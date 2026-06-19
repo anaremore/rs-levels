@@ -9,6 +9,7 @@
 - [Schemas overview](schemas.md)
 - [Schema reference](schema-reference.md)
 - [Platform plugins](platform-plugins.md)
+- [TradingView](tradingview.md)
 - [Install](install.md)
 - [Extraction checklist](extraction-checklist.md)
 - [Release checklist](release-checklist.md)

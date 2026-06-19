@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { URL } from 'node:url';
+import { createTradingViewJsonExport, createTradingViewPayload } from '../../../packages/exporters/src/index.js';
 import { normalizeSymbol } from '../../../packages/schemas/src/index.js';
 import { networkStatus } from './config.js';
 import { levelsToSierraText } from './sierra-format.js';
@@ -29,6 +30,17 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/ddbands') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => level.kind === 'dd-band') });
       if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/stream') return streamSnapshots(req, res, clients, store);
+
+      const tradingViewMatch = pathname.match(/^\/tradingview\/([^/]+)$/);
+      if (req.method === 'GET' && tradingViewMatch) {
+        const symbol = normalizeSymbol(tradingViewMatch[1]);
+        const row = store.getSnapshot().symbols[symbol] || null;
+        if (!row) return sendJson(res, 404, { ok: false, error: 'symbol not found' });
+        if (url.searchParams.get('format') === 'json') {
+          return sendJson(res, 200, createTradingViewJsonExport(row));
+        }
+        return sendText(res, 200, createTradingViewPayload(row), 'text/plain; charset=utf-8');
+      }
 
       const symbolMatch = pathname.match(/^\/levels\/([^/]+)$/);
       if (req.method === 'GET' && symbolMatch) {
@@ -60,7 +72,7 @@ export function rootInfo(config) {
   return {
     ok: true,
     name: 'RS Levels local service',
-    endpoints: ['/health', '/status', '/snapshot', '/levels', '/stream'],
+    endpoints: ['/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -153,4 +165,3 @@ function readJson(req) {
     });
   });
 }
-

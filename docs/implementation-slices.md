@@ -25,17 +25,21 @@ No RocketScooter parser code yet.
 
 ## Slice 3: Local Service Shell
 
-Goal: provide a cross-platform service with static sample data.
+Status: complete.
+
+Goal: provide a cross-platform service with normalized in-memory captured data.
 
 Deliverables:
 
-- Node.js/TypeScript service
+- Node.js service
 - `/health`
 - `/snapshot`
 - `/levels`
 - `/levels/:symbol`
 - `/stream`
-- sample in-memory snapshot
+- browser capture ingest
+- Sierra text output
+- TradingView compact payload and JSON export
 
 No browser extension yet.
 
@@ -74,6 +78,7 @@ Recommended order:
 2. NinjaTrader
 3. Quantower
 4. Bookmap
+5. TradingView paste-based Pine indicator
 
 Each plugin must include a safety test or review note confirming it does not call platform order APIs.
 

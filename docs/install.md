@@ -59,4 +59,4 @@ The browser extension is not packaged yet. The first extension milestone will be
 
 ## Platform Plugins
 
-Plugins are display-only and will consume the read-only API. TradingView is handled differently because Pine scripts cannot call arbitrary localhost HTTP; see [platform plugins](platform-plugins.md).
+Plugins are display-only and will consume the read-only API. TradingView is handled differently because Pine scripts cannot call arbitrary localhost HTTP; see [TradingView](tradingview.md).

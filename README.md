@@ -58,4 +58,4 @@ docs/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, and local service shell are implemented with tests. Browser extension and platform plugins will be added in small public-safety-reviewed steps.
+Public-safe foundation in progress. The schema package, parser, exporter package, and local service shell are implemented with tests. Browser extension and platform plugins will be added in small public-safety-reviewed steps.

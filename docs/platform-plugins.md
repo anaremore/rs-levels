@@ -38,8 +38,8 @@ Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API dire
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path should therefore be:
 
 - a display-only Pine indicator checked into `plugins/tradingview/`
-- a local-service or extension button to copy a compact level payload
-- an optional "copy as JSON" export for users and tooling
+- the implemented `/tradingview/:symbol` local-service endpoint and future extension button to copy a compact level payload
+- the implemented `/tradingview/:symbol?format=json` export for users and tooling
 - an indicator input where the compact payload can be pasted and drawn
 
 References:

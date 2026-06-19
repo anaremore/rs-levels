@@ -1,0 +1,40 @@
+# TradingView
+
+TradingView support uses a manual paste workflow.
+
+The official Pine documentation lists supported `request.*` data sources such as symbols, timeframes, financial/economic data, footprint data, and Pine Seeds from GitHub. Pine does not provide arbitrary HTTP access to `localhost`, so a TradingView indicator cannot poll the RS Levels local API directly.
+
+References:
+
+- https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/
+- https://www.tradingview.com/pine-script-docs/writing/limitations/
+
+## Recommended UX
+
+- The browser extension popup should include `Copy TradingView Payload` for each symbol.
+- The local service exposes the same payload at `/tradingview/:symbol`.
+- `Copy JSON` should remain available for users and external tools.
+- The Pine indicator should parse the compact payload, not JSON.
+
+## Local Service Exports
+
+```text
+GET /tradingview/MES
+GET /tradingview/MNQ
+GET /tradingview/MES?format=json
+GET /tradingview/MNQ?format=json
+```
+
+Default response is text/plain:
+
+```text
+RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
+```
+
+The JSON response is for inspection and third-party tooling. Pine users should paste the compact `RSLEVELS|...` payload into the included indicator.
+
+## Indicator
+
+See `plugins/tradingview/rs-levels.pine`.
+
+The indicator is display-only. It draws levels using the public kind field and does not include alerts, strategy logic, or execution behavior.

@@ -38,6 +38,12 @@ try {
   const text = await getText(`${baseUrl}/levels/MES?format=sierra`);
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
 
+  const tradingViewPayload = await getText(`${baseUrl}/tradingview/ES`);
+  assert.equal(tradingViewPayload, 'RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band');
+
+  const tradingViewJson = await getJson(`${baseUrl}/tradingview/MES?format=json`);
+  assert.equal(tradingViewJson.exportFormat, 'tradingview-json');
+  assert.equal(tradingViewJson.levels.length, 2);
   const ddbands = await getJson(`${baseUrl}/ddbands`);
   assert.equal(ddbands.levels.length, 1);
 

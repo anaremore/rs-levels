@@ -48,11 +48,15 @@ GET  /levels/:symbol
 GET  /levels/:symbol?format=sierra
 GET  /ddbands
 GET  /references
+GET  /tradingview/:symbol
+GET  /tradingview/:symbol?format=json
 GET  /stream
 POST /capture/api
 ```
 
-`/stream` is an SSE stream that emits the current snapshot immediately and emits a new snapshot after each accepted capture.
+/tradingview/:symbol returns the compact text payload used by the TradingView Pine indicator. ?format=json returns a copy-friendly JSON export for tooling.
+
+/stream is an SSE stream that emits the current snapshot immediately and emits a new snapshot after each accepted capture.
 
 `POST /capture/api` is for the browser extension. Display clients should use the read-only endpoints.
 

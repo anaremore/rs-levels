@@ -1,0 +1,50 @@
+//@version=6
+indicator("RS Levels", overlay = true, max_lines_count = 100, max_labels_count = 100)
+
+payload = input.string("", "RS Levels Payload")
+showLabels = input.bool(true, "Labels")
+lineWidth = input.int(1, "Line width", minval = 1, maxval = 4)
+
+var line[] rsLines = array.new_line()
+var label[] rsLabels = array.new_label()
+
+clearDrawings() =>
+    while array.size(rsLines) > 0
+        line.delete(array.pop(rsLines))
+    while array.size(rsLabels) > 0
+        label.delete(array.pop(rsLabels))
+
+kindColor(kind) =>
+    switch kind
+        "dd-band" => color.rgb(41, 182, 246)
+        "hp" => color.rgb(41, 98, 255)
+        "mhp" => color.rgb(255, 152, 0)
+        "open-close" => color.rgb(224, 224, 224)
+        "reference" => color.rgb(255, 235, 59)
+        "zone" => color.rgb(76, 175, 80)
+        => color.rgb(158, 158, 158)
+
+drawLevel(name, priceText, kind) =>
+    price = str.tonumber(priceText)
+    if not na(price)
+        levelColor = kindColor(kind)
+        newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth)
+        array.push(rsLines, newLine)
+        if showLabels
+            text = name + " " + str.tostring(price, format.mintick)
+            newLabel = label.new(bar_index, price, text, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
+            array.push(rsLabels, newLabel)
+
+if barstate.islast
+    clearDrawings()
+    parts = str.split(payload, "|")
+    validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS"
+    if validPayload
+        levelText = array.get(parts, 4)
+        items = str.split(levelText, ";")
+        count = math.min(array.size(items), 40)
+        if count > 0
+            for i = 0 to count - 1
+                fields = str.split(array.get(items, i), ",")
+                if array.size(fields) >= 3
+                    drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2))

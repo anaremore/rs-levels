@@ -20,6 +20,8 @@ GET  /levels/:symbol
 GET  /levels/:symbol?format=sierra
 GET  /ddbands
 GET  /references
+GET  /tradingview/:symbol
+GET  /tradingview/:symbol?format=json
 GET  /stream
 POST /capture/api
 ```
@@ -34,7 +36,7 @@ Returns service metadata and endpoint hints.
 {
   "ok": true,
   "name": "RS Levels local service",
-  "endpoints": ["/health", "/status", "/snapshot", "/levels", "/stream"],
+  "endpoints": ["/health", "/status", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -117,6 +119,30 @@ DD Upper,7579.75,41,182,246
 
 Columns are `name,price,red,green,blue`. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
 
+## GET /tradingview/:symbol
+
+Returns a compact text payload for the included TradingView Pine indicator. Aliases normalize the same way as `/levels/:symbol`.
+
+```text
+RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
+```
+
+The payload is intentionally not JSON because Pine scripts do not include a JSON parser and cannot poll localhost directly. See [TradingView](tradingview.md).
+
+## GET /tradingview/:symbol?format=json
+
+Returns a copy-friendly JSON export for tooling and inspection:
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "exportFormat": "tradingview-json",
+  "symbol": "MES",
+  "levels": []
+}
+```
+
+Pine users should paste the compact `RSLEVELS|...` payload into the indicator input.
 ## GET /ddbands
 
 Returns all flat levels whose kind is `dd-band`.
