@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+out/
+coverage/
+
+# Local runtime state
+.env
+.env.*
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+logs/
+archives/
+
+# Captures and private diagnostics
+captures/
+snapshots/
+screenshots/
+*.har
+*.log
+*.jsonl
+
+# Platform noise
+.DS_Store
+Thumbs.db
+

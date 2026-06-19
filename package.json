@@ -1,0 +1,17 @@
+{
+  "name": "rs-levels",
+  "version": "0.0.0",
+  "description": "Local-first RocketScooter level capture and display feeds.",
+  "scripts": {
+    "scan:private": "rg -n \"account|rithmic|full auto|execution|flatten|cancel|order|password|token|secret|audit|journal|pnl|live account\"",
+    "scan:secrets": "rg -n \"AKIA|BEGIN .*PRIVATE KEY|Authorization:|Cookie:|Bearer \""
+  },
+  "keywords": [
+    "rocketscooter",
+    "levels",
+    "local-api",
+    "charting"
+  ],
+  "license": "UNLICENSED"
+}
+
