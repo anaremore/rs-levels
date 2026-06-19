@@ -2,11 +2,15 @@
 
 - [Public boundary](public-boundary.md)
 - [Privacy and security](privacy-security.md)
+- [Networking and Tailscale](networking.md)
+- [Architecture](architecture.md)
+- [UX principles](ux-principles.md)
 - [API draft](api.md)
-- [Schemas draft](schemas.md)
+- [Schemas overview](schemas.md)
+- [Schema reference](schema-reference.md)
 - [Platform plugins](platform-plugins.md)
 - [Install draft](install.md)
 - [Extraction checklist](extraction-checklist.md)
 - [Release checklist](release-checklist.md)
+- [Implementation slices](implementation-slices.md)
 - [Roadmap](roadmap.md)
-

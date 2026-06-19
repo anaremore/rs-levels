@@ -1,0 +1,13 @@
+{
+  "name": "@rs-levels/schemas",
+  "version": "0.1.0",
+  "description": "Public display-data schemas for RS Levels.",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "node test/validate-samples.test.js"
+  },
+  "license": "UNLICENSED"
+}
+

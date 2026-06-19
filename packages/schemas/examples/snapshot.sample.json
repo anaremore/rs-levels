@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "0.1.0",
+  "generatedAt": "2026-06-19T14:30:00.000Z",
+  "capturedAt": "2026-06-19T14:29:59.500Z",
+  "source": {
+    "state": "capturing",
+    "connected": true,
+    "lastCaptureAt": "2026-06-19T14:29:59.500Z",
+    "ageMs": 500,
+    "endpoints": [
+      {
+        "key": "ddbands/MES",
+        "url": "/platform/api/v1/ddbands/MES",
+        "status": 200,
+        "capturedAt": "2026-06-19T14:29:59.500Z",
+        "parser": "ddbands",
+        "ok": true
+      }
+    ],
+    "warnings": []
+  },
+  "symbols": {
+    "MES": {
+      "symbol": "MES",
+      "displaySymbol": "ES/MES",
+      "price": 7610.25,
+      "capturedAt": "2026-06-19T14:29:59.500Z",
+      "levels": [
+        {
+          "id": "MES:OVNHP:7537.00",
+          "symbol": "MES",
+          "name": "OVNHP",
+          "price": 7537,
+          "kind": "hp",
+          "color": "#2962FF",
+          "source": "rocketscooter",
+          "capturedAt": "2026-06-19T14:29:59.500Z",
+          "metadata": {}
+        },
+        {
+          "id": "MES:DD-UPPER:7579.75",
+          "symbol": "MES",
+          "name": "DD Upper",
+          "price": 7579.75,
+          "kind": "dd-band",
+          "color": "#29B6F6",
+          "source": "rocketscooter",
+          "capturedAt": "2026-06-19T14:29:59.500Z",
+          "metadata": {}
+        }
+      ],
+      "stats": {
+        "dd": 0.59,
+        "resilience": -30.42,
+        "weeklyResilience": -51.48,
+        "monthlyResilience": -34.89,
+        "mapCode": "BLU"
+      },
+      "warnings": []
+    }
+  },
+  "warnings": []
+}
+

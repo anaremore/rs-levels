@@ -1,47 +1,32 @@
-# Schemas Draft
+# Schemas
 
 Schemas are intentionally display-oriented. They describe visible levels and source freshness, not trading decisions.
 
-## Level
+Current package: `packages/schemas`
 
-```json
-{
-  "name": "OVNHP",
-  "symbol": "MES",
-  "price": 7612.5,
-  "kind": "hp",
-  "color": "#2962ff",
-  "source": "rocketscooter",
-  "capturedAt": "2026-06-19T14:30:00.000Z"
-}
+Current schema version: `0.1.0`
+
+## What Is Defined
+
+- Snapshot envelope
+- Source freshness and endpoint summaries
+- Symbol snapshots
+- Display level rows
+- Basic stats shown as context
+- Validation helpers for sample payloads
+
+## Development
+
+Run schema validation from the repo root:
+
+```powershell
+npm run test:schemas
 ```
 
-## Symbol Snapshot
+Sample payloads live in:
 
-```json
-{
-  "symbol": "MES",
-  "displaySymbol": "ES/MES",
-  "price": 7610.25,
-  "levels": [],
-  "stats": {
-    "dd": null,
-    "resilience": null,
-    "weeklyResilience": null,
-    "monthlyResilience": null
-  },
-  "capturedAt": "2026-06-19T14:30:00.000Z"
-}
+```text
+packages/schemas/examples/
 ```
 
-## Source Freshness
-
-```json
-{
-  "connected": true,
-  "lastCaptureAt": "2026-06-19T14:30:00.000Z",
-  "ageMs": 250,
-  "warnings": []
-}
-```
-
+See [schema-reference.md](schema-reference.md) for field-level details.
