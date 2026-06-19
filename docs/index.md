@@ -14,6 +14,7 @@
 - [Platform plugins](platform-plugins.md)
 - [TradingView](tradingview.md)
 - [Install](install.md)
+- [Packaging](packaging.md)
 - [Extraction checklist](extraction-checklist.md)
 - [Release checklist](release-checklist.md)
 - [Implementation slices](implementation-slices.md)

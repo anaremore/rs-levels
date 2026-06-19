@@ -28,6 +28,12 @@ npm test
 npm start
 ```
 
+Create a release directory:
+
+```powershell
+npm run package
+```
+
 See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml).

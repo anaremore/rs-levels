@@ -32,6 +32,15 @@ curl http://127.0.0.1:8765/health
 
 The OpenAPI spec is in [openapi.yaml](openapi.yaml). It can be opened with Swagger UI, Redoc, or any OpenAPI-compatible client tooling.
 
+## Packaged Release
+
+Maintainers can create a clean release directory with:
+
+```powershell
+npm run package
+```
+
+Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 ## 2. Load The Browser Extension
 
 1. Open `chrome://extensions` or the equivalent Chromium extension page.
