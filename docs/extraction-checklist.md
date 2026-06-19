@@ -15,11 +15,11 @@ Use this checklist before copying code from any private workspace.
 Run scans:
 
 ```powershell
-rg -n "rithmic|full auto|execution|flatten|cancel|order|account|batch|pnl|journal|audit|strategy"
-rg -n "password|token|secret|cookie|authorization|bearer|private key"
+npm run scan:private
+npm run scan:secrets
 ```
 
-Review every hit. If a term is present only in safety docs, keep it. If it appears in implementation as behavior, remove or isolate it before committing.
+Documentation-only hits are allowed when they describe the public safety boundary. Implementation hits fail the scan and must be removed or explicitly reviewed before committing.
 
 ## Commit Rule
 
@@ -31,4 +31,3 @@ Prefer small commits:
 4. extension shell
 5. parser extraction
 6. display plugins
-

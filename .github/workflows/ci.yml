@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify public package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test
+        run: npm test
+
+      - name: Private-boundary scan
+        run: npm run scan:private
+
+      - name: Credential pattern scan
+        run: npm run scan:secrets
+
+      - name: Build release directory
+        run: npm run package
+
+      - name: Upload release directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: rs-levels-source-package
+          path: dist/rs-levels-0.0.0
+          if-no-files-found: error

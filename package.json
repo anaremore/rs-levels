@@ -14,8 +14,8 @@
     "test:tradingview": "node plugins/tradingview/test/tradingview.test.cjs",
     "test:extension": "node apps/browser-extension/test/extension.test.cjs && node apps/browser-extension/test/extension-logic.test.cjs",
     "test:openapi": "node docs/test/openapi.test.cjs",
-    "scan:private": "rg -n \"account|rithmic|full auto|execution|flatten|cancel|order|password|token|secret|audit|journal|pnl|live account\"",
-    "scan:secrets": "rg -n \"AKIA|BEGIN .*PRIVATE KEY|Authorization:|Cookie:|Bearer \""
+    "scan:private": "node tools/scan-text.mjs private",
+    "scan:secrets": "node tools/scan-text.mjs secrets"
   },
   "keywords": [
     "rocketscooter",

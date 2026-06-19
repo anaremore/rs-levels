@@ -33,12 +33,11 @@ The browser extension must not forward:
 
 ## Public Release Checks
 
-Before publishing a release or pushing extracted code, run private-term and secret scans. At minimum:
+Before publishing a release or pushing extracted code, run:
 
 ```powershell
-rg -n "account|rithmic|full auto|execution|flatten|cancel|order|password|token|secret|audit|journal|pnl|live account"
-rg -n "AKIA|BEGIN .*PRIVATE KEY|Authorization:|Cookie:|Bearer "
+npm run scan:private
+npm run scan:secrets
 ```
 
-Review every hit manually. Some words may appear in safety docs, but implementation code should not expose trading or account behavior.
-
+The scan scripts are implemented in `tools/scan-text.mjs` so they work without external command-line tools. Safety documentation may contain boundary terms, but implementation hits fail the scan and must be removed or explicitly reviewed before release.

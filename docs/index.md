@@ -15,6 +15,7 @@
 - [TradingView](tradingview.md)
 - [Install](install.md)
 - [Packaging](packaging.md)
+- [CI](ci.md)
 - [Extraction checklist](extraction-checklist.md)
 - [Release checklist](release-checklist.md)
 - [Implementation slices](implementation-slices.md)
