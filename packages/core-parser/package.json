@@ -1,0 +1,13 @@
+{
+  "name": "@rs-levels/core-parser",
+  "version": "0.1.0",
+  "description": "Display-level parser helpers for RS Levels captures.",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "node test/core-parser.test.js"
+  },
+  "license": "UNLICENSED"
+}
+

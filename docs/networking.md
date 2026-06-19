@@ -38,7 +38,7 @@ When remote access is enabled, `/health` should report:
     "host": "0.0.0.0",
     "port": 8765,
     "remoteAccess": true,
-    "warning": "Remote access is enabled. Use only on trusted private networks such as Tailscale."
+    "warnings": ["Remote access is enabled. Use only on trusted private networks such as Tailscale."]
   }
 }
 ```

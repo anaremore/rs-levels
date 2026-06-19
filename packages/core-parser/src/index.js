@@ -1,0 +1,195 @@
+import {
+  inferLevelKind,
+  normalizeEndpointSummary,
+  normalizeLevel,
+  normalizeSymbol,
+  stableLevelId
+} from '../../schemas/src/index.js';
+
+const MAX_DEPTH = 8;
+const MAX_LEVELS_PER_CAPTURE = 200;
+
+const NAME_KEYS = ['name', 'label', 'text', 'title', 'level', 'levelName', 'pivotName'];
+const PRICE_KEYS = ['price', 'value', 'last', 'y', 'levelPrice', 'pivotPrice'];
+const SYMBOL_KEYS = ['symbol', 'ticker', 'root', 'instrument'];
+
+export function normalizeCapture(capture = {}) {
+  const capturedAt = stringValue(capture.capturedAt) || new Date().toISOString();
+  const endpoint = normalizeEndpointSummary({
+    key: endpointKey(capture),
+    url: stringValue(capture.url || capture.endpoint || capture.path),
+    status: integerOrNull(capture.status),
+    capturedAt,
+    parser: 'generic-display-levels',
+    ok: true
+  });
+
+  const warnings = [];
+  const parsed = parseBody(capture.body, warnings);
+  const symbolHint = detectSymbol(capture, parsed);
+  const levels = collectLevels(parsed, {
+    symbolHint,
+    capturedAt,
+    source: 'rocketscooter',
+    warnings
+  });
+
+  if (!levels.length) {
+    warnings.push('No display levels were recognized in this capture.');
+  }
+
+  return {
+    endpoint,
+    capturedAt,
+    symbols: groupLevelsBySymbol(levels),
+    warnings
+  };
+}
+
+export function parseBody(body, warnings = []) {
+  if (body == null || body === '') return null;
+  if (typeof body === 'object') return body;
+  if (typeof body !== 'string') return null;
+  try {
+    return JSON.parse(body);
+  } catch (err) {
+    warnings.push('Capture body was not JSON.');
+    return null;
+  }
+}
+
+export function collectLevels(root, options = {}) {
+  const levels = [];
+  const seen = new Set();
+  walk(root, 0, (node) => {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) return;
+    const candidate = candidateFromObject(node, options);
+    if (!candidate) return;
+    const id = candidate.id || stableLevelId(candidate.symbol, candidate);
+    if (seen.has(id)) return;
+    seen.add(id);
+    levels.push({ ...candidate, id });
+  });
+  return levels.slice(0, MAX_LEVELS_PER_CAPTURE);
+}
+
+export function endpointKey(capture = {}) {
+  const raw = stringValue(capture.endpoint || capture.path || capture.url || 'capture');
+  return raw.replace(/^https?:\/\/[^/]+/i, '').split('?')[0] || 'capture';
+}
+
+function candidateFromObject(node, options) {
+  const name = firstString(node, NAME_KEYS);
+  const price = firstNumber(node, PRICE_KEYS);
+  if (!name || price == null) return null;
+  if (!looksLikeDisplayLevelName(name)) return null;
+  const symbol = normalizeSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint || '');
+  return normalizeLevel(symbol, {
+    id: stringValue(node.id || node.key),
+    symbol,
+    name,
+    price,
+    kind: stringValue(node.kind) || inferLevelKind(name),
+    color: normalizeInputColor(node.color || node.colour || node.rgb),
+    source: options.source || 'rocketscooter',
+    capturedAt: options.capturedAt || '',
+    metadata: displayMetadata(node)
+  });
+}
+
+function groupLevelsBySymbol(levels) {
+  const grouped = {};
+  levels.forEach((level) => {
+    const symbol = normalizeSymbol(level.symbol);
+    if (!grouped[symbol]) grouped[symbol] = [];
+    grouped[symbol].push(level);
+  });
+  return grouped;
+}
+
+function detectSymbol(capture, body) {
+  const haystack = [
+    capture.symbol,
+    capture.endpoint,
+    capture.path,
+    capture.url,
+    JSON.stringify(shallowPick(body, SYMBOL_KEYS))
+  ].map(stringValue).join(' ').toUpperCase();
+  if (haystack.includes('NQ') || haystack.includes('QQQ')) return 'MNQ';
+  if (haystack.includes('ES') || haystack.includes('SPY')) return 'MES';
+  return '';
+}
+
+function walk(value, depth, visit) {
+  if (depth > MAX_DEPTH || value == null) return;
+  if (Array.isArray(value)) {
+    value.forEach((item) => walk(item, depth + 1, visit));
+    return;
+  }
+  if (typeof value !== 'object') return;
+  visit(value);
+  Object.keys(value).forEach((key) => walk(value[key], depth + 1, visit));
+}
+
+function firstString(node, keys) {
+  for (const key of keys) {
+    if (node[key] != null && String(node[key]).trim()) return String(node[key]).trim();
+  }
+  return '';
+}
+
+function firstNumber(node, keys) {
+  for (const key of keys) {
+    const n = Number(node[key]);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function looksLikeDisplayLevelName(name) {
+  const text = stringValue(name).toUpperCase();
+  if (!text) return false;
+  return /(HP|MHP|DD|BZ|BRZ|YL|RL|OPEN|CLOSE|HIGH|GAP|LOW|ZONE)/.test(text);
+}
+
+function normalizeInputColor(value) {
+  if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value.trim())) return value.trim().toUpperCase();
+  if (Array.isArray(value) && value.length >= 3) return rgbToHex(value[0], value[1], value[2]);
+  if (value && typeof value === 'object') return rgbToHex(value.r, value.g, value.b);
+  return '';
+}
+
+function rgbToHex(r, g, b) {
+  const parts = [r, g, b].map((part) => {
+    const n = Math.max(0, Math.min(255, Number(part) || 0));
+    return n.toString(16).padStart(2, '0');
+  });
+  return `#${parts.join('')}`.toUpperCase();
+}
+
+function displayMetadata(node) {
+  const out = {};
+  ['source', 'type', 'group', 'side'].forEach((key) => {
+    if (node[key] != null && typeof node[key] !== 'object') out[key] = node[key];
+  });
+  return out;
+}
+
+function shallowPick(value, keys) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const out = {};
+  keys.forEach((key) => {
+    if (value[key] != null) out[key] = value[key];
+  });
+  return out;
+}
+
+function integerOrNull(value) {
+  const n = Number(value);
+  return Number.isInteger(n) ? n : null;
+}
+
+function stringValue(value) {
+  return value == null ? '' : String(value).trim();
+}
+

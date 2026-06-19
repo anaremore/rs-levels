@@ -1,6 +1,6 @@
 # Platform Plugins
 
-Plugins in this repository are display-only. They read the local levels API and draw overlays inside charting platforms.
+Plugins in this repository are display-only. They read the local levels API or accept a manual export and draw overlays inside charting platforms.
 
 ## Safety Boundary
 
@@ -17,11 +17,12 @@ Plugins must not:
 Plugins may:
 
 - poll the local API
+- consume a manual paste/export payload
 - draw horizontal level lines
 - draw labels and zone fills
 - show feed freshness
 
-## Planned Plugins
+## Plugin Paths
 
 ```text
 plugins/
@@ -29,7 +30,23 @@ plugins/
   ninjatrader/
   quantower/
   bookmap/
+  tradingview/
 ```
 
-Each plugin should have its own README with installation steps and a short display-only safety statement.
+Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling.
 
+TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path should therefore be:
+
+- a display-only Pine indicator checked into `plugins/tradingview/`
+- a local-service or extension button to copy a compact level payload
+- an optional "copy as JSON" export for users and tooling
+- an indicator input where the compact payload can be pasted and drawn
+
+References:
+
+- https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/
+- https://www.tradingview.com/pine-script-docs/writing/limitations/
+
+## Feed Freshness
+
+Every plugin should show stale/missing data clearly. A chart should never make an old capture look live.

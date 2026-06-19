@@ -7,8 +7,8 @@ RS Levels lets a user capture level data from their own RocketScooter browser se
 ## What This Is
 
 - A browser extension for allowlisted RocketScooter response capture.
-- A local API service that stores the latest level snapshot.
-- Stable JSON and streaming APIs for display integrations.
+- A cross-platform local API service that stores the latest level snapshot.
+- Stable JSON, text, and streaming APIs for display integrations.
 - Display-only plugins for charting platforms.
 
 ## What This Is Not
@@ -21,7 +21,20 @@ RS Levels lets a user capture level data from their own RocketScooter browser se
 
 Users must have their own RocketScooter access. This project only processes data already loaded in the user's browser and keeps it local by default.
 
-## Planned Layout
+## Quick Start
+
+```powershell
+npm test
+npm start
+```
+
+Default service URL:
+
+```text
+http://127.0.0.1:8765
+```
+
+## Layout
 
 ```text
 apps/
@@ -35,6 +48,7 @@ plugins/
   ninjatrader/
   quantower/
   bookmap/
+  tradingview/
 examples/
   html-dashboard/
   node-client/
@@ -44,4 +58,4 @@ docs/
 
 ## Status
 
-Planning skeleton only. Code extraction will happen in small public-safety-reviewed steps.
+Public-safe foundation in progress. The schema package, parser, and local service shell are implemented with tests. Browser extension and platform plugins will be added in small public-safety-reviewed steps.

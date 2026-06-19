@@ -1,0 +1,16 @@
+{
+  "name": "@rs-levels/local-service",
+  "version": "0.1.0",
+  "description": "Cross-platform localhost API service for RS Levels.",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "rs-levels-service": "src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node test/local-service.test.js"
+  },
+  "license": "UNLICENSED"
+}
+
