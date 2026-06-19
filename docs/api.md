@@ -8,6 +8,8 @@ http://127.0.0.1:8765
 
 The local service is read-mostly. The only write endpoint is browser-capture ingest.
 
+A machine-readable OpenAPI 3.1 spec is available at [openapi.yaml](openapi.yaml).
+
 ## Endpoints
 
 ```text
@@ -143,6 +145,7 @@ Returns a copy-friendly JSON export for tooling and inspection:
 ```
 
 Pine users should paste the compact `RSLEVELS|...` payload into the indicator input.
+
 ## GET /ddbands
 
 Returns all flat levels whose kind is `dd-band`.

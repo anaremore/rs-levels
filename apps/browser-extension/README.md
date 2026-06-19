@@ -1,18 +1,42 @@
 # Browser Extension
 
-Planned Manifest V3 browser extension for allowlisted RocketScooter response capture.
+For the full user workflow, see docs/user-setup.md.
 
-Responsibilities:
+Manifest V3 extension for allowlisted RocketScooter response capture.
 
-- run at `document_start`
-- capture explicitly allowlisted response bodies
-- send safe capture payloads to the local service
-- show local-service connection status in the popup
+The extension runs only on `rocketscooter.com` host patterns, injects a page hook at `document_start`, observes fetch/XHR responses, and forwards only URL-allowlisted response bodies to the local RS Levels service.
 
-Non-responsibilities:
+## Load Unpacked
 
-- storing credentials
-- forwarding cookies or auth headers
-- reading arbitrary page content
-- placing or managing trades
+1. Open Chromium extension management.
+2. Enable developer mode.
+3. Load `apps/browser-extension` as an unpacked extension.
+4. Start the local service with `npm start`.
+5. Open RocketScooter and use the extension popup to check status.
 
+## Popup
+
+The popup shows local service health and captured level counts. It includes:
+
+- symbol selector
+- `Copy TradingView`
+- `Copy JSON`
+- refresh
+- options shortcut
+
+`Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`.
+
+## Options
+
+Options let users configure:
+
+- local service URL, default `http://127.0.0.1:8765`
+- capture enabled/paused
+- endpoint URL allowlist
+- max capture size
+
+For Tailscale/private-network use, point the service URL at the trusted machine after the local service has been explicitly started with remote access enabled. Chrome will ask for permission to reach that specific origin.
+
+## Safety Boundary
+
+The extension does not store credentials, forward request auth data, read arbitrary page text, or include strategy/execution behavior. It forwards response bodies only when their URL matches the configured allowlist.

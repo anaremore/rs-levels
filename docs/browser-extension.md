@@ -1,0 +1,57 @@
+# Browser Extension
+
+The RS Levels browser extension is the first-priority capture UX.
+
+## What It Does
+
+- Runs as a Manifest V3 extension.
+- Loads only on `rocketscooter.com` host patterns.
+- Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
+- Captures only response URLs that match the configured allowlist.
+- Posts capture payloads to the local service at `/capture/api`.
+- Provides popup buttons for TradingView and JSON copy workflows.
+
+## What It Avoids
+
+- No arbitrary page text scraping.
+- No request auth data forwarding.
+- No stored credentials.
+- No strategy, broker, or automation behavior.
+
+## User Flow
+
+1. Start the local service.
+2. Load `apps/browser-extension` unpacked.
+3. Open RocketScooter.
+4. Check the popup status.
+5. Use `Copy TradingView` to paste levels into `plugins/tradingview/rs-levels.pine`.
+6. Use `Copy JSON` when another local tool needs a manual export.
+
+## Settings
+
+Default service URL:
+
+```text
+http://127.0.0.1:8765
+```
+
+Default endpoint allowlist:
+
+```text
+level
+levels
+ddband
+dd-band
+zone
+pivot
+```
+
+Users can change these in the options page. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits.
+
+## Tailscale And Private Networks
+
+For local-only use, keep the default service URL. For Tailscale or another trusted private network, start the local service with remote access explicitly enabled and then set the extension service URL to that private address.
+
+When a non-default service URL is saved, Chrome will ask for permission to reach that specific origin. The broad optional host permission exists only so the extension can support user-selected localhost, LAN, and Tailscale service URLs without granting those origins by default.
+
+The extension does not discover or broadcast service locations.

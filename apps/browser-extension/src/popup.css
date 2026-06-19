@@ -1,0 +1,164 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #090d12;
+  color: #eef6ff;
+}
+
+
+body {
+  width: 360px;
+  margin: 0;
+  background: #090d12;
+}
+
+.shell {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+p {
+  margin: 0;
+}
+
+#service-url {
+  margin-top: 4px;
+  color: #8ea2ba;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.pill {
+  min-width: 74px;
+  padding: 5px 8px;
+  background: #202838;
+  box-shadow: inset 0 0 0 1px #334157;
+  color: #cdd9e8;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pill.live {
+  background: #0f2c1a;
+  box-shadow: inset 0 0 0 1px #2baa58;
+  color: #66ee92;
+}
+
+.pill.error {
+  background: #321616;
+  box-shadow: inset 0 0 0 1px #853737;
+  color: #ff8b8b;
+}
+
+.panel {
+  padding: 12px;
+  background: #101720;
+  box-shadow: inset 0 0 0 1px #223047;
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  gap: 5px;
+}
+
+label,
+dt {
+  color: #8ea2ba;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+select,
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+select {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  background: #0b1118;
+  color: #eef6ff;
+  box-shadow: inset 0 0 0 1px #2f405a;
+  outline: none;
+}
+
+.actions,
+footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+button {
+  min-height: 34px;
+  padding: 6px 8px;
+  background: #12365d;
+  color: #eaf5ff;
+  box-shadow: inset 0 0 0 1px #2d77bd;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #17202c;
+  box-shadow: inset 0 0 0 1px #334157;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.message {
+  min-height: 32px;
+  color: #a9b7ca;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.message.ok {
+  color: #63ec94;
+}
+
+.message.error {
+  color: #ff8b8b;
+}
+
+dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+dd {
+  margin: 4px 0 0;
+  color: #eef6ff;
+  font-weight: 700;
+}
+
+footer button {
+  background: #111923;
+  box-shadow: inset 0 0 0 1px #2d3a50;
+}

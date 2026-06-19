@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RS Levels Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>RS Levels Options</h1>
+      <p>Configure the local service and capture allowlist.</p>
+    </header>
+
+    <section class="panel">
+      <label for="service-url">Local service URL</label>
+      <input id="service-url" type="url" spellcheck="false">
+      <p class="hint">Default: http://127.0.0.1:8765. Use a Tailscale URL only when you intentionally expose the local service.</p>
+    </section>
+
+    <section class="panel">
+      <label class="switch">
+        <input id="capture-enabled" type="checkbox">
+        <span>Capture allowlisted RocketScooter responses</span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <label for="endpoint-patterns">Endpoint allowlist</label>
+      <textarea id="endpoint-patterns" rows="8" spellcheck="false"></textarea>
+      <p class="hint">One URL substring per line. The page hook ignores every response whose URL does not match this list.</p>
+    </section>
+
+    <section class="panel">
+      <label for="max-capture-bytes">Max capture bytes</label>
+      <input id="max-capture-bytes" type="number" min="1024" step="1024">
+    </section>
+
+    <footer>
+      <button id="save" type="button">Save</button>
+      <button id="reset" type="button">Reset</button>
+      <p id="message" class="message"></p>
+    </footer>
+  </main>
+  <script src="shared.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

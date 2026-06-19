@@ -1,5 +1,7 @@
 # Install
 
+For the end-to-end local API, extension, and TradingView workflow, see [User setup](user-setup.md).
+
 RS Levels is in early development. The current developer flow works on Windows, macOS, and Linux with Node.js 20 or newer.
 
 ## Clone
@@ -55,7 +57,7 @@ Only use remote binding on networks you trust. The browser extension should cont
 
 ## Browser Extension
 
-The browser extension is not packaged yet. The first extension milestone will be an unpacked Manifest V3 build that posts allowlisted RocketScooter responses to `/capture/api` and shows local service status.
+Load `apps/browser-extension` as an unpacked Chromium extension. It posts allowlisted RocketScooter responses to `/capture/api`, shows local service status, and can copy TradingView or JSON exports from the local service.
 
 ## Platform Plugins
 

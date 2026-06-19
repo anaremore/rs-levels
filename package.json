@@ -4,12 +4,14 @@
   "description": "Local-first RocketScooter level capture and display feeds.",
   "scripts": {
     "start": "node apps/local-service/src/cli.js",
-    "test": "npm run test:schemas && npm run test:parser && npm run test:exporters && npm run test:service && npm run test:tradingview",
+    "test": "npm run test:schemas && npm run test:parser && npm run test:exporters && npm run test:service && npm run test:tradingview && npm run test:extension && npm run test:openapi",
     "test:schemas": "node packages/schemas/test/validate-samples.test.js",
     "test:parser": "node packages/core-parser/test/core-parser.test.js",
     "test:exporters": "node packages/exporters/test/exporters.test.js",
     "test:service": "node apps/local-service/test/local-service.test.js",
     "test:tradingview": "node plugins/tradingview/test/tradingview.test.cjs",
+    "test:extension": "node apps/browser-extension/test/extension.test.cjs && node apps/browser-extension/test/extension-logic.test.cjs",
+    "test:openapi": "node docs/test/openapi.test.cjs",
     "scan:private": "rg -n \"account|rithmic|full auto|execution|flatten|cancel|order|password|token|secret|audit|journal|pnl|live account\"",
     "scan:secrets": "rg -n \"AKIA|BEGIN .*PRIVATE KEY|Authorization:|Cookie:|Bearer \""
   },

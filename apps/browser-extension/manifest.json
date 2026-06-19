@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "RS Levels Capture",
+  "description": "Capture RocketScooter display levels into the local RS Levels API.",
+  "version": "0.1.0",
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://rocketscooter.com/*",
+    "https://*.rocketscooter.com/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_title": "RS Levels",
+    "default_popup": "src/popup.html"
+  },
+  "options_page": "src/options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://rocketscooter.com/*",
+        "https://*.rocketscooter.com/*"
+      ],
+      "js": [
+        "src/shared.js",
+        "src/content-script.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/capture-rules.js",
+        "src/page-hook.js"
+      ],
+      "matches": [
+        "https://rocketscooter.com/*",
+        "https://*.rocketscooter.com/*"
+      ]
+    }
+  ]
+}

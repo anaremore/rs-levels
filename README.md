@@ -28,6 +28,10 @@ npm test
 npm start
 ```
 
+See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
+
+OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml).
+
 Default service URL:
 
 ```text
@@ -58,4 +62,4 @@ docs/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, and local service shell are implemented with tests. Browser extension and platform plugins will be added in small public-safety-reviewed steps.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service shell, TradingView paste workflow, and browser extension shell are implemented with tests. Remaining platform plugins will be added in small public-safety-reviewed steps.

@@ -45,15 +45,17 @@ No browser extension yet.
 
 ## Slice 4: Browser Extension Shell
 
+Status: in progress.
+
 Goal: connect extension to service without real parser complexity.
 
 Deliverables:
 
 - Manifest V3 extension
-- popup with service status
+- popup with service status and copy buttons
 - content/page hook skeleton
 - local capture POST shape
-- no credentials, cookies, auth headers, or arbitrary page content
+- options page for service URL and capture allowlist`r`n- no credentials, cookies, auth headers, or arbitrary page content
 
 ## Slice 5: Parser Extraction
 

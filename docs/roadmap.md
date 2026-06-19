@@ -26,12 +26,12 @@ Status: in progress.
 
 ## Milestone 3: Browser Extension
 
-Status: planned.
+Status: in progress.
 
 - Manifest V3 extension shell.
 - Capture only allowlisted RocketScooter responses.
 - Show connection status in a popup.
-- Add copy/export actions for JSON and TradingView paste payloads.
+- Add copy/export actions for JSON and TradingView paste payloads. Implemented in the unpacked extension shell.
 
 ## Milestone 4: Display Plugins
 

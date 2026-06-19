@@ -1,0 +1,427 @@
+openapi: 3.1.0
+info:
+  title: RS Levels Local API
+  version: 0.1.0
+  description: Local-first RocketScooter display-level capture and read-only feed API.
+servers:
+  - url: http://127.0.0.1:8765
+    description: Default loopback service
+paths:
+  /:
+    get:
+      summary: Service metadata
+      responses:
+        '200':
+          description: Service metadata and endpoint hints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RootInfo'
+  /health:
+    get:
+      summary: Health and freshness
+      responses:
+        '200':
+          description: Current service health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /status:
+    get:
+      summary: Compact status
+      responses:
+        '200':
+          description: Network, source, and symbol status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /snapshot:
+    get:
+      summary: Full level snapshot
+      responses:
+        '200':
+          description: Versioned level snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+  /levels:
+    get:
+      summary: Flat levels
+      responses:
+        '200':
+          description: All known levels as a flat array
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [levels]
+                properties:
+                  levels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Level'
+  /levels/{symbol}:
+    get:
+      summary: Symbol levels
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [sierra]
+      responses:
+        '200':
+          description: Symbol snapshot or Sierra text feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SymbolSnapshot'
+            text/plain:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /ddbands:
+    get:
+      summary: DD band levels
+      responses:
+        '200':
+          description: Flat DD band levels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlatLevels'
+  /references:
+    get:
+      summary: Reference levels
+      responses:
+        '200':
+          description: Flat reference/open-close levels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlatLevels'
+  /tradingview/{symbol}:
+    get:
+      summary: TradingView paste export
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [json]
+      responses:
+        '200':
+          description: Compact TradingView text payload or JSON export
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingViewExport'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /stream:
+    get:
+      summary: Snapshot stream
+      responses:
+        '200':
+          description: Server-Sent Events stream of snapshot messages
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /capture/api:
+    post:
+      summary: Browser-extension capture ingest
+      description: Intended for the browser extension. Display clients should use read-only endpoints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapturePayload'
+      responses:
+        '200':
+          description: Capture accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, snapshot]
+                properties:
+                  ok:
+                    type: boolean
+                  snapshot:
+                    $ref: '#/components/schemas/Snapshot'
+        '400':
+          description: Malformed JSON
+        '413':
+          description: Request body too large
+components:
+  parameters:
+    Symbol:
+      name: symbol
+      in: path
+      required: true
+      schema:
+        type: string
+        examples: [MES, MNQ, ES, NQ]
+  responses:
+    NotFound:
+      description: Symbol not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    RootInfo:
+      type: object
+      required: [ok, name, endpoints, network]
+      properties:
+        ok:
+          type: boolean
+        name:
+          type: string
+        endpoints:
+          type: array
+          items:
+            type: string
+        network:
+          $ref: '#/components/schemas/Network'
+    Health:
+      type: object
+      required: [ok, service, schemaVersion, generatedAt, network, source, symbolCount, levelCount]
+      properties:
+        ok:
+          type: boolean
+        service:
+          type: string
+        schemaVersion:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        network:
+          $ref: '#/components/schemas/Network'
+        source:
+          $ref: '#/components/schemas/SourceState'
+        symbolCount:
+          type: integer
+        levelCount:
+          type: integer
+    Status:
+      type: object
+      required: [ok, network, source, symbols]
+      properties:
+        ok:
+          type: boolean
+        network:
+          $ref: '#/components/schemas/Network'
+        source:
+          $ref: '#/components/schemas/SourceState'
+        symbols:
+          type: array
+          items:
+            type: string
+    Network:
+      type: object
+      required: [host, requestedHost, port, remoteAccess, warnings]
+      properties:
+        host:
+          type: string
+        requestedHost:
+          type: string
+        port:
+          type: integer
+        remoteAccess:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+    Snapshot:
+      type: object
+      required: [schemaVersion, generatedAt, capturedAt, source, symbols, warnings]
+      properties:
+        schemaVersion:
+          type: string
+          example: 0.1.0
+        generatedAt:
+          type: string
+          format: date-time
+        capturedAt:
+          type: string
+        source:
+          $ref: '#/components/schemas/SourceState'
+        symbols:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SymbolSnapshot'
+        warnings:
+          type: array
+          items:
+            type: string
+    SourceState:
+      type: object
+      required: [state, connected, lastCaptureAt, ageMs, endpoints, warnings]
+      properties:
+        state:
+          type: string
+          enum: [offline, waiting, capturing, stale, error]
+        connected:
+          type: boolean
+        lastCaptureAt:
+          type: string
+        ageMs:
+          type: number
+          nullable: true
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/EndpointSummary'
+        warnings:
+          type: array
+          items:
+            type: string
+    EndpointSummary:
+      type: object
+      properties:
+        key:
+          type: string
+        url:
+          type: string
+        status:
+          type: integer
+          nullable: true
+        capturedAt:
+          type: string
+        parser:
+          type: string
+        ok:
+          type: boolean
+    SymbolSnapshot:
+      type: object
+      required: [symbol, displaySymbol, price, capturedAt, levels, stats, warnings]
+      properties:
+        symbol:
+          type: string
+        displaySymbol:
+          type: string
+        price:
+          type: number
+          nullable: true
+        capturedAt:
+          type: string
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Level'
+        stats:
+          type: object
+        warnings:
+          type: array
+          items:
+            type: string
+    Level:
+      type: object
+      required: [id, symbol, name, price, kind, color, source, capturedAt, metadata]
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        kind:
+          type: string
+          enum: [hp, mhp, zone, dd-band, reference, open-close, stat, unknown]
+        color:
+          type: string
+        source:
+          type: string
+        capturedAt:
+          type: string
+        metadata:
+          type: object
+    FlatLevels:
+      type: object
+      required: [levels]
+      properties:
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Level'
+    TradingViewExport:
+      type: object
+      required: [schemaVersion, exportFormat, generatedAt, symbol, capturedAt, levels, notes]
+      properties:
+        schemaVersion:
+          type: string
+        exportFormat:
+          type: string
+          enum: [tradingview-json]
+        generatedAt:
+          type: string
+          format: date-time
+        symbol:
+          type: string
+        capturedAt:
+          type: string
+        levels:
+          type: array
+          items:
+            type: object
+            required: [name, price, kind, color]
+            properties:
+              name:
+                type: string
+              price:
+                type: number
+              kind:
+                type: string
+              color:
+                type: string
+        notes:
+          type: array
+          items:
+            type: string
+    CapturePayload:
+      type: object
+      required: [endpoint, capturedAt, body]
+      properties:
+        endpoint:
+          type: string
+        url:
+          type: string
+        method:
+          type: string
+        status:
+          type: integer
+        capturedAt:
+          type: string
+          format: date-time
+        body:
+          oneOf:
+            - type: object
+            - type: string
+    Error:
+      type: object
+      required: [ok, error]
+      properties:
+        ok:
+          type: boolean
+          const: false
+        error:
+          type: string

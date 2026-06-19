@@ -10,6 +10,8 @@ The service receives browser-extension captures, normalizes display levels, keep
 npm start
 ```
 
+OpenAPI spec: docs/openapi.yaml.
+
 Default URL:
 
 ```text
