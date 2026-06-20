@@ -87,7 +87,8 @@ Then open the dashboard, run a client example, copy a TradingView payload from `
 1. Start the local API.
 2. Open RocketScooter in the browser with the extension loaded.
 3. Open the extension popup.
-4. Confirm the service status changes from waiting/offline to live once levels are captured.
+4. Confirm capture is enabled in the popup.
+5. Confirm the service status changes from waiting/offline to live once levels are captured.
 
 If capture does not start, open extension options and review the endpoint allowlist.
 
@@ -99,7 +100,7 @@ If capture does not start, open extension options and review the endpoint allowl
 4. In the extension popup, choose the symbol and click `Copy TradingView`.
 5. Paste the copied `RSLEVELS|...` payload into the indicator input.
 
-`Copy JSON` is available for manual inspection and third-party tooling.
+`Copy JSON` is available for manual inspection and third-party tooling. `Plugins` opens the local display-plugin manifest.
 
 ## 5. Tailscale Or Trusted Private Network
 

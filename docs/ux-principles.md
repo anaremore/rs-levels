@@ -17,6 +17,7 @@ The popup should answer four questions:
 2. Is a RocketScooter tab being observed?
 3. When was the last recognized capture?
 4. Which endpoints have been seen recently?
+5. Can capture be paused without leaving the popup?
 
 Recommended states:
 
@@ -78,4 +79,3 @@ Ideal first-run flow:
 5. Add a display plugin or run an example client.
 
 The docs should make this path work before advanced packaging exists.
-
