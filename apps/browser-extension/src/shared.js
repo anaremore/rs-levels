@@ -138,6 +138,15 @@
     return '';
   }
 
+  function tradingViewBundleCopyIssue(status = {}) {
+    const source = status.source || {};
+    const levelCount = nonNegativeInteger(status.levelCount);
+    if (levelCount < 1) return 'No captured levels are available yet.';
+    if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before copying TradingView.';
+    if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before copying TradingView.';
+    return '';
+  }
+
   globalThis.RS_LEVELS = {
     defaults,
     cleanServiceUrl,
@@ -147,6 +156,7 @@
     migrateSettings,
     selectedSymbolIssue,
     symbolLevelCount,
+    tradingViewBundleCopyIssue,
     tradingViewCopyIssue
   };
 })();

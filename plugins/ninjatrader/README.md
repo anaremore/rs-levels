@@ -20,7 +20,7 @@ The first indicator source uses the Sierra text feed to avoid adding a JSON depe
 - service URL, default `http://127.0.0.1:8765`
 - symbol override, optional
 - refresh interval, default 1000 ms
-- stale threshold, default 10 seconds
+- stale threshold, default 23 hours
 - show labels
 - line width
 

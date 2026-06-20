@@ -4,7 +4,7 @@ const { join } = require('node:path');
 
 const spec = readFileSync(join(__dirname, '..', 'openapi.yaml'), 'utf8');
 
-for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/{symbol}', '/ddbands', '/zones', '/references', '/tradingview/{symbol}', '/stream', '/capture/api']) {
+for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/{symbol}', '/ddbands', '/zones', '/references', '/tradingview', '/tradingview/{symbol}', '/stream', '/capture/api']) {
   assert.match(spec, new RegExp(`^  ${path.replace(/[{}]/g, '\\$&')}:`, 'm'));
 }
 

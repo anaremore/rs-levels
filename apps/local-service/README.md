@@ -36,7 +36,7 @@ RS_LEVELS_HOST=127.0.0.1
 RS_LEVELS_PORT=8765
 RS_LEVELS_ALLOW_REMOTE=0
 RS_LEVELS_CORS_ORIGINS=
-RS_LEVELS_STALE_MS=10000
+RS_LEVELS_STALE_MS=82800000
 ```
 
 Loopback is the safe default. To expose the API to another machine on Tailscale or another trusted private network, set both an explicit non-loopback host and the remote-access flag:
@@ -67,13 +67,15 @@ GET  /levels/:symbol?format=sierra
 GET  /ddbands
 GET  /zones
 GET  /references
+GET  /tradingview
+GET  /tradingview?format=json
 GET  /tradingview/:symbol
 GET  /tradingview/:symbol?format=json
 GET  /stream
 POST /capture/api
 ```
 
-/tradingview/:symbol returns the compact text payload used by the TradingView Pine indicator. ?format=json returns a copy-friendly JSON export for tooling.
+/tradingview returns the compact all-symbol text payload used by the TradingView Pine indicator. /tradingview/:symbol remains available for single-symbol compatibility. ?format=json returns a copy-friendly JSON export for tooling.
 
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
 
@@ -83,7 +85,7 @@ POST /capture/api
 
 /diagnostics returns scrubbed setup checks and hints for local API, capture, and private-network troubleshooting. It does not include raw captured URLs.
 
-/health, /status, /snapshot, and /diagnostics compute service-side source freshness on each read. After `RS_LEVELS_STALE_MS`, the source state becomes `stale` and `connected` becomes `false`.
+/health, /status, /snapshot, and /diagnostics compute service-side source freshness on each read. After `RS_LEVELS_STALE_MS`, the source state becomes `stale` and `connected` becomes `false`. The default is 23 hours because RocketScooter levels are expected to remain stable after the daily post-open update window.
 
 /stream is an SSE stream that emits the current snapshot immediately and emits a new snapshot after each accepted capture.
 

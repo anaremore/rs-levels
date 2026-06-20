@@ -204,8 +204,8 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         RefreshMs.SetIntLimits(250, 60000);
 
         StaleSeconds.Name = "Local stale seconds";
-        StaleSeconds.SetInt(10);
-        StaleSeconds.SetIntLimits(1, 3600);
+        StaleSeconds.SetInt(82800);
+        StaleSeconds.SetIntLimits(1, 86400);
 
         ShowLabels.Name = "Show labels";
         ShowLabels.SetYesNo(1);

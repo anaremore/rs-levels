@@ -8,7 +8,7 @@ import {
 } from '../../../packages/schemas/src/index.js';
 import { normalizeCapture } from '../../../packages/core-parser/src/index.js';
 
-const DEFAULT_STALE_MS = 10000;
+const DEFAULT_STALE_MS = 23 * 60 * 60 * 1000;
 
 export function createLevelStore(options = {}) {
   const staleMs = numberInRange(options.staleMs, 1000, 24 * 60 * 60 * 1000, DEFAULT_STALE_MS);

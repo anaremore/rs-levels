@@ -8,7 +8,7 @@ const DEFAULT_CORS_ORIGINS = Object.freeze([
   'chrome-extension://*',
   'moz-extension://*'
 ]);
-const DEFAULT_STALE_MS = 10000;
+const DEFAULT_STALE_MS = 23 * 60 * 60 * 1000;
 
 export function loadConfig(env = process.env, overrides = {}) {
   const host = stringValue(overrides.host || env.RS_LEVELS_HOST || '127.0.0.1');

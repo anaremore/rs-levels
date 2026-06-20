@@ -27,7 +27,7 @@ Current schema version: `0.1.0`.
 - `stale`
 - `error`
 
-`source.lastCaptureAt` preserves the capture timestamp. `source.ageMs` is calculated by the local service when a snapshot, health payload, status payload, or diagnostics bundle is read and measures how long it has been since the service accepted the latest capture. After the configured stale threshold is exceeded, the local service reports `source.state: "stale"` and `source.connected: false`.
+`source.lastCaptureAt` preserves the capture timestamp. `source.ageMs` is calculated by the local service when a snapshot, health payload, status payload, or diagnostics bundle is read and measures how long it has been since the service accepted the latest capture. After the configured stale threshold is exceeded, the local service reports `source.state: "stale"` and `source.connected: false`. The default stale threshold is 23 hours because captured RocketScooter levels are expected to remain useful after the daily post-open update window.
 
 Use `source.endpoints` to show which RocketScooter captures were seen recently and whether parsing succeeded. Endpoint summaries intentionally omit raw captured URLs and include only normalized endpoint keys, status codes, parser names, timestamps, and parse status. Long numeric or identifier-like path segments in endpoint keys are scrubbed as `:id`.
 

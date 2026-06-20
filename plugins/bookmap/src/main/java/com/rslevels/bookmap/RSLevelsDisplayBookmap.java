@@ -64,7 +64,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
         this.api = api;
         this.serviceUrl = cleanBaseUrl(System.getProperty("rslevels.serviceUrl", "http://127.0.0.1:8765"));
         this.refreshMs = clampInt(readIntProperty("rslevels.refreshMs", 1000), 250, 60000);
-        this.staleSeconds = clampInt(readIntProperty("rslevels.staleSeconds", 10), 1, 3600);
+        this.staleSeconds = clampInt(readIntProperty("rslevels.staleSeconds", 82800), 1, 86400);
         this.symbol = normalizeSymbol(System.getProperty("rslevels.symbol", alias));
 
         registerIndicator();

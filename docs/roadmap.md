@@ -20,11 +20,11 @@ Status: complete.
 Status: public API foundation complete; launch scripts included; app wrapper planned.
 
 - Cross-platform localhost service.
-- Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/plugins`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
+- Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/plugins`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/tradingview`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
 - Safe loopback default with explicit Tailscale/private-network opt-in.
 - Generic display parser normalizes object, compact row, and keyed map level shapes.
 - Recaptures replace previous levels from the same scrubbed endpoint key while preserving other display endpoints.
-- Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state.
+- Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state with a 23-hour default stale window for daily RocketScooter levels.
 - Public source endpoint summaries omit raw URLs and scrub identifier-like path segments.
 - API responses report the local service version and use `Cache-Control: no-store`.
 - `/status` and diagnostics expose scrubbed per-symbol summaries for plugin and extension readiness checks.
@@ -40,7 +40,7 @@ Status: public setup foundation complete; field validation planned.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add popup capture pause/resume toggle backed by extension storage.
-- Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
+- Add copy/export actions for all-symbol TradingView paste payloads, selected-symbol JSON, and scrubbed diagnostics.
 - Include the exact compact TradingView payload in JSON exports for tooling.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.

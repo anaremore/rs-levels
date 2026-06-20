@@ -16,6 +16,7 @@ for (const plugin of manifest.plugins) {
   assert.ok(Array.isArray(plugin.api.endpoints) && plugin.api.endpoints.length > 0, `${plugin.id} must list API endpoints`);
   if (plugin.id === 'tradingview') {
     assert.equal(plugin.api.mode, 'manual-paste');
+    assert.ok(plugin.api.endpoints.includes('GET /tradingview'));
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
   } else {
     assert.equal(plugin.api.mode, 'local-http');

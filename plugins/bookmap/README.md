@@ -29,7 +29,7 @@ stable, and easy for chart-plugin runtimes to consume.
 - service URL: JVM system property `rslevels.serviceUrl`, default `http://127.0.0.1:8765`
 - symbol mapping: JVM system property `rslevels.symbol`, default inferred from the Bookmap alias
 - refresh interval: JVM system property `rslevels.refreshMs`, default `1000`
-- stale threshold: JVM system property `rslevels.staleSeconds`, default `10`
+- stale threshold: JVM system property `rslevels.staleSeconds`, default `82800`
 
 ## Rendering
 

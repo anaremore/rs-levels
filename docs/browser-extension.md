@@ -11,7 +11,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides a popup capture toggle plus TradingView, JSON, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
-- Shows scrubbed capture-hook counters for observed, ignored, skipped, and posted responses.
+- Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in a collapsed debug section.
 - Shows the extension version/build identity in the popup corner for support and diagnostics.
 
 ## What It Avoids
@@ -28,17 +28,20 @@ The RS Levels browser extension is the first-priority capture UX.
 3. Open RocketScooter.
 4. Check the popup status.
 5. Use the capture toggle when you need to pause or resume allowlisted capture.
-6. Use `Copy TradingView` to paste levels into `plugins/tradingview/rs-levels.pine`.
-7. Use `Copy JSON` when another local tool needs a manual export.
+6. Use `Copy TradingView` to paste the all-symbol payload into `plugins/tradingview/rs-levels.pine`.
+7. Use `Copy JSON` when another local tool needs a selected-symbol manual export.
 8. Use `Plugins` to inspect the local display-adapter manifest.
 9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
-10. Use `Copy Diagnostics` when troubleshooting local API, extension, or stale-source setup.
+10. Expand `Debug` when troubleshooting local API, extension, or stale-source setup.
+11. Use `Copy Diagnostics` for a scrubbed support bundle.
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 
 Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.0.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
 The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.0+abc1234`. `Copy Diagnostics` includes the same build identity.
+
+The collapsed `Debug` section includes aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
 Capture-hook counters are aggregate only:
 
@@ -91,7 +94,7 @@ db/nq
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.
 
-Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols; the popup symbol selector only controls which export is copied. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored as `MES`, and `F.US.ENQ...` symbols are stored as `MNQ`, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform.
+Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols. `Copy TradingView` copies an all-symbol payload, while the popup symbol selector controls selected-symbol JSON export. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored as `MES`, and `F.US.ENQ...` symbols are stored as `MNQ`, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform.
 
 ## Tailscale And Private Networks
 

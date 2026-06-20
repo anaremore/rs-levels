@@ -4,17 +4,27 @@ export const TRADINGVIEW_PAYLOAD_PREFIX = 'RSLEVELS';
 
 export function createTradingViewPayload(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
-  const levels = limitLevels(row.levels, options.maxLevels)
-    .filter((level) => Number.isFinite(level.price))
-    .map((level) => [field(level.name), Number(level.price).toFixed(2), field(level.kind)].join(','))
-    .join(';');
 
   return [
     TRADINGVIEW_PAYLOAD_PREFIX,
     '1',
     field(row.symbol),
     field(row.capturedAt || options.capturedAt || ''),
-    levels
+    levelsPayload(row.levels, options)
+  ].join('|');
+}
+
+export function createTradingViewBundlePayload(snapshot, options = {}) {
+  const rows = bundleRows(snapshot, options);
+  return [
+    TRADINGVIEW_PAYLOAD_PREFIX,
+    '2',
+    field(options.generatedAt || snapshot?.generatedAt || latestCapturedAt(rows) || ''),
+    ...rows.flatMap((row) => [
+      field(row.symbol),
+      field(row.capturedAt || options.capturedAt || ''),
+      levelsPayload(row.levels, options)
+    ])
   ].join('|');
 }
 
@@ -42,8 +52,58 @@ export function createTradingViewJsonExport(symbolSnapshot, options = {}) {
   };
 }
 
+export function createTradingViewBundleJsonExport(snapshot, options = {}) {
+  const rows = bundleRows(snapshot, options);
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    exportFormat: 'tradingview-bundle-json',
+    payloadVersion: 2,
+    generatedAt: options.generatedAt || snapshot?.generatedAt || new Date().toISOString(),
+    compactPayload: createTradingViewBundlePayload(snapshot, options),
+    symbols: rows.map((row) => {
+      const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
+      return {
+        symbol: row.symbol,
+        capturedAt: row.capturedAt,
+        levelCount: levels.length,
+        levels: levels.map((level) => ({
+          name: level.name,
+          price: level.price,
+          kind: level.kind,
+          color: level.color || ''
+        }))
+      };
+    }),
+    notes: [
+      'TradingView Pine scripts cannot poll the local API directly.',
+      'Use the compact RSLEVELS v2 payload for the included Pine indicator input.'
+    ]
+  };
+}
+
 function normalizeRow(symbolSnapshot, options) {
   return normalizeSymbolSnapshot(options.symbol || symbolSnapshot?.symbol, symbolSnapshot || {});
+}
+
+function bundleRows(snapshot, options) {
+  const symbols = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot.symbols : {};
+  const rowOptions = { ...options };
+  delete rowOptions.symbol;
+  return Object.values(symbols || {})
+    .map((row) => normalizeRow(row, rowOptions))
+    .filter((row) => row.symbol && Array.isArray(row.levels) && row.levels.some((level) => Number.isFinite(level.price)))
+    .sort((a, b) => a.symbol.localeCompare(b.symbol));
+}
+
+function levelsPayload(levels, options) {
+  return limitLevels(levels, options.maxLevels)
+    .filter((level) => Number.isFinite(level.price))
+    .map((level) => [field(level.name), Number(level.price).toFixed(2), field(level.kind)].join(','))
+    .join(';');
+}
+
+function latestCapturedAt(rows) {
+  return rows.map((row) => row.capturedAt || '').filter(Boolean).sort().at(-1) || '';
 }
 
 function field(value) {

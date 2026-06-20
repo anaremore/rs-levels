@@ -94,7 +94,9 @@ try {
   assert.ok(root.endpoints.includes('/openapi.yaml'));
   assert.ok(root.endpoints.includes('/diagnostics'));
   assert.ok(root.endpoints.includes('/plugins'));
+  assert.ok(root.endpoints.includes('/tradingview'));
   assert.equal(root.version, '0.0.0');
+  assert.equal(service.config.staleMs, 23 * 60 * 60 * 1000);
 
   const docsPage = await getText(`${baseUrl}/docs`);
   assert.match(docsPage, /RS Levels API Docs/);
@@ -250,6 +252,21 @@ try {
   assert.deepEqual(multiSymbolStatus.symbols, ['MES', 'MNQ']);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'MES').levelCount, 3);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'MNQ').levelCount, 2);
+
+  const bundledTradingViewPayload = await getText(`${baseUrl}/tradingview`);
+  assert.match(bundledTradingViewPayload, /^RSLEVELS\|2\|/);
+  assert.match(bundledTradingViewPayload, /MES\|/);
+  assert.match(bundledTradingViewPayload, /MNQ\|/);
+  assert.match(bundledTradingViewPayload, /BZT1,7580\.00,zone-bull/);
+  assert.match(bundledTradingViewPayload, /BrZT1,30450\.00,zone-bear/);
+
+  const bundledTradingViewJson = await getJson(`${baseUrl}/tradingview?format=json`);
+  assert.equal(bundledTradingViewJson.exportFormat, 'tradingview-bundle-json');
+  assert.equal(bundledTradingViewJson.payloadVersion, 2);
+  assert.match(bundledTradingViewJson.compactPayload, /^RSLEVELS\|2\|/);
+  assert.match(bundledTradingViewJson.compactPayload, /MES\|/);
+  assert.match(bundledTradingViewJson.compactPayload, /MNQ\|/);
+  assert.deepEqual(bundledTradingViewJson.symbols.map((row) => row.symbol), ['MES', 'MNQ']);
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /BrZT1,30450\.00,zone-bear/);

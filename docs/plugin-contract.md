@@ -9,7 +9,7 @@ Every direct API plugin should expose:
 - service URL, default `http://127.0.0.1:8765`
 - symbol, default platform-appropriate value such as `MES` or `MNQ`
 - refresh interval, default 1000 ms
-- stale threshold, default 10 seconds
+- stale threshold, default 23 hours
 - line visibility by kind
 - label visibility
 
@@ -30,6 +30,8 @@ Optional format-specific calls:
 
 ```text
 GET /levels/:symbol?format=sierra
+GET /tradingview
+GET /tradingview?format=json
 GET /tradingview/:symbol
 GET /tradingview/:symbol?format=json
 ```
@@ -47,7 +49,7 @@ Plugins must show feed freshness in the chart or settings panel:
 - `stale`: last capture is older than the configured threshold
 - `offline`: service cannot be reached
 
-The local service computes `source.ageMs` and marks the feed `stale` after `RS_LEVELS_STALE_MS` milliseconds, default `10000`. Plugins may apply their own stricter visual threshold, but they should never show `source.state: "stale"` as live.
+The local service computes `source.ageMs` and marks the feed `stale` after `RS_LEVELS_STALE_MS` milliseconds, default `82800000` (23 hours). RocketScooter levels are expected to change around the early daily session window, so the default avoids marking valid daily levels stale minutes after capture. Plugins may apply their own visual threshold, but they should never show `source.state: "stale"` as live.
 
 A stale or offline feed should never look live.
 

@@ -39,7 +39,8 @@
       <p id="message" class="message">Start the local service, then open RocketScooter.</p>
     </section>
 
-    <section class="panel compact">
+    <details class="panel compact debug-panel">
+      <summary>Debug</summary>
       <dl>
         <div>
           <dt>Source</dt>
@@ -86,10 +87,10 @@
           <dd id="hook-reason">none</dd>
         </div>
       </dl>
-    </section>
+      <button id="refresh" type="button" class="secondary wide">Refresh status</button>
+    </details>
 
     <footer>
-      <button id="refresh" type="button">Refresh</button>
       <button id="options" type="button">Options</button>
     </footer>
   </main>

@@ -38,7 +38,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 ServiceUrl = "http://127.0.0.1:8765";
                 SymbolOverride = "";
                 RefreshMilliseconds = 1000;
-                StaleSeconds = 10;
+                StaleSeconds = 82800;
                 ShowLabels = true;
                 LineWidth = 1;
             }
@@ -261,7 +261,7 @@ namespace NinjaTrader.NinjaScript.Indicators
         public int RefreshMilliseconds { get; set; }
 
         [NinjaScriptProperty]
-        [Range(1, 3600)]
+        [Range(1, 86400)]
         [Display(Name = "Stale seconds", GroupName = "RS Levels")]
         public int StaleSeconds { get; set; }
 

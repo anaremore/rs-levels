@@ -28,7 +28,7 @@ name,price,red,green,blue
 - service URL, default `http://127.0.0.1:8765`
 - symbol, default chart symbol mapped through API aliases
 - refresh interval, default 1000 ms
-- stale threshold, default 10 seconds
+- stale threshold, default 23 hours
 - draw labels
 - line width
 

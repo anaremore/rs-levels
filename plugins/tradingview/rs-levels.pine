@@ -57,6 +57,10 @@ lineStyle() =>
         "Dotted" => line.style_dotted
         => line.style_solid
 
+chartPayloadSymbol() =>
+    chartText = str.upper(syminfo.root + " " + syminfo.ticker)
+    str.contains(chartText, "NQ") ? "MNQ" : str.contains(chartText, "ES") ? "MES" : ""
+
 drawLevel(name, priceText, kind) =>
     price = str.tonumber(priceText)
     drawn = false
@@ -71,6 +75,20 @@ drawLevel(name, priceText, kind) =>
         drawn := true
     drawn
 
+drawLevelText(levelText, maxCount) =>
+    drawnCount = 0
+    totalCount = 0
+    if levelText != ""
+        items = str.split(levelText, ";")
+        totalCount := array.size(items)
+        count = math.min(totalCount, maxCount)
+        for i = 0 to count - 1
+            fields = str.split(array.get(items, i), ",")
+            if array.size(fields) >= 3
+                if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2))
+                    drawnCount := drawnCount + 1
+    [drawnCount, totalCount]
+
 drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount) =>
     if showStatus and array.size(rsLabels) < 500
         statusText = validPayload ? "RS Levels " + symbolText + " " + str.tostring(drawnCount) + "/" + str.tostring(totalCount) + " " + capturedText : "RS Levels: paste RSLEVELS payload"
@@ -82,20 +100,31 @@ drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount) =>
 if barstate.islast
     clearDrawings()
     parts = str.split(payload, "|")
-    validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS" and array.get(parts, 1) == "1"
-    symbolText = validPayload ? array.get(parts, 2) : ""
-    capturedText = validPayload ? array.get(parts, 3) : ""
+    validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS" and (array.get(parts, 1) == "1" or array.get(parts, 1) == "2")
+    payloadVersion = validPayload ? array.get(parts, 1) : ""
+    symbolText = ""
+    capturedText = ""
+    levelText = ""
     drawnCount = 0
     totalCount = 0
+    if validPayload and payloadVersion == "1"
+        symbolText := array.get(parts, 2)
+        capturedText := array.get(parts, 3)
+        levelText := array.get(parts, 4)
+    if validPayload and payloadVersion == "2"
+        chartSymbol = chartPayloadSymbol()
+        sectionCount = int(math.floor((array.size(parts) - 3) / 3))
+        fallbackSymbol = sectionCount == 1 ? array.get(parts, 3) : ""
+        sectionIndex = 3
+        while sectionIndex + 2 < array.size(parts)
+            candidateSymbol = array.get(parts, sectionIndex)
+            if symbolText == "" and (candidateSymbol == chartSymbol or (chartSymbol == "" and fallbackSymbol != "" and candidateSymbol == fallbackSymbol))
+                symbolText := candidateSymbol
+                capturedText := array.get(parts, sectionIndex + 1)
+                levelText := array.get(parts, sectionIndex + 2)
+            sectionIndex += 3
     if validPayload
-        levelText = array.get(parts, 4)
-        if levelText != ""
-            items = str.split(levelText, ";")
-            totalCount := array.size(items)
-            count = math.min(totalCount, maxLevelsInput)
-            for i = 0 to count - 1
-                fields = str.split(array.get(items, i), ",")
-                if array.size(fields) >= 3
-                    if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2))
-                        drawnCount := drawnCount + 1
+        [nextDrawnCount, nextTotalCount] = drawLevelText(levelText, maxLevelsInput)
+        drawnCount := nextDrawnCount
+        totalCount := nextTotalCount
     drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount)

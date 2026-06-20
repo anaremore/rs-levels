@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
-import { createTradingViewJsonExport, createTradingViewPayload } from '../src/index.js';
+import {
+  createTradingViewBundleJsonExport,
+  createTradingViewBundlePayload,
+  createTradingViewJsonExport,
+  createTradingViewPayload
+} from '../src/index.js';
 
 const row = {
   symbol: 'ES',
@@ -38,5 +43,28 @@ const manyLevels = {
 assert.equal(createTradingViewJsonExport(manyLevels).levels.length, 120);
 assert.equal(createTradingViewPayload(manyLevels).split(';').length, 120);
 assert.equal(createTradingViewPayload(manyLevels, { maxLevels: 10 }).split(';').length, 10);
+
+const bundleSnapshot = {
+  generatedAt: '2026-06-19T14:31:00.000Z',
+  symbols: {
+    MNQ: {
+      symbol: 'MNQ',
+      capturedAt: '2026-06-19T14:30:30.000Z',
+      levels: [{ name: 'BrZT1', price: 30450, kind: 'zone-bear', color: '#F06292' }]
+    },
+    MES: row
+  }
+};
+const bundlePayload = createTradingViewBundlePayload(bundleSnapshot);
+assert.equal(bundlePayload, 'RSLEVELS|2|2026-06-19T14:31:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper bad chars,7579.75,dd-band;BZT1,7588.00,zone-bull;BrZT1,7612.00,zone-bear|MNQ|2026-06-19T14:30:30.000Z|BrZT1,30450.00,zone-bear');
+
+const bundleJson = createTradingViewBundleJsonExport(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' });
+assert.equal(bundleJson.exportFormat, 'tradingview-bundle-json');
+assert.equal(bundleJson.payloadVersion, 2);
+assert.equal(bundleJson.compactPayload, createTradingViewBundlePayload(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' }));
+assert.deepEqual(bundleJson.symbols.map((symbol) => symbol.symbol), ['MES', 'MNQ']);
+assert.equal(bundleJson.symbols[0].levelCount, 4);
+assert.equal(bundleJson.symbols[1].levels[0].kind, 'zone-bear');
+assert.match(createTradingViewBundlePayload(bundleSnapshot, { symbol: 'MES' }), /\|MNQ\|/);
 
 console.log('exporter tests passed');

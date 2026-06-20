@@ -1,7 +1,12 @@
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
-import { createTradingViewJsonExport, createTradingViewPayload } from '../../../packages/exporters/src/index.js';
+import {
+  createTradingViewBundleJsonExport,
+  createTradingViewBundlePayload,
+  createTradingViewJsonExport,
+  createTradingViewPayload
+} from '../../../packages/exporters/src/index.js';
 import { normalizeSymbol } from '../../../packages/schemas/src/index.js';
 import { networkStatus } from './config.js';
 import { levelsToSierraText } from './sierra-format.js';
@@ -40,6 +45,15 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/zones') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['zone', 'zone-bull', 'zone-bear'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/stream') return streamSnapshots(req, res, clients, store);
+
+      if (req.method === 'GET' && pathname === '/tradingview') {
+        const snapshot = store.getSnapshot();
+        if (!Object.keys(snapshot.symbols || {}).length) return sendJson(res, 404, { ok: false, error: 'no symbols found' });
+        if (url.searchParams.get('format') === 'json') {
+          return sendJson(res, 200, createTradingViewBundleJsonExport(snapshot));
+        }
+        return sendText(res, 200, createTradingViewBundlePayload(snapshot), 'text/plain; charset=utf-8');
+      }
 
       const tradingViewMatch = pathname.match(/^\/tradingview\/([^/]+)$/);
       if (req.method === 'GET' && tradingViewMatch) {
@@ -83,7 +97,7 @@ export function rootInfo(config) {
     ok: true,
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/zones', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -333,6 +347,7 @@ GET /diagnostics
 GET /levels
 GET /levels/:symbol
 GET /zones
+GET /tradingview
 GET /tradingview/:symbol
 GET /stream</pre>
   </main>

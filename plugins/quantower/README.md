@@ -20,7 +20,7 @@ The first indicator source uses the Sierra text feed to keep parsing simple insi
 - service URL, default `http://127.0.0.1:8765`
 - symbol override, optional
 - refresh interval, default 1000 ms
-- stale threshold, default 10 seconds
+- stale threshold, default 23 hours
 - label visibility
 - line width
 

@@ -13,6 +13,8 @@
       "api": {
         "mode": "manual-paste",
         "endpoints": [
+          "GET /tradingview",
+          "GET /tradingview?format=json",
           "GET /tradingview/:symbol",
           "GET /tradingview/:symbol?format=json"
         ]

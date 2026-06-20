@@ -30,6 +30,8 @@ GET  /levels/:symbol?format=sierra
 GET  /ddbands
 GET  /zones
 GET  /references
+GET  /tradingview
+GET  /tradingview?format=json
 GET  /tradingview/:symbol
 GET  /tradingview/:symbol?format=json
 GET  /stream
@@ -47,7 +49,7 @@ Returns service metadata and endpoint hints.
   "ok": true,
   "name": "RS Levels local service",
   "version": "0.0.0",
-  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/zones", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/zones", "/tradingview", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -68,7 +70,7 @@ Returns a scrubbed setup and support bundle for local API and browser-extension 
 
 Public source endpoint summaries intentionally omit raw captured URLs. Endpoint diagnostics include the normalized endpoint key, status, parser name, timestamp, and parse result only.
 
-`source.ageMs` is calculated when diagnostics are requested. It measures how long it has been since the local service accepted the latest capture. Once it exceeds the local service stale threshold, `source.state` becomes `stale` and `source.connected` becomes `false`.
+`source.ageMs` is calculated when diagnostics are requested. It measures how long it has been since the local service accepted the latest capture. Once it exceeds the local service stale threshold, `source.state` becomes `stale` and `source.connected` becomes `false`. The default threshold is 23 hours because RocketScooter levels are expected to remain stable after the daily post-open update window.
 
 ```json
 {
@@ -214,9 +216,33 @@ DD Upper,7579.75,41,182,246
 
 Columns are `name,price,red,green,blue`. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
 
+## GET /tradingview
+
+Returns a compact all-symbol text payload for the included TradingView Pine indicator. The extension popup uses this route for `Copy TradingView` so one copied payload can contain both MES and MNQ. The Pine indicator reads the chart family and draws the matching section on ES/MES or NQ/MNQ charts.
+
+```text
+RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
+```
+
+Unknown or unsupported chart symbols fall back to the first symbol section. The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set.
+
+## GET /tradingview?format=json
+
+Returns a copy-friendly JSON export with the v2 all-symbol compact payload and structured symbol rows.
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "exportFormat": "tradingview-bundle-json",
+  "payloadVersion": 2,
+  "compactPayload": "RSLEVELS|2|...",
+  "symbols": []
+}
+```
+
 ## GET /tradingview/:symbol
 
-Returns a compact text payload for the included TradingView Pine indicator. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
+Returns a compact single-symbol text payload for compatibility with older workflows and external tools. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
 
 ```text
 RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band

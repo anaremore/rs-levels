@@ -43,6 +43,6 @@ Environment:
   RS_LEVELS_PORT           Port to bind, default 8765
   RS_LEVELS_ALLOW_REMOTE   Set to 1 only on trusted private networks
   RS_LEVELS_CORS_ORIGINS   Additional comma-separated CORS origins
-  RS_LEVELS_STALE_MS       Source stale threshold in milliseconds
+  RS_LEVELS_STALE_MS       Source stale threshold in milliseconds, default 82800000
 `);
 }

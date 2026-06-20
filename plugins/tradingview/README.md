@@ -6,14 +6,15 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels workf
 
 1. Run the local service.
 2. Capture RocketScooter levels with the browser extension or another approved local capture client.
-3. Open `http://127.0.0.1:8765/tradingview/MES` or `http://127.0.0.1:8765/tradingview/MNQ`.
-4. Copy the compact `RSLEVELS|...` payload.
+3. Open `http://127.0.0.1:8765/tradingview` or use `Copy TradingView` in the extension popup.
+4. Copy the compact `RSLEVELS|...` payload. The all-symbol payload can carry MES and MNQ together.
 5. Add `rs-levels.pine` to a TradingView chart and paste the payload into the indicator input.
 
 JSON export is also available for tooling and manual inspection:
 
 ```text
 http://127.0.0.1:8765/tradingview/MES?format=json
+http://127.0.0.1:8765/tradingview?format=json
 ```
 
 The JSON export includes `compactPayload` for tools that want the exact Pine-ready string alongside structured rows.
@@ -24,7 +25,7 @@ This indicator only draws lines and labels. It does not contain strategy logic, 
 
 ## Indicator Controls
 
-- `RS Levels Payload`: compact `RSLEVELS|...` text from the extension or local API.
+- `RS Levels Payload`: compact `RSLEVELS|...` text from the extension or local API. The current indicator accepts v1 single-symbol payloads and v2 all-symbol payloads.
 - `Labels`: show or hide level labels.
 - `Status`: show a small paste/status label on the latest bar.
 - Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and unknown levels.
@@ -45,6 +46,12 @@ Fields:
 - symbol: normalized display symbol
 - captured timestamp
 - semicolon-separated `name,price,kind` rows
+
+All-symbol v2 payloads use repeated symbol sections:
+
+```text
+RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
+```
 
 Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still accepted.
 

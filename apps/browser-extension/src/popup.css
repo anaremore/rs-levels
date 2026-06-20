@@ -143,10 +143,14 @@ select {
   outline: none;
 }
 
-.actions,
-footer {
+.actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+footer {
+  display: grid;
   gap: 8px;
 }
 
@@ -162,6 +166,10 @@ button {
 button.secondary {
   background: #17202c;
   box-shadow: inset 0 0 0 1px #334157;
+}
+
+button.wide {
+  width: 100%;
 }
 
 button:disabled {
@@ -200,6 +208,23 @@ dd {
   color: #eef6ff;
   font-weight: 700;
   word-break: break-word;
+}
+
+summary {
+  color: #c6d6ea;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  list-style-position: inside;
+}
+
+.debug-panel:not([open]) {
+  gap: 0;
+}
+
+.debug-panel[open] summary {
+  margin-bottom: 2px;
 }
 
 footer button {

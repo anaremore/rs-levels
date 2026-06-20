@@ -82,7 +82,7 @@ In another terminal:
 npm run demo:capture
 ```
 
-Then open the dashboard, run a client example, copy a TradingView payload from `http://127.0.0.1:8765/tradingview/MES`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
+Then open the dashboard, run a client example, copy a TradingView payload from `http://127.0.0.1:8765/tradingview`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
 
 ## 3. Capture Levels
 
@@ -102,10 +102,10 @@ If capture does not start, open extension options and review the endpoint allowl
 1. In TradingView, open Pine Editor.
 2. Paste the contents of `plugins/tradingview/rs-levels.pine`.
 3. Add the indicator to your chart.
-4. In the extension popup, choose the symbol and click `Copy TradingView`.
-5. Paste the copied `RSLEVELS|...` payload into the indicator input.
+4. In the extension popup, click `Copy TradingView`.
+5. Paste the copied `RSLEVELS|...` payload into the indicator input. One all-symbol payload can carry MES and MNQ together; the indicator chooses the matching ES/MES or NQ/MNQ section for the current chart.
 
-`Copy JSON` is available for manual inspection and third-party tooling. `Plugins` opens the local display-plugin manifest.
+`Copy JSON` is selected-symbol JSON for manual inspection and third-party tooling. `Plugins` opens the local display-plugin manifest.
 
 ## 5. Tailscale Or Trusted Private Network
 

@@ -48,8 +48,8 @@ namespace RSLevelsQuantower
         [InputParameter("Refresh milliseconds", 2, 250, 60000, 250, 0)]
         public int RefreshMilliseconds = 1000;
 
-        [InputParameter("Stale seconds", 3, 1, 3600, 1, 0)]
-        public int StaleSeconds = 10;
+        [InputParameter("Stale seconds", 3, 1, 86400, 1, 0)]
+        public int StaleSeconds = 82800;
 
         [InputParameter("Show labels", 4)]
         public bool ShowLabels = true;

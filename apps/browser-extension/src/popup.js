@@ -101,12 +101,12 @@ async function copyTradingView() {
   try {
     latestServiceStatus = await getJson('/status');
     renderTradingViewCopy(latestServiceStatus);
-    const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(latestServiceStatus, selectedSymbol());
+    const issue = globalThis.RS_LEVELS.tradingViewBundleCopyIssue(latestServiceStatus);
     if (issue) {
       setMessage(issue, 'warning');
       return;
     }
-    await copyFromEndpoint(`/tradingview/${selectedSymbol()}`, 'TradingView payload copied');
+    await copyFromEndpoint('/tradingview', 'TradingView payload copied');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
   }
@@ -261,10 +261,10 @@ function renderCaptureStats(stats = {}) {
 
 function renderTradingViewCopy(serviceStatus = latestServiceStatus || {}) {
   const selected = selectedSymbol();
-  const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(serviceStatus, selected);
+  const issue = globalThis.RS_LEVELS.tradingViewBundleCopyIssue(serviceStatus);
   const jsonIssue = globalThis.RS_LEVELS.selectedSymbolIssue(serviceStatus, selected);
   els.copyTv.disabled = Boolean(issue);
-  els.copyTv.title = issue || 'Copy TradingView payload';
+  els.copyTv.title = issue || 'Copy all-symbol TradingView payload';
   els.copyJson.disabled = Boolean(jsonIssue);
   els.copyJson.title = jsonIssue || 'Copy JSON export';
 }

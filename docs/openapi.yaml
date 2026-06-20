@@ -166,6 +166,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlatLevels'
+  /tradingview:
+    get:
+      summary: TradingView all-symbol paste export
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [json]
+      responses:
+        '200':
+          description: Compact all-symbol TradingView text payload or JSON export
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingViewBundleExport'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /tradingview/{symbol}:
     get:
       summary: TradingView paste export
@@ -399,7 +422,7 @@ components:
       properties:
         state:
           type: string
-          description: Current capture freshness state. The service reports stale when lastCaptureAt is older than the configured stale threshold.
+          description: Current capture freshness state. The service reports stale when lastCaptureAt is older than the configured stale threshold. The default stale threshold is 23 hours for daily RocketScooter levels.
           enum: [offline, waiting, capturing, stale, error]
         connected:
           type: boolean
@@ -538,6 +561,53 @@ components:
                 type: string
               color:
                 type: string
+        notes:
+          type: array
+          items:
+            type: string
+    TradingViewBundleExport:
+      type: object
+      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, compactPayload, symbols, notes]
+      properties:
+        schemaVersion:
+          type: string
+        exportFormat:
+          type: string
+          enum: [tradingview-bundle-json]
+        payloadVersion:
+          type: integer
+          const: 2
+        generatedAt:
+          type: string
+          format: date-time
+        compactPayload:
+          type: string
+        symbols:
+          type: array
+          items:
+            type: object
+            required: [symbol, capturedAt, levelCount, levels]
+            properties:
+              symbol:
+                type: string
+              capturedAt:
+                type: string
+              levelCount:
+                type: integer
+              levels:
+                type: array
+                items:
+                  type: object
+                  required: [name, price, kind, color]
+                  properties:
+                    name:
+                      type: string
+                    price:
+                      type: number
+                    kind:
+                      type: string
+                    color:
+                      type: string
         notes:
           type: array
           items:
