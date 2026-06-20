@@ -82,6 +82,8 @@ Each symbol key maps to a display snapshot:
 
 Captured source endpoint summaries omit raw URLs. They include only normalized endpoint keys, status codes, parser names, timestamps, and parse status.
 
+Levels may include `metadata.endpointKey`, which is the same scrubbed endpoint key. The local service uses it to replace old rows from the same captured endpoint while preserving rows from other display endpoints for the same symbol.
+
 ## Samples And Validation
 
 Sample payloads live in `packages/schemas/examples/`.

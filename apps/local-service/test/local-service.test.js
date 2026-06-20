@@ -174,6 +174,20 @@ try {
   const ddbands = await getJson(`${baseUrl}/ddbands`);
   assert.equal(ddbands.levels.length, 1);
 
+  const replacementCapture = await postJson(`${baseUrl}/capture/api`, {
+    endpoint: '/platform/api/v1/ddbands/MES',
+    status: 200,
+    capturedAt,
+    body: {
+      symbol: 'MES',
+      levels: [
+        { name: 'DD Lower', price: 7498.25, color: '#29b6f6' }
+      ]
+    }
+  });
+  assert.equal(replacementCapture.snapshot.symbols.MES.levels.length, 1);
+  assert.equal(replacementCapture.snapshot.symbols.MES.levels[0].name, 'DD Lower');
+
   const remoteService = createService({
     config: { host: '0.0.0.0', port: 0, allowRemote: false }
   });

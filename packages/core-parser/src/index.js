@@ -30,6 +30,7 @@ export function normalizeCapture(capture = {}) {
   const levels = collectLevels(parsed, {
     symbolHint,
     capturedAt,
+    endpointKey: endpoint.key,
     source: 'rocketscooter',
     warnings
   });
@@ -97,7 +98,7 @@ function candidateFromObject(node, options) {
     color: normalizeInputColor(node.color || node.colour || node.rgb),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
-    metadata: displayMetadata(node)
+    metadata: withEndpointMetadata(displayMetadata(node), options.endpointKey)
   });
 }
 
@@ -117,7 +118,7 @@ function candidateFromArray(row, options) {
     color: colorFromArray(row, nameIndex, priceInfo.index),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
-    metadata: {}
+    metadata: withEndpointMetadata({}, options.endpointKey)
   });
 }
 
@@ -160,7 +161,7 @@ function candidateFromNamedValue(name, value, options) {
     color,
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
-    metadata
+    metadata: withEndpointMetadata(metadata, options.endpointKey)
   });
 }
 
@@ -271,6 +272,11 @@ function displayMetadata(node) {
     if (node[key] != null && typeof node[key] !== 'object') out[key] = node[key];
   });
   return out;
+}
+
+function withEndpointMetadata(metadata, endpointKey) {
+  const key = stringValue(endpointKey);
+  return key ? { ...metadata, endpointKey: key } : metadata;
 }
 
 function scrubEndpointKey(value) {

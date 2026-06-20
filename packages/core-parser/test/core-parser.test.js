@@ -22,6 +22,7 @@ assert.equal(Object.hasOwn(parsed.endpoint, 'url'), false);
 assert.equal(parsed.symbols.MES.length, 2);
 assert.equal(parsed.symbols.MES[0].name, 'OVNHP');
 assert.equal(parsed.symbols.MES[0].color, '#2962FF');
+assert.equal(parsed.symbols.MES[0].metadata.endpointKey, '/platform/api/v1/ddbands/MES');
 assert.equal(parsed.symbols.MES[1].kind, 'dd-band');
 
 const nested = collectLevels({ data: { rows: [{ pivotName: 'QQQ Open', pivotPrice: 30812.5 }] } }, {
@@ -40,12 +41,14 @@ const tupleRows = collectLevels({
   ]
 }, {
   symbolHint: 'ES',
+  endpointKey: '/tuple/MES',
   capturedAt: '2026-06-19T14:29:59.500Z'
 });
 assert.equal(tupleRows.length, 2);
 assert.equal(tupleRows[0].symbol, 'MES');
 assert.equal(tupleRows[0].price, 7537);
 assert.equal(tupleRows[0].color, '#2962FF');
+assert.equal(tupleRows[0].metadata.endpointKey, '/tuple/MES');
 assert.equal(tupleRows[1].kind, 'dd-band');
 assert.equal(tupleRows[1].color, '#29B6F6');
 

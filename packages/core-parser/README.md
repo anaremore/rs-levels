@@ -12,3 +12,5 @@ The parser accepts generic display-level shapes:
 - colors as hex strings, `[red, green, blue]`, `{ r, g, b }`, or `{ red, green, blue }`
 
 Endpoint summaries use path-only keys and scrub long numeric or identifier-like path segments before they reach public snapshots.
+
+Parsed levels include the scrubbed `metadata.endpointKey` so the local service can replace previous rows from the same captured endpoint while still merging rows from separate display endpoints.

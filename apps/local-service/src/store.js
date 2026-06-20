@@ -48,7 +48,8 @@ export function createLevelStore(options = {}) {
     const symbols = { ...snapshot.symbols };
     Object.keys(parsed.symbols).forEach((symbol) => {
       const existing = symbols[symbol] || normalizeSymbolSnapshot(symbol, {});
-      const byId = new Map(existing.levels.map((level) => [level.id, level]));
+      const existingLevels = existing.levels.filter((level) => level.metadata?.endpointKey !== parsed.endpoint.key);
+      const byId = new Map(existingLevels.map((level) => [level.id, level]));
       parsed.symbols[symbol].forEach((level) => byId.set(level.id, level));
       symbols[symbol] = normalizeSymbolSnapshot(symbol, {
         ...existing,
