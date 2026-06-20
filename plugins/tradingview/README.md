@@ -26,7 +26,7 @@ This indicator only draws lines and labels. It does not contain strategy logic, 
 - `Labels`: show or hide level labels.
 - `Status`: show a small paste/status label on the latest bar.
 - Kind toggles: DD bands, HP, MHP, open/close, references, zones, and unknown levels.
-- `Line width`, `Label offset`, and `Line style`: display-only drawing preferences.
+- `Line width`, `Label offset`, `Max levels`, and `Line style`: display-only drawing preferences.
 
 The status label shows the payload symbol, captured timestamp, and drawn/available row count. If the payload is missing or invalid, it prompts for a valid `RSLEVELS` payload instead of silently drawing nothing.
 

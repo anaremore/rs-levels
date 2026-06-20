@@ -16,6 +16,8 @@ assert.match(pine, /showStatus/);
 assert.match(pine, /showDdBands/);
 assert.match(pine, /showHp/);
 assert.match(pine, /lineStyleInput/);
+assert.match(pine, /maxLevelsInput/);
+assert.match(pine, /maxval = 40/);
 assert.match(pine, /label\.style_label_down/);
 
 console.log('TradingView plugin tests passed');

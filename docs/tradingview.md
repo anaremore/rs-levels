@@ -40,4 +40,4 @@ See `plugins/tradingview/rs-levels.pine`.
 
 The indicator is display-only. It draws levels using the public kind field and does not include alerts, strategy logic, or execution behavior.
 
-The included indicator provides kind visibility toggles, line style/width controls, optional labels, and an optional status label. The status label reports the payload symbol, captured timestamp, and drawn/available row count, or prompts for a valid `RSLEVELS` payload when the input is empty or malformed.
+The included indicator provides kind visibility toggles, max-level display control, line style/width controls, optional labels, and an optional status label. The status label reports the payload symbol, captured timestamp, and drawn/available row count, or prompts for a valid `RSLEVELS` payload when the input is empty or malformed.
