@@ -9,6 +9,18 @@
     endpointPatterns: [],
     maxCaptureBytes: 1024 * 1024
   };
+  const stats = {
+    observedCount: 0,
+    ignoredCount: 0,
+    skippedDisabledCount: 0,
+    skippedTooLargeCount: 0,
+    skippedNonTextCount: 0,
+    skippedEmptyCount: 0,
+    readErrorCount: 0,
+    publishedCount: 0,
+    lastReason: '',
+    lastDiagnosticAt: ''
+  };
 
   if (!NONCE || !rules) return;
 
@@ -23,9 +35,10 @@
     };
   });
 
-  function allowed(url) {
-    if (!settings.captureEnabled) return false;
-    return rules.isAllowedCaptureUrl(url, settings.endpointPatterns);
+  function skipReason(url) {
+    if (!settings.captureEnabled) return 'disabled';
+    if (!rules.isAllowedCaptureUrl(url, settings.endpointPatterns)) return 'allowlist';
+    return '';
   }
 
   function endpoint(url) {
@@ -33,17 +46,54 @@
   }
 
   function publish(capture) {
+    stats.publishedCount += 1;
+    publishDiagnostic('published');
     window.postMessage({ source: SOURCE, type: 'capture', nonce: NONCE, capture }, TARGET_ORIGIN);
+  }
+
+  function publishDiagnostic(reason) {
+    stats.lastReason = reason;
+    stats.lastDiagnosticAt = new Date().toISOString();
+    window.postMessage({
+      source: SOURCE,
+      type: 'diagnostic',
+      nonce: NONCE,
+      stats: { ...stats }
+    }, TARGET_ORIGIN);
   }
 
   async function readResponse(response, requestUrl, method) {
     const url = response.url || requestUrl;
-    if (!allowed(url)) return;
+    stats.observedCount += 1;
+    const reason = skipReason(url);
+    if (reason === 'disabled') {
+      stats.skippedDisabledCount += 1;
+      publishDiagnostic(reason);
+      return;
+    }
+    if (reason === 'allowlist') {
+      stats.ignoredCount += 1;
+      publishDiagnostic(reason);
+      return;
+    }
     const length = Number(response.headers.get('content-length') || 0);
-    if (length > settings.maxCaptureBytes) return;
+    if (length > settings.maxCaptureBytes) {
+      stats.skippedTooLargeCount += 1;
+      publishDiagnostic('too-large');
+      return;
+    }
     try {
       const body = await response.clone().text();
-      if (body.length > settings.maxCaptureBytes) return;
+      if (!body) {
+        stats.skippedEmptyCount += 1;
+        publishDiagnostic('empty');
+        return;
+      }
+      if (body.length > settings.maxCaptureBytes) {
+        stats.skippedTooLargeCount += 1;
+        publishDiagnostic('too-large');
+        return;
+      }
       publish({
         url,
         endpoint: endpoint(url),
@@ -53,6 +103,8 @@
         body
       });
     } catch (_err) {
+      stats.readErrorCount += 1;
+      publishDiagnostic('read-error');
       // Some responses cannot be cloned or read by page script context.
     }
   }
@@ -81,15 +133,41 @@
         return originalOpen.apply(xhr, arguments);
       };
       xhr.addEventListener('load', () => {
-        if (!allowed(requestUrl)) return;
-        if (xhr.responseType && xhr.responseType !== 'text') return;
+        stats.observedCount += 1;
+        const reason = skipReason(requestUrl);
+        if (reason === 'disabled') {
+          stats.skippedDisabledCount += 1;
+          publishDiagnostic(reason);
+          return;
+        }
+        if (reason === 'allowlist') {
+          stats.ignoredCount += 1;
+          publishDiagnostic(reason);
+          return;
+        }
+        if (xhr.responseType && xhr.responseType !== 'text') {
+          stats.skippedNonTextCount += 1;
+          publishDiagnostic('non-text');
+          return;
+        }
         let body = '';
         try {
           body = typeof xhr.responseText === 'string' ? xhr.responseText : '';
         } catch (_err) {
+          stats.readErrorCount += 1;
+          publishDiagnostic('read-error');
           return;
         }
-        if (!body || body.length > settings.maxCaptureBytes) return;
+        if (!body) {
+          stats.skippedEmptyCount += 1;
+          publishDiagnostic('empty');
+          return;
+        }
+        if (body.length > settings.maxCaptureBytes) {
+          stats.skippedTooLargeCount += 1;
+          publishDiagnostic('too-large');
+          return;
+        }
         publish({
           url: requestUrl,
           endpoint: endpoint(requestUrl),

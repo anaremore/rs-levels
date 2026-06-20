@@ -16,13 +16,14 @@ The extension runs only on `rocketscooter.com` host patterns, injects a page hoo
 
 ## Popup
 
-The popup shows local service health, captured level counts, post timing, and the last extension-side issue. It includes:
+The popup shows local service health, captured level counts, post timing, capture-hook counters, and the last extension-side issue. It includes:
 
 - symbol selector
 - `Copy TradingView`
 - `Copy JSON`
 - `Copy Diagnostics`
 - `API Docs`
+- aggregate observed, ignored, skipped, and posted counters
 - refresh
 - options shortcut
 
@@ -41,4 +42,4 @@ For Tailscale/private-network use, point the service URL at the trusted machine 
 
 ## Safety Boundary
 
-The extension does not store credentials, forward request auth data, read arbitrary page text, or include strategy/execution behavior. It forwards response bodies only when their URL matches the configured allowlist.
+The extension does not store credentials, forward request auth data, read arbitrary page text, or include strategy/execution behavior. It forwards response bodies only when their URL matches the configured allowlist. Capture-hook diagnostics are aggregate counters and scrubbed reasons; they do not include ignored URLs, headers, cookies, bodies, or page text.

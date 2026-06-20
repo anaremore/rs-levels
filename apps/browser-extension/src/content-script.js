@@ -9,8 +9,14 @@
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.origin !== window.location.origin) return;
     const data = event.data || {};
-    if (data.source !== PAGE_SOURCE || data.type !== 'capture' || data.nonce !== nonce) return;
-    chrome.runtime.sendMessage({ type: 'rs-levels.capture', capture: data.capture });
+    if (data.source !== PAGE_SOURCE || data.nonce !== nonce) return;
+    if (data.type === 'capture') {
+      chrome.runtime.sendMessage({ type: 'rs-levels.capture', capture: data.capture });
+      return;
+    }
+    if (data.type === 'diagnostic') {
+      chrome.runtime.sendMessage({ type: 'rs-levels.capture-diagnostic', stats: data.stats });
+    }
   });
 
   chrome.storage.onChanged.addListener((changes, areaName) => {

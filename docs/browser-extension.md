@@ -10,6 +10,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Captures only response URLs that match the configured allowlist.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides popup buttons for TradingView, JSON, scrubbed diagnostics, and local API docs workflows.
+- Shows scrubbed capture-hook counters for observed, ignored, skipped, and posted responses.
 
 ## What It Avoids
 
@@ -29,6 +30,15 @@ The RS Levels browser extension is the first-priority capture UX.
 7. Use `Copy Diagnostics` when troubleshooting local API, extension, or stale-source setup.
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
+
+Capture-hook counters are aggregate only:
+
+- `Observed`: fetch/XHR responses seen by the page hook.
+- `Ignored`: responses skipped because the URL did not match the allowlist.
+- `Skipped`: allowlisted responses skipped because capture is disabled, too large, empty, non-text, or unreadable.
+- `Hook`: the most recent scrubbed hook reason.
+
+These counters do not include ignored URLs, response bodies, request headers, cookies, or page text.
 
 ## Settings
 

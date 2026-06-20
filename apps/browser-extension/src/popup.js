@@ -13,6 +13,10 @@ const els = {
   lastCapture: document.getElementById('last-capture'),
   lastPost: document.getElementById('last-post'),
   lastError: document.getElementById('last-error'),
+  observedCount: document.getElementById('observed-count'),
+  ignoredCount: document.getElementById('ignored-count'),
+  skippedCount: document.getElementById('skipped-count'),
+  hookReason: document.getElementById('hook-reason'),
   refresh: document.getElementById('refresh'),
   options: document.getElementById('options')
 };
@@ -56,6 +60,7 @@ async function refresh() {
     els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
     els.lastPost.textContent = formatTime(extState.lastPostAt);
     els.lastError.textContent = extState.lastError || 'none';
+    renderCaptureStats(extState.captureStats);
     renderPill(source);
     if (extState.lastError && !health.levelCount) {
       setMessage(extState.lastError, 'error');
@@ -126,8 +131,32 @@ function cleanExtensionState(state = {}) {
     postedCount: Number(state.postedCount) || 0,
     lastCaptureAt: String(state.lastCaptureAt || ''),
     lastPostAt: String(state.lastPostAt || ''),
-    lastError: String(state.lastError || '')
+    lastError: String(state.lastError || ''),
+    captureStats: cleanCaptureStats(state.captureStats)
   };
+}
+
+function cleanCaptureStats(stats = {}) {
+  return {
+    observedCount: nonNegativeInteger(stats.observedCount),
+    ignoredCount: nonNegativeInteger(stats.ignoredCount),
+    skippedDisabledCount: nonNegativeInteger(stats.skippedDisabledCount),
+    skippedTooLargeCount: nonNegativeInteger(stats.skippedTooLargeCount),
+    skippedNonTextCount: nonNegativeInteger(stats.skippedNonTextCount),
+    skippedEmptyCount: nonNegativeInteger(stats.skippedEmptyCount),
+    readErrorCount: nonNegativeInteger(stats.readErrorCount),
+    publishedCount: nonNegativeInteger(stats.publishedCount),
+    lastReason: String(stats.lastReason || ''),
+    lastDiagnosticAt: String(stats.lastDiagnosticAt || '')
+  };
+}
+
+function renderCaptureStats(stats = {}) {
+  const clean = cleanCaptureStats(stats);
+  els.observedCount.textContent = String(clean.observedCount);
+  els.ignoredCount.textContent = String(clean.ignoredCount);
+  els.skippedCount.textContent = String(clean.skippedDisabledCount + clean.skippedTooLargeCount + clean.skippedNonTextCount + clean.skippedEmptyCount + clean.readErrorCount);
+  els.hookReason.textContent = clean.lastReason || 'none';
 }
 
 function formatTime(value) {
@@ -135,6 +164,12 @@ function formatTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function nonNegativeInteger(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.trunc(number));
 }
 
 function renderPill(source = {}) {
