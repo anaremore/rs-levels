@@ -40,6 +40,8 @@ Create a release directory:
 npm run package
 ```
 
+The release directory includes `RELEASE-MANIFEST.json` and `SHA256SUMS.txt`.
+
 See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml), also served at `http://127.0.0.1:8765/openapi.yaml` after startup. Local API docs: `http://127.0.0.1:8765/docs`.
@@ -76,4 +78,4 @@ docs/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service shell, TradingView paste workflow, and browser extension shell are implemented with tests. Remaining platform plugins will be added in small public-safety-reviewed steps.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service shell, TradingView paste workflow, browser extension shell, and initial display plugin sources are implemented with tests.

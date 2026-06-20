@@ -26,6 +26,21 @@ const includeEntries = [
   'tools'
 ];
 
+const requiredReleaseEntries = [
+  'README.md',
+  'docs/openapi.yaml',
+  'docs/user-setup.md',
+  'apps/local-service/src/cli.js',
+  'apps/browser-extension/manifest.json',
+  'apps/browser-extension/src/popup.html',
+  'plugins/tradingview/rs-levels.pine',
+  'plugins/sierra-chart/rs-levels-sierra.cpp',
+  'plugins/ninjatrader/RSLevelsDisplay.cs',
+  'plugins/quantower/RSLevelsDisplayQuantower.cs',
+  'plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java',
+  'tools/scan-text.mjs'
+];
+
 const excludedNames = new Set([
   '.git',
   'node_modules',
@@ -50,9 +65,10 @@ for (const entry of includeEntries) {
   await collectFiles(source, entry.replace(/\\/g, '/'), files);
 }
 files.sort((a, b) => a.relative.localeCompare(b.relative));
+assertRequiredReleaseEntries(files);
 
 if (checkOnly) {
-  console.log(`release package check passed (${files.length} files)`);
+  console.log(`release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries)`);
   process.exit(0);
 }
 
@@ -112,6 +128,14 @@ async function collectFiles(absolute, relative, output) {
 
   if (!stat.isFile()) return;
   output.push({ absolute, relative });
+}
+
+function assertRequiredReleaseEntries(files) {
+  const releasePaths = new Set(files.map((file) => file.relative));
+  const missing = requiredReleaseEntries.filter((entry) => !releasePaths.has(entry));
+  if (missing.length) {
+    throw new Error(`Required release file(s) missing: ${missing.join(', ')}`);
+  }
 }
 
 function sha256(filePath) {

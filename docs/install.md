@@ -19,6 +19,8 @@ npm run scan:private
 npm run scan:secrets
 ```
 
+`npm test` includes `npm run package:check`, which verifies the release package includes the local API, browser extension, TradingView indicator, display plugins, docs, and scan tooling.
+
 ## Start The Local Service
 
 ```powershell
