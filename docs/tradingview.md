@@ -32,7 +32,7 @@ Default response is text/plain:
 RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
 ```
 
-The JSON response is for inspection and third-party tooling. Pine users should paste the compact `RSLEVELS|...` payload into the included indicator.
+The JSON response is for inspection and third-party tooling. It includes `compactPayload` with the exact Pine-ready string. Pine users should paste the compact `RSLEVELS|...` payload into the included indicator.
 
 ## Indicator
 

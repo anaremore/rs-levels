@@ -17,9 +17,11 @@ export interface TradingViewJsonLevel {
 export interface TradingViewJsonExport {
   schemaVersion: string;
   exportFormat: 'tradingview-json';
+  payloadVersion: 1;
   generatedAt: string;
   symbol: string;
   capturedAt: string;
+  compactPayload: string;
   levels: TradingViewJsonLevel[];
   notes: string[];
 }

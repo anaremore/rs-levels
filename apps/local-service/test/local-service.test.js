@@ -168,6 +168,8 @@ try {
 
   const tradingViewJson = await getJson(`${baseUrl}/tradingview/MES?format=json`);
   assert.equal(tradingViewJson.exportFormat, 'tradingview-json');
+  assert.equal(tradingViewJson.payloadVersion, 1);
+  assert.equal(tradingViewJson.compactPayload, tradingViewPayload);
   assert.equal(tradingViewJson.levels.length, 2);
   const ddbands = await getJson(`${baseUrl}/ddbands`);
   assert.equal(ddbands.levels.length, 1);

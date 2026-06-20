@@ -231,12 +231,14 @@ Returns a copy-friendly JSON export for tooling and inspection:
 {
   "schemaVersion": "0.1.0",
   "exportFormat": "tradingview-json",
+  "payloadVersion": 1,
   "symbol": "MES",
+  "compactPayload": "RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp",
   "levels": []
 }
 ```
 
-Pine users should paste the compact `RSLEVELS|...` payload into the indicator input.
+Pine users should paste the compact `RSLEVELS|...` payload into the indicator input. JSON clients can read `compactPayload` when they need the exact Pine-ready string alongside structured rows.
 
 ## GET /ddbands
 

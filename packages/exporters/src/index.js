@@ -27,9 +27,11 @@ export function createTradingViewJsonExport(symbolSnapshot, options = {}) {
   return {
     schemaVersion: SCHEMA_VERSION,
     exportFormat: 'tradingview-json',
+    payloadVersion: 1,
     generatedAt: options.generatedAt || new Date().toISOString(),
     symbol: row.symbol,
     capturedAt: row.capturedAt,
+    compactPayload: createTradingViewPayload(row, { maxLevels }),
     levels: row.levels
       .filter((level) => Number.isFinite(level.price))
       .slice(0, maxLevels)

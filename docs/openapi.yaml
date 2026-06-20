@@ -494,19 +494,24 @@ components:
             $ref: '#/components/schemas/Level'
     TradingViewExport:
       type: object
-      required: [schemaVersion, exportFormat, generatedAt, symbol, capturedAt, levels, notes]
+      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, symbol, capturedAt, compactPayload, levels, notes]
       properties:
         schemaVersion:
           type: string
         exportFormat:
           type: string
           enum: [tradingview-json]
+        payloadVersion:
+          type: integer
+          const: 1
         generatedAt:
           type: string
           format: date-time
         symbol:
           type: string
         capturedAt:
+          type: string
+        compactPayload:
           type: string
         levels:
           type: array

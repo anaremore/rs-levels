@@ -16,6 +16,8 @@ JSON export is also available for tooling and manual inspection:
 http://127.0.0.1:8765/tradingview/MES?format=json
 ```
 
+The JSON export includes `compactPayload` for tools that want the exact Pine-ready string alongside structured rows.
+
 ## Safety Boundary
 
 This indicator only draws lines and labels. It does not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or automation.
