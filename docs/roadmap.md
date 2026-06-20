@@ -65,5 +65,6 @@ Status: in progress.
 - Verify critical API, extension, TradingView, plugin, docs, and scan artifacts in `npm run package:check`.
 - Build zip archive and checksum sidecar.
 - Include cross-platform local service launch scripts.
+- Run CI verification on Ubuntu, Windows, and macOS.
 - Next: native packaged app wrapper.
 - Test clean install on Windows, macOS, and Linux.

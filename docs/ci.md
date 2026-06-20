@@ -4,7 +4,15 @@ GitHub Actions runs the public verification workflow on pushes and pull requests
 
 Workflow: `.github/workflows/ci.yml`
 
-The workflow runs:
+The workflow runs on a three-OS matrix:
+
+```text
+ubuntu-latest
+windows-latest
+macos-latest
+```
+
+Each OS job runs:
 
 ```text
 npm test
@@ -13,7 +21,7 @@ npm run scan:secrets
 npm run package
 ```
 
-It also uploads the generated source-style release directory as a build artifact.
+It also uploads the generated source-style release directory as an OS-named build artifact.
 
 The workflow uses current major versions of the official checkout, Node setup, and artifact upload actions while testing the project on Node.js 20 for user compatibility.
 

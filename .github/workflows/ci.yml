@@ -11,8 +11,12 @@ permissions:
 
 jobs:
   verify:
-    name: Verify public package
-    runs-on: ubuntu-latest
+    name: Verify public package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -37,6 +41,6 @@ jobs:
       - name: Upload release directory
         uses: actions/upload-artifact@v6
         with:
-          name: rs-levels-source-package
+          name: rs-levels-source-package-${{ matrix.os }}
           path: dist/rs-levels-0.0.0
           if-no-files-found: error
