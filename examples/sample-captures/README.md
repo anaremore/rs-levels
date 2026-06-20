@@ -14,6 +14,8 @@ Post the sample capture in another terminal:
 npm run demo:capture
 ```
 
+The demo poster stamps the fixture with the current time so freshness checks and extension diagnostics behave like a new local capture.
+
 Use a custom service URL:
 
 ```powershell

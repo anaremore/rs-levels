@@ -9,7 +9,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
 - Captures only response URLs that match the configured allowlist.
 - Posts capture payloads to the local service at `/capture/api`.
-- Provides popup buttons for TradingView and JSON copy workflows.
+- Provides popup buttons for TradingView, JSON, scrubbed diagnostics, and local API docs workflows.
 
 ## What It Avoids
 
@@ -26,6 +26,9 @@ The RS Levels browser extension is the first-priority capture UX.
 4. Check the popup status.
 5. Use `Copy TradingView` to paste levels into `plugins/tradingview/rs-levels.pine`.
 6. Use `Copy JSON` when another local tool needs a manual export.
+7. Use `Copy Diagnostics` when troubleshooting local API, extension, or stale-source setup.
+
+The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 
 ## Settings
 

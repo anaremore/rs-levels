@@ -1,5 +1,39 @@
 import assert from 'node:assert/strict';
 import { createService, listen } from '../src/index.js';
+import { createLevelStore } from '../src/store.js';
+import { diagnostics } from '../src/http.js';
+
+let nowMs = Date.parse('2026-06-20T12:00:00.000Z');
+const freshnessStore = createLevelStore({
+  staleMs: 1000,
+  clock: () => new Date(nowMs)
+});
+freshnessStore.applyCapture({
+  endpoint: '/demo/levels/MES',
+  status: 200,
+  capturedAt: '2026-06-20T12:00:00.000Z',
+  body: {
+    symbol: 'MES',
+    levels: [{ name: 'OVNHP', price: 7537 }]
+  }
+});
+assert.equal(freshnessStore.getSnapshot().source.state, 'capturing');
+assert.equal(freshnessStore.getSnapshot().source.connected, true);
+assert.equal(freshnessStore.getSnapshot().source.ageMs, 0);
+nowMs += 1500;
+const staleSnapshot = freshnessStore.getSnapshot();
+assert.equal(staleSnapshot.source.state, 'stale');
+assert.equal(staleSnapshot.source.connected, false);
+assert.equal(staleSnapshot.source.ageMs, 1500);
+const staleDiagnostics = diagnostics(freshnessStore, {
+  host: '127.0.0.1',
+  requestedHost: '127.0.0.1',
+  port: 8765,
+  remoteAccess: false,
+  corsOrigins: [],
+  warnings: []
+});
+assert.ok(staleDiagnostics.checks.some((check) => check.id === 'source' && check.status === 'warning'));
 
 const service = createService({
   config: { host: '127.0.0.1', port: 0 }
@@ -47,10 +81,11 @@ try {
   const blockedCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'https://example.com' } });
   assert.equal(blockedCors.headers.get('access-control-allow-origin'), null);
 
+  const capturedAt = new Date().toISOString();
   const captureResponse = await postJson(`${baseUrl}/capture/api`, {
     endpoint: '/platform/api/v1/ddbands/MES',
     status: 200,
-    capturedAt: '2026-06-19T14:29:59.500Z',
+    capturedAt,
     body: JSON.stringify({
       symbol: 'MES',
       levels: [
@@ -81,7 +116,7 @@ try {
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
 
   const tradingViewPayload = await getText(`${baseUrl}/tradingview/ES`);
-  assert.equal(tradingViewPayload, 'RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band');
+  assert.equal(tradingViewPayload, `RSLEVELS|1|MES|${capturedAt}|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band`);
 
   const tradingViewJson = await getJson(`${baseUrl}/tradingview/MES?format=json`);
   assert.equal(tradingViewJson.exportFormat, 'tradingview-json');
@@ -106,6 +141,11 @@ try {
     config: { host: '127.0.0.1', port: 0, corsOrigins: ['https://dashboard.example'] }
   });
   assert.deepEqual(customCorsService.config.corsOrigins, ['https://dashboard.example']);
+
+  const staleConfigService = createService({
+    config: { host: '127.0.0.1', port: 0, staleMs: 2500 }
+  });
+  assert.equal(staleConfigService.config.staleMs, 2500);
 
   console.log('local service tests passed');
 } finally {

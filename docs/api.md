@@ -63,6 +63,8 @@ Returns a scrubbed setup and support bundle for local API and browser-extension 
 
 The response intentionally omits raw captured URLs from source endpoint summaries. Endpoint diagnostics include the normalized endpoint key, status, parser name, timestamp, and parse result only.
 
+`source.ageMs` is calculated when diagnostics are requested. It measures how long it has been since the local service accepted the latest capture. Once it exceeds the local service stale threshold, `source.state` becomes `stale` and `source.connected` becomes `false`.
+
 ```json
 {
   "ok": true,
@@ -75,6 +77,8 @@ The response intentionally omits raw captured URLs from source endpoint summarie
   "source": {
     "state": "waiting",
     "connected": false,
+    "lastCaptureAt": "",
+    "ageMs": null,
     "endpointCount": 0,
     "endpoints": []
   },
@@ -89,7 +93,7 @@ The response intentionally omits raw captured URLs from source endpoint summarie
 
 ## GET /health
 
-Health includes network posture, source state, symbol count, and level count.
+Health includes network posture, source state, symbol count, and level count. Source freshness is computed on each read, so `ageMs`, `state`, and `connected` reflect current service-side freshness instead of the ingest-time snapshot only.
 
 ```json
 {
@@ -117,6 +121,8 @@ Health includes network posture, source state, symbol count, and level count.
   "source": {
     "state": "waiting",
     "connected": false,
+    "lastCaptureAt": "",
+    "ageMs": null,
     "warnings": []
   },
   "symbolCount": 0,
@@ -126,7 +132,7 @@ Health includes network posture, source state, symbol count, and level count.
 
 ## GET /status
 
-Returns a compact status payload for UI badges and plugin diagnostics.
+Returns a compact status payload for UI badges and plugin diagnostics. Display plugins should use `source.state`, `source.connected`, and `source.ageMs` to avoid making stale captures look live.
 
 ```json
 {

@@ -321,14 +321,17 @@ components:
       properties:
         state:
           type: string
+          description: Current capture freshness state. The service reports stale when lastCaptureAt is older than the configured stale threshold.
           enum: [offline, waiting, capturing, stale, error]
         connected:
           type: boolean
+          description: True only while the source has a recent non-stale capture.
         lastCaptureAt:
           type: string
         ageMs:
           type: number
           nullable: true
+          description: Milliseconds since the service accepted the latest capture, computed when the response is generated.
         endpoints:
           type: array
           items:
@@ -514,6 +517,7 @@ components:
         ageMs:
           type: number
           nullable: true
+          description: Milliseconds since the service accepted the latest capture, computed when diagnostics are generated.
         endpointCount:
           type: integer
         endpoints:

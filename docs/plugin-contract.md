@@ -43,6 +43,8 @@ Plugins must show feed freshness in the chart or settings panel:
 - `stale`: last capture is older than the configured threshold
 - `offline`: service cannot be reached
 
+The local service computes `source.ageMs` and marks the feed `stale` after `RS_LEVELS_STALE_MS` milliseconds, default `10000`. Plugins may apply their own stricter visual threshold, but they should never show `source.state: "stale"` as live.
+
 A stale or offline feed should never look live.
 
 ## Rendering Rules

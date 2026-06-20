@@ -66,6 +66,12 @@ p {
   color: #ff8b8b;
 }
 
+.pill.warning {
+  background: #302411;
+  box-shadow: inset 0 0 0 1px #8a6a22;
+  color: #ffd36a;
+}
+
 .panel {
   padding: 12px;
   background: #101720;
@@ -143,6 +149,10 @@ button:disabled {
 
 .message.error {
   color: #ff8b8b;
+}
+
+.message.warning {
+  color: #ffd36a;
 }
 
 dl {

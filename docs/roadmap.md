@@ -20,18 +20,20 @@ Status: complete.
 Status: in progress.
 
 - Cross-platform localhost service.
-- Implemented `/health`, `/status`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/stream`, and `/capture/api`.
+- Implemented `/health`, `/status`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/stream`, and `/capture/api`.
 - Safe loopback default with explicit Tailscale/private-network opt-in.
-- Next: persisted settings, packaged app wrapper, and UI-visible diagnostics.
+- Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state.
+- Next: persisted settings and packaged app wrapper.
 
 ## Milestone 3: Browser Extension
 
-Status: in progress.
+Status: shell complete.
 
 - Manifest V3 extension shell.
 - Capture only allowlisted RocketScooter responses.
-- Show connection status in a popup.
-- Add copy/export actions for JSON and TradingView paste payloads. Implemented in the unpacked extension shell.
+- Show connection status, post timing, and last issue in a popup.
+- Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
+- Next: field testing against real RocketScooter endpoint shapes and parser hardening.
 
 ## Milestone 4: Display Plugins
 
@@ -41,7 +43,7 @@ Status: planned.
 - NinjaTrader display indicator.
 - Quantower display indicator.
 - Bookmap display add-on.
-- TradingView Pine indicator with paste-based level input.
+- TradingView Pine indicator with paste-based level input. Implemented as the first display plugin path.
 
 ## Milestone 5: Packaging
 

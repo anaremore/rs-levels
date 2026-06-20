@@ -166,8 +166,8 @@ function diagnosticChecks({ source, levels, symbols, network }) {
     {
       id: 'source',
       label: 'Capture source',
-      status: source.connected ? 'ok' : source.state === 'error' ? 'error' : 'waiting',
-      detail: source.connected ? `Last capture ${source.lastCaptureAt || 'recently'}.` : 'Waiting for captured level responses.'
+      status: sourceStatus(source),
+      detail: sourceDetail(source)
     },
     {
       id: 'levels',
@@ -180,11 +180,26 @@ function diagnosticChecks({ source, levels, symbols, network }) {
 
 function diagnosticHints({ source, levels, network }) {
   const hints = [];
+  if (source.state === 'stale') hints.push('The last capture is stale. Refresh RocketScooter or copy a fresh TradingView payload after a new capture.');
   if (!source.connected) hints.push('Open RocketScooter with the browser extension enabled, then refresh this status.');
   if (!levels.length) hints.push('Use the demo capture command to verify the API before connecting a browser session.');
   if (network.warnings.length) hints.push(...network.warnings);
   if (network.remoteAccess) hints.push('Remote binding is enabled; use it only on a trusted private network.');
   return hints;
+}
+
+function sourceStatus(source) {
+  if (source.connected) return 'ok';
+  if (source.state === 'error') return 'error';
+  if (source.state === 'stale') return 'warning';
+  return 'waiting';
+}
+
+function sourceDetail(source) {
+  if (source.connected) return `Last capture ${source.lastCaptureAt || 'recently'}.`;
+  if (source.state === 'stale') return `Last capture is stale${source.ageMs == null ? '' : ` (${Math.round(source.ageMs)} ms old)`}.`;
+  if (source.state === 'error') return 'Capture source reported an error.';
+  return 'Waiting for captured level responses.';
 }
 
 function streamSnapshots(req, res, clients, store) {

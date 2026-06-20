@@ -22,6 +22,7 @@ RS_LEVELS_HOST=127.0.0.1       # default
 RS_LEVELS_PORT=8765
 RS_LEVELS_ALLOW_REMOTE=0       # default
 RS_LEVELS_CORS_ORIGINS=       # optional comma-separated browser origins
+RS_LEVELS_STALE_MS=10000       # source freshness threshold
 ```
 
 To bind beyond loopback, require both an explicit host and an explicit remote-access flag:

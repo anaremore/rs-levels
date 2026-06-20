@@ -24,6 +24,7 @@ const pageHook = readFileSync(join(root, 'src', 'page-hook.js'), 'utf8');
 const background = readFileSync(join(root, 'src', 'background.js'), 'utf8');
 const popup = readFileSync(join(root, 'src', 'popup.js'), 'utf8');
 const popupHtml = readFileSync(join(root, 'src', 'popup.html'), 'utf8');
+const popupCss = readFileSync(join(root, 'src', 'popup.css'), 'utf8');
 const options = readFileSync(join(root, 'src', 'options.js'), 'utf8');
 
 assert.match(contentScript, /capture-rules\.js/);
@@ -42,8 +43,10 @@ assert.match(popup, /\/tradingview\/\$\{selectedSymbol\(\)\}/);
 assert.match(popup, /format=json/);
 assert.match(popup, /\/diagnostics/);
 assert.match(popup, /cleanExtensionState/);
+assert.match(popup, /Captured levels are stale/);
 assert.match(popupHtml, /copy-diagnostics/);
 assert.match(popupHtml, /open-docs/);
+assert.match(popupCss, /\.pill\.warning/);
 assert.match(options, /chrome\.permissions\.request/);
 
 console.log('browser extension static tests passed');

@@ -7,6 +7,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baseUrl = cleanBaseUrl(process.env.RS_LEVELS_URL || process.argv[2] || 'http://127.0.0.1:8765');
 const fixturePath = path.resolve(root, process.argv[3] || 'examples/sample-captures/mes-levels.json');
 const payload = JSON.parse(await fs.readFile(fixturePath, 'utf8'));
+if (process.env.RS_LEVELS_PRESERVE_CAPTURED_AT !== '1') {
+  payload.capturedAt = new Date().toISOString();
+}
 
 const response = await fetch(`${baseUrl}/capture/api`, {
   method: 'POST',

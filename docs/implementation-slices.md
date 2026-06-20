@@ -45,19 +45,22 @@ No browser extension yet.
 
 ## Slice 4: Browser Extension Shell
 
-Status: in progress.
+Status: complete.
 
 Goal: connect extension to service without real parser complexity.
 
 Deliverables:
 
 - Manifest V3 extension
-- popup with service status and copy buttons
+- popup with service status, diagnostics, and copy buttons
 - content/page hook skeleton
 - local capture POST shape
-- options page for service URL and capture allowlist`r`n- no credentials, cookies, auth headers, or arbitrary page content
+- options page for service URL and capture allowlist
+- no credentials, cookies, auth headers, or arbitrary page content
 
 ## Slice 5: Parser Extraction
+
+Status: next.
 
 Goal: carefully extract only display-level parsing.
 
@@ -72,15 +75,16 @@ Do not copy strategy, execution, account, or automation code.
 
 ## Slice 6: Platform Display Plugins
 
+Status: in progress.
+
 Goal: add display integrations one platform at a time.
 
 Recommended order:
 
-1. Sierra Chart
-2. NinjaTrader
-3. Quantower
-4. Bookmap
-5. TradingView paste-based Pine indicator
+1. TradingView paste-based Pine indicator. Implemented first because TradingView is a priority and Pine cannot poll localhost directly.
+2. Sierra Chart
+3. NinjaTrader
+4. Quantower
+5. Bookmap
 
 Each plugin must include a safety test or review note confirming it does not call platform order APIs.
-

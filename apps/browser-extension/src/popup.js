@@ -48,15 +48,19 @@ async function refresh() {
     const extState = extensionState && extensionState.state ? extensionState.state : {};
     symbols = status.symbols && status.symbols.length ? status.symbols : globalThis.RS_LEVELS.defaults.symbols.slice();
     renderSymbols(symbols);
-    els.sourceState.textContent = health.source && health.source.state || 'waiting';
+    const source = health.source || {};
+    const sourceState = source.state || 'waiting';
+    els.sourceState.textContent = sourceState;
     els.levelCount.textContent = String(health.levelCount || 0);
     els.postedCount.textContent = String(extState.postedCount || 0);
     els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
     els.lastPost.textContent = formatTime(extState.lastPostAt);
     els.lastError.textContent = extState.lastError || 'none';
-    setPill(health.source && health.source.connected ? 'LIVE' : 'WAITING', health.source && health.source.connected ? 'live' : 'waiting');
+    renderPill(source);
     if (extState.lastError && !health.levelCount) {
       setMessage(extState.lastError, 'error');
+    } else if (sourceState === 'stale') {
+      setMessage('Captured levels are stale.', 'warning');
     } else {
       setMessage(health.levelCount ? 'Levels are available.' : 'Waiting for captured levels.', health.levelCount ? 'ok' : '');
     }
@@ -131,6 +135,18 @@ function formatTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function renderPill(source = {}) {
+  if (source.connected) {
+    setPill('LIVE', 'live');
+    return;
+  }
+  if (source.state === 'stale') {
+    setPill('STALE', 'warning');
+    return;
+  }
+  setPill('WAITING', 'waiting');
 }
 
 function setPill(text, mode) {
