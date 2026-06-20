@@ -2,6 +2,8 @@
 
 Plugins in this repository are display-only. They read the local levels API or accept a manual export and draw overlays inside charting platforms.
 
+Start with the shared [display plugin contract](plugin-contract.md), then use the platform-specific README for implementation details.
+
 ## Safety Boundary
 
 Plugins must not:
@@ -33,12 +35,12 @@ plugins/
   tradingview/
 ```
 
-Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling.
+Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling. Their current directories contain implementation-ready specifications rather than compiled platform artifacts.
 
-TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path should therefore be:
+TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path is therefore:
 
 - a display-only Pine indicator checked into `plugins/tradingview/`
-- the implemented `/tradingview/:symbol` local-service endpoint and future extension button to copy a compact level payload
+- the implemented `/tradingview/:symbol` local-service endpoint and extension button to copy a compact level payload
 - the implemented `/tradingview/:symbol?format=json` export for users and tooling
 - an indicator input where the compact payload can be pasted and drawn
 

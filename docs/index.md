@@ -12,6 +12,7 @@
 - [Schemas overview](schemas.md)
 - [Schema reference](schema-reference.md)
 - [Platform plugins](platform-plugins.md)
+- [Display plugin contract](plugin-contract.md)
 - [TradingView](tradingview.md)
 - [Install](install.md)
 - [Packaging](packaging.md)
