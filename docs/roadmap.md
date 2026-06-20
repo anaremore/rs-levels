@@ -42,7 +42,7 @@ Status: in progress.
 - Sierra Chart display study. Initial ACSIL source included.
 - NinjaTrader display indicator. Initial NinjaScript source included.
 - Quantower display indicator. Initial indicator source included.
-- Bookmap display add-on.
+- Bookmap display add-on. Initial Java source included.
 - TradingView Pine indicator with paste-based level input. Implemented as the first display plugin path.
 
 ## Milestone 5: Packaging

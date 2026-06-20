@@ -46,6 +46,13 @@ assert.match(quantowerSource, /OnPaintChart/);
 assert.match(quantowerSource, /DrawLine/);
 assertNoPlatformApiTerms(quantowerSource);
 
+const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'RSLevelsDisplayBookmap.java'), 'utf8');
+assert.match(bookmapSource, /class RSLevelsDisplayBookmap implements CustomModule/);
+assert.match(bookmapSource, /\/status/);
+assert.match(bookmapSource, /format=sierra/);
+assert.match(bookmapSource, /setHorizontalValueLinesInfo/);
+assertNoPlatformApiTerms(bookmapSource);
+
 console.log('plugin documentation tests passed');
 
 function assertNoPlatformApiTerms(source) {

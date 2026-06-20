@@ -85,6 +85,6 @@ Recommended order:
 2. Sierra Chart
 3. NinjaTrader
 4. Quantower
-5. Bookmap
+5. Bookmap. Initial Java add-on source included.
 
 Each plugin must include a safety test or review note confirming it does not call platform order APIs.
