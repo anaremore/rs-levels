@@ -34,6 +34,8 @@ GET /tradingview/:symbol?format=json
 
 Plugins should normalize `ES` to `MES` and `NQ` to `MNQ` the same way the API does, or simply rely on the API response symbol.
 
+The API sends `Cache-Control: no-store` on HTTP responses. Plugins should still poll on their own refresh interval and use `/status` freshness fields as the source of truth.
+
 ## Freshness Rules
 
 Plugins must show feed freshness in the chart or settings panel:

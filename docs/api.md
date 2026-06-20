@@ -8,6 +8,8 @@ http://127.0.0.1:8765
 
 The local service is read-mostly. The only write endpoint is browser-capture ingest.
 
+HTTP responses include `Cache-Control: no-store` so browser tools, dashboards, and chart plugins should always receive the latest local snapshot instead of a cached level export.
+
 A machine-readable OpenAPI 3.1 spec is checked in at [openapi.yaml](openapi.yaml) and served by the running API at `http://127.0.0.1:8765/openapi.yaml`. A lightweight local docs page is available at `http://127.0.0.1:8765/docs`.
 
 ## Endpoints

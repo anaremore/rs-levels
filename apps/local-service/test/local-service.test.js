@@ -57,7 +57,11 @@ try {
 
   const swaggerYaml = await getText(`${baseUrl}/swagger.yaml`);
   assert.equal(swaggerYaml, openapiYaml);
-  const health = await getJson(`${baseUrl}/health`);
+  const healthResponse = await fetch(`${baseUrl}/health`);
+  assert.equal(healthResponse.ok, true, `${baseUrl}/health returned ${healthResponse.status}`);
+  assert.equal(healthResponse.headers.get('cache-control'), 'no-store');
+  assert.equal(healthResponse.headers.get('x-content-type-options'), 'nosniff');
+  const health = await healthResponse.json();
   assert.equal(health.ok, true);
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
@@ -115,7 +119,10 @@ try {
   const text = await getText(`${baseUrl}/levels/MES?format=sierra`);
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
 
-  const tradingViewPayload = await getText(`${baseUrl}/tradingview/ES`);
+  const tradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
+  assert.equal(tradingViewResponse.ok, true, `${baseUrl}/tradingview/ES returned ${tradingViewResponse.status}`);
+  assert.equal(tradingViewResponse.headers.get('cache-control'), 'no-store');
+  const tradingViewPayload = await tradingViewResponse.text();
   assert.equal(tradingViewPayload, `RSLEVELS|1|MES|${capturedAt}|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band`);
 
   const tradingViewJson = await getJson(`${baseUrl}/tradingview/MES?format=json`);
