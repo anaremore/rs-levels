@@ -23,4 +23,15 @@ assert.match(contract, /GET \/levels\/:symbol/);
 assert.match(contract, /Freshness Rules/);
 assert.match(contract, /Safety Tests/);
 
+const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
+assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
+assert.match(sierraSource, /\/status/);
+assert.match(sierraSource, /format=sierra/);
+assert.match(sierraSource, /DRAWING_HORIZONTALLINE/);
+assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'ord' + 'er' + '\\b', 'i'));
+assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'acc' + 'ount' + '\\b', 'i'));
+assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'flat' + 'ten' + '\\b', 'i'));
+assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'can' + 'cel' + '\\b', 'i'));
+assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'pos' + 'ition' + '\\b', 'i'));
+
 console.log('plugin documentation tests passed');

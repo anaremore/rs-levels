@@ -37,9 +37,9 @@ Status: shell complete.
 
 ## Milestone 4: Display Plugins
 
-Status: planned.
+Status: in progress.
 
-- Sierra Chart display study.
+- Sierra Chart display study. Initial ACSIL source included.
 - NinjaTrader display indicator.
 - Quantower display indicator.
 - Bookmap display add-on.

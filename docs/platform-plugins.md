@@ -35,7 +35,7 @@ plugins/
   tradingview/
 ```
 
-Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling. Their current directories contain implementation-ready specifications rather than compiled platform artifacts.
+Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling. Sierra Chart now includes an initial display-only ACSIL source file at `plugins/sierra-chart/rs-levels-sierra.cpp`; the other direct-polling directories currently contain implementation-ready specifications.
 
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path is therefore:
 

@@ -27,7 +27,7 @@ if (!scanners[mode]) {
 const excludedDirs = new Set(['.git', 'node_modules', 'dist', 'build', 'out', 'coverage']);
 const excludedFiles = new Set(['tools/scan-text.mjs']);
 const textExtensions = new Set([
-  '.cjs', '.css', '.html', '.js', '.json', '.md', '.mjs', '.pine', '.ps1', '.txt', '.yaml', '.yml'
+  '.cjs', '.cpp', '.cs', '.css', '.h', '.hpp', '.html', '.java', '.js', '.json', '.kt', '.md', '.mjs', '.pine', '.ps1', '.txt', '.yaml', '.yml'
 ]);
 
 const allowedDocumentation = [

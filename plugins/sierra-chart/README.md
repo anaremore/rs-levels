@@ -4,16 +4,15 @@ Display-only Sierra Chart study for drawing RS Levels overlays from the local AP
 
 ## Status
 
-Specification ready. ACSIL source is not included yet.
+Initial ACSIL source is included at `rs-levels-sierra.cpp`.
 
-## Recommended API Path
+## API Path
 
-Sierra Chart can use the Sierra text feed first:
+The included study polls:
 
 ```text
 GET /status
-GET /levels/MES?format=sierra
-GET /levels/MNQ?format=sierra
+GET /levels/:symbol?format=sierra
 ```
 
 Text rows are:
@@ -22,7 +21,7 @@ Text rows are:
 name,price,red,green,blue
 ```
 
-The study may also poll JSON from `/levels/:symbol` if the ACSIL implementation includes a JSON parser.
+`/status` provides source freshness. The Sierra text feed provides simple rows that avoid requiring a JSON parser inside ACSIL.
 
 ## Study Inputs
 
@@ -32,6 +31,14 @@ The study may also poll JSON from `/levels/:symbol` if the ACSIL implementation 
 - stale threshold, default 10 seconds
 - draw labels
 - line width
+
+## Install
+
+1. Copy `rs-levels-sierra.cpp` to the Sierra Chart `ACS_Source` folder.
+2. In Sierra Chart, open **Analysis -> Build Custom Studies DLL**.
+3. Select `rs-levels-sierra.cpp` and build it.
+4. Add **RS Levels Display** to a chart.
+5. Set the service URL and symbol if different from the defaults.
 
 ## Rendering Plan
 
@@ -44,4 +51,4 @@ The study may also poll JSON from `/levels/:symbol` if the ACSIL implementation 
 
 This plugin must be display-only. It must not call Sierra order-entry, trade-management, position, or account APIs.
 
-Review note for first ACSIL implementation: search source for trade/order/account APIs before release and add the result to this README.
+Static test coverage in `plugins/test/plugin-docs.test.cjs` checks the included source for display endpoints and blocks common Sierra trade/account API terms. The source draws chart lines, labels, and a status marker only.
