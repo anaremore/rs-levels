@@ -25,6 +25,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ ok: true });
     return false;
   }
+  if (message.type === 'rs-levels.inject-active-tab') {
+    injectActiveTab().then((result) => sendResponse(result));
+    return true;
+  }
   if (message.type === 'rs-levels.state') {
     sendResponse({ ok: true, state });
     return false;
@@ -67,6 +71,35 @@ async function postCapture(capture) {
   } catch (err) {
     state.lastError = err && err.message ? err.message : 'Local service unavailable';
     return { ok: false, error: state.lastError };
+  }
+}
+
+async function injectActiveTab() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = tabs && tabs[0];
+    if (!tab || !tab.id) throw new Error('No active tab found');
+    if (!isRocketScooterUrl(tab.url || '')) {
+      throw new Error('Open a RocketScooter tab before reconnecting capture');
+    }
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['src/shared.js', 'src/content-script.js']
+    });
+    state.lastError = '';
+    return { ok: true };
+  } catch (err) {
+    state.lastError = err && err.message ? err.message : 'Capture reconnect failed';
+    return { ok: false, error: state.lastError };
+  }
+}
+
+function isRocketScooterUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && (url.hostname === 'rocketscooter.com' || url.hostname.endsWith('.rocketscooter.com'));
+  } catch (_err) {
+    return false;
   }
 }
 

@@ -5,6 +5,7 @@ const els = {
   captureEnabled: document.getElementById('capture-enabled'),
   copyTv: document.getElementById('copy-tv'),
   copyJson: document.getElementById('copy-json'),
+  reconnect: document.getElementById('reconnect'),
   copyDiagnostics: document.getElementById('copy-diagnostics'),
   openDocs: document.getElementById('open-docs'),
   openPlugins: document.getElementById('open-plugins'),
@@ -48,6 +49,7 @@ function bindEvents() {
   els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
   els.copyTv.addEventListener('click', copyTradingView);
   els.copyJson.addEventListener('click', copyJsonExport);
+  els.reconnect.addEventListener('click', reconnectActiveTab);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
   els.openPlugins.addEventListener('click', () => window.open(`${settings.serviceUrl}/plugins`, '_blank', 'noopener'));
@@ -120,6 +122,18 @@ async function copyJsonExport() {
     await copyFromEndpoint(`/tradingview/${selectedSymbol()}?format=json`, 'JSON copied', true);
   } catch (err) {
     setMessage(err && err.message ? err.message : 'JSON copy failed', 'error');
+  }
+}
+
+async function reconnectActiveTab() {
+  setMessage('Reconnecting capture hook');
+  try {
+    const result = await chrome.runtime.sendMessage({ type: 'rs-levels.inject-active-tab' });
+    if (!result || result.ok !== true) throw new Error(result && result.error || 'Capture reconnect failed');
+    await refresh();
+    setMessage('Capture hook reconnected. Refresh RocketScooter data if levels are still waiting.', 'ok');
+  } catch (err) {
+    setMessage(err && err.message ? err.message : 'Capture reconnect failed', 'error');
   }
 }
 

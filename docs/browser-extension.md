@@ -10,6 +10,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Captures only response URLs that match the configured allowlist.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides a popup capture toggle plus TradingView, JSON, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
+- Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
 - Shows scrubbed capture-hook counters for observed, ignored, skipped, and posted responses.
 
 ## What It Avoids
@@ -29,7 +30,8 @@ The RS Levels browser extension is the first-priority capture UX.
 6. Use `Copy TradingView` to paste levels into `plugins/tradingview/rs-levels.pine`.
 7. Use `Copy JSON` when another local tool needs a manual export.
 8. Use `Plugins` to inspect the local display-adapter manifest.
-9. Use `Copy Diagnostics` when troubleshooting local API, extension, or stale-source setup.
+9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
+10. Use `Copy Diagnostics` when troubleshooting local API, extension, or stale-source setup.
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 

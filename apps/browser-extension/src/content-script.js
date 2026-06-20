@@ -1,4 +1,7 @@
 (() => {
+  if (globalThis.__RS_LEVELS_CONTENT_SCRIPT_ACTIVE__) return;
+  globalThis.__RS_LEVELS_CONTENT_SCRIPT_ACTIVE__ = true;
+
   const PAGE_SOURCE = 'rs-levels-page';
   const CONTROL_SOURCE = 'rs-levels-content';
   const nonce = createNonce();

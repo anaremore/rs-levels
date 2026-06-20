@@ -5,7 +5,8 @@
   "version": "0.1.0",
   "permissions": [
     "storage",
-    "clipboardWrite"
+    "clipboardWrite",
+    "scripting"
   ],
   "host_permissions": [
     "http://127.0.0.1/*",

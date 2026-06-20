@@ -26,6 +26,7 @@ The popup shows local service health, service version, captured level counts, po
 - capture pause/resume toggle
 - `Copy TradingView`
 - `Copy JSON`
+- `Reconnect Tab`
 - `Copy Diagnostics`
 - `API Docs`
 - `Plugins`
@@ -33,7 +34,7 @@ The popup shows local service health, service version, captured level counts, po
 - refresh
 - options shortcut
 
-The capture toggle updates the same `captureEnabled` setting as the options page. `Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`, without adding extension permissions.
+The capture toggle updates the same `captureEnabled` setting as the options page. `Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`. `Reconnect Tab` attaches the capture hook to the active RocketScooter tab if the extension was loaded after the page was already open. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`.
 
 `Copy TradingView` is disabled while the local service is waiting for levels or reporting a stale source. Refresh RocketScooter to capture fresh levels before copying a Pine paste payload. `Copy JSON` remains available for inspection and tooling.
 
