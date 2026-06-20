@@ -31,5 +31,28 @@ assert.equal(nested.length, 1);
 assert.equal(nested[0].symbol, 'MNQ');
 assert.equal(nested[0].kind, 'open-close');
 
-console.log('core parser tests passed');
+const tupleRows = collectLevels({
+  rows: [
+    ['OVNHP', '7,537.00', 41, 98, 255],
+    ['DD Upper', '7,579.75', 'dd-band', '#29b6f6'],
+    ['Not a level', 123]
+  ]
+}, {
+  symbolHint: 'ES',
+  capturedAt: '2026-06-19T14:29:59.500Z'
+});
+assert.equal(tupleRows.length, 2);
+assert.equal(tupleRows[0].symbol, 'MES');
+assert.equal(tupleRows[0].price, 7537);
+assert.equal(tupleRows[0].color, '#2962FF');
+assert.equal(tupleRows[1].kind, 'dd-band');
+assert.equal(tupleRows[1].color, '#29B6F6');
 
+const colorObject = collectLevels({
+  levels: [{ label: 'Support Zone', value: '5,111.25', color: { red: 76, green: 175, blue: 80 } }]
+}, { symbolHint: 'MES' });
+assert.equal(colorObject.length, 1);
+assert.equal(colorObject[0].price, 5111.25);
+assert.equal(colorObject[0].color, '#4CAF50');
+
+console.log('core parser tests passed');

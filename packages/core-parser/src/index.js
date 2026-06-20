@@ -62,8 +62,8 @@ export function collectLevels(root, options = {}) {
   const levels = [];
   const seen = new Set();
   walk(root, 0, (node) => {
-    if (!node || typeof node !== 'object' || Array.isArray(node)) return;
-    const candidate = candidateFromObject(node, options);
+    if (!node || typeof node !== 'object') return;
+    const candidate = Array.isArray(node) ? candidateFromArray(node, options) : candidateFromObject(node, options);
     if (!candidate) return;
     const id = candidate.id || stableLevelId(candidate.symbol, candidate);
     if (seen.has(id)) return;
@@ -97,6 +97,26 @@ function candidateFromObject(node, options) {
   });
 }
 
+function candidateFromArray(row, options) {
+  if (!Array.isArray(row) || row.length < 2 || row.length > 12) return null;
+  const nameIndex = row.findIndex((item) => typeof item === 'string' && looksLikeDisplayLevelName(item));
+  if (nameIndex < 0) return null;
+  const name = stringValue(row[nameIndex]);
+  const priceInfo = firstArrayNumber(row, nameIndex);
+  if (!priceInfo) return null;
+  const symbol = normalizeSymbol(options.symbolHint || '');
+  return normalizeLevel(symbol, {
+    symbol,
+    name,
+    price: priceInfo.value,
+    kind: explicitKind(row) || inferLevelKind(name),
+    color: colorFromArray(row, nameIndex, priceInfo.index),
+    source: options.source || 'rocketscooter',
+    capturedAt: options.capturedAt || '',
+    metadata: {}
+  });
+}
+
 function groupLevelsBySymbol(levels) {
   const grouped = {};
   levels.forEach((level) => {
@@ -123,6 +143,7 @@ function detectSymbol(capture, body) {
 function walk(value, depth, visit) {
   if (depth > MAX_DEPTH || value == null) return;
   if (Array.isArray(value)) {
+    visit(value);
     value.forEach((item) => walk(item, depth + 1, visit));
     return;
   }
@@ -140,8 +161,17 @@ function firstString(node, keys) {
 
 function firstNumber(node, keys) {
   for (const key of keys) {
-    const n = Number(node[key]);
-    if (Number.isFinite(n)) return n;
+    const n = numberValue(node[key]);
+    if (n != null) return n;
+  }
+  return null;
+}
+
+function firstArrayNumber(row, skipIndex) {
+  for (let index = 0; index < row.length; index += 1) {
+    if (index === skipIndex) continue;
+    const value = numberValue(row[index]);
+    if (value != null) return { index, value };
   }
   return null;
 }
@@ -155,13 +185,34 @@ function looksLikeDisplayLevelName(name) {
 function normalizeInputColor(value) {
   if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value.trim())) return value.trim().toUpperCase();
   if (Array.isArray(value) && value.length >= 3) return rgbToHex(value[0], value[1], value[2]);
-  if (value && typeof value === 'object') return rgbToHex(value.r, value.g, value.b);
+  if (value && typeof value === 'object') {
+    const r = value.r ?? value.red;
+    const g = value.g ?? value.green;
+    const b = value.b ?? value.blue;
+    if ([r, g, b].every((part) => numberValue(part) != null)) return rgbToHex(r, g, b);
+  }
   return '';
+}
+
+function colorFromArray(row, nameIndex, priceIndex) {
+  const hex = row.find((item) => typeof item === 'string' && /^#[0-9a-f]{6}$/i.test(item.trim()));
+  if (hex) return normalizeInputColor(hex);
+  for (let index = 0; index <= row.length - 3; index += 1) {
+    if ([index, index + 1, index + 2].includes(nameIndex) || [index, index + 1, index + 2].includes(priceIndex)) continue;
+    const parts = [row[index], row[index + 1], row[index + 2]].map(colorByte);
+    if (parts.every((part) => part != null)) return rgbToHex(parts[0], parts[1], parts[2]);
+  }
+  return '';
+}
+
+function explicitKind(row) {
+  const allowed = new Set(['dd-band', 'hp', 'mhp', 'open-close', 'reference', 'zone', 'unknown']);
+  return row.map(stringValue).find((value) => allowed.has(value.toLowerCase())) || '';
 }
 
 function rgbToHex(r, g, b) {
   const parts = [r, g, b].map((part) => {
-    const n = Math.max(0, Math.min(255, Number(part) || 0));
+    const n = Math.trunc(Math.max(0, Math.min(255, numberValue(part) ?? 0)));
     return n.toString(16).padStart(2, '0');
   });
   return `#${parts.join('')}`.toUpperCase();
@@ -189,7 +240,21 @@ function integerOrNull(value) {
   return Number.isInteger(n) ? n : null;
 }
 
+function colorByte(value) {
+  const n = numberValue(value);
+  if (n == null || !Number.isInteger(n) || n < 0 || n > 255) return null;
+  return n;
+}
+
+function numberValue(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const clean = value.trim().replace(/[$,\s]/g, '');
+  if (!/^[+-]?\d+(?:\.\d+)?$/.test(clean)) return null;
+  const n = Number(clean);
+  return Number.isFinite(n) ? n : null;
+}
+
 function stringValue(value) {
   return value == null ? '' : String(value).trim();
 }
-
