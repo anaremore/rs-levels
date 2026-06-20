@@ -287,6 +287,37 @@ assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BZT1'
 assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BrZT1').kind, 'zone-bear');
 assert.equal(pageReaderCapture.symbols.QQQ, undefined);
 
+const pageReaderSnapshotArrays = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:58.000Z',
+  body: {
+    type: 'rs_snapshot',
+    source: 'page-reader',
+    capturedAt: '2026-06-19T14:31:58.000Z',
+    chartLines: [
+      { index: 'ES', chart: 'F.US.EPU26', text: 'OVNHP', price: 7565, color: '#2962ff' },
+      { index: 'NQ', chart: 'F.US.ENQU26', text: 'OVNMHP', price: 30667.5, color: '#ff9800' },
+      { index: 'SPY', chart: 'SPY', text: 'PrevDayClose', price: 722.51 }
+    ],
+    referenceLines: [
+      { index: 'ES', name: 'LastOpen', price: 7559.25, source: 'chart_shape' },
+      { index: 'NQ', name: 'MidGap', price: 30625.75, source: 'study:Liquidity Map' }
+    ],
+    zoneRectangles: [
+      { index: 'ES', chart: 'F.US.EPU26', top: 7580, bottom: 7560, text: 'Bull Zone: 7580', source: 'chart_shape' },
+      { index: 'NQ', chart: 'F.US.ENQU26', top: 30710, bottom: 30680, text: 'Bear Zone: 30710', source: 'chart_shape' }
+    ]
+  }
+});
+assert.equal(pageReaderSnapshotArrays.symbols.MES.length, 4);
+assert.equal(pageReaderSnapshotArrays.symbols.MNQ.length, 4);
+assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'OVNHP').kind, 'hp');
+assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'LastOpen').kind, 'open-close');
+assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'BZT1').kind, 'zone-bull');
+assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name.startsWith('BrZT')).kind, 'zone-bear');
+assert.equal(pageReaderSnapshotArrays.symbols.SPY, undefined);
+
 const manyZones = collectLevels({
   MES: {
     bullZones: Array.from({ length: 250 }, (_item, index) => ({

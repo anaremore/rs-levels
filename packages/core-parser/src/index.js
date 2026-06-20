@@ -21,7 +21,9 @@ const SYMBOL_KEYS = [
   'chartSymbol',
   'displaySymbol',
   'marketSymbol',
-  'feedSymbol'
+  'feedSymbol',
+  'chart',
+  'index'
 ];
 const ZONE_TOP_KEYS = ['top', 'upper', 'high', 'zoneTop', 'topPrice', 'upperPrice', 'highPrice'];
 const ZONE_BOTTOM_KEYS = ['bottom', 'lower', 'low', 'zoneBottom', 'bottomPrice', 'lowerPrice', 'lowPrice'];
@@ -107,12 +109,12 @@ export function endpointKey(capture = {}) {
 }
 
 function candidateFromObject(node, options) {
-  const name = firstString(node, NAME_KEYS);
+  const name = firstDisplayLevelName(node);
   const price = firstNumber(node, PRICE_KEYS);
   if (!name || price == null) return null;
   if (isBareQuoteFieldName(name)) return null;
   if (!looksLikeDisplayLevelName(name)) return null;
-  const symbol = candidateSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint);
+  const symbol = candidateSymbolFromNode(node, options);
   if (!symbol) return null;
   return normalizeLevel(symbol, {
     id: stringValue(node.id || node.key),
@@ -170,14 +172,14 @@ function candidatesFromZoneBounds(node, options) {
 
   const metadata = displayMetadata(node);
   const side = zoneSideFromText(
-    [options.zoneSide, metadata.side, metadata.type, metadata.group, firstString(node, NAME_KEYS), options.nameHint]
+    [options.zoneSide, metadata.side, metadata.type, metadata.group, displayNameText(node), options.nameHint]
       .map(stringValue)
       .filter(Boolean)
       .join(' ')
   );
   if (!side) return [];
 
-  const symbol = candidateSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint);
+  const symbol = candidateSymbolFromNode(node, options);
   if (!symbol) return [];
   const suffix = zoneSuffix(node, options);
   const prefix = side === 'bear' ? 'BrZ' : 'BZ';
@@ -223,7 +225,7 @@ function candidateFromNamedValue(name, value, options) {
     color = normalizeInputColor(value.color || value.colour || value.rgb);
     kind = levelKind(name, value.kind || kind, metadata, options);
     id = stringValue(value.id || value.key);
-    symbol = candidateSymbol(firstString(value, SYMBOL_KEYS) || options.symbolHint);
+    symbol = candidateSymbolFromNode(value, options);
     metadata = displayMetadata(value);
   }
 
@@ -285,6 +287,19 @@ function firstString(node, keys) {
     if (node[key] != null && String(node[key]).trim()) return String(node[key]).trim();
   }
   return '';
+}
+
+function firstDisplayLevelName(node) {
+  for (const key of NAME_KEYS) {
+    const value = stringValue(node[key]);
+    if (!value || isBareQuoteFieldName(value)) continue;
+    if (looksLikeDisplayLevelName(value)) return value;
+  }
+  return '';
+}
+
+function displayNameText(node) {
+  return NAME_KEYS.map((key) => stringValue(node[key])).filter(Boolean).join(' ');
 }
 
 function firstNumber(node, keys) {
@@ -360,7 +375,7 @@ function rgbToHex(r, g, b) {
 
 function displayMetadata(node) {
   const out = {};
-  ['source', 'type', 'group', 'side'].forEach((key) => {
+  ['source', 'type', 'group', 'side', 'chart', 'index', 'label', 'reader'].forEach((key) => {
     if (node[key] != null && typeof node[key] !== 'object') out[key] = node[key];
   });
   return out;
@@ -433,6 +448,18 @@ function candidateSymbol(value) {
   return symbol === 'MES' || symbol === 'MNQ' ? symbol : '';
 }
 
+function candidateSymbolFromNode(node, options = {}) {
+  let sawUnsupportedSymbol = false;
+  for (const key of SYMBOL_KEYS) {
+    const raw = stringValue(node[key]);
+    if (!raw) continue;
+    const symbol = candidateSymbol(raw);
+    if (symbol) return symbol;
+    if (isUnsupportedSymbolContext(raw)) sawUnsupportedSymbol = true;
+  }
+  return sawUnsupportedSymbol ? '' : candidateSymbol(options.symbolHint);
+}
+
 function isQuoteContextKey(key) {
   return /(watchlist|quote|quotes|ticker|screener|scanner)/i.test(stringValue(key));
 }
@@ -461,9 +488,16 @@ function zoneSideFromText(value) {
 }
 
 function zoneSuffix(node, options) {
-  const raw = stringValue(node.index || node.number || node.id || node.key || options.nameHint);
-  const match = raw.match(/\d+/);
-  return match ? match[0] : '';
+  const values = [node.number, node.zoneIndex, node.id, node.key, node.index];
+  for (const value of values) {
+    const raw = stringValue(value);
+    const match = raw.match(/\d+/);
+    if (match) return match[0];
+  }
+  const rawHint = stringValue(options.nameHint);
+  if (/^\d+$/.test(rawHint)) return String(Number(rawHint) + 1);
+  const hintMatch = rawHint.match(/\d+/);
+  return hintMatch ? hintMatch[0] : '';
 }
 
 function withEndpointMetadata(metadata, endpointKey) {

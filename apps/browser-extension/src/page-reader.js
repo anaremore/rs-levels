@@ -107,17 +107,29 @@
   function readDisplaySnapshot() {
     const capturedAt = new Date().toISOString();
     const state = {
+      type: 'rs_snapshot',
       source: 'page-reader',
       capturedAt,
       levels: [],
+      chartLines: [],
+      referenceLines: [],
+      zoneRectangles: [],
       reader: {
         chartCount: 0,
         shapeCount: 0,
         studyCount: 0,
-        levelCount: 0
+        levelCount: 0,
+        chartLineCount: 0,
+        referenceLineCount: 0,
+        zoneRectangleCount: 0
       }
     };
-    const seen = new Set();
+    const seen = {
+      levels: new Set(),
+      chartLines: new Set(),
+      referenceLines: new Set(),
+      zoneRectangles: new Set()
+    };
     try {
       const widget = globalThis.tvWidget;
       if (!widget) return state;
@@ -136,6 +148,9 @@
       stats.readErrorCount += 1;
     }
     state.reader.levelCount = state.levels.length;
+    state.reader.chartLineCount = state.chartLines.length;
+    state.reader.referenceLineCount = state.referenceLines.length;
+    state.reader.zoneRectangleCount = state.zoneRectangles.length;
     return state;
   }
 
@@ -143,6 +158,7 @@
     const shapes = safeArray(call(chart, 'getAllShapes'));
     state.reader.shapeCount += shapes.length;
     const zoneCounts = { bull: 0, bear: 0 };
+    const index = futuresIndex(symbol);
 
     for (const shape of shapes) {
       try {
@@ -156,11 +172,23 @@
         const label = shapeLabel(shape, props);
         const color = shapeColor(props);
         const side = zoneSide(label);
+        const shapeName = safeString(shape && shape.name);
 
         if (side && prices.length >= 2) {
           zoneCounts[side] += 1;
           const top = Math.max(...prices);
           const bottom = Math.min(...prices);
+          addZoneRectangle(state, seen, {
+            index,
+            chart: rawSymbol,
+            top,
+            bottom,
+            name: shapeName,
+            text: label,
+            color,
+            source: 'chart_shape',
+            side
+          });
           addLevel(state.levels, seen, {
             symbol,
             name: side === 'bear' ? `BrZT${zoneCounts[side]}` : `BZT${zoneCounts[side]}`,
@@ -187,6 +215,18 @@
         const price = prices[0];
         if (!(price > 0)) continue;
         const levelName = levelNameFromLabel(label, color);
+        if (shapeName === 'horizontal_line' || shapeName === 'horizontal_ray') {
+          addChartLine(state, seen, {
+            index,
+            chart: rawSymbol,
+            price,
+            text: levelName || label,
+            title: safeString(props && props.title),
+            color,
+            source: levelName ? 'chart_shape' : 'chart_horizontal',
+            label
+          });
+        }
         if (!levelName) continue;
         addLevel(state.levels, seen, {
           symbol,
@@ -198,6 +238,15 @@
           capturedAt: state.capturedAt,
           metadata: { rawSymbol, reader: 'shape-line' }
         });
+        if (kindFromName(levelName) === 'open-close') {
+          addReferenceLine(state, seen, {
+            index,
+            name: levelName,
+            price,
+            source: 'chart_shape',
+            text: label
+          });
+        }
       } catch (_err) {
         stats.readErrorCount += 1;
       }
@@ -207,6 +256,7 @@
   function readStudyLevels(chart, symbol, rawSymbol, state, seen) {
     const studies = safeArray(call(chart, 'getAllStudies'));
     state.reader.studyCount += studies.length;
+    const index = futuresIndex(symbol);
     for (const study of studies) {
       try {
         if (!/Liquidity|Map|Gap|Open|Close|Level|Zone|HP|MHP|DD/i.test(safeString(study.name))) continue;
@@ -234,6 +284,13 @@
             capturedAt: state.capturedAt,
             metadata: { rawSymbol, reader: 'study-plot', study: safeString(study.name) }
           });
+          addReferenceLine(state, seen, {
+            index,
+            name,
+            price,
+            source: `study:${safeString(study.name) || 'unknown'}`,
+            text: plotNames[i - 1] || ''
+          });
         }
       } catch (_err) {
         stats.readErrorCount += 1;
@@ -246,12 +303,68 @@
     const name = safeString(level.name);
     if (!name || !(price > 0)) return;
     const key = [level.symbol, name, price.toFixed(2), level.kind || ''].join('|');
-    if (seen.has(key)) return;
-    seen.add(key);
+    if (seen.levels.has(key)) return;
+    seen.levels.add(key);
     levels.push({
       ...level,
       name,
       price
+    });
+  }
+
+  function addChartLine(state, seen, line) {
+    const price = numberValue(line.price);
+    const text = compact(line.text);
+    if (!text || !(price > 0)) return;
+    const key = [line.index, text, price.toFixed(2), line.source || ''].join('|');
+    if (seen.chartLines.has(key)) return;
+    seen.chartLines.add(key);
+    state.chartLines.push({
+      index: safeString(line.index),
+      chart: safeString(line.chart),
+      price,
+      text,
+      title: safeString(line.title),
+      color: safeString(line.color),
+      source: safeString(line.source || 'chart_shape'),
+      label: compact(line.label)
+    });
+  }
+
+  function addReferenceLine(state, seen, line) {
+    const price = numberValue(line.price);
+    const name = compact(line.name);
+    if (!name || !(price > 0)) return;
+    const key = [line.index, name, price.toFixed(2), line.source || ''].join('|');
+    if (seen.referenceLines.has(key)) return;
+    seen.referenceLines.add(key);
+    state.referenceLines.push({
+      index: safeString(line.index),
+      name,
+      price,
+      source: safeString(line.source || 'chart_shape'),
+      text: compact(line.text)
+    });
+  }
+
+  function addZoneRectangle(state, seen, rectangle) {
+    const top = numberValue(rectangle.top);
+    const bottom = numberValue(rectangle.bottom);
+    if (!(top > 0) || !(bottom > 0) || top <= bottom) return;
+    const text = compact(rectangle.text);
+    const key = [rectangle.index, top.toFixed(2), bottom.toFixed(2), text, rectangle.source || ''].join('|');
+    if (seen.zoneRectangles.has(key)) return;
+    seen.zoneRectangles.add(key);
+    state.zoneRectangles.push({
+      index: safeString(rectangle.index),
+      chart: safeString(rectangle.chart),
+      top,
+      bottom,
+      name: safeString(rectangle.name),
+      text,
+      color: safeString(rectangle.color),
+      source: safeString(rectangle.source || 'chart_shape'),
+      side: safeString(rectangle.side)
     });
   }
 
@@ -343,6 +456,10 @@
     if (/\bNASDAQ\b/.test(text) || /\bNQ[-\s]?100\b/.test(text)) return 'MNQ';
     if (/\bS\s*&\s*P\s*500\b/.test(text) || /\bS\s+AND\s+P\s+500\b/.test(text)) return 'MES';
     return '';
+  }
+
+  function futuresIndex(symbol) {
+    return safeString(symbol).toUpperCase() === 'MNQ' ? 'NQ' : 'ES';
   }
 
   function chartCountFromWidget(widget) {

@@ -39,7 +39,7 @@ The capture toggle updates the same `captureEnabled` setting as the options page
 
 Capture is not limited by the selected popup symbol. The extension posts every allowlisted response it observes, and the local parser can store both MES and MNQ from one combined response. The symbol selector controls selected-symbol JSON export; the TradingView payload can carry all captured symbols.
 
-The page-reader fallback posts a synthetic `/page-reader/display` capture through the same local ingest endpoint. It emits only display names, prices, public kind labels, futures chart-family symbols, colors, and small metadata needed for diagnostics. It skips SPY/QQQ chart families and does not forward account, broker, execution, order-entry, raw DOM text, cookies, headers, or credentials.
+The page-reader fallback posts a synthetic `/page-reader/display` capture through the same local ingest endpoint. It emits generic display levels plus compatibility arrays named `chartLines`, `referenceLines`, and `zoneRectangles` so the local parser can consume RocketScooter live-chart drawings and study plots from both visible futures charts at once. It emits only display names, prices, public kind labels, futures chart-family symbols, colors, and small metadata needed for diagnostics. It skips SPY/QQQ chart families and does not forward account, broker, execution, order-entry, raw DOM text, cookies, headers, or credentials.
 
 If the popup remains waiting, `Hook: hook-installed` or `Hook: settings-synced` means the page hook is alive and waiting for RocketScooter traffic. `Observed: 0` means the hook has not seen fetch/XHR responses yet; use `Reconnect Tab`, then reload RocketScooter data or the tab so startup requests run with the hook installed.
 

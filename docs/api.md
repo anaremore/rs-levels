@@ -336,6 +336,8 @@ Accepted payload shape:
 
 `body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both ES/MES and NQ/MNQ sections, including CQG-style keys such as `F.US.EP...` and `F.US.ENQ...`, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
 
+The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, and `zoneRectangles` arrays. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line.
+
 ## CORS
 
 The service is origin-aware by default. It allows loopback browser tools, file-open dashboards, and browser-extension origins, but it does not return `Access-Control-Allow-Origin` for arbitrary websites.
