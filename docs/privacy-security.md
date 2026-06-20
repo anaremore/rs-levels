@@ -40,4 +40,4 @@ npm run scan:private
 npm run scan:secrets
 ```
 
-The scan scripts are implemented in `tools/scan-text.mjs` so they work without external command-line tools. Safety documentation may contain boundary terms, but implementation hits fail the scan and must be removed or explicitly reviewed before release.
+The scan scripts are implemented in `tools/scan-text.mjs` so they work without external command-line tools. Safety documentation may contain boundary terms, but implementation hits fail the scan and must be removed or explicitly reviewed before release. Plugin README files may describe the safety boundary; plugin source files are scanned as implementation.

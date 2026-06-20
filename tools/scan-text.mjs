@@ -39,8 +39,7 @@ const allowedDocumentation = [
   'apps/browser-extension/README.md',
   'apps/local-service/README.md',
   'packages/core-parser/README.md',
-  'packages/schemas/README.md',
-  'plugins/'
+  'packages/schemas/README.md'
 ];
 
 const hits = [];
@@ -90,7 +89,8 @@ async function scanFile(absolute, relative) {
 }
 
 function isAllowedDocumentation(file) {
-  return allowedDocumentation.some((allowed) => file === allowed || file.startsWith(allowed));
+  return allowedDocumentation.some((allowed) => file === allowed || file.startsWith(allowed)) ||
+    /^plugins\/[^/]+\/README\.md$/.test(file);
 }
 
 function slash(value) {
