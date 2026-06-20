@@ -93,6 +93,8 @@ Then open the dashboard, run a client example, copy a TradingView payload from `
 5. If RocketScooter was already open before the extension loaded or reloaded, click `Reconnect Tab`.
 6. Confirm the service status changes from waiting/offline to live once levels are captured.
 
+You can keep the current ES and NQ futures contracts visible in RocketScooter. CQG-style symbols such as `F.US.EP...` normalize to `MES`, and `F.US.ENQ...` normalizes to `MNQ`, so the same captured levels can be used on ES/MES and NQ/MNQ charts in the destination platform.
+
 If capture does not start, open extension options and review the endpoint allowlist.
 
 ## 4. Use TradingView

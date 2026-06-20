@@ -22,9 +22,13 @@ References:
 ```text
 GET /tradingview/MES
 GET /tradingview/MNQ
+GET /tradingview/F.US.EP...
+GET /tradingview/F.US.ENQ...
 GET /tradingview/MES?format=json
 GET /tradingview/MNQ?format=json
 ```
+
+The CQG-style RocketScooter paths normalize to the same ES/MES and NQ/MNQ families as `/levels/:symbol`; users do not need to paste the exact current contract code into TradingView.
 
 Default response is text/plain:
 

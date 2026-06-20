@@ -34,7 +34,7 @@ GET /tradingview/:symbol
 GET /tradingview/:symbol?format=json
 ```
 
-Plugins should normalize `ES` to `MES` and `NQ` to `MNQ` the same way the API does, or simply rely on the API response symbol.
+Plugins should normalize `ES` to `MES` and `NQ` to `MNQ` the same way the API does, or simply rely on the API response symbol. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the `MES` family, and `/levels/F.US.ENQ...` resolves to the `MNQ` family.
 
 The API sends `Cache-Control: no-store` on HTTP responses. Plugins should still poll on their own refresh interval and use `/status` freshness fields as the source of truth.
 

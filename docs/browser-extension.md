@@ -80,7 +80,7 @@ indicators
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.
 
-Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both MES and MNQ display data, the local parser stores both symbols; the popup symbol selector only controls which export is copied.
+Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols; the popup symbol selector only controls which export is copied. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored as `MES`, and `F.US.ENQ...` symbols are stored as `MNQ`, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform.
 
 ## Tailscale And Private Networks
 

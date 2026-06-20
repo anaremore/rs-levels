@@ -154,9 +154,38 @@ export function validateLevel(level) {
 
 export function normalizeSymbol(value) {
   const text = stringValue(value).toUpperCase();
-  if (text.includes('NQ')) return 'MNQ';
-  if (text.includes('ES')) return 'MES';
-  return text || 'MES';
+  if (!text) return 'MES';
+  if (isNqFamilySymbol(text)) return 'MNQ';
+  if (isEsFamilySymbol(text)) return 'MES';
+  return text;
+}
+
+function isNqFamilySymbol(text) {
+  const parts = symbolParts(text);
+  return parts.some((part) => (
+    part === 'MNQ' ||
+    part === 'NQ' ||
+    part === 'ENQ' ||
+    part === 'QQQ' ||
+    /^M?NQ[FGHJKMNQUVXZ]\d{1,2}$/.test(part) ||
+    /^ENQ[FGHJKMNQUVXZ]\d{1,2}$/.test(part)
+  )) || /\bNASDAQ\b/.test(text) || /\bNQ[-\s]?100\b/.test(text);
+}
+
+function isEsFamilySymbol(text) {
+  const parts = symbolParts(text);
+  return parts.some((part) => (
+    part === 'MES' ||
+    part === 'ES' ||
+    part === 'EP' ||
+    part === 'SPY' ||
+    /^M?ES[FGHJKMNQUVXZ]\d{1,2}$/.test(part) ||
+    /^EP[FGHJKMNQUVXZ]\d{1,2}$/.test(part)
+  )) || /\bS\s*&\s*P\s*500\b/.test(text) || /\bS\s+AND\s+P\s+500\b/.test(text) || /\bSPX?\s*500\b/.test(text);
+}
+
+function symbolParts(text) {
+  return stringValue(text).toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
 }
 
 export function inferLevelKind(name) {

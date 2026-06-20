@@ -192,7 +192,7 @@ Returns all known levels as a flat array.
 
 ## GET /levels/:symbol
 
-Returns one normalized symbol snapshot. Aliases are normalized through the public schema package, so `ES` maps to `MES` and `NQ` maps to `MNQ`.
+Returns one normalized symbol snapshot. Aliases are normalized through the public schema package, so `ES` maps to `MES` and `NQ` maps to `MNQ`. Current-contract CQG-style RocketScooter symbols are normalized into the same families: `F.US.EP...` and `EP...` map to `MES`, while `F.US.ENQ...` and `ENQ...` map to `MNQ`.
 
 Unknown symbols return `404`:
 
@@ -216,7 +216,7 @@ Columns are `name,price,red,green,blue`. Missing symbols return an empty text bo
 
 ## GET /tradingview/:symbol
 
-Returns a compact text payload for the included TradingView Pine indicator. Aliases normalize the same way as `/levels/:symbol`.
+Returns a compact text payload for the included TradingView Pine indicator. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
 
 ```text
 RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
@@ -284,7 +284,7 @@ Accepted payload shape:
 }
 ```
 
-`body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both `MES` and `MNQ` keyed sections, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
+`body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both ES/MES and NQ/MNQ sections, including CQG-style keys such as `F.US.EP...` and `F.US.ENQ...`, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
 
 ## CORS
 

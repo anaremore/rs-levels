@@ -116,6 +116,42 @@ assert.equal(multiSymbol.symbols.MES.find((level) => level.name === 'BrZT1').kin
 assert.equal(multiSymbol.symbols.MNQ.find((level) => level.name === 'BrZT2').kind, 'zone-bear');
 assert.equal(multiSymbol.symbols.MNQ.find((level) => level.name === 'BZT3').kind, 'zone-bull');
 
+const cqgEndpointSymbol = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/F.US.EPU26',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:30.000Z',
+  body: {
+    instrument: 'F.US.EPU26',
+    levels: [
+      { name: 'OVNHP', price: 7557.75 }
+    ]
+  }
+});
+assert.equal(cqgEndpointSymbol.symbols.MES.length, 1);
+assert.equal(cqgEndpointSymbol.symbols.MES[0].symbol, 'MES');
+
+const cqgMultiSymbol = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:45.000Z',
+  body: {
+    charts: {
+      'F.US.EPU26': {
+        levels: [{ name: 'DD Upper', price: 7588.25 }],
+        bullZones: [{ index: 2, top: 7590, bottom: 7575 }]
+      },
+      'F.US.ENQU26': {
+        levels: [{ name: 'QQQ Open', price: 30625.75 }],
+        bearZones: [{ index: 2, top: 30667.5, bottom: 30638 }]
+      }
+    }
+  }
+});
+assert.equal(cqgMultiSymbol.symbols.MES.length, 3);
+assert.equal(cqgMultiSymbol.symbols.MNQ.length, 3);
+assert.equal(cqgMultiSymbol.symbols.MES.find((level) => level.name === 'BZT2').kind, 'zone-bull');
+assert.equal(cqgMultiSymbol.symbols.MNQ.find((level) => level.name === 'BrZT2').kind, 'zone-bear');
+
 const manyZones = collectLevels({
   MES: {
     bullZones: Array.from({ length: 250 }, (_item, index) => ({

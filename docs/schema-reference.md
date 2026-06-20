@@ -47,6 +47,8 @@ Each symbol key maps to a display snapshot:
 }
 ```
 
+Symbols are normalized to display families for cross-platform chart use. `ES`, `MES`, CQG `EP` contracts such as `F.US.EPU26`, and S&P 500 chart titles map to `MES`; `NQ`, `MNQ`, CQG `ENQ` contracts such as `F.US.ENQU26`, and NASDAQ-100 chart titles map to `MNQ`.
+
 ## Level
 
 ```json

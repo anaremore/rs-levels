@@ -10,7 +10,19 @@ const MAX_DEPTH = 8;
 
 const NAME_KEYS = ['name', 'label', 'text', 'title', 'caption', 'displayName', 'level', 'levelName', 'pivotName'];
 const PRICE_KEYS = ['price', 'value', 'val', 'target', 'last', 'y', 'p', 'levelPrice', 'levelValue', 'pivotPrice'];
-const SYMBOL_KEYS = ['symbol', 'ticker', 'root', 'instrument'];
+const SYMBOL_KEYS = [
+  'symbol',
+  'ticker',
+  'root',
+  'instrument',
+  'contract',
+  'contractSymbol',
+  'cqgSymbol',
+  'chartSymbol',
+  'displaySymbol',
+  'marketSymbol',
+  'feedSymbol'
+];
 const ZONE_TOP_KEYS = ['top', 'upper', 'high', 'zoneTop', 'topPrice', 'upperPrice', 'highPrice'];
 const ZONE_BOTTOM_KEYS = ['bottom', 'lower', 'low', 'zoneBottom', 'bottomPrice', 'lowerPrice', 'lowPrice'];
 
@@ -234,15 +246,17 @@ function groupLevelsBySymbol(levels) {
 }
 
 function detectSymbol(capture, body) {
-  const haystack = [
+  const values = [
     capture.symbol,
     capture.endpoint,
     capture.path,
     capture.url,
     JSON.stringify(shallowPick(body, SYMBOL_KEYS))
-  ].map(stringValue).join(' ').toUpperCase();
-  if (haystack.includes('NQ') || haystack.includes('QQQ')) return 'MNQ';
-  if (haystack.includes('ES') || haystack.includes('SPY')) return 'MES';
+  ];
+  for (const value of values) {
+    const symbol = detectedSymbol(value);
+    if (symbol) return symbol;
+  }
   return '';
 }
 
@@ -364,8 +378,16 @@ function contextFromKey(context, key) {
 }
 
 function symbolFromKey(key) {
-  const text = stringValue(key).toUpperCase();
-  if (/^(MES|ES|MNQ|NQ)$/.test(text)) return normalizeSymbol(text);
+  return detectedSymbol(key);
+}
+
+function detectedSymbol(value) {
+  const raw = stringValue(value);
+  if (!raw) return '';
+  const normalized = normalizeSymbol(raw);
+  const upper = raw.toUpperCase();
+  if (normalized === 'MNQ' && (normalized !== upper || upper === 'MNQ' || upper === 'NQ')) return 'MNQ';
+  if (normalized === 'MES' && (normalized !== upper || upper === 'MES' || upper === 'ES')) return 'MES';
   return '';
 }
 

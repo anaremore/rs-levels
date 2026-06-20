@@ -172,6 +172,9 @@ try {
   const aliasLevels = await getJson(`${baseUrl}/levels/ES`);
   assert.equal(aliasLevels.symbol, 'MES');
 
+  const cqgEsLevels = await getJson(`${baseUrl}/levels/F.US.EPU26`);
+  assert.equal(cqgEsLevels.symbol, 'MES');
+
   const text = await getText(`${baseUrl}/levels/MES?format=sierra`);
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
 
@@ -209,10 +212,10 @@ try {
     capturedAt,
     body: {
       levels: {
-        MES: {
+        'F.US.EPU26': {
           bullZones: [{ index: 1, top: 7580, bottom: 7560 }]
         },
-        MNQ: {
+        'F.US.ENQU26': {
           bearZones: [{ index: 1, top: 30450, bottom: 30412 }]
         }
       }
@@ -228,6 +231,9 @@ try {
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /BrZT1,30450\.00,zone-bear/);
+
+  const cqgNqLevels = await getJson(`${baseUrl}/levels/F.US.ENQU26`);
+  assert.equal(cqgNqLevels.symbol, 'MNQ');
 
   const zones = await getJson(`${baseUrl}/zones`);
   assert.equal(zones.levels.length, 4);
