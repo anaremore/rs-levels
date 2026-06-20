@@ -56,6 +56,25 @@ assert.equal(colorObject.length, 1);
 assert.equal(colorObject[0].price, 5111.25);
 assert.equal(colorObject[0].color, '#4CAF50');
 
+const keyedMap = collectLevels({
+  levelsByName: {
+    OVNMHP: { target: '30,125.50', kind: 'mhp', rgb: { r: 255, g: 152, b: 0 } },
+    'DD Lower': '29,900.25',
+    notes: 'not a level'
+  }
+}, {
+  symbolHint: 'NQ',
+  capturedAt: '2026-06-19T14:29:59.500Z'
+});
+assert.equal(keyedMap.length, 2);
+assert.equal(keyedMap[0].symbol, 'MNQ');
+assert.equal(keyedMap[0].name, 'OVNMHP');
+assert.equal(keyedMap[0].price, 30125.5);
+assert.equal(keyedMap[0].kind, 'mhp');
+assert.equal(keyedMap[0].color, '#FF9800');
+assert.equal(keyedMap[1].name, 'DD Lower');
+assert.equal(keyedMap[1].kind, 'dd-band');
+
 assert.equal(
   endpointKey({ url: 'https://example.test/platform/api/users/1234567890/feeds/abcdef1234567890/ddbands/MES?private=value' }),
   '/platform/api/users/:id/feeds/:id/ddbands/MES'

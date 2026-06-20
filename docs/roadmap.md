@@ -22,6 +22,7 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 - Cross-platform localhost service.
 - Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
 - Safe loopback default with explicit Tailscale/private-network opt-in.
+- Generic display parser normalizes object, compact row, and keyed map level shapes.
 - Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state.
 - Public source endpoint summaries omit raw URLs and scrub identifier-like path segments.
 - API responses report the local service version and use `Cache-Control: no-store`.

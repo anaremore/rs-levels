@@ -67,7 +67,7 @@ Goal: carefully extract only display-level parsing.
 Deliverables:
 
 - allowlisted endpoint capture parsing: implemented through generic display-level parser
-- normalized level rows: implemented for object and compact row shapes
+- normalized level rows: implemented for object, compact row, and keyed map shapes
 - source freshness and warnings: implemented in the local service/store
 - endpoint summary scrubbing: implemented for raw URLs and identifier-like path segments
 - private-term scan reviewed before commit

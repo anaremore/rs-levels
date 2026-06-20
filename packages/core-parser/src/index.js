@@ -9,8 +9,8 @@ import {
 const MAX_DEPTH = 8;
 const MAX_LEVELS_PER_CAPTURE = 200;
 
-const NAME_KEYS = ['name', 'label', 'text', 'title', 'level', 'levelName', 'pivotName'];
-const PRICE_KEYS = ['price', 'value', 'last', 'y', 'levelPrice', 'pivotPrice'];
+const NAME_KEYS = ['name', 'label', 'text', 'title', 'caption', 'displayName', 'level', 'levelName', 'pivotName'];
+const PRICE_KEYS = ['price', 'value', 'val', 'target', 'last', 'y', 'p', 'levelPrice', 'levelValue', 'pivotPrice'];
 const SYMBOL_KEYS = ['symbol', 'ticker', 'root', 'instrument'];
 
 export function normalizeCapture(capture = {}) {
@@ -63,12 +63,16 @@ export function collectLevels(root, options = {}) {
   const seen = new Set();
   walk(root, 0, (node) => {
     if (!node || typeof node !== 'object') return;
-    const candidate = Array.isArray(node) ? candidateFromArray(node, options) : candidateFromObject(node, options);
-    if (!candidate) return;
-    const id = candidate.id || stableLevelId(candidate.symbol, candidate);
-    if (seen.has(id)) return;
-    seen.add(id);
-    levels.push({ ...candidate, id });
+    const candidates = Array.isArray(node) ? [candidateFromArray(node, options)] : [
+      candidateFromObject(node, options),
+      ...candidatesFromNamedPriceMap(node, options)
+    ];
+    candidates.filter(Boolean).forEach((candidate) => {
+      const id = candidate.id || stableLevelId(candidate.symbol, candidate);
+      if (seen.has(id)) return;
+      seen.add(id);
+      levels.push({ ...candidate, id });
+    });
   });
   return levels.slice(0, MAX_LEVELS_PER_CAPTURE);
 }
@@ -114,6 +118,49 @@ function candidateFromArray(row, options) {
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
     metadata: {}
+  });
+}
+
+function candidatesFromNamedPriceMap(node, options) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) return [];
+  const candidates = [];
+  for (const [rawName, rawValue] of Object.entries(node)) {
+    const name = stringValue(rawName);
+    if (!looksLikeDisplayLevelName(name)) continue;
+    const candidate = candidateFromNamedValue(name, rawValue, options);
+    if (candidate) candidates.push(candidate);
+  }
+  return candidates;
+}
+
+function candidateFromNamedValue(name, value, options) {
+  let price = numberValue(value);
+  let color = '';
+  let kind = inferLevelKind(name);
+  let id = '';
+  let symbol = normalizeSymbol(options.symbolHint || '');
+  let metadata = {};
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    price = firstNumber(value, PRICE_KEYS);
+    color = normalizeInputColor(value.color || value.colour || value.rgb);
+    kind = stringValue(value.kind) || kind;
+    id = stringValue(value.id || value.key);
+    symbol = normalizeSymbol(firstString(value, SYMBOL_KEYS) || options.symbolHint || '');
+    metadata = displayMetadata(value);
+  }
+
+  if (price == null) return null;
+  return normalizeLevel(symbol, {
+    id,
+    symbol,
+    name,
+    price,
+    kind,
+    color,
+    source: options.source || 'rocketscooter',
+    capturedAt: options.capturedAt || '',
+    metadata
   });
 }
 
