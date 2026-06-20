@@ -17,6 +17,10 @@
       <label for="service-url">Local service URL</label>
       <input id="service-url" type="url" spellcheck="false">
       <p class="hint">Default: http://127.0.0.1:8765. Use a Tailscale URL only when you intentionally expose the local service.</p>
+      <div class="service-actions">
+        <button id="test-service" type="button">Test Service</button>
+        <span id="permission-status" class="status">Permission: checking</span>
+      </div>
     </section>
 
     <section class="panel">

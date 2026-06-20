@@ -26,6 +26,8 @@ const popup = readFileSync(join(root, 'src', 'popup.js'), 'utf8');
 const popupHtml = readFileSync(join(root, 'src', 'popup.html'), 'utf8');
 const popupCss = readFileSync(join(root, 'src', 'popup.css'), 'utf8');
 const options = readFileSync(join(root, 'src', 'options.js'), 'utf8');
+const optionsHtml = readFileSync(join(root, 'src', 'options.html'), 'utf8');
+const optionsCss = readFileSync(join(root, 'src', 'options.css'), 'utf8');
 
 assert.match(contentScript, /capture-rules\.js/);
 assert.match(contentScript, /page-hook\.js/);
@@ -61,5 +63,14 @@ assert.match(popupHtml, /ignored-count/);
 assert.match(popupHtml, /skipped-count/);
 assert.match(popupCss, /\.pill\.warning/);
 assert.match(options, /chrome\.permissions\.request/);
+assert.match(options, /chrome\.permissions\.contains/);
+assert.match(options, /testService/);
+assert.match(options, /fetchHealth/);
+assert.match(options, /\/health/);
+assert.match(options, /AbortController/);
+assert.match(options, /permissionStatus/);
+assert.match(optionsHtml, /test-service/);
+assert.match(optionsHtml, /permission-status/);
+assert.match(optionsCss, /\.status\.warning/);
 
 console.log('browser extension static tests passed');

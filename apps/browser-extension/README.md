@@ -39,6 +39,8 @@ Options let users configure:
 - capture enabled/paused
 - endpoint URL allowlist
 - max capture size
+- service reachability test
+- Chrome origin permission status for the configured service URL
 
 For Tailscale/private-network use, point the service URL at the trusted machine after the local service has been explicitly started with remote access enabled. Chrome will ask for permission to reach that specific origin.
 

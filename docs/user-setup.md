@@ -113,6 +113,8 @@ http://100.x.y.z:8765
 
 Chrome will ask for permission to reach that specific origin. The extension does not auto-discover or broadcast service locations.
 
+Use `Test Service` in the options page to confirm Chrome permission and `/health` reachability for the configured private address.
+
 ## Use Examples
 
 The `examples/` folder includes dependency-free clients for local API exploration:
@@ -130,4 +132,4 @@ All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the
 - `OFFLINE` in the popup: start the API or check the service URL. Use `Copy Diagnostics` for a scrubbed setup bundle.
 - No symbols in the popup: open RocketScooter and wait for allowlisted level responses. If `Observed` rises but `Ignored` also rises, review the endpoint allowlist in extension options. If `Skipped` rises, check max capture bytes or whether the endpoint returns empty/non-text responses.
 - TradingView lines do not update: copy a fresh payload and paste it into the indicator input.
-- Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and Chrome granted the extension origin permission.
+- Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and `Test Service` succeeds in the extension options page.
