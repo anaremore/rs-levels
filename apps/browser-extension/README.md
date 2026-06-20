@@ -37,6 +37,8 @@ The capture toggle updates the same `captureEnabled` setting as the options page
 
 `Copy TradingView` is disabled while the local service is waiting for levels or reporting a stale source. Refresh RocketScooter to capture fresh levels before copying a Pine paste payload. `Copy JSON` remains available for inspection and tooling.
 
+Capture is not limited by the selected popup symbol. The extension posts every allowlisted response it observes, and the local parser can store both MES and MNQ from one combined response. The symbol selector only controls which export is copied.
+
 ## Options
 
 Options let users configure:
@@ -47,6 +49,8 @@ Options let users configure:
 - max capture size
 - service reachability test
 - Chrome origin permission status for the configured service URL
+
+Older unpacked extension settings migrate to the current display-feed allowlist after reload or update.
 
 For Tailscale/private-network use, point the service URL at the trusted machine after the local service has been explicitly started with remote access enabled. Chrome will ask for permission to reach that specific origin.
 

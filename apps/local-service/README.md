@@ -65,6 +65,7 @@ GET  /levels
 GET  /levels/:symbol
 GET  /levels/:symbol?format=sierra
 GET  /ddbands
+GET  /zones
 GET  /references
 GET  /tradingview/:symbol
 GET  /tradingview/:symbol?format=json

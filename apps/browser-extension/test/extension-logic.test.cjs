@@ -19,6 +19,13 @@ const settings = sharedContext.RS_LEVELS.cleanSettings({
 assert.equal(settings.serviceUrl, 'http://127.0.0.1:8765');
 assert.equal(JSON.stringify(settings.endpointPatterns), JSON.stringify(['level', 'zone', 'ddband']));
 assert.equal(settings.maxCaptureBytes, 1024);
+assert.equal(sharedContext.RS_LEVELS.defaults.settingsVersion, 2);
+assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('chart'));
+assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('indicator'));
+assert.deepEqual(
+  sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 1, endpointPatterns: ['level'] }).endpointPatterns,
+  sharedContext.RS_LEVELS.mergeEndpointPatterns(['level'], sharedContext.RS_LEVELS.defaults.endpointPatterns)
+);
 assert.equal(sharedContext.RS_LEVELS.cleanSettings({ maxCaptureBytes: 99999999 }).maxCaptureBytes, 5 * 1024 * 1024);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('ftp://example.test'), /http or https/);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('not a url'), /Invalid URL/);

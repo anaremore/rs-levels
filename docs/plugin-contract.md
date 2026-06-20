@@ -69,8 +69,12 @@ mhp         #FF9800
 open-close  #E0E0E0
 reference   #FFEB3B
 zone        #4CAF50
+zone-bull   #4CAF50
+zone-bear   #F06292
 unknown     #9E9E9E
 ```
+
+`zone-bull` and `zone-bear` are preferred when the source distinguishes bullish/demand/support zones from bearish/supply/resistance zones. Generic `zone` remains valid for sources that do not expose side.
 
 ## Safety Tests
 

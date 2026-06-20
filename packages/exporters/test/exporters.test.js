@@ -6,12 +6,14 @@ const row = {
   capturedAt: '2026-06-19T14:29:59.500Z',
   levels: [
     { name: 'OVNHP', price: 7537, kind: 'hp', color: '#2962FF' },
-    { name: 'DD Upper; bad|chars', price: 7579.75, kind: 'dd-band', color: '#29B6F6' }
+    { name: 'DD Upper; bad|chars', price: 7579.75, kind: 'dd-band', color: '#29B6F6' },
+    { name: 'BZT1', price: 7588, kind: 'zone-bull', color: '#4CAF50' },
+    { name: 'BrZT1', price: 7612, kind: 'zone-bear', color: '#F06292' }
   ]
 };
 
 const payload = createTradingViewPayload(row);
-assert.equal(payload, 'RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper bad chars,7579.75,dd-band');
+assert.equal(payload, 'RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper bad chars,7579.75,dd-band;BZT1,7588.00,zone-bull;BrZT1,7612.00,zone-bear');
 
 const json = createTradingViewJsonExport(row, { generatedAt: '2026-06-19T14:30:00.000Z' });
 assert.equal(json.schemaVersion, '0.1.0');
@@ -19,7 +21,22 @@ assert.equal(json.exportFormat, 'tradingview-json');
 assert.equal(json.payloadVersion, 1);
 assert.equal(json.symbol, 'MES');
 assert.equal(json.compactPayload, payload);
-assert.equal(json.levels.length, 2);
+assert.equal(json.levels.length, 4);
 assert.equal(json.levels[1].color, '#29B6F6');
+assert.equal(json.levels[2].kind, 'zone-bull');
+assert.equal(json.levels[3].kind, 'zone-bear');
+
+const manyLevels = {
+  symbol: 'MES',
+  capturedAt: '2026-06-19T14:29:59.500Z',
+  levels: Array.from({ length: 120 }, (_item, index) => ({
+    name: `BZT${index + 1}`,
+    price: 7500 + index,
+    kind: 'zone-bull'
+  }))
+};
+assert.equal(createTradingViewJsonExport(manyLevels).levels.length, 120);
+assert.equal(createTradingViewPayload(manyLevels).split(';').length, 120);
+assert.equal(createTradingViewPayload(manyLevels, { maxLevels: 10 }).split(';').length, 10);
 
 console.log('exporter tests passed');

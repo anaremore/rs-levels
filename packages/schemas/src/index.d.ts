@@ -4,6 +4,8 @@ export type LevelKind =
   | 'hp'
   | 'mhp'
   | 'zone'
+  | 'zone-bull'
+  | 'zone-bear'
   | 'dd-band'
   | 'reference'
   | 'open-close'

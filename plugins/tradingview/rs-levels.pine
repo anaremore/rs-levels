@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels", overlay = true, max_lines_count = 100, max_labels_count = 100)
+indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500)
 
 payload = input.string("", "RS Levels Payload")
 showLabels = input.bool(true, "Labels")
@@ -10,10 +10,12 @@ showMhp = input.bool(true, "MHP")
 showOpenClose = input.bool(true, "Open/close")
 showReference = input.bool(true, "References")
 showZones = input.bool(true, "Zones")
+showBullZones = input.bool(true, "Bull zones")
+showBearZones = input.bool(true, "Bear zones")
 showUnknown = input.bool(true, "Unknown")
 lineWidth = input.int(1, "Line width", minval = 1, maxval = 4)
 labelOffset = input.int(1, "Label offset", minval = 0, maxval = 20)
-maxLevelsInput = input.int(40, "Max levels", minval = 1, maxval = 40)
+maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"])
 
 var line[] rsLines = array.new_line()
@@ -32,6 +34,8 @@ kindColor(kind) =>
         "mhp" => color.rgb(255, 152, 0)
         "open-close" => color.rgb(224, 224, 224)
         "reference" => color.rgb(255, 235, 59)
+        "zone-bull" => color.rgb(76, 175, 80)
+        "zone-bear" => color.rgb(240, 98, 146)
         "zone" => color.rgb(76, 175, 80)
         => color.rgb(158, 158, 158)
 
@@ -42,6 +46,8 @@ kindEnabled(kind) =>
         "mhp" => showMhp
         "open-close" => showOpenClose
         "reference" => showReference
+        "zone-bull" => showZones and showBullZones
+        "zone-bear" => showZones and showBearZones
         "zone" => showZones
         => showUnknown
 
@@ -58,15 +64,15 @@ drawLevel(name, priceText, kind) =>
         levelColor = kindColor(kind)
         newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth, style = lineStyle())
         array.push(rsLines, newLine)
-        if showLabels
-            text = name + " " + str.tostring(price, format.mintick)
-            newLabel = label.new(bar_index + labelOffset, price, text, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
+        if showLabels and array.size(rsLabels) < 499
+            labelText = name + " " + str.tostring(price, format.mintick)
+            newLabel = label.new(bar_index + labelOffset, price, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
             array.push(rsLabels, newLabel)
         drawn := true
     drawn
 
 drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount) =>
-    if showStatus
+    if showStatus and array.size(rsLabels) < 500
         statusText = validPayload ? "RS Levels " + symbolText + " " + str.tostring(drawnCount) + "/" + str.tostring(totalCount) + " " + capturedText : "RS Levels: paste RSLEVELS payload"
         statusColor = validPayload ? color.new(color.rgb(18, 54, 93), 0) : color.new(color.rgb(80, 39, 39), 0)
         statusTextColor = validPayload ? color.rgb(234, 245, 255) : color.rgb(255, 190, 190)
@@ -85,8 +91,8 @@ if barstate.islast
         levelText = array.get(parts, 4)
         if levelText != ""
             items = str.split(levelText, ";")
-            count = math.min(array.size(items), maxLevelsInput)
-            totalCount := count
+            totalCount := array.size(items)
+            count = math.min(totalCount, maxLevelsInput)
             for i = 0 to count - 1
                 fields = str.split(array.get(items, i), ",")
                 if array.size(fields) >= 3

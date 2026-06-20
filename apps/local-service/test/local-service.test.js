@@ -45,6 +45,21 @@ const staleDiagnostics = diagnostics(freshnessStore, {
 });
 assert.ok(staleDiagnostics.checks.some((check) => check.id === 'source' && check.status === 'warning'));
 
+const emptyCaptureStore = createLevelStore({
+  clock: () => new Date('2026-06-20T12:01:00.000Z')
+});
+emptyCaptureStore.applyCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-06-20T12:01:00.000Z',
+  body: { ok: true, rows: [{ name: 'Not display data', value: 123 }] }
+});
+const emptyCaptureSnapshot = emptyCaptureStore.getSnapshot();
+assert.equal(emptyCaptureSnapshot.source.state, 'waiting');
+assert.equal(emptyCaptureSnapshot.source.connected, false);
+assert.equal(emptyCaptureSnapshot.source.endpoints[0].ok, false);
+assert.equal(emptyCaptureStore.flatLevels().length, 0);
+
 const service = createService({
   config: { host: '127.0.0.1', port: 0 }
 });
@@ -187,6 +202,37 @@ try {
   });
   assert.equal(replacementCapture.snapshot.symbols.MES.levels.length, 1);
   assert.equal(replacementCapture.snapshot.symbols.MES.levels[0].name, 'DD Lower');
+
+  const combinedCapture = await postJson(`${baseUrl}/capture/api`, {
+    endpoint: '/platform/api/v1/chart/display',
+    status: 200,
+    capturedAt,
+    body: {
+      levels: {
+        MES: {
+          bullZones: [{ index: 1, top: 7580, bottom: 7560 }]
+        },
+        MNQ: {
+          bearZones: [{ index: 1, top: 30450, bottom: 30412 }]
+        }
+      }
+    }
+  });
+  assert.equal(combinedCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'zone-bull'), true);
+  assert.equal(combinedCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'zone-bear'), true);
+
+  const multiSymbolStatus = await getJson(`${baseUrl}/status`);
+  assert.deepEqual(multiSymbolStatus.symbols, ['MES', 'MNQ']);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'MES').levelCount, 3);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'MNQ').levelCount, 2);
+
+  const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
+  assert.match(mnqTradingViewPayload, /BrZT1,30450\.00,zone-bear/);
+
+  const zones = await getJson(`${baseUrl}/zones`);
+  assert.equal(zones.levels.length, 4);
+  assert.equal(zones.levels.some((level) => level.kind === 'zone-bull'), true);
+  assert.equal(zones.levels.some((level) => level.kind === 'zone-bear'), true);
 
   const remoteService = createService({
     config: { host: '0.0.0.0', port: 0, allowRemote: false }

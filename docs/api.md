@@ -28,6 +28,7 @@ GET  /levels
 GET  /levels/:symbol
 GET  /levels/:symbol?format=sierra
 GET  /ddbands
+GET  /zones
 GET  /references
 GET  /tradingview/:symbol
 GET  /tradingview/:symbol?format=json
@@ -46,7 +47,7 @@ Returns service metadata and endpoint hints.
   "ok": true,
   "name": "RS Levels local service",
   "version": "0.0.0",
-  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/zones", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -221,7 +222,7 @@ Returns a compact text payload for the included TradingView Pine indicator. Alia
 RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
 ```
 
-The payload is intentionally not JSON because Pine scripts do not include a JSON parser and cannot poll localhost directly. See [TradingView](tradingview.md).
+The payload is intentionally not JSON because Pine scripts do not include a JSON parser and cannot poll localhost directly. The local API includes every finite-price level in the export unless a caller explicitly requests a smaller set. See [TradingView](tradingview.md).
 
 ## GET /tradingview/:symbol?format=json
 
@@ -243,6 +244,10 @@ Pine users should paste the compact `RSLEVELS|...` payload into the indicator in
 ## GET /ddbands
 
 Returns all flat levels whose kind is `dd-band`.
+
+## GET /zones
+
+Returns all flat levels whose kind is `zone`, `zone-bull`, or `zone-bear`.
 
 ## GET /references
 
@@ -279,7 +284,7 @@ Accepted payload shape:
 }
 ```
 
-`body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value.
+`body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both `MES` and `MNQ` keyed sections, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
 
 ## CORS
 

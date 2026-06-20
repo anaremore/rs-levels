@@ -146,6 +146,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlatLevels'
+  /zones:
+    get:
+      summary: Zone levels
+      responses:
+        '200':
+          description: Flat generic, bull, and bear zone levels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlatLevels'
   /references:
     get:
       summary: Reference levels
@@ -475,7 +485,7 @@ components:
           type: number
         kind:
           type: string
-          enum: [hp, mhp, zone, dd-band, reference, open-close, stat, unknown]
+          enum: [hp, mhp, zone, zone-bull, zone-bear, dd-band, reference, open-close, stat, unknown]
         color:
           type: string
         source:

@@ -52,8 +52,11 @@
 
   async function syncSettings() {
     if (!ready) return;
-    const stored = await chrome.storage.local.get(['captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
-    const settings = globalThis.RS_LEVELS.cleanSettings(stored);
+    const stored = await chrome.storage.local.get(['settingsVersion', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+    const settings = globalThis.RS_LEVELS.migrateSettings(stored);
+    if (settings.settingsVersion !== stored.settingsVersion) {
+      await chrome.storage.local.set(settings);
+    }
     window.postMessage({
       source: CONTROL_SOURCE,
       type: 'settings',

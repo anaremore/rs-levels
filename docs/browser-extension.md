@@ -57,13 +57,28 @@ Default endpoint allowlist:
 ```text
 level
 levels
+line
+lines
+chart
+charts
 ddband
+ddbands
 dd-band
+band
+bands
 zone
+zones
 pivot
+pivots
+reference
+references
+indicator
+indicators
 ```
 
-Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits.
+Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.
+
+Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both MES and MNQ display data, the local parser stores both symbols; the popup symbol selector only controls which export is copied.
 
 ## Tailscale And Private Networks
 

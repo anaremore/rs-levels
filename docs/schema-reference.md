@@ -68,11 +68,15 @@ Each symbol key maps to a display snapshot:
 - `hp`
 - `mhp`
 - `zone`
+- `zone-bull`
+- `zone-bear`
 - `dd-band`
 - `reference`
 - `open-close`
 - `stat`
 - `unknown`
+
+`zone-bull` and `zone-bear` identify bullish/demand/support zones and bearish/supply/resistance zones when the source exposes that distinction. `zone` remains valid for generic zones.
 
 ## Diagnostics
 

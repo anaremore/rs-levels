@@ -7,22 +7,16 @@ import {
 } from '../../schemas/src/index.js';
 
 const MAX_DEPTH = 8;
-const MAX_LEVELS_PER_CAPTURE = 200;
 
 const NAME_KEYS = ['name', 'label', 'text', 'title', 'caption', 'displayName', 'level', 'levelName', 'pivotName'];
 const PRICE_KEYS = ['price', 'value', 'val', 'target', 'last', 'y', 'p', 'levelPrice', 'levelValue', 'pivotPrice'];
 const SYMBOL_KEYS = ['symbol', 'ticker', 'root', 'instrument'];
+const ZONE_TOP_KEYS = ['top', 'upper', 'high', 'zoneTop', 'topPrice', 'upperPrice', 'highPrice'];
+const ZONE_BOTTOM_KEYS = ['bottom', 'lower', 'low', 'zoneBottom', 'bottomPrice', 'lowerPrice', 'lowPrice'];
 
 export function normalizeCapture(capture = {}) {
   const capturedAt = stringValue(capture.capturedAt) || new Date().toISOString();
-  const endpoint = normalizeEndpointSummary({
-    key: endpointKey(capture),
-    url: stringValue(capture.url || capture.endpoint || capture.path),
-    status: integerOrNull(capture.status),
-    capturedAt,
-    parser: 'generic-display-levels',
-    ok: true
-  });
+  const key = endpointKey(capture);
 
   const warnings = [];
   const parsed = parseBody(capture.body, warnings);
@@ -30,7 +24,7 @@ export function normalizeCapture(capture = {}) {
   const levels = collectLevels(parsed, {
     symbolHint,
     capturedAt,
-    endpointKey: endpoint.key,
+    endpointKey: key,
     source: 'rocketscooter',
     warnings
   });
@@ -38,6 +32,15 @@ export function normalizeCapture(capture = {}) {
   if (!levels.length) {
     warnings.push('No display levels were recognized in this capture.');
   }
+
+  const endpoint = normalizeEndpointSummary({
+    key,
+    url: stringValue(capture.url || capture.endpoint || capture.path),
+    status: integerOrNull(capture.status),
+    capturedAt,
+    parser: 'generic-display-levels',
+    ok: levels.length > 0
+  });
 
   return {
     endpoint,
@@ -62,11 +65,18 @@ export function parseBody(body, warnings = []) {
 export function collectLevels(root, options = {}) {
   const levels = [];
   const seen = new Set();
-  walk(root, 0, (node) => {
+  walk(root, 0, contextFromOptions(options), (node, context) => {
     if (!node || typeof node !== 'object') return;
-    const candidates = Array.isArray(node) ? [candidateFromArray(node, options)] : [
-      candidateFromObject(node, options),
-      ...candidatesFromNamedPriceMap(node, options)
+    const candidateOptions = {
+      ...options,
+      symbolHint: context.symbolHint || options.symbolHint || '',
+      zoneSide: context.zoneSide || options.zoneSide || '',
+      nameHint: context.nameHint || ''
+    };
+    const candidates = Array.isArray(node) ? [candidateFromArray(node, candidateOptions)] : [
+      ...candidatesFromZoneBounds(node, candidateOptions),
+      candidateFromObject(node, candidateOptions),
+      ...candidatesFromNamedPriceMap(node, candidateOptions)
     ];
     candidates.filter(Boolean).forEach((candidate) => {
       const id = candidate.id || stableLevelId(candidate.symbol, candidate);
@@ -75,7 +85,7 @@ export function collectLevels(root, options = {}) {
       levels.push({ ...candidate, id });
     });
   });
-  return levels.slice(0, MAX_LEVELS_PER_CAPTURE);
+  return levels;
 }
 
 export function endpointKey(capture = {}) {
@@ -94,7 +104,7 @@ function candidateFromObject(node, options) {
     symbol,
     name,
     price,
-    kind: stringValue(node.kind) || inferLevelKind(name),
+    kind: levelKind(name, node.kind, displayMetadata(node), options),
     color: normalizeInputColor(node.color || node.colour || node.rgb),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
@@ -114,7 +124,7 @@ function candidateFromArray(row, options) {
     symbol,
     name,
     price: priceInfo.value,
-    kind: explicitKind(row) || inferLevelKind(name),
+    kind: levelKind(name, explicitKind(row), {}, options),
     color: colorFromArray(row, nameIndex, priceInfo.index),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
@@ -134,6 +144,53 @@ function candidatesFromNamedPriceMap(node, options) {
   return candidates;
 }
 
+function candidatesFromZoneBounds(node, options) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) return [];
+  const top = firstNumber(node, ZONE_TOP_KEYS);
+  const bottom = firstNumber(node, ZONE_BOTTOM_KEYS);
+  if (top == null || bottom == null) return [];
+
+  const metadata = displayMetadata(node);
+  const side = zoneSideFromText(
+    [options.zoneSide, metadata.side, metadata.type, metadata.group, firstString(node, NAME_KEYS), options.nameHint]
+      .map(stringValue)
+      .filter(Boolean)
+      .join(' ')
+  );
+  if (!side) return [];
+
+  const symbol = normalizeSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint || '');
+  const suffix = zoneSuffix(node, options);
+  const prefix = side === 'bear' ? 'BrZ' : 'BZ';
+  const kind = side === 'bear' ? 'zone-bear' : 'zone-bull';
+  const color = normalizeInputColor(node.color || node.colour || node.rgb);
+
+  return [
+    normalizeLevel(symbol, {
+      id: stringValue(node.topId || node.upperId || node.highId),
+      symbol,
+      name: `${prefix}T${suffix}`,
+      price: top,
+      kind,
+      color,
+      source: options.source || 'rocketscooter',
+      capturedAt: options.capturedAt || '',
+      metadata: withEndpointMetadata({ ...metadata, side }, options.endpointKey)
+    }),
+    normalizeLevel(symbol, {
+      id: stringValue(node.bottomId || node.lowerId || node.lowId),
+      symbol,
+      name: `${prefix}B${suffix}`,
+      price: bottom,
+      kind,
+      color,
+      source: options.source || 'rocketscooter',
+      capturedAt: options.capturedAt || '',
+      metadata: withEndpointMetadata({ ...metadata, side }, options.endpointKey)
+    })
+  ];
+}
+
 function candidateFromNamedValue(name, value, options) {
   let price = numberValue(value);
   let color = '';
@@ -145,12 +202,13 @@ function candidateFromNamedValue(name, value, options) {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     price = firstNumber(value, PRICE_KEYS);
     color = normalizeInputColor(value.color || value.colour || value.rgb);
-    kind = stringValue(value.kind) || kind;
+    kind = levelKind(name, value.kind || kind, metadata, options);
     id = stringValue(value.id || value.key);
     symbol = normalizeSymbol(firstString(value, SYMBOL_KEYS) || options.symbolHint || '');
     metadata = displayMetadata(value);
   }
 
+  kind = levelKind(name, kind, metadata, options);
   if (price == null) return null;
   return normalizeLevel(symbol, {
     id,
@@ -188,16 +246,16 @@ function detectSymbol(capture, body) {
   return '';
 }
 
-function walk(value, depth, visit) {
+function walk(value, depth, context, visit) {
   if (depth > MAX_DEPTH || value == null) return;
   if (Array.isArray(value)) {
-    visit(value);
-    value.forEach((item) => walk(item, depth + 1, visit));
+    visit(value, context);
+    value.forEach((item, index) => walk(item, depth + 1, contextFromKey(context, String(index)), visit));
     return;
   }
   if (typeof value !== 'object') return;
-  visit(value);
-  Object.keys(value).forEach((key) => walk(value[key], depth + 1, visit));
+  visit(value, context);
+  Object.keys(value).forEach((key) => walk(value[key], depth + 1, contextFromKey(context, key), visit));
 }
 
 function firstString(node, keys) {
@@ -254,8 +312,20 @@ function colorFromArray(row, nameIndex, priceIndex) {
 }
 
 function explicitKind(row) {
-  const allowed = new Set(['dd-band', 'hp', 'mhp', 'open-close', 'reference', 'zone', 'unknown']);
+  const allowed = new Set(['dd-band', 'hp', 'mhp', 'open-close', 'reference', 'zone', 'zone-bull', 'zone-bear', 'unknown']);
   return row.map(stringValue).find((value) => allowed.has(value.toLowerCase())) || '';
+}
+
+function levelKind(name, explicit, metadata = {}, options = {}) {
+  const clean = stringValue(explicit).toLowerCase();
+  if (clean === 'bull-zone') return 'zone-bull';
+  if (clean === 'bear-zone') return 'zone-bear';
+  if (clean === 'zone-bull' || clean === 'zone-bear') return clean;
+  if (clean && clean !== 'zone') return clean;
+  const side = zoneSideFromText([metadata.side, metadata.type, metadata.group, options.zoneSide, name].map(stringValue).join(' '));
+  if (side === 'bull') return 'zone-bull';
+  if (side === 'bear') return 'zone-bear';
+  return clean || inferLevelKind(name);
 }
 
 function rgbToHex(r, g, b) {
@@ -272,6 +342,45 @@ function displayMetadata(node) {
     if (node[key] != null && typeof node[key] !== 'object') out[key] = node[key];
   });
   return out;
+}
+
+function contextFromOptions(options = {}) {
+  return {
+    symbolHint: normalizeSymbol(options.symbolHint || ''),
+    zoneSide: zoneSideFromText(options.zoneSide || ''),
+    nameHint: stringValue(options.nameHint)
+  };
+}
+
+function contextFromKey(context, key) {
+  const text = stringValue(key);
+  const symbol = symbolFromKey(text);
+  const zoneSide = zoneSideFromText(text);
+  return {
+    symbolHint: symbol || context.symbolHint || '',
+    zoneSide: zoneSide || context.zoneSide || '',
+    nameHint: symbol || zoneSide ? context.nameHint || '' : text || context.nameHint || ''
+  };
+}
+
+function symbolFromKey(key) {
+  const text = stringValue(key).toUpperCase();
+  if (/^(MES|ES|MNQ|NQ)$/.test(text)) return normalizeSymbol(text);
+  return '';
+}
+
+function zoneSideFromText(value) {
+  const text = stringValue(value).toUpperCase();
+  if (!text) return '';
+  if (text.includes('BEAR') || text.includes('SUPPLY') || text.includes('SELL') || text.includes('RESISTANCE') || text.includes('BRZ')) return 'bear';
+  if (text.includes('BULL') || text.includes('DEMAND') || text.includes('BUY') || text.includes('SUPPORT') || /\bBZ/.test(text)) return 'bull';
+  return '';
+}
+
+function zoneSuffix(node, options) {
+  const raw = stringValue(node.index || node.number || node.id || node.key || options.nameHint);
+  const match = raw.match(/\d+/);
+  return match ? match[0] : '';
 }
 
 function withEndpointMetadata(metadata, endpointKey) {

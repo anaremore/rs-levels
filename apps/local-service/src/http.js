@@ -37,6 +37,7 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/snapshot') return sendJson(res, 200, store.getSnapshot());
       if (req.method === 'GET' && pathname === '/levels') return sendJson(res, 200, { levels: store.flatLevels() });
       if (req.method === 'GET' && pathname === '/ddbands') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => level.kind === 'dd-band') });
+      if (req.method === 'GET' && pathname === '/zones') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['zone', 'zone-bull', 'zone-bear'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/stream') return streamSnapshots(req, res, clients, store);
 
@@ -82,7 +83,7 @@ export function rootInfo(config) {
     ok: true,
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/zones', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -331,6 +332,7 @@ GET /snapshot
 GET /diagnostics
 GET /levels
 GET /levels/:symbol
+GET /zones
 GET /tradingview/:symbol
 GET /stream</pre>
   </main>

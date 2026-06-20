@@ -24,8 +24,11 @@ async function init() {
 }
 
 async function load() {
-  const stored = await chrome.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
-  const settings = globalThis.RS_LEVELS.cleanSettings(stored);
+  const stored = await chrome.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const settings = globalThis.RS_LEVELS.migrateSettings(stored);
+  if (settings.settingsVersion !== stored.settingsVersion) {
+    await chrome.storage.local.set(settings);
+  }
   els.serviceUrl.value = settings.serviceUrl;
   els.captureEnabled.checked = settings.captureEnabled;
   els.endpointPatterns.value = settings.endpointPatterns.join('\n');

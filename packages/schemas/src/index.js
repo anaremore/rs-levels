@@ -4,6 +4,8 @@ export const LEVEL_KINDS = Object.freeze([
   'hp',
   'mhp',
   'zone',
+  'zone-bull',
+  'zone-bear',
   'dd-band',
   'reference',
   'open-close',
@@ -162,7 +164,9 @@ export function inferLevelKind(name) {
   if (text.includes('MHP')) return 'mhp';
   if (text.includes('HP')) return 'hp';
   if (text.includes('DD')) return 'dd-band';
-  if (text.includes('BZ') || text.includes('BRZ') || text.includes('ZONE')) return 'zone';
+  if (text.includes('BRZ') || text.includes('BEAR')) return 'zone-bear';
+  if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
+  if (text.includes('ZONE')) return 'zone';
   if (text.includes('OPEN') || text.includes('CLOSE') || text.includes('HIGH') || text.includes('GAP')) return 'open-close';
   if (text === 'DD' || text.includes('RES')) return 'stat';
   if (text.includes('YL') || text.includes('RL')) return 'reference';

@@ -78,6 +78,66 @@ assert.equal(keyedMap[0].color, '#FF9800');
 assert.equal(keyedMap[1].name, 'DD Lower');
 assert.equal(keyedMap[1].kind, 'dd-band');
 
+const multiSymbol = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:00.000Z',
+  body: {
+    levels: {
+      MES: {
+        chartLines: [
+          { name: 'OVNHP', price: 7537 },
+          { name: 'BZT1', price: 7580 },
+          { name: 'BZB1', price: 7560 }
+        ],
+        bearZones: [
+          { index: 1, top: 7615, bottom: 7602 }
+        ]
+      },
+      MNQ: {
+        referenceLines: [
+          { name: 'QQQ Open', price: 30125.5 },
+          { name: 'BrZT2', price: 30450 },
+          { name: 'BrZB2', price: 30412 }
+        ],
+        bullZones: [
+          { index: 3, top: 30040, bottom: 30010 }
+        ]
+      }
+    }
+  }
+});
+assert.equal(multiSymbol.endpoint.key, '/platform/api/v1/chart/display');
+assert.equal(multiSymbol.endpoint.ok, true);
+assert.equal(multiSymbol.symbols.MES.length, 5);
+assert.equal(multiSymbol.symbols.MNQ.length, 5);
+assert.equal(multiSymbol.symbols.MES.find((level) => level.name === 'BZT1').kind, 'zone-bull');
+assert.equal(multiSymbol.symbols.MES.find((level) => level.name === 'BrZT1').kind, 'zone-bear');
+assert.equal(multiSymbol.symbols.MNQ.find((level) => level.name === 'BrZT2').kind, 'zone-bear');
+assert.equal(multiSymbol.symbols.MNQ.find((level) => level.name === 'BZT3').kind, 'zone-bull');
+
+const manyZones = collectLevels({
+  MES: {
+    bullZones: Array.from({ length: 250 }, (_item, index) => ({
+      index: index + 1,
+      top: 7600 + index,
+      bottom: 7590 + index
+    }))
+  }
+});
+assert.equal(manyZones.length, 500);
+assert.equal(manyZones[0].kind, 'zone-bull');
+assert.equal(manyZones.at(-1).name, 'BZB250');
+
+const emptyCapture = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:32:00.000Z',
+  body: { ok: true, rows: [{ name: 'Not display data', value: 123 }] }
+});
+assert.equal(emptyCapture.endpoint.ok, false);
+assert.equal(emptyCapture.warnings.includes('No display levels were recognized in this capture.'), true);
+
 assert.equal(
   endpointKey({ url: 'https://example.test/platform/api/users/1234567890/feeds/abcdef1234567890/ddbands/MES?private=value' }),
   '/platform/api/users/:id/feeds/:id/ddbands/MES'

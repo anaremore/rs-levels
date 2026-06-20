@@ -27,10 +27,10 @@ This indicator only draws lines and labels. It does not contain strategy logic, 
 - `RS Levels Payload`: compact `RSLEVELS|...` text from the extension or local API.
 - `Labels`: show or hide level labels.
 - `Status`: show a small paste/status label on the latest bar.
-- Kind toggles: DD bands, HP, MHP, open/close, references, zones, and unknown levels.
+- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and unknown levels.
 - `Line width`, `Label offset`, `Max levels`, and `Line style`: display-only drawing preferences.
 
-The status label shows the payload symbol, captured timestamp, and drawn/available row count. If the payload is missing or invalid, it prompts for a valid `RSLEVELS` payload instead of silently drawing nothing.
+The status label shows the payload symbol, captured timestamp, and drawn/available row count. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limit. If the payload is missing or invalid, it prompts for a valid `RSLEVELS` payload instead of silently drawing nothing.
 
 ## Payload Format
 
@@ -45,5 +45,7 @@ Fields:
 - symbol: normalized display symbol
 - captured timestamp
 - semicolon-separated `name,price,kind` rows
+
+Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still accepted.
 
 The local service sanitizes delimiters in level names so Pine can parse the payload with `str.split()`.

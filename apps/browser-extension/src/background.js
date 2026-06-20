@@ -9,8 +9,8 @@ const state = {
 };
 
 chrome.runtime.onInstalled.addListener(async () => {
-  const stored = await chrome.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
-  const settings = globalThis.RS_LEVELS.cleanSettings(stored);
+  const stored = await chrome.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const settings = globalThis.RS_LEVELS.migrateSettings(stored);
   await chrome.storage.local.set(settings);
 });
 

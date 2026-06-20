@@ -1,8 +1,29 @@
 (() => {
   const defaults = {
+    settingsVersion: 2,
     serviceUrl: 'http://127.0.0.1:8765',
     captureEnabled: true,
-    endpointPatterns: ['level', 'levels', 'ddband', 'dd-band', 'zone', 'pivot'],
+    endpointPatterns: [
+      'level',
+      'levels',
+      'line',
+      'lines',
+      'chart',
+      'charts',
+      'ddband',
+      'ddbands',
+      'dd-band',
+      'band',
+      'bands',
+      'zone',
+      'zones',
+      'pivot',
+      'pivots',
+      'reference',
+      'references',
+      'indicator',
+      'indicators'
+    ],
     symbols: ['MES', 'MNQ'],
     maxCaptureBytes: 1024 * 1024
   };
@@ -20,8 +41,15 @@
 
   function cleanPatterns(value) {
     const rows = Array.isArray(value) ? value : String(value || '').split(/\r?\n|,/);
-    const clean = rows.map((row) => String(row).trim()).filter(Boolean).slice(0, 50);
+    const clean = uniquePatterns(rows.map((row) => String(row).trim()).filter(Boolean)).slice(0, 50);
     return clean.length ? clean : defaults.endpointPatterns.slice();
+  }
+
+  function mergeEndpointPatterns(current, additions) {
+    return uniquePatterns([
+      ...cleanPatterns(current),
+      ...(Array.isArray(additions) ? additions : cleanPatterns(additions))
+    ]).slice(0, 50);
   }
 
   function cleanMaxBytes(value) {
@@ -45,11 +73,34 @@
 
   function cleanSettings(input = {}) {
     return {
+      settingsVersion: defaults.settingsVersion,
       serviceUrl: cleanServiceUrl(input.serviceUrl),
       captureEnabled: input.captureEnabled !== false,
       endpointPatterns: cleanPatterns(input.endpointPatterns),
       maxCaptureBytes: cleanMaxBytes(input.maxCaptureBytes)
     };
+  }
+
+  function migrateSettings(input = {}) {
+    const settings = cleanSettings(input);
+    const version = Number(input.settingsVersion);
+    if (!Number.isInteger(version) || version < defaults.settingsVersion) {
+      settings.endpointPatterns = mergeEndpointPatterns(input.endpointPatterns, defaults.endpointPatterns);
+    }
+    return settings;
+  }
+
+  function uniquePatterns(rows) {
+    const out = [];
+    const seen = new Set();
+    rows.forEach((row) => {
+      const clean = String(row || '').trim();
+      const key = clean.toLowerCase();
+      if (!clean || seen.has(key)) return;
+      seen.add(key);
+      out.push(clean);
+    });
+    return out;
   }
 
   function symbolLevelCount(status = {}, symbol = '') {
@@ -83,7 +134,9 @@
     defaults,
     cleanServiceUrl,
     cleanPatterns,
+    mergeEndpointPatterns,
     cleanSettings,
+    migrateSettings,
     selectedSymbolIssue,
     symbolLevelCount,
     tradingViewCopyIssue

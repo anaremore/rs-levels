@@ -46,6 +46,19 @@
           "source": "rocketscooter",
           "capturedAt": "2026-06-19T14:29:59.500Z",
           "metadata": {}
+        },
+        {
+          "id": "MES:BZT1:7588.00",
+          "symbol": "MES",
+          "name": "BZT1",
+          "price": 7588,
+          "kind": "zone-bull",
+          "color": "#4CAF50",
+          "source": "rocketscooter",
+          "capturedAt": "2026-06-19T14:29:59.500Z",
+          "metadata": {
+            "side": "bull"
+          }
         }
       ],
       "stats": {

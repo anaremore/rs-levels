@@ -42,10 +42,28 @@ export function createLevelStore(options = {}) {
     const parsed = normalizeCapture(capture);
     const receivedAtDate = dateFrom(clock());
     const receivedAt = isoNow(receivedAtDate);
-    lastAcceptedAtMs = receivedAtDate.getTime();
     endpointMap.set(parsed.endpoint.key, parsed.endpoint);
 
     const symbols = { ...snapshot.symbols };
+    const parsedLevelCount = Object.values(parsed.symbols).reduce((sum, rows) => sum + rows.length, 0);
+    if (!parsedLevelCount) {
+      const hasLevels = Object.values(symbols).some((row) => Array.isArray(row.levels) && row.levels.length);
+      snapshot = {
+        ...snapshot,
+        generatedAt: receivedAt,
+        source: normalizeSourceState({
+          ...snapshot.source,
+          state: hasLevels ? snapshot.source.state : 'waiting',
+          connected: hasLevels ? snapshot.source.connected : false,
+          endpoints: Array.from(endpointMap.values()).slice(-50),
+          warnings: parsed.warnings
+        }),
+        warnings: parsed.warnings
+      };
+      return getSnapshot();
+    }
+
+    lastAcceptedAtMs = receivedAtDate.getTime();
     Object.keys(parsed.symbols).forEach((symbol) => {
       const existing = symbols[symbol] || normalizeSymbolSnapshot(symbol, {});
       const existingLevels = existing.levels.filter((level) => level.metadata?.endpointKey !== parsed.endpoint.key);

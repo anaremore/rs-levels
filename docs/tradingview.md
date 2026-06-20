@@ -32,7 +32,7 @@ Default response is text/plain:
 RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
 ```
 
-The JSON response is for inspection and third-party tooling. It includes `compactPayload` with the exact Pine-ready string. Pine users should paste the compact `RSLEVELS|...` payload into the included indicator.
+The JSON response is for inspection and third-party tooling. It includes `compactPayload` with the exact Pine-ready string. Pine users should paste the compact `RSLEVELS|...` payload into the included indicator. The local API does not silently truncate the export; the included Pine indicator draws up to TradingView's drawing limit and reports drawn/available rows in its status label.
 
 ## Indicator
 
@@ -40,4 +40,4 @@ See `plugins/tradingview/rs-levels.pine`.
 
 The indicator is display-only. It draws levels using the public kind field and does not include alerts, strategy logic, or execution behavior.
 
-The included indicator provides kind visibility toggles, max-level display control, line style/width controls, optional labels, and an optional status label. The status label reports the payload symbol, captured timestamp, and drawn/available row count, or prompts for a valid `RSLEVELS` payload when the input is empty or malformed.
+The included indicator provides kind visibility toggles, separate bull-zone and bear-zone controls, max-level display control, line style/width controls, optional labels, and an optional status label. The status label reports the payload symbol, captured timestamp, and drawn/available row count, or prompts for a valid `RSLEVELS` payload when the input is empty or malformed.

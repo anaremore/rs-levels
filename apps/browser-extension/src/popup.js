@@ -31,7 +31,11 @@ let latestServiceStatus = null;
 init();
 
 async function init() {
-  settings = globalThis.RS_LEVELS.cleanSettings(await chrome.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']));
+  const stored = await chrome.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  settings = globalThis.RS_LEVELS.migrateSettings(stored);
+  if (settings.settingsVersion !== stored.settingsVersion) {
+    await chrome.storage.local.set(settings);
+  }
   els.serviceUrl.textContent = settings.serviceUrl;
   els.captureEnabled.checked = settings.captureEnabled;
   renderSymbols(symbols);
