@@ -4,6 +4,7 @@
   "description": "Local-first RocketScooter level capture and display feeds.",
   "scripts": {
     "start": "node apps/local-service/src/cli.js",
+    "demo:capture": "node tools/post-sample-capture.mjs",
     "package": "node tools/package-release.mjs",
     "package:check": "node tools/package-release.mjs --check",
     "test": "npm run test:schemas && npm run test:parser && npm run test:exporters && npm run test:service && npm run test:tradingview && npm run test:extension && npm run test:openapi && npm run test:examples && npm run package:check",

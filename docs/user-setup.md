@@ -51,6 +51,21 @@ Users can then run the service from the package root and load the unpacked exten
 
 The extension runs only on RocketScooter host patterns. It posts allowlisted response bodies to your configured local API URL.
 
+## Demo Capture
+
+Before RocketScooter capture is available, use the public-safe fixture to verify the API and examples:
+
+```powershell
+npm start
+```
+
+In another terminal:
+
+```powershell
+npm run demo:capture
+```
+
+Then open the dashboard, run a client example, or copy a TradingView payload from `http://127.0.0.1:8765/tradingview/MES`.
 ## 3. Capture Levels
 
 1. Start the local API.

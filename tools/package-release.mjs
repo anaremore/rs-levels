@@ -23,7 +23,7 @@ const includeEntries = [
   'plugins',
   'examples',
   'docs',
-  'tools/package-release.mjs'
+  'tools'
 ];
 
 const excludedNames = new Set([

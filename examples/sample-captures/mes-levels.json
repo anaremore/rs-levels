@@ -1,0 +1,15 @@
+{
+  "endpoint": "/demo/levels/MES",
+  "status": 200,
+  "capturedAt": "2026-06-19T14:29:59.500Z",
+  "body": {
+    "symbol": "MES",
+    "levels": [
+      { "name": "OVNHP", "price": 7537.0, "color": [41, 98, 255] },
+      { "name": "DD Upper", "price": 7579.75, "color": "#29b6f6" },
+      { "name": "YL", "price": 7632.0, "color": "#ffeb3b" },
+      { "name": "RL", "price": 7472.0, "color": "#ff5252" },
+      { "name": "BZB", "price": 7422.25, "color": "#4caf50" }
+    ]
+  }
+}

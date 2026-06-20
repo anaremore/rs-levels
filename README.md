@@ -28,6 +28,12 @@ npm test
 npm start
 ```
 
+Post public-safe demo levels after starting the service:
+
+```powershell
+npm run demo:capture
+```
+
 Create a release directory:
 
 ```powershell
@@ -37,6 +43,8 @@ npm run package
 See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml).
+
+Examples: `examples/html-dashboard`, `examples/node-client`, and `examples/python-client`.
 
 Default service URL:
 
