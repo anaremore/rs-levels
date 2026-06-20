@@ -4,17 +4,16 @@ Display-only Quantower indicator for drawing RS Levels overlays from the local A
 
 ## Status
 
-Specification ready. Quantower indicator source is not included yet.
+Initial Quantower indicator source is included at `RSLevelsDisplayQuantower.cs`.
 
-## Recommended API Path
+## API Path
 
 ```text
 GET /status
-GET /levels/MES
-GET /levels/MNQ
+GET /levels/:symbol?format=sierra
 ```
 
-The indicator should parse the JSON `levels` array from the symbol snapshot.
+The first indicator source uses the Sierra text feed to keep parsing simple inside Quantower. `/status` provides source freshness.
 
 ## Indicator Settings
 
@@ -23,7 +22,16 @@ The indicator should parse the JSON `levels` array from the symbol snapshot.
 - refresh interval, default 1000 ms
 - stale threshold, default 10 seconds
 - label visibility
-- enabled level kinds
+- line width
+
+## Install
+
+1. Open Quantower Algo in Visual Studio.
+2. Create or open an indicator project.
+3. Add `RSLevelsDisplayQuantower.cs` to the project.
+4. Build the indicator.
+5. Add **RS Levels Display** to a chart.
+6. Set the service URL and symbol override if needed.
 
 ## Rendering Plan
 
@@ -36,4 +44,4 @@ The indicator should parse the JSON `levels` array from the symbol snapshot.
 
 This plugin must be display-only. It must not call Quantower trading, position, account, order, cancellation, or flatten APIs.
 
-Review note for first Quantower implementation: include a source scan for trading API references before release.
+Static test coverage in `plugins/test/plugin-docs.test.cjs` checks the included source for display endpoints and blocks common Quantower trade/account API terms. The source paints chart lines, labels, and a status marker only.

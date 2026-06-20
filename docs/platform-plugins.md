@@ -35,7 +35,7 @@ plugins/
   tradingview/
 ```
 
-Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling. Sierra Chart includes an initial display-only ACSIL source file at `plugins/sierra-chart/rs-levels-sierra.cpp`, and NinjaTrader includes an initial display-only NinjaScript indicator at `plugins/ninjatrader/RSLevelsDisplay.cs`. Quantower and Bookmap currently contain implementation-ready specifications.
+Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling. Sierra Chart includes an initial display-only ACSIL source file at `plugins/sierra-chart/rs-levels-sierra.cpp`, NinjaTrader includes an initial display-only NinjaScript indicator at `plugins/ninjatrader/RSLevelsDisplay.cs`, and Quantower includes an initial display-only indicator at `plugins/quantower/RSLevelsDisplayQuantower.cs`. Bookmap currently contains an implementation-ready specification.
 
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path is therefore:
 

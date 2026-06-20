@@ -38,6 +38,14 @@ assert.match(ninjaSource, /Draw\.HorizontalLine/);
 assert.match(ninjaSource, /Draw\.TextFixed/);
 assertNoPlatformApiTerms(ninjaSource);
 
+const quantowerSource = readFileSync(join(root, 'quantower', 'RSLevelsDisplayQuantower.cs'), 'utf8');
+assert.match(quantowerSource, /class RSLevelsDisplayQuantower : Indicator/);
+assert.match(quantowerSource, /\/status/);
+assert.match(quantowerSource, /format=sierra/);
+assert.match(quantowerSource, /OnPaintChart/);
+assert.match(quantowerSource, /DrawLine/);
+assertNoPlatformApiTerms(quantowerSource);
+
 console.log('plugin documentation tests passed');
 
 function assertNoPlatformApiTerms(source) {
