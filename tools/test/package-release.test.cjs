@@ -22,6 +22,20 @@ assert.match(packageOutput, /release zip written/);
 assert.match(packageOutput, /release zip checksum written/);
 
 const zipPath = join(root, 'dist', 'rs-levels-0.0.0.zip');
+const releaseRoot = join(root, 'dist', 'rs-levels-0.0.0');
+const releaseCli = join(releaseRoot, 'apps', 'local-service', 'src', 'cli.js');
+const releaseVersion = execFileSync(process.execPath, [releaseCli, '--version'], {
+  cwd: releaseRoot,
+  encoding: 'utf8'
+}).trim();
+assert.equal(releaseVersion, '0.0.0');
+const releaseHelp = execFileSync(process.execPath, [releaseCli, '--help'], {
+  cwd: releaseRoot,
+  encoding: 'utf8'
+});
+assert.match(releaseHelp, /RS_LEVELS_HOST/);
+assert.match(releaseHelp, /trusted private networks/);
+
 const zip = readFileSync(zipPath);
 assert.equal(zip.readUInt32LE(0), 0x04034b50);
 assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/README\.md/);
