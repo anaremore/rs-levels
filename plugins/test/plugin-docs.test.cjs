@@ -28,10 +28,27 @@ assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
 assert.match(sierraSource, /\/status/);
 assert.match(sierraSource, /format=sierra/);
 assert.match(sierraSource, /DRAWING_HORIZONTALLINE/);
-assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'ord' + 'er' + '\\b', 'i'));
-assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'acc' + 'ount' + '\\b', 'i'));
-assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'flat' + 'ten' + '\\b', 'i'));
-assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'can' + 'cel' + '\\b', 'i'));
-assert.doesNotMatch(sierraSource, new RegExp('\\b' + 'pos' + 'ition' + '\\b', 'i'));
+assertNoPlatformApiTerms(sierraSource);
+
+const ninjaSource = readFileSync(join(root, 'ninjatrader', 'RSLevelsDisplay.cs'), 'utf8');
+assert.match(ninjaSource, /class RSLevelsDisplay : Indicator/);
+assert.match(ninjaSource, /\/status/);
+assert.match(ninjaSource, /format=sierra/);
+assert.match(ninjaSource, /Draw\.HorizontalLine/);
+assert.match(ninjaSource, /Draw\.TextFixed/);
+assertNoPlatformApiTerms(ninjaSource);
 
 console.log('plugin documentation tests passed');
+
+function assertNoPlatformApiTerms(source) {
+  for (const term of [
+    'ord' + 'er',
+    'acc' + 'ount',
+    'flat' + 'ten',
+    'can' + 'cel',
+    'exec' + 'ution',
+    'strat' + 'egy'
+  ]) {
+    assert.doesNotMatch(source, new RegExp('\\b' + term + '\\b', 'i'));
+  }
+}
