@@ -112,7 +112,12 @@ async function injectActiveTab() {
 function isRocketScooterUrl(value) {
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' && (url.hostname === 'rocketscooter.com' || url.hostname.endsWith('.rocketscooter.com'));
+    return url.protocol === 'https:' && (
+      url.hostname === 'rocket.place' ||
+      url.hostname.endsWith('.rocket.place') ||
+      url.hostname === 'rocketscooter.com' ||
+      url.hostname.endsWith('.rocketscooter.com')
+    );
   } catch (_err) {
     return false;
   }

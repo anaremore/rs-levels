@@ -5,7 +5,7 @@ The RS Levels browser extension is the first-priority capture UX.
 ## What It Does
 
 - Runs as a Manifest V3 extension.
-- Loads only on `rocketscooter.com` host patterns.
+- Loads only on RocketScooter app host patterns: `rocket.place` and `rocketscooter.com`.
 - Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
 - Captures only response URLs that match the configured allowlist.
 - Posts capture payloads to the local service at `/capture/api`.

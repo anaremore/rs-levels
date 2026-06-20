@@ -11,6 +11,8 @@
   "host_permissions": [
     "http://127.0.0.1/*",
     "http://localhost/*",
+    "https://rocket.place/*",
+    "https://*.rocket.place/*",
     "https://rocketscooter.com/*",
     "https://*.rocketscooter.com/*"
   ],
@@ -29,6 +31,8 @@
   "content_scripts": [
     {
       "matches": [
+        "https://rocket.place/*",
+        "https://*.rocket.place/*",
         "https://rocketscooter.com/*",
         "https://*.rocketscooter.com/*"
       ],
@@ -40,6 +44,8 @@
     },
     {
       "matches": [
+        "https://rocket.place/*",
+        "https://*.rocket.place/*",
         "https://rocketscooter.com/*",
         "https://*.rocketscooter.com/*"
       ],
@@ -58,6 +64,8 @@
         "src/page-hook.js"
       ],
       "matches": [
+        "https://rocket.place/*",
+        "https://*.rocket.place/*",
         "https://rocketscooter.com/*",
         "https://*.rocketscooter.com/*"
       ]
