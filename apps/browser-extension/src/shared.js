@@ -30,6 +30,12 @@
     return Math.min(5 * 1024 * 1024, Math.max(1024, Math.trunc(number)));
   }
 
+  function nonNegativeInteger(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return 0;
+    return Math.max(0, Math.trunc(number));
+  }
+
   function cleanSettings(input = {}) {
     return {
       serviceUrl: cleanServiceUrl(input.serviceUrl),
@@ -39,10 +45,20 @@
     };
   }
 
+  function tradingViewCopyIssue(status = {}) {
+    const source = status.source || {};
+    const levelCount = nonNegativeInteger(status.levelCount);
+    if (levelCount < 1) return 'No captured levels are available yet.';
+    if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before copying TradingView.';
+    if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before copying TradingView.';
+    return '';
+  }
+
   globalThis.RS_LEVELS = {
     defaults,
     cleanServiceUrl,
     cleanPatterns,
-    cleanSettings
+    cleanSettings,
+    tradingViewCopyIssue
   };
 })();

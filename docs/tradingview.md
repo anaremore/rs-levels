@@ -12,6 +12,7 @@ References:
 ## Recommended UX
 
 - The browser extension popup should include `Copy TradingView Payload` for each symbol.
+- The extension should only enable TradingView payload copy while the local service reports fresh captured levels.
 - The local service exposes the same payload at `/tradingview/:symbol`.
 - `Copy JSON` should remain available for users and external tools.
 - The Pine indicator should parse the compact payload, not JSON.
