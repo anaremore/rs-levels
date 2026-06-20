@@ -1,9 +1,19 @@
 (() => {
   const SOURCE = 'rs-levels-page';
   const CONTROL_SOURCE = 'rs-levels-content';
-  const NONCE = document.currentScript && document.currentScript.dataset.rsLevelsNonce || '';
   const TARGET_ORIGIN = window.location.origin;
+  const HOOK_KEY = '__RS_LEVELS_PAGE_HOOK__';
   const rules = globalThis.RS_LEVELS_CAPTURE_RULES;
+
+  if (!rules) return;
+
+  const existingHook = globalThis[HOOK_KEY];
+  if (existingHook && typeof existingHook.attach === 'function') {
+    existingHook.attach();
+    existingHook.publishDiagnostic('hook-reconnected');
+    return;
+  }
+
   let settings = {
     captureEnabled: false,
     endpointPatterns: [],
@@ -22,17 +32,21 @@
     lastDiagnosticAt: ''
   };
 
-  if (!NONCE || !rules) return;
+  globalThis[HOOK_KEY] = {
+    attach() {},
+    publishDiagnostic
+  };
 
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.origin !== TARGET_ORIGIN) return;
     const data = event.data || {};
-    if (data.source !== CONTROL_SOURCE || data.type !== 'settings' || data.nonce !== NONCE) return;
+    if (data.source !== CONTROL_SOURCE || data.type !== 'settings') return;
     settings = {
       captureEnabled: data.captureEnabled === true,
       endpointPatterns: Array.isArray(data.endpointPatterns) ? data.endpointPatterns : [],
       maxCaptureBytes: Number.isFinite(Number(data.maxCaptureBytes)) ? Number(data.maxCaptureBytes) : 1024 * 1024
     };
+    publishDiagnostic('settings-synced');
   });
 
   function skipReason(url) {
@@ -48,18 +62,20 @@
   function publish(capture) {
     stats.publishedCount += 1;
     publishDiagnostic('published');
-    window.postMessage({ source: SOURCE, type: 'capture', nonce: NONCE, capture }, TARGET_ORIGIN);
+    postToContent({ type: 'capture', capture });
   }
 
   function publishDiagnostic(reason) {
     stats.lastReason = reason;
     stats.lastDiagnosticAt = new Date().toISOString();
-    window.postMessage({
-      source: SOURCE,
+    postToContent({
       type: 'diagnostic',
-      nonce: NONCE,
       stats: { ...stats }
-    }, TARGET_ORIGIN);
+    });
+  }
+
+  function postToContent(message) {
+    window.postMessage({ source: SOURCE, ...message }, TARGET_ORIGIN);
   }
 
   async function readResponse(response, requestUrl, method) {
@@ -110,7 +126,6 @@
     } catch (_err) {
       stats.readErrorCount += 1;
       publishDiagnostic('read-error');
-      // Some responses cannot be cloned or read by page script context.
     }
   }
 
@@ -190,6 +205,8 @@
       return xhr;
     };
   }
+
+  publishDiagnostic('hook-installed');
 
   function responseHeader(xhr, name) {
     try {

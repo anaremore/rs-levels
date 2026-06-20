@@ -12,6 +12,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Provides a popup capture toggle plus TradingView, JSON, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
 - Shows scrubbed capture-hook counters for observed, ignored, skipped, and posted responses.
+- Shows the extension version/build identity in the popup corner for support and diagnostics.
 
 ## What It Avoids
 
@@ -37,12 +38,14 @@ The popup distinguishes live, waiting, offline, and stale source states so an ol
 
 Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.0.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
+The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.0+abc1234`. `Copy Diagnostics` includes the same build identity.
+
 Capture-hook counters are aggregate only:
 
 - `Observed`: fetch/XHR responses seen by the page hook.
 - `Ignored`: responses skipped because the URL did not match the allowlist.
 - `Skipped`: allowlisted responses skipped because capture is disabled, too large, empty, non-text, or unreadable.
-- `Hook`: the most recent scrubbed hook reason.
+- `Hook`: the most recent scrubbed hook reason, including `hook-installed`, `settings-synced`, `published`, or skip reasons.
 
 These counters do not include ignored URLs, response bodies, request headers, cookies, or page text.
 
@@ -76,6 +79,13 @@ reference
 references
 indicator
 indicators
+hpa
+tview
+history
+liq-map
+liquidity
+dyn-hp
+/db/
 ```
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.

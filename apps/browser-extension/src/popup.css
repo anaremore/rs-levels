@@ -25,6 +25,12 @@ body {
   align-items: flex-start;
 }
 
+.status-stack {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+}
+
 h1 {
   margin: 0;
   font-size: 18px;
@@ -70,6 +76,18 @@ p {
   background: #302411;
   box-shadow: inset 0 0 0 1px #8a6a22;
   color: #ffd36a;
+}
+
+.build-id {
+  color: #6f8299;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  max-width: 96px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .panel {

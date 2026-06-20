@@ -13,7 +13,10 @@
         <h1>RS Levels</h1>
         <p id="service-url">Loading</p>
       </div>
-      <span id="status-pill" class="pill waiting">WAITING</span>
+      <div class="status-stack">
+        <span id="status-pill" class="pill waiting">WAITING</span>
+        <span id="build-id" class="build-id">ext</span>
+      </div>
     </header>
 
     <section class="panel">
@@ -91,6 +94,7 @@
     </footer>
   </main>
   <script src="shared.js"></script>
+  <script src="build-info.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

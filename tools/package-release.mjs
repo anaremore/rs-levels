@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -20,6 +21,12 @@ const extensionVersion = extensionManifest.version || packageJson.version;
 const extensionReleaseName = `${packageJson.name}-browser-extension-${extensionVersion}`;
 const extensionZipPath = path.join(distRoot, `${extensionReleaseName}.zip`);
 const extensionZipShaPath = `${extensionZipPath}.sha256`;
+const gitRevision = revisionFromGit();
+const buildInfo = buildInfoSource({
+  revision: gitRevision,
+  generatedAt: new Date().toISOString(),
+  source: 'package'
+});
 
 const includeEntries = [
   'README.md',
@@ -60,6 +67,7 @@ const requiredExtensionEntries = [
   'manifest.json',
   'README.md',
   'src/background.js',
+  'src/build-info.js',
   'src/capture-rules.js',
   'src/content-script.js',
   'src/options.html',
@@ -131,12 +139,16 @@ const manifestFiles = [];
 for (const file of files) {
   const target = path.join(outDir, file.relative);
   await fs.mkdir(path.dirname(target), { recursive: true });
-  await fs.copyFile(file.absolute, target);
-  const stat = await fs.stat(file.absolute);
+  if (file.relative === 'apps/browser-extension/src/build-info.js') {
+    await fs.writeFile(target, buildInfo);
+  } else {
+    await fs.copyFile(file.absolute, target);
+  }
+  const stat = await fs.stat(target);
   manifestFiles.push({
     path: file.relative,
     bytes: stat.size,
-    sha256: await sha256(file.absolute)
+    sha256: await sha256(target)
   });
 }
 
@@ -161,7 +173,15 @@ await writeZip(zipPath, archiveFiles);
 const zipHash = await sha256(zipPath);
 await fs.writeFile(zipShaPath, `${zipHash}  ${path.basename(zipPath)}\n`);
 
-await writeZip(extensionZipPath, extensionFiles);
+const packagedExtensionFiles = [];
+for (const entry of extensionIncludeEntries) {
+  const source = path.join(outDir, 'apps', 'browser-extension', entry);
+  await collectFiles(source, entry.replace(/\\/g, '/'), packagedExtensionFiles);
+}
+packagedExtensionFiles.sort((a, b) => a.relative.localeCompare(b.relative));
+assertRequiredExtensionEntries(packagedExtensionFiles);
+
+await writeZip(extensionZipPath, packagedExtensionFiles);
 const extensionZipHash = await sha256(extensionZipPath);
 await fs.writeFile(extensionZipShaPath, `${extensionZipHash}  ${path.basename(extensionZipPath)}\n`);
 
@@ -211,6 +231,26 @@ function assertRequiredExtensionEntries(files) {
   if (missing.length) {
     throw new Error(`Required extension package file(s) missing: ${missing.join(', ')}`);
   }
+}
+
+function revisionFromGit() {
+  try {
+    return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+  } catch (_err) {
+    return '';
+  }
+}
+
+function buildInfoSource(info) {
+  return `globalThis.RS_LEVELS_BUILD = Object.freeze(${JSON.stringify({
+    revision: info.revision || '',
+    generatedAt: info.generatedAt || '',
+    source: info.source || 'source'
+  }, null, 2)});\n`;
 }
 
 async function writeZip(targetPath, zipFiles) {

@@ -5,6 +5,11 @@ const state = {
   lastCaptureAt: '',
   lastPostAt: '',
   lastError: '',
+  contentDiagnostic: {
+    reason: '',
+    detail: '',
+    at: ''
+  },
   captureStats: emptyCaptureStats()
 };
 
@@ -22,6 +27,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   if (message.type === 'rs-levels.capture-diagnostic') {
     state.captureStats = cleanCaptureStats(message.stats);
+    sendResponse({ ok: true });
+    return false;
+  }
+  if (message.type === 'rs-levels.content-diagnostic') {
+    state.contentDiagnostic = cleanContentDiagnostic(message.diagnostic);
     sendResponse({ ok: true });
     return false;
   }
@@ -86,6 +96,11 @@ async function injectActiveTab() {
       target: { tabId: tab.id },
       files: ['src/shared.js', 'src/content-script.js']
     });
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['src/capture-rules.js', 'src/page-hook.js'],
+      world: 'MAIN'
+    });
     state.lastError = '';
     return { ok: true };
   } catch (err) {
@@ -115,6 +130,14 @@ function emptyCaptureStats() {
     publishedCount: 0,
     lastReason: '',
     lastDiagnosticAt: ''
+  };
+}
+
+function cleanContentDiagnostic(input = {}) {
+  return {
+    reason: String(input.reason || ''),
+    detail: String(input.detail || ''),
+    at: String(input.at || '')
   };
 }
 

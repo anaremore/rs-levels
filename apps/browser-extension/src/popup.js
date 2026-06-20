@@ -1,6 +1,7 @@
 const els = {
   serviceUrl: document.getElementById('service-url'),
   statusPill: document.getElementById('status-pill'),
+  buildId: document.getElementById('build-id'),
   symbol: document.getElementById('symbol'),
   captureEnabled: document.getElementById('capture-enabled'),
   copyTv: document.getElementById('copy-tv'),
@@ -39,6 +40,7 @@ async function init() {
   }
   els.serviceUrl.textContent = settings.serviceUrl;
   els.captureEnabled.checked = settings.captureEnabled;
+  renderBuildIdentity();
   renderSymbols(symbols);
   bindEvents();
   await refresh();
@@ -157,6 +159,7 @@ async function copyDiagnostics() {
     const payload = {
       generatedAt: new Date().toISOString(),
       serviceUrl: settings.serviceUrl,
+      build: extensionBuildInfo(),
       service: diagnostics,
       extension: cleanExtensionState(extensionState && extensionState.state)
     };
@@ -214,11 +217,22 @@ function combineServiceStatus(health = {}, status = {}) {
 
 function cleanExtensionState(state = {}) {
   return {
+    version: extensionVersion(),
+    build: extensionBuildInfo(),
     postedCount: Number(state.postedCount) || 0,
     lastCaptureAt: String(state.lastCaptureAt || ''),
     lastPostAt: String(state.lastPostAt || ''),
     lastError: String(state.lastError || ''),
+    contentDiagnostic: cleanContentDiagnostic(state.contentDiagnostic),
     captureStats: cleanCaptureStats(state.captureStats)
+  };
+}
+
+function cleanContentDiagnostic(input = {}) {
+  return {
+    reason: String(input.reason || ''),
+    detail: String(input.detail || ''),
+    at: String(input.at || '')
   };
 }
 
@@ -288,4 +302,34 @@ function setPill(text, mode) {
 function setMessage(text, mode = '') {
   els.message.textContent = text;
   els.message.className = `message ${mode}`.trim();
+}
+
+function renderBuildIdentity() {
+  const info = extensionBuildInfo();
+  const suffix = info.revision ? `+${info.revision}` : '';
+  const text = `ext ${info.version}${suffix}`;
+  els.buildId.textContent = text;
+  els.buildId.title = [
+    `Extension ${info.version}`,
+    info.revision ? `Revision ${info.revision}` : 'Source build',
+    info.generatedAt ? `Built ${info.generatedAt}` : ''
+  ].filter(Boolean).join('\n');
+}
+
+function extensionBuildInfo() {
+  const build = globalThis.RS_LEVELS_BUILD || {};
+  return {
+    version: extensionVersion(),
+    revision: String(build.revision || ''),
+    generatedAt: String(build.generatedAt || ''),
+    source: String(build.source || 'source')
+  };
+}
+
+function extensionVersion() {
+  try {
+    return chrome.runtime.getManifest().version || 'unknown';
+  } catch (_err) {
+    return 'unknown';
+  }
 }

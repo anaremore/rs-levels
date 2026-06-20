@@ -37,6 +37,18 @@
         "src/content-script.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://rocketscooter.com/*",
+        "https://*.rocketscooter.com/*"
+      ],
+      "js": [
+        "src/capture-rules.js",
+        "src/page-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ],
   "web_accessible_resources": [

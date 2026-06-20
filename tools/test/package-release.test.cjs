@@ -57,8 +57,11 @@ assert.equal(extensionZip.readUInt32LE(0), 0x04034b50);
 assert.match(extensionZipText, /manifest\.json/);
 assert.match(extensionZipText, /README\.md/);
 assert.match(extensionZipText, /src\/background\.js/);
+assert.match(extensionZipText, /src\/build-info\.js/);
 assert.match(extensionZipText, /src\/page-hook\.js/);
 assert.match(extensionZipText, /src\/popup\.html/);
+assert.match(extensionZipText, /RS_LEVELS_BUILD/);
+assert.match(extensionZipText, /"source": "package"/);
 assert.doesNotMatch(extensionZipText, /test\/extension\.test\.cjs/);
 
 const extensionChecksum = readFileSync(`${extensionZipPath}.sha256`, 'utf8').trim();

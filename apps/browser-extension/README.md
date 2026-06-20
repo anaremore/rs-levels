@@ -20,7 +20,7 @@ Packaged releases also include `dist/rs-levels-browser-extension-0.1.0.zip`. Unz
 
 ## Popup
 
-The popup shows local service health, service version, captured level counts, post timing, capture-hook counters, and the last extension-side issue. It includes:
+The popup shows local service health, service version, extension version/build identity, captured level counts, post timing, capture-hook counters, and the last extension-side issue. It includes:
 
 - symbol selector
 - capture pause/resume toggle
@@ -31,6 +31,7 @@ The popup shows local service health, service version, captured level counts, po
 - `API Docs`
 - `Plugins`
 - aggregate observed, ignored, skipped, and posted counters
+- hook status reason
 - refresh
 - options shortcut
 
@@ -39,6 +40,8 @@ The capture toggle updates the same `captureEnabled` setting as the options page
 `Copy TradingView` is disabled while the local service is waiting for levels or reporting a stale source. Refresh RocketScooter to capture fresh levels before copying a Pine paste payload. `Copy JSON` remains available for inspection and tooling.
 
 Capture is not limited by the selected popup symbol. The extension posts every allowlisted response it observes, and the local parser can store both MES and MNQ from one combined response. The symbol selector only controls which export is copied.
+
+If the popup remains waiting, `Hook: hook-installed` or `Hook: settings-synced` means the page hook is alive and waiting for RocketScooter traffic. `Observed: 0` means the hook has not seen fetch/XHR responses yet; use `Reconnect Tab`, then reload RocketScooter data or the tab so startup requests run with the hook installed.
 
 ## Options
 
