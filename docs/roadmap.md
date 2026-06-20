@@ -37,6 +37,7 @@ Status: public setup foundation complete; field validation planned.
 - Capture only allowlisted RocketScooter responses.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
+- Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
 - Guard TradingView and JSON copy actions when the selected symbol has no captured levels.

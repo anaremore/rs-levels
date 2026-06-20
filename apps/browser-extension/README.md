@@ -23,11 +23,12 @@ The popup shows local service health, service version, captured level counts, po
 - `Copy JSON`
 - `Copy Diagnostics`
 - `API Docs`
+- `Plugins`
 - aggregate observed, ignored, skipped, and posted counters
 - refresh
 - options shortcut
 
-`Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page without adding extension permissions.
+`Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`, without adding extension permissions.
 
 `Copy TradingView` is disabled while the local service is waiting for levels or reporting a stale source. Refresh RocketScooter to capture fresh levels before copying a Pine paste payload. `Copy JSON` remains available for inspection and tooling.
 

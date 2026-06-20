@@ -6,6 +6,7 @@ const els = {
   copyJson: document.getElementById('copy-json'),
   copyDiagnostics: document.getElementById('copy-diagnostics'),
   openDocs: document.getElementById('open-docs'),
+  openPlugins: document.getElementById('open-plugins'),
   message: document.getElementById('message'),
   sourceState: document.getElementById('source-state'),
   levelCount: document.getElementById('level-count'),
@@ -43,6 +44,7 @@ function bindEvents() {
   els.copyJson.addEventListener('click', copyJsonExport);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
+  els.openPlugins.addEventListener('click', () => window.open(`${settings.serviceUrl}/plugins`, '_blank', 'noopener'));
   els.symbol.addEventListener('change', () => renderTradingViewCopy(latestServiceStatus));
 }
 
