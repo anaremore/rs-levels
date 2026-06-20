@@ -12,6 +12,8 @@ Output:
 
 ```text
 dist/rs-levels-0.0.0/
+dist/rs-levels-0.0.0.zip
+dist/rs-levels-0.0.0.zip.sha256
 ```
 
 The release directory includes:
@@ -27,13 +29,15 @@ The release directory includes:
 - `RELEASE-MANIFEST.json`
 - `SHA256SUMS.txt`
 
+The zip artifact contains the release directory as its top-level folder. The `.zip.sha256` sidecar verifies the archive itself; `SHA256SUMS.txt` verifies files inside the unpacked release directory.
+
 ## Verify Packaging Inputs
 
 ```powershell
 npm run package:check
 ```
 
-`npm test` runs the package check so missing release inputs are caught before a commit.
+`npm test` runs the package check and package-release test so missing release inputs and broken zip artifact generation are caught before a commit.
 
 ## Extension Install From Package
 
@@ -59,4 +63,4 @@ http://127.0.0.1:8765
 
 ## Future Installers
 
-Native installers and signed extension artifacts can be added later. Until then, the release directory is the canonical cross-platform artifact.
+Native installers and signed extension artifacts can be added later. Until then, the release directory and zip archive are the canonical cross-platform artifacts.

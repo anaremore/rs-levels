@@ -40,7 +40,7 @@ Create a release directory:
 npm run package
 ```
 
-The release directory includes `RELEASE-MANIFEST.json` and `SHA256SUMS.txt`.
+The release output includes a source-style directory, a zip archive, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and a zip checksum sidecar.
 
 See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
 

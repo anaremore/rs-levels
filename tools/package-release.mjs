@@ -12,6 +12,8 @@ const packageJson = JSON.parse(await fs.readFile(path.join(root, 'package.json')
 const releaseName = `${packageJson.name}-${packageJson.version}`;
 const distRoot = path.join(root, 'dist');
 const outDir = path.join(distRoot, releaseName);
+const zipPath = path.join(distRoot, `${releaseName}.zip`);
+const zipShaPath = `${zipPath}.sha256`;
 
 const includeEntries = [
   'README.md',
@@ -58,6 +60,14 @@ const excludedNames = new Set([
 
 const excludedExtensions = new Set(['.db', '.sqlite', '.sqlite3', '.har', '.log', '.jsonl']);
 
+const CRC32_TABLE = Array.from({ length: 256 }, (_value, index) => {
+  let crc = index;
+  for (let bit = 0; bit < 8; bit += 1) {
+    crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+  }
+  return crc >>> 0;
+});
+
 const files = [];
 for (const entry of includeEntries) {
   const source = path.join(root, entry);
@@ -68,11 +78,13 @@ files.sort((a, b) => a.relative.localeCompare(b.relative));
 assertRequiredReleaseEntries(files);
 
 if (checkOnly) {
-  console.log(`release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries)`);
+  console.log(`release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries, zip enabled)`);
   process.exit(0);
 }
 
 await fs.rm(outDir, { recursive: true, force: true });
+await fs.rm(zipPath, { force: true });
+await fs.rm(zipShaPath, { force: true });
 await fs.mkdir(outDir, { recursive: true });
 
 const manifestFiles = [];
@@ -102,7 +114,16 @@ await fs.writeFile(
   manifestFiles.map((file) => `${file.sha256}  ${file.path}`).join('\n') + '\n'
 );
 
+const archiveFiles = [];
+await collectFiles(outDir, releaseName, archiveFiles);
+archiveFiles.sort((a, b) => a.relative.localeCompare(b.relative));
+await writeZip(zipPath, archiveFiles);
+const zipHash = await sha256(zipPath);
+await fs.writeFile(zipShaPath, `${zipHash}  ${path.basename(zipPath)}\n`);
+
 console.log(`release package written to ${path.relative(root, outDir)}`);
+console.log(`release zip written to ${path.relative(root, zipPath)}`);
+console.log(`release zip checksum written to ${path.relative(root, zipShaPath)}`);
 console.log(`${manifestFiles.length} files`);
 
 async function assertExists(filePath) {
@@ -138,6 +159,89 @@ function assertRequiredReleaseEntries(files) {
   }
 }
 
+async function writeZip(targetPath, zipFiles) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  for (const file of zipFiles) {
+    const name = slash(file.relative);
+    const nameBuffer = Buffer.from(name, 'utf8');
+    const data = await fs.readFile(file.absolute);
+    const crc = crc32(data);
+    const localHeader = zipLocalHeader(nameBuffer, data.length, crc);
+    localParts.push(localHeader, data);
+    centralParts.push(zipCentralHeader(nameBuffer, data.length, crc, offset));
+    offset += localHeader.length + data.length;
+  }
+
+  const centralDirectory = Buffer.concat(centralParts);
+  const end = zipEndRecord(zipFiles.length, centralDirectory.length, offset);
+  await fs.writeFile(targetPath, Buffer.concat([...localParts, centralDirectory, end]));
+}
+
+function zipLocalHeader(nameBuffer, size, crc) {
+  const header = Buffer.alloc(30);
+  header.writeUInt32LE(0x04034b50, 0);
+  header.writeUInt16LE(20, 4);
+  header.writeUInt16LE(0x0800, 6);
+  header.writeUInt16LE(0, 8);
+  writeDosDateTime(header, 10);
+  header.writeUInt32LE(crc >>> 0, 14);
+  header.writeUInt32LE(size >>> 0, 18);
+  header.writeUInt32LE(size >>> 0, 22);
+  header.writeUInt16LE(nameBuffer.length, 26);
+  header.writeUInt16LE(0, 28);
+  return Buffer.concat([header, nameBuffer]);
+}
+
+function zipCentralHeader(nameBuffer, size, crc, offset) {
+  const header = Buffer.alloc(46);
+  header.writeUInt32LE(0x02014b50, 0);
+  header.writeUInt16LE(20, 4);
+  header.writeUInt16LE(20, 6);
+  header.writeUInt16LE(0x0800, 8);
+  header.writeUInt16LE(0, 10);
+  writeDosDateTime(header, 12);
+  header.writeUInt32LE(crc >>> 0, 16);
+  header.writeUInt32LE(size >>> 0, 20);
+  header.writeUInt32LE(size >>> 0, 24);
+  header.writeUInt16LE(nameBuffer.length, 28);
+  header.writeUInt16LE(0, 30);
+  header.writeUInt16LE(0, 32);
+  header.writeUInt16LE(0, 34);
+  header.writeUInt16LE(0, 36);
+  header.writeUInt32LE(0, 38);
+  header.writeUInt32LE(offset >>> 0, 42);
+  return Buffer.concat([header, nameBuffer]);
+}
+
+function zipEndRecord(entryCount, centralSize, centralOffset) {
+  const header = Buffer.alloc(22);
+  header.writeUInt32LE(0x06054b50, 0);
+  header.writeUInt16LE(0, 4);
+  header.writeUInt16LE(0, 6);
+  header.writeUInt16LE(entryCount, 8);
+  header.writeUInt16LE(entryCount, 10);
+  header.writeUInt32LE(centralSize >>> 0, 12);
+  header.writeUInt32LE(centralOffset >>> 0, 16);
+  header.writeUInt16LE(0, 20);
+  return header;
+}
+
+function writeDosDateTime(buffer, offset) {
+  buffer.writeUInt16LE(0, offset);
+  buffer.writeUInt16LE((1 << 5) | 1, offset + 2);
+}
+
+function crc32(data) {
+  let crc = 0xffffffff;
+  for (const byte of data) {
+    crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ byte) & 0xff];
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 function sha256(filePath) {
   return new Promise((resolve, reject) => {
     const hash = createHash('sha256');
@@ -146,4 +250,8 @@ function sha256(filePath) {
     stream.on('data', (chunk) => hash.update(chunk));
     stream.on('end', () => resolve(hash.digest('hex')));
   });
+}
+
+function slash(value) {
+  return value.replace(/\\/g, '/');
 }

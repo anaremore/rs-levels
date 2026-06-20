@@ -7,7 +7,7 @@ Before any public release:
 - Run private-term and secret scans.
 - Build from a clean clone.
 - Run `npm run package:check`; it verifies critical API, extension, TradingView, plugin, and scan artifacts are present.
-- Run `npm run package` and publish `RELEASE-MANIFEST.json` plus `SHA256SUMS.txt` with the release artifact.
+- Run `npm run package` and publish the release zip, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and the zip `.sha256` sidecar.
 - Test service startup on Windows, macOS, and Linux.
 - Test extension install instructions from scratch.
 - Verify the service binds to `127.0.0.1` by default.
