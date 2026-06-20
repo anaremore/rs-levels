@@ -82,6 +82,11 @@
       publishDiagnostic('too-large');
       return;
     }
+    if (!rules.isTextLikeContentType(response.headers.get('content-type') || '')) {
+      stats.skippedNonTextCount += 1;
+      publishDiagnostic('non-text');
+      return;
+    }
     try {
       const body = await response.clone().text();
       if (!body) {
@@ -150,6 +155,11 @@
           publishDiagnostic('non-text');
           return;
         }
+        if (!rules.isTextLikeContentType(responseHeader(xhr, 'content-type'))) {
+          stats.skippedNonTextCount += 1;
+          publishDiagnostic('non-text');
+          return;
+        }
         let body = '';
         try {
           body = typeof xhr.responseText === 'string' ? xhr.responseText : '';
@@ -179,5 +189,13 @@
       });
       return xhr;
     };
+  }
+
+  function responseHeader(xhr, name) {
+    try {
+      return xhr.getResponseHeader(name) || '';
+    } catch (_err) {
+      return '';
+    }
   }
 })();

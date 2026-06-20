@@ -18,8 +18,22 @@
     }
   }
 
+  function isTextLikeContentType(value) {
+    const text = String(value || '').split(';')[0].trim().toLowerCase();
+    if (!text) return true;
+    return text.startsWith('text/') ||
+      text === 'application/json' ||
+      text === 'application/x-ndjson' ||
+      text === 'application/xml' ||
+      text === 'application/javascript' ||
+      text === 'application/x-www-form-urlencoded' ||
+      text.endsWith('+json') ||
+      text.endsWith('+xml');
+  }
+
   globalThis.RS_LEVELS_CAPTURE_RULES = {
     isAllowedCaptureUrl,
-    endpointFromUrl
+    endpointFromUrl,
+    isTextLikeContentType
   };
 })();

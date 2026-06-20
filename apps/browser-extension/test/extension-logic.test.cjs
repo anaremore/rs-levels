@@ -45,5 +45,11 @@ assert.equal(rules.isAllowedCaptureUrl('https://example.test/api/profile', ['lev
 assert.equal(rules.isAllowedCaptureUrl('', ['levels']), false);
 assert.equal(rules.endpointFromUrl('/api/levels/MES', 'https://example.test/chart'), '/api/levels/MES');
 assert.equal(rules.endpointFromUrl('not a url', ''), 'not a url');
+assert.equal(rules.isTextLikeContentType('application/json; charset=utf-8'), true);
+assert.equal(rules.isTextLikeContentType('application/problem+json'), true);
+assert.equal(rules.isTextLikeContentType('text/plain'), true);
+assert.equal(rules.isTextLikeContentType(''), true);
+assert.equal(rules.isTextLikeContentType('image/png'), false);
+assert.equal(rules.isTextLikeContentType('application/octet-stream'), false);
 
 console.log('browser extension logic tests passed');

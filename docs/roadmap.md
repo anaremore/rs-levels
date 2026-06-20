@@ -36,6 +36,7 @@ Status: public setup foundation complete; field validation planned.
 
 - Manifest V3 extension shell.
 - Capture only allowlisted RocketScooter responses.
+- Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
 - Add quick links to local API docs and the display-plugin manifest.

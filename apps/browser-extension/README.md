@@ -6,6 +6,8 @@ Manifest V3 extension for allowlisted RocketScooter response capture.
 
 The extension runs only on `rocketscooter.com` host patterns, injects a page hook at `document_start`, observes fetch/XHR responses, and forwards only URL-allowlisted response bodies to the local RS Levels service.
 
+The page hook skips clearly non-text response content types before reading a body. Empty content types are allowed because some browser API responses omit the header.
+
 ## Load Unpacked
 
 1. Open Chromium extension management.
