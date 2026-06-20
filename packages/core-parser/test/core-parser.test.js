@@ -130,6 +130,26 @@ const cqgEndpointSymbol = normalizeCapture({
 assert.equal(cqgEndpointSymbol.symbols.MES.length, 1);
 assert.equal(cqgEndpointSymbol.symbols.MES[0].symbol, 'MES');
 
+const cqgRolloverSymbol = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-12-14T14:31:30.000Z',
+  body: {
+    charts: {
+      'F.US.EPZ26': {
+        levels: [{ name: 'OVNHP', price: 7557.75 }]
+      },
+      'F.US.ENQH27': {
+        levels: [{ name: 'OVNMHP', price: 30625.75 }]
+      }
+    }
+  }
+});
+assert.equal(cqgRolloverSymbol.symbols.MES.length, 1);
+assert.equal(cqgRolloverSymbol.symbols.MNQ.length, 1);
+assert.equal(cqgRolloverSymbol.symbols.MES[0].symbol, 'MES');
+assert.equal(cqgRolloverSymbol.symbols.MNQ[0].symbol, 'MNQ');
+
 const cqgMultiSymbol = normalizeCapture({
   endpoint: '/platform/api/v1/chart/display',
   status: 200,
@@ -192,6 +212,40 @@ const mixedWatchlistAndFutures = normalizeCapture({
 assert.equal(mixedWatchlistAndFutures.symbols.MES.length, 2);
 assert.equal(mixedWatchlistAndFutures.symbols.MES[0].price, 7545);
 assert.equal(mixedWatchlistAndFutures.symbols.MNQ, undefined);
+
+const unsupportedSymbolPanels = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/F.US.EPU26',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:56.000Z',
+  body: {
+    panels: {
+      SPY: {
+        rows: [
+          { name: 'hp', price: 741 },
+          { name: 'close', price: 740.96 },
+          { name: 'PrevDayClose', price: 722.51 },
+          { name: 'LastOpen', price: 737.1 }
+        ]
+      },
+      QQQ: {
+        rows: [
+          { name: 'hp', price: 742.5 },
+          { name: 'close', price: 742.84 }
+        ]
+      },
+      'F.US.EPU26': {
+        levels: [
+          { name: 'man_HP', price: 732.5 }
+        ]
+      }
+    }
+  }
+});
+assert.equal(unsupportedSymbolPanels.symbols.MES.length, 1);
+assert.equal(unsupportedSymbolPanels.symbols.MES[0].price, 732.5);
+assert.equal(unsupportedSymbolPanels.symbols.MES.some((level) => level.price === 722.51), false);
+assert.equal(unsupportedSymbolPanels.symbols.SPY, undefined);
+assert.equal(unsupportedSymbolPanels.symbols.QQQ, undefined);
 
 const manyZones = collectLevels({
   MES: {

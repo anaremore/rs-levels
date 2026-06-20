@@ -5,6 +5,11 @@
   color: #eef6ff;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -50,9 +55,19 @@ label {
 }
 
 .switch {
-  display: flex;
+  display: inline-flex;
   gap: 10px;
   align-items: center;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.switch input {
+  flex: 0 0 auto;
+}
+
+.switch span {
+  line-height: 1.35;
 }
 
 .service-actions {
@@ -76,6 +91,12 @@ textarea {
   color: #eef6ff;
   box-shadow: inset 0 0 0 1px #2f405a;
   outline: none;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
 }
 
 textarea {

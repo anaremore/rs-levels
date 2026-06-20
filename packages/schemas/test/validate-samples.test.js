@@ -52,10 +52,16 @@ assert.equal(symbolSnapshot.symbol, 'MES');
 assert.equal(symbolSnapshot.levels[0].id, stableLevelId('MES', { name: 'HP', price: 7500 }));
 
 assert.equal(normalizeSymbol('F.US.EPU26'), 'MES');
+assert.equal(normalizeSymbol('F.US.EPZ26'), 'MES');
+assert.equal(normalizeSymbol('F.US.EPH27'), 'MES');
+assert.equal(normalizeSymbol('MESH27'), 'MES');
 assert.equal(normalizeSymbol('EPU26'), 'MES');
 assert.equal(normalizeSymbol('EP'), 'MES');
 assert.equal(normalizeSymbol('E-Mini S&P 500: September 2026'), 'MES');
 assert.equal(normalizeSymbol('F.US.ENQU26'), 'MNQ');
+assert.equal(normalizeSymbol('F.US.ENQZ26'), 'MNQ');
+assert.equal(normalizeSymbol('F.US.ENQH27'), 'MNQ');
+assert.equal(normalizeSymbol('MNQH27'), 'MNQ');
 assert.equal(normalizeSymbol('ENQU26'), 'MNQ');
 assert.equal(normalizeSymbol('ENQ'), 'MNQ');
 assert.equal(normalizeSymbol('E-mini NASDAQ-100: September 2026'), 'MNQ');

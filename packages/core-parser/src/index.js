@@ -79,6 +79,7 @@ export function collectLevels(root, options = {}) {
   const seen = new Set();
   walk(root, 0, contextFromOptions(options), (node, context) => {
     if (!node || typeof node !== 'object') return;
+    if (context.ignore) return;
     const candidateOptions = {
       ...options,
       symbolHint: context.symbolHint || options.symbolHint || '',
@@ -274,8 +275,9 @@ function walk(value, depth, context, visit) {
     return;
   }
   if (typeof value !== 'object') return;
-  visit(value, context);
-  Object.keys(value).forEach((key) => walk(value[key], depth + 1, contextFromKey(context, key), visit));
+  const nodeContext = contextFromNode(context, value);
+  visit(value, nodeContext);
+  Object.keys(value).forEach((key) => walk(value[key], depth + 1, contextFromKey(nodeContext, key), visit));
 }
 
 function firstString(node, keys) {
@@ -368,19 +370,46 @@ function contextFromOptions(options = {}) {
   return {
     symbolHint: candidateSymbol(options.symbolHint),
     zoneSide: zoneSideFromText(options.zoneSide || ''),
-    nameHint: stringValue(options.nameHint)
+    nameHint: stringValue(options.nameHint),
+    ignore: false,
+    quoteContext: false
   };
 }
 
 function contextFromKey(context, key) {
   const text = stringValue(key);
   const symbol = symbolFromKey(text);
+  const quoteContext = context.quoteContext || isQuoteContextKey(text);
+  const unsupportedSymbol = !symbol && isUnsupportedSymbolContext(text);
   const zoneSide = zoneSideFromText(text);
   return {
-    symbolHint: symbol || context.symbolHint || '',
+    symbolHint: unsupportedSymbol ? '' : symbol || context.symbolHint || '',
     zoneSide: zoneSide || context.zoneSide || '',
-    nameHint: symbol || zoneSide ? context.nameHint || '' : text || context.nameHint || ''
+    nameHint: symbol || zoneSide || unsupportedSymbol ? context.nameHint || '' : text || context.nameHint || '',
+    ignore: quoteContext || unsupportedSymbol || (context.ignore && !symbol),
+    quoteContext
   };
+}
+
+function contextFromNode(context, node) {
+  const rawSymbol = firstString(node, SYMBOL_KEYS);
+  if (!rawSymbol) return context;
+  const symbol = detectedSymbol(rawSymbol);
+  if (symbol) {
+    return {
+      ...context,
+      symbolHint: symbol,
+      ignore: context.quoteContext
+    };
+  }
+  if (isUnsupportedSymbolContext(rawSymbol)) {
+    return {
+      ...context,
+      symbolHint: '',
+      ignore: true
+    };
+  }
+  return context;
 }
 
 function symbolFromKey(key) {
@@ -403,6 +432,21 @@ function candidateSymbol(value) {
   const symbol = normalizeSymbol(raw);
   return symbol === 'MES' || symbol === 'MNQ' ? symbol : '';
 }
+
+function isQuoteContextKey(key) {
+  return /(watchlist|quote|quotes|ticker|screener|scanner)/i.test(stringValue(key));
+}
+
+function isUnsupportedSymbolContext(value) {
+  const text = stringValue(value);
+  if (!text || candidateSymbol(text) || looksLikeDisplayLevelName(text)) return false;
+  if (/^F\.US\./i.test(text)) return true;
+  return text.split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .some((part) => /^[A-Z]{1,6}$/.test(part) && !NON_SYMBOL_CONTEXT_PARTS.has(part));
+}
+
+const NON_SYMBOL_CONTEXT_PARTS = new Set(['API', 'CME', 'CQG', 'F', 'ID', 'RS', 'TV', 'URL', 'US', 'USD']);
 
 function isBareQuoteFieldName(name) {
   return /^(hp|mhp|open|close|high|low|last)$/i.test(stringValue(name));

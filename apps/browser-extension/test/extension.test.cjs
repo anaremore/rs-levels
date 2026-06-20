@@ -133,5 +133,7 @@ assert.match(options, /migrateSettings/);
 assert.match(optionsHtml, /test-service/);
 assert.match(optionsHtml, /permission-status/);
 assert.match(optionsCss, /\.status\.warning/);
+assert.match(optionsCss, /box-sizing: border-box/);
+assert.match(optionsCss, /input\[type="checkbox"\]/);
 
 console.log('browser extension static tests passed');
