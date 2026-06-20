@@ -14,6 +14,13 @@ Built-in docs: http://127.0.0.1:8765/docs.
 
 OpenAPI spec: http://127.0.0.1:8765/openapi.yaml, also checked in at docs/openapi.yaml.
 
+CLI smoke checks:
+
+```powershell
+node apps/local-service/src/cli.js --help
+node apps/local-service/src/cli.js --version
+```
+
 Default URL:
 
 ```text

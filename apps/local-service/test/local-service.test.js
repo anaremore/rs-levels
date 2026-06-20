@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createService, listen } from '../src/index.js';
 import { createLevelStore } from '../src/store.js';
 import { diagnostics } from '../src/http.js';
+
+const cliPath = fileURLToPath(new URL('../src/cli.js', import.meta.url));
+const cliHelp = execFileSync(process.execPath, [cliPath, '--help'], { encoding: 'utf8' });
+assert.match(cliHelp, /RS Levels local service/);
+assert.match(cliHelp, /RS_LEVELS_HOST/);
+assert.match(cliHelp, /trusted private networks/);
+const cliVersion = execFileSync(process.execPath, [cliPath, '--version'], { encoding: 'utf8' }).trim();
+assert.equal(cliVersion, '0.0.0');
 
 let nowMs = Date.parse('2026-06-20T12:00:00.000Z');
 const freshnessStore = createLevelStore({

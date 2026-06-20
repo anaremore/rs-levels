@@ -27,6 +27,12 @@ npm run scan:secrets
 npm start
 ```
 
+Check CLI usage without starting the service:
+
+```powershell
+node apps/local-service/src/cli.js --help
+```
+
 Release packages also include launch wrappers:
 
 ```text

@@ -67,6 +67,12 @@ scripts/start-local-service.sh
 
 The scripts call the same local service CLI as `npm start`. Existing environment variables such as `RS_LEVELS_HOST`, `RS_LEVELS_PORT`, and `RS_LEVELS_ALLOW_REMOTE` still control loopback and trusted private-network behavior.
 
+Use `--help` or `--version` as a non-binding smoke check:
+
+```powershell
+scripts/start-local-service.ps1 --help
+```
+
 Default URL:
 
 ```text
