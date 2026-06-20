@@ -109,8 +109,10 @@ function candidateFromObject(node, options) {
   const name = firstString(node, NAME_KEYS);
   const price = firstNumber(node, PRICE_KEYS);
   if (!name || price == null) return null;
+  if (isBareQuoteFieldName(name)) return null;
   if (!looksLikeDisplayLevelName(name)) return null;
-  const symbol = normalizeSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint || '');
+  const symbol = candidateSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint);
+  if (!symbol) return null;
   return normalizeLevel(symbol, {
     id: stringValue(node.id || node.key),
     symbol,
@@ -129,9 +131,11 @@ function candidateFromArray(row, options) {
   const nameIndex = row.findIndex((item) => typeof item === 'string' && looksLikeDisplayLevelName(item));
   if (nameIndex < 0) return null;
   const name = stringValue(row[nameIndex]);
+  if (isBareQuoteFieldName(name)) return null;
   const priceInfo = firstArrayNumber(row, nameIndex);
   if (!priceInfo) return null;
-  const symbol = normalizeSymbol(options.symbolHint || '');
+  const symbol = candidateSymbol(options.symbolHint);
+  if (!symbol) return null;
   return normalizeLevel(symbol, {
     symbol,
     name,
@@ -149,6 +153,7 @@ function candidatesFromNamedPriceMap(node, options) {
   const candidates = [];
   for (const [rawName, rawValue] of Object.entries(node)) {
     const name = stringValue(rawName);
+    if (isBareQuoteFieldName(name)) continue;
     if (!looksLikeDisplayLevelName(name)) continue;
     const candidate = candidateFromNamedValue(name, rawValue, options);
     if (candidate) candidates.push(candidate);
@@ -171,7 +176,8 @@ function candidatesFromZoneBounds(node, options) {
   );
   if (!side) return [];
 
-  const symbol = normalizeSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint || '');
+  const symbol = candidateSymbol(firstString(node, SYMBOL_KEYS) || options.symbolHint);
+  if (!symbol) return [];
   const suffix = zoneSuffix(node, options);
   const prefix = side === 'bear' ? 'BrZ' : 'BZ';
   const kind = side === 'bear' ? 'zone-bear' : 'zone-bull';
@@ -208,7 +214,7 @@ function candidateFromNamedValue(name, value, options) {
   let color = '';
   let kind = inferLevelKind(name);
   let id = '';
-  let symbol = normalizeSymbol(options.symbolHint || '');
+  let symbol = candidateSymbol(options.symbolHint);
   let metadata = {};
 
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -216,12 +222,12 @@ function candidateFromNamedValue(name, value, options) {
     color = normalizeInputColor(value.color || value.colour || value.rgb);
     kind = levelKind(name, value.kind || kind, metadata, options);
     id = stringValue(value.id || value.key);
-    symbol = normalizeSymbol(firstString(value, SYMBOL_KEYS) || options.symbolHint || '');
+    symbol = candidateSymbol(firstString(value, SYMBOL_KEYS) || options.symbolHint);
     metadata = displayMetadata(value);
   }
 
   kind = levelKind(name, kind, metadata, options);
-  if (price == null) return null;
+  if (price == null || !symbol) return null;
   return normalizeLevel(symbol, {
     id,
     symbol,
@@ -360,7 +366,7 @@ function displayMetadata(node) {
 
 function contextFromOptions(options = {}) {
   return {
-    symbolHint: normalizeSymbol(options.symbolHint || ''),
+    symbolHint: candidateSymbol(options.symbolHint),
     zoneSide: zoneSideFromText(options.zoneSide || ''),
     nameHint: stringValue(options.nameHint)
   };
@@ -389,6 +395,17 @@ function detectedSymbol(value) {
   if (normalized === 'MNQ' && (normalized !== upper || upper === 'MNQ' || upper === 'NQ')) return 'MNQ';
   if (normalized === 'MES' && (normalized !== upper || upper === 'MES' || upper === 'ES')) return 'MES';
   return '';
+}
+
+function candidateSymbol(value) {
+  const raw = stringValue(value);
+  if (!raw) return '';
+  const symbol = normalizeSymbol(raw);
+  return symbol === 'MES' || symbol === 'MNQ' ? symbol : '';
+}
+
+function isBareQuoteFieldName(name) {
+  return /^(hp|mhp|open|close|high|low|last)$/i.test(stringValue(name));
 }
 
 function zoneSideFromText(value) {

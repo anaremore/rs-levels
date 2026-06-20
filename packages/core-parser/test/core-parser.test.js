@@ -152,6 +152,47 @@ assert.equal(cqgMultiSymbol.symbols.MNQ.length, 3);
 assert.equal(cqgMultiSymbol.symbols.MES.find((level) => level.name === 'BZT2').kind, 'zone-bull');
 assert.equal(cqgMultiSymbol.symbols.MNQ.find((level) => level.name === 'BrZT2').kind, 'zone-bear');
 
+const quoteLikeRows = normalizeCapture({
+  endpoint: '/api/v1/tview/history?symbol=SPY',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:50.000Z',
+  body: {
+    symbol: 'SPY',
+    rows: [
+      { hp: 741, close: 740.96 },
+      { name: 'hp', price: 742.5 },
+      { name: 'close', price: 740.62 },
+      { name: 'PrevDayClose', price: 740.96, symbol: 'SPY' }
+    ]
+  }
+});
+assert.equal(quoteLikeRows.endpoint.ok, false);
+assert.equal(quoteLikeRows.symbols.MES, undefined);
+
+const mixedWatchlistAndFutures = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:55.000Z',
+  body: {
+    watchlist: [
+      { symbol: 'SPY', name: 'PrevDayClose', price: 740.96 },
+      { symbol: 'QQQ', name: 'LastOpen', price: 747.76 },
+      { symbol: 'AAPL', hp: 290.5, close: 290.62 }
+    ],
+    charts: {
+      'F.US.EPU26': {
+        levels: [
+          { name: 'OVNMHP', price: 7545 },
+          { name: 'man_HP', price: 7565 }
+        ]
+      }
+    }
+  }
+});
+assert.equal(mixedWatchlistAndFutures.symbols.MES.length, 2);
+assert.equal(mixedWatchlistAndFutures.symbols.MES[0].price, 7545);
+assert.equal(mixedWatchlistAndFutures.symbols.MNQ, undefined);
+
 const manyZones = collectLevels({
   MES: {
     bullZones: Array.from({ length: 250 }, (_item, index) => ({

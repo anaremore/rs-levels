@@ -60,6 +60,28 @@ assert.equal(emptyCaptureSnapshot.source.connected, false);
 assert.equal(emptyCaptureSnapshot.source.endpoints[0].ok, false);
 assert.equal(emptyCaptureStore.flatLevels().length, 0);
 
+const endpointPruneStore = createLevelStore({
+  clock: () => new Date('2026-06-20T12:02:00.000Z')
+});
+endpointPruneStore.applyCapture({
+  endpoint: '/demo/levels/MES',
+  status: 200,
+  capturedAt: '2026-06-20T12:02:00.000Z',
+  body: {
+    symbol: 'MES',
+    levels: [{ name: 'OVNHP', price: 7537 }]
+  }
+});
+assert.equal(endpointPruneStore.flatLevels().length, 1);
+endpointPruneStore.applyCapture({
+  endpoint: '/demo/levels/MES',
+  status: 200,
+  capturedAt: '2026-06-20T12:02:01.000Z',
+  body: { ok: true, rows: [{ name: 'Not display data', value: 123 }] }
+});
+assert.equal(endpointPruneStore.flatLevels().length, 0);
+assert.equal(endpointPruneStore.getSnapshot().source.state, 'waiting');
+
 const service = createService({
   config: { host: '127.0.0.1', port: 0 }
 });

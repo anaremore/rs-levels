@@ -1,6 +1,6 @@
 (() => {
   const defaults = {
-    settingsVersion: 3,
+    settingsVersion: 4,
     serviceUrl: 'http://127.0.0.1:8765',
     captureEnabled: true,
     endpointPatterns: [
@@ -24,12 +24,13 @@
       'indicator',
       'indicators',
       'hpa',
-      'tview',
-      'history',
+      'tview/settings',
+      'tview/indicators',
       'liq-map',
       'liquidity',
       'dyn-hp',
-      '/db/'
+      'db/sp',
+      'db/nq'
     ],
     symbols: ['MES', 'MNQ'],
     maxCaptureBytes: 1024 * 1024

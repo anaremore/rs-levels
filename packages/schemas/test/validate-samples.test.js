@@ -59,6 +59,8 @@ assert.equal(normalizeSymbol('F.US.ENQU26'), 'MNQ');
 assert.equal(normalizeSymbol('ENQU26'), 'MNQ');
 assert.equal(normalizeSymbol('ENQ'), 'MNQ');
 assert.equal(normalizeSymbol('E-mini NASDAQ-100: September 2026'), 'MNQ');
+assert.equal(normalizeSymbol('SPY'), 'SPY');
+assert.equal(normalizeSymbol('QQQ'), 'QQQ');
 assert.equal(normalizeSymbol('levels'), 'LEVELS');
 assert.equal(normalizeSymbol('messages'), 'MESSAGES');
 

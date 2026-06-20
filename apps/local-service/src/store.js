@@ -47,7 +47,8 @@ export function createLevelStore(options = {}) {
     const symbols = { ...snapshot.symbols };
     const parsedLevelCount = Object.values(parsed.symbols).reduce((sum, rows) => sum + rows.length, 0);
     if (!parsedLevelCount) {
-      const hasLevels = Object.values(symbols).some((row) => Array.isArray(row.levels) && row.levels.length);
+      const nextSymbols = removeEndpointLevels(symbols, parsed.endpoint.key);
+      const hasLevels = Object.values(nextSymbols).some((row) => Array.isArray(row.levels) && row.levels.length);
       snapshot = {
         ...snapshot,
         generatedAt: receivedAt,
@@ -55,9 +56,12 @@ export function createLevelStore(options = {}) {
           ...snapshot.source,
           state: hasLevels ? snapshot.source.state : 'waiting',
           connected: hasLevels ? snapshot.source.connected : false,
+          lastCaptureAt: hasLevels ? snapshot.source.lastCaptureAt : '',
+          ageMs: hasLevels ? snapshot.source.ageMs : null,
           endpoints: Array.from(endpointMap.values()).slice(-50),
           warnings: parsed.warnings
         }),
+        symbols: nextSymbols,
         warnings: parsed.warnings
       };
       return getSnapshot();
@@ -148,6 +152,22 @@ export function createLevelStore(options = {}) {
       ageMs
     });
   }
+}
+
+function removeEndpointLevels(symbols, endpointKey) {
+  const key = String(endpointKey || '');
+  if (!key) return symbols;
+  const next = {};
+  Object.entries(symbols || {}).forEach(([symbol, row]) => {
+    const levels = Array.isArray(row.levels) ? row.levels.filter((level) => level.metadata?.endpointKey !== key) : [];
+    if (levels.length) {
+      next[symbol] = normalizeSymbolSnapshot(symbol, {
+        ...row,
+        levels
+      });
+    }
+  });
+  return next;
 }
 
 function isoNow(clockValue) {

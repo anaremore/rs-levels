@@ -80,12 +80,13 @@ references
 indicator
 indicators
 hpa
-tview
-history
+tview/settings
+tview/indicators
 liq-map
 liquidity
 dyn-hp
-/db/
+db/sp
+db/nq
 ```
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.

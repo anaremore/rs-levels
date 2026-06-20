@@ -19,11 +19,13 @@ const settings = sharedContext.RS_LEVELS.cleanSettings({
 assert.equal(settings.serviceUrl, 'http://127.0.0.1:8765');
 assert.equal(JSON.stringify(settings.endpointPatterns), JSON.stringify(['level', 'zone', 'ddband']));
 assert.equal(settings.maxCaptureBytes, 1024);
-assert.equal(sharedContext.RS_LEVELS.defaults.settingsVersion, 3);
+assert.equal(sharedContext.RS_LEVELS.defaults.settingsVersion, 4);
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('chart'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('indicator'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('hpa'));
-assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('tview'));
+assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('tview/settings'));
+assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('tview/indicators'));
+assert.ok(!sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('history'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('liq-map'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('dyn-hp'));
 assert.deepEqual(
