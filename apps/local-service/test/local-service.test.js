@@ -46,6 +46,7 @@ try {
   assert.ok(root.endpoints.includes('/docs'));
   assert.ok(root.endpoints.includes('/openapi.yaml'));
   assert.ok(root.endpoints.includes('/diagnostics'));
+  assert.equal(root.version, '0.0.0');
 
   const docsPage = await getText(`${baseUrl}/docs`);
   assert.match(docsPage, /RS Levels API Docs/);
@@ -63,11 +64,13 @@ try {
   assert.equal(healthResponse.headers.get('x-content-type-options'), 'nosniff');
   const health = await healthResponse.json();
   assert.equal(health.ok, true);
+  assert.equal(health.version, '0.0.0');
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
 
   const waitingDiagnostics = await getJson(`${baseUrl}/diagnostics`);
   assert.equal(waitingDiagnostics.ok, true);
+  assert.equal(waitingDiagnostics.version, '0.0.0');
   assert.equal(waitingDiagnostics.source.connected, false);
   assert.equal(waitingDiagnostics.levelCount, 0);
   assert.ok(waitingDiagnostics.checks.some((check) => check.id === 'source' && check.status === 'waiting'));
@@ -75,6 +78,9 @@ try {
 
   const loopbackCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'http://127.0.0.1:5173' } });
   assert.equal(loopbackCors.headers.get('access-control-allow-origin'), 'http://127.0.0.1:5173');
+
+  const compactStatus = await getJson(`${baseUrl}/status`);
+  assert.equal(compactStatus.version, '0.0.0');
 
   const extensionCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'chrome-extension://abcdefghijklmnop' } });
   assert.equal(extensionCors.headers.get('access-control-allow-origin'), 'chrome-extension://abcdefghijklmnop');

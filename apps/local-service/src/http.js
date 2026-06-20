@@ -8,6 +8,8 @@ import { levelsToSierraText } from './sierra-format.js';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const OPENAPI_YAML = readFileSync(new URL('../../../docs/openapi.yaml', import.meta.url), 'utf8');
+const PACKAGE_JSON = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
+const SERVICE_VERSION = String(PACKAGE_JSON.version || '0.0.0');
 
 export function createHttpApp({ store, config }) {
   const clients = new Set();
@@ -77,6 +79,7 @@ export function rootInfo(config) {
   return {
     ok: true,
     name: 'RS Levels local service',
+    version: SERVICE_VERSION,
     endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
@@ -87,6 +90,7 @@ export function health(store, config) {
   return {
     ok: true,
     service: 'rs-levels',
+    version: SERVICE_VERSION,
     schemaVersion: snapshot.schemaVersion,
     generatedAt: new Date().toISOString(),
     network: networkStatus(config),
@@ -99,6 +103,7 @@ export function health(store, config) {
 export function status(store, config) {
   return {
     ok: true,
+    version: SERVICE_VERSION,
     network: networkStatus(config),
     source: store.getSnapshot().source,
     symbols: Object.keys(store.getSnapshot().symbols)
@@ -114,6 +119,7 @@ export function diagnostics(store, config) {
   return {
     ok: true,
     service: 'rs-levels',
+    version: SERVICE_VERSION,
     schemaVersion: snapshot.schemaVersion,
     generatedAt: new Date().toISOString(),
     docs: {

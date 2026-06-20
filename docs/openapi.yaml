@@ -226,11 +226,13 @@ components:
   schemas:
     RootInfo:
       type: object
-      required: [ok, name, endpoints, network]
+      required: [ok, name, version, endpoints, network]
       properties:
         ok:
           type: boolean
         name:
+          type: string
+        version:
           type: string
         endpoints:
           type: array
@@ -240,11 +242,13 @@ components:
           $ref: '#/components/schemas/Network'
     Health:
       type: object
-      required: [ok, service, schemaVersion, generatedAt, network, source, symbolCount, levelCount]
+      required: [ok, service, version, schemaVersion, generatedAt, network, source, symbolCount, levelCount]
       properties:
         ok:
           type: boolean
         service:
+          type: string
+        version:
           type: string
         schemaVersion:
           type: string
@@ -261,10 +265,12 @@ components:
           type: integer
     Status:
       type: object
-      required: [ok, network, source, symbols]
+      required: [ok, version, network, source, symbols]
       properties:
         ok:
           type: boolean
+        version:
+          type: string
         network:
           $ref: '#/components/schemas/Network'
         source:
@@ -464,11 +470,13 @@ components:
             - type: string
     Diagnostics:
       type: object
-      required: [ok, service, schemaVersion, generatedAt, docs, network, source, symbols, levelCount, checks, hints]
+      required: [ok, service, version, schemaVersion, generatedAt, docs, network, source, symbols, levelCount, checks, hints]
       properties:
         ok:
           type: boolean
         service:
+          type: string
+        version:
           type: string
         schemaVersion:
           type: string
