@@ -89,3 +89,18 @@ Recommended order:
 5. Bookmap. Initial Java add-on source included.
 
 Each plugin must include a safety test or review note confirming it does not call platform order APIs.
+
+## Slice 7: Packaging And Release Artifacts
+
+Status: in progress.
+
+Goal: make public-safe releases easy to inspect, verify, and install across Windows, macOS, and Linux.
+
+Deliverables:
+
+- source-style release directory with manifest and file checksums
+- source zip archive with checksum sidecar
+- standalone browser-extension zip archive with checksum sidecar
+- cross-platform local service launch scripts
+- package tests and release checklist updates
+- CI coverage across Windows, macOS, and Linux

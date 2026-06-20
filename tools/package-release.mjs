@@ -14,6 +14,12 @@ const distRoot = path.join(root, 'dist');
 const outDir = path.join(distRoot, releaseName);
 const zipPath = path.join(distRoot, `${releaseName}.zip`);
 const zipShaPath = `${zipPath}.sha256`;
+const extensionRoot = path.join(root, 'apps', 'browser-extension');
+const extensionManifest = JSON.parse(await fs.readFile(path.join(extensionRoot, 'manifest.json'), 'utf8'));
+const extensionVersion = extensionManifest.version || packageJson.version;
+const extensionReleaseName = `${packageJson.name}-browser-extension-${extensionVersion}`;
+const extensionZipPath = path.join(distRoot, `${extensionReleaseName}.zip`);
+const extensionZipShaPath = `${extensionZipPath}.sha256`;
 
 const includeEntries = [
   'README.md',
@@ -28,6 +34,8 @@ const includeEntries = [
   'scripts',
   'tools'
 ];
+
+const extensionIncludeEntries = ['manifest.json', 'README.md', 'src'];
 
 const requiredReleaseEntries = [
   'README.md',
@@ -46,6 +54,20 @@ const requiredReleaseEntries = [
   'plugins/quantower/RSLevelsDisplayQuantower.cs',
   'plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java',
   'tools/scan-text.mjs'
+];
+
+const requiredExtensionEntries = [
+  'manifest.json',
+  'README.md',
+  'src/background.js',
+  'src/capture-rules.js',
+  'src/content-script.js',
+  'src/options.html',
+  'src/options.js',
+  'src/page-hook.js',
+  'src/popup.html',
+  'src/popup.js',
+  'src/shared.js'
 ];
 
 const excludedNames = new Set([
@@ -82,14 +104,27 @@ for (const entry of includeEntries) {
 files.sort((a, b) => a.relative.localeCompare(b.relative));
 assertRequiredReleaseEntries(files);
 
+const extensionFiles = [];
+for (const entry of extensionIncludeEntries) {
+  const source = path.join(extensionRoot, entry);
+  await assertExists(source);
+  await collectFiles(source, entry.replace(/\\/g, '/'), extensionFiles);
+}
+extensionFiles.sort((a, b) => a.relative.localeCompare(b.relative));
+assertRequiredExtensionEntries(extensionFiles);
+
 if (checkOnly) {
-  console.log(`release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries, zip enabled)`);
+  console.log(
+    `release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries, zip enabled, extension zip enabled)`
+  );
   process.exit(0);
 }
 
 await fs.rm(outDir, { recursive: true, force: true });
 await fs.rm(zipPath, { force: true });
 await fs.rm(zipShaPath, { force: true });
+await fs.rm(extensionZipPath, { force: true });
+await fs.rm(extensionZipShaPath, { force: true });
 await fs.mkdir(outDir, { recursive: true });
 
 const manifestFiles = [];
@@ -126,9 +161,15 @@ await writeZip(zipPath, archiveFiles);
 const zipHash = await sha256(zipPath);
 await fs.writeFile(zipShaPath, `${zipHash}  ${path.basename(zipPath)}\n`);
 
+await writeZip(extensionZipPath, extensionFiles);
+const extensionZipHash = await sha256(extensionZipPath);
+await fs.writeFile(extensionZipShaPath, `${extensionZipHash}  ${path.basename(extensionZipPath)}\n`);
+
 console.log(`release package written to ${path.relative(root, outDir)}`);
 console.log(`release zip written to ${path.relative(root, zipPath)}`);
 console.log(`release zip checksum written to ${path.relative(root, zipShaPath)}`);
+console.log(`browser extension zip written to ${path.relative(root, extensionZipPath)}`);
+console.log(`browser extension zip checksum written to ${path.relative(root, extensionZipShaPath)}`);
 console.log(`${manifestFiles.length} files`);
 
 async function assertExists(filePath) {
@@ -161,6 +202,14 @@ function assertRequiredReleaseEntries(files) {
   const missing = requiredReleaseEntries.filter((entry) => !releasePaths.has(entry));
   if (missing.length) {
     throw new Error(`Required release file(s) missing: ${missing.join(', ')}`);
+  }
+}
+
+function assertRequiredExtensionEntries(files) {
+  const releasePaths = new Set(files.map((file) => file.relative));
+  const missing = requiredExtensionEntries.filter((entry) => !releasePaths.has(entry));
+  if (missing.length) {
+    throw new Error(`Required extension package file(s) missing: ${missing.join(', ')}`);
   }
 }
 

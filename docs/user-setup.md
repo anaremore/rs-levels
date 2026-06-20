@@ -48,6 +48,8 @@ npm run package
 
 Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 
+The package command also writes `dist/rs-levels-browser-extension-0.1.0.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
+
 Release packages include cross-platform service launch scripts:
 
 ```text
@@ -61,7 +63,7 @@ scripts/start-local-service.sh
 1. Open `chrome://extensions` or the equivalent Chromium extension page.
 2. Enable developer mode.
 3. Choose `Load unpacked`.
-4. Select `apps/browser-extension` from this repository.
+4. Select `apps/browser-extension` from this repository, `dist/rs-levels-0.0.0/apps/browser-extension` from a source release, or the extracted `rs-levels-browser-extension` folder from the standalone extension zip.
 5. Pin `RS Levels Capture` if you want quick access to the popup.
 
 The extension runs only on RocketScooter host patterns. It posts allowlisted response bodies to your configured local API URL.

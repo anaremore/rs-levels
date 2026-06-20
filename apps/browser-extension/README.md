@@ -16,6 +16,8 @@ The page hook skips clearly non-text response content types before reading a bod
 4. Start the local service with `npm start`.
 5. Open RocketScooter and use the extension popup to check status.
 
+Packaged releases also include `dist/rs-levels-browser-extension-0.1.0.zip`. Unzip it and load the extracted folder as the unpacked extension. The standalone zip contains only the extension manifest, README, and runtime `src/` files.
+
 ## Popup
 
 The popup shows local service health, service version, captured level counts, post timing, capture-hook counters, and the last extension-side issue. It includes:

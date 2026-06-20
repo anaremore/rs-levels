@@ -14,6 +14,8 @@ Output:
 dist/rs-levels-0.0.0/
 dist/rs-levels-0.0.0.zip
 dist/rs-levels-0.0.0.zip.sha256
+dist/rs-levels-browser-extension-0.1.0.zip
+dist/rs-levels-browser-extension-0.1.0.zip.sha256
 ```
 
 The release directory includes:
@@ -33,6 +35,8 @@ The release directory includes:
 
 The zip artifact contains the release directory as its top-level folder. The `.zip.sha256` sidecar verifies the archive itself; `SHA256SUMS.txt` verifies files inside the unpacked release directory.
 
+The browser-extension zip is a focused install artifact with `manifest.json` at the archive root. It includes the extension README and runtime `src/` files, but not the extension test suite.
+
 ## Verify Packaging Inputs
 
 ```powershell
@@ -47,6 +51,12 @@ Load this directory as an unpacked Chromium extension:
 
 ```text
 dist/rs-levels-0.0.0/apps/browser-extension
+```
+
+Or unzip the focused browser-extension artifact and load the extracted folder:
+
+```text
+dist/rs-levels-browser-extension-0.1.0.zip
 ```
 
 ## Service Start From Package
@@ -81,4 +91,4 @@ http://127.0.0.1:8765
 
 ## Future Installers
 
-Native installers and signed extension artifacts can be added later. Until then, the release directory and zip archive are the canonical cross-platform artifacts.
+Native installers and signed extension artifacts can be added later. Until then, the release directory, source zip archive, standalone browser-extension zip, and checksum sidecars are the canonical cross-platform artifacts.

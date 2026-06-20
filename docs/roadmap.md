@@ -66,7 +66,8 @@ Status: in progress.
 - Build source-style release directory.
 - Add `RELEASE-MANIFEST.json` and `SHA256SUMS.txt`.
 - Verify critical API, extension, TradingView, plugin, docs, and scan artifacts in `npm run package:check`.
-- Build zip archive and checksum sidecar.
+- Build source zip archive and checksum sidecar.
+- Build standalone browser-extension zip archive and checksum sidecar.
 - Include cross-platform local service launch scripts.
 - Run CI verification on Ubuntu, Windows, and macOS.
 - Next: native packaged app wrapper.

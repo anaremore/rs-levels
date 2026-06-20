@@ -19,7 +19,7 @@ npm run scan:private
 npm run scan:secrets
 ```
 
-`npm test` includes `npm run package:check`, which verifies the release package includes the local API, browser extension, TradingView indicator, display plugins, docs, and scan tooling.
+`npm test` includes `npm run package:check`, which verifies the release package includes the local API, browser extension, TradingView indicator, display plugins, docs, scan tooling, and standalone extension packaging inputs.
 
 ## Start The Local Service
 
@@ -76,6 +76,8 @@ Only use remote binding on networks you trust. The browser extension should cont
 ## Browser Extension
 
 Load `apps/browser-extension` as an unpacked Chromium extension. It posts allowlisted RocketScooter responses to `/capture/api`, shows local service status, and can copy TradingView or JSON exports from the local service.
+
+`npm run package` also creates `dist/rs-levels-browser-extension-0.1.0.zip`. Unzip it and load the extracted folder when installing from a focused extension artifact.
 
 ## Platform Plugins
 

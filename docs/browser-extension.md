@@ -33,6 +33,8 @@ The RS Levels browser extension is the first-priority capture UX.
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 
+Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.0.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
+
 Capture-hook counters are aggregate only:
 
 - `Observed`: fetch/XHR responses seen by the page hook.

@@ -40,7 +40,7 @@ Create a release directory:
 npm run package
 ```
 
-The release output includes a source-style directory, a zip archive, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and a zip checksum sidecar.
+The release output includes a source-style directory, a source zip archive, a standalone browser-extension zip, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and checksum sidecars.
 
 Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`.
 
