@@ -46,7 +46,6 @@ export function normalizeSourceState(source = {}) {
 export function normalizeEndpointSummary(endpoint = {}) {
   return {
     key: stringValue(endpoint.key),
-    url: stringValue(endpoint.url),
     status: integerOrNull(endpoint.status),
     capturedAt: stringValue(endpoint.capturedAt),
     parser: stringValue(endpoint.parser),
@@ -214,4 +213,3 @@ function stringValue(value) {
 function plainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
-

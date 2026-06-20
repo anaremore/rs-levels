@@ -29,7 +29,7 @@ Current schema version: `0.1.0`.
 
 `source.lastCaptureAt` preserves the capture timestamp. `source.ageMs` is calculated by the local service when a snapshot, health payload, status payload, or diagnostics bundle is read and measures how long it has been since the service accepted the latest capture. After the configured stale threshold is exceeded, the local service reports `source.state: "stale"` and `source.connected: false`.
 
-Use `source.endpoints` to show which RocketScooter captures were seen recently and whether parsing succeeded.
+Use `source.endpoints` to show which RocketScooter captures were seen recently and whether parsing succeeded. Endpoint summaries intentionally omit raw captured URLs and include only normalized endpoint keys, status codes, parser names, timestamps, and parse status.
 
 ## Symbol Snapshot
 

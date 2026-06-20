@@ -342,10 +342,9 @@ components:
             type: string
     EndpointSummary:
       type: object
+      description: Scrubbed capture endpoint summary. Raw captured URLs are intentionally omitted.
       properties:
         key:
-          type: string
-        url:
           type: string
         status:
           type: integer

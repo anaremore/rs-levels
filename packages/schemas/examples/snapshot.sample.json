@@ -10,7 +10,6 @@
     "endpoints": [
       {
         "key": "ddbands/MES",
-        "url": "/platform/api/v1/ddbands/MES",
         "status": 200,
         "capturedAt": "2026-06-19T14:29:59.500Z",
         "parser": "ddbands",
@@ -61,4 +60,3 @@
   },
   "warnings": []
 }
-

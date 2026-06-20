@@ -14,7 +14,6 @@ export type SourceStateName = 'offline' | 'waiting' | 'capturing' | 'stale' | 'e
 
 export interface EndpointSummary {
   key: string;
-  url: string;
   status: number | null;
   capturedAt: string;
   parser: string;
@@ -86,4 +85,3 @@ export function validateLevel(level: unknown): string[];
 export function normalizeSymbol(value: unknown): string;
 export function inferLevelKind(name: unknown): LevelKind;
 export function stableLevelId(symbol: string, level?: Partial<Level>): string;
-

@@ -63,7 +63,7 @@ Returns the OpenAPI 3.1 YAML spec. Use this URL with Swagger UI, Redoc, Postman,
 
 Returns a scrubbed setup and support bundle for local API and browser-extension troubleshooting. It includes network posture, source state, symbol count, level count, setup checks, and hints.
 
-The response intentionally omits raw captured URLs from source endpoint summaries. Endpoint diagnostics include the normalized endpoint key, status, parser name, timestamp, and parse result only.
+Public source endpoint summaries intentionally omit raw captured URLs. Endpoint diagnostics include the normalized endpoint key, status, parser name, timestamp, and parse result only.
 
 `source.ageMs` is calculated when diagnostics are requested. It measures how long it has been since the local service accepted the latest capture. Once it exceeds the local service stale threshold, `source.state` becomes `stale` and `source.connected` becomes `false`.
 

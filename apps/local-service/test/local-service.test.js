@@ -109,6 +109,12 @@ try {
   assert.equal(Object.hasOwn(captureDiagnostics.source.endpoints[0], 'url'), false);
   assert.ok(captureDiagnostics.checks.some((check) => check.id === 'levels' && check.status === 'ok'));
 
+  const snapshotAfterCapture = await getJson(`${baseUrl}/snapshot`);
+  assert.equal(Object.hasOwn(snapshotAfterCapture.source.endpoints[0], 'url'), false);
+
+  const healthAfterCapture = await getJson(`${baseUrl}/health`);
+  assert.equal(Object.hasOwn(healthAfterCapture.source.endpoints[0], 'url'), false);
+
   const levels = await getJson(`${baseUrl}/levels/MES`);
   assert.equal(levels.symbol, 'MES');
   assert.equal(levels.levels[1].kind, 'dd-band');

@@ -18,6 +18,7 @@ const parsed = normalizeCapture({
 });
 
 assert.equal(parsed.endpoint.key, '/platform/api/v1/ddbands/MES');
+assert.equal(Object.hasOwn(parsed.endpoint, 'url'), false);
 assert.equal(parsed.symbols.MES.length, 2);
 assert.equal(parsed.symbols.MES[0].name, 'OVNHP');
 assert.equal(parsed.symbols.MES[0].color, '#2962FF');
