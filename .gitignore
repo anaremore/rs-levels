@@ -4,6 +4,7 @@ dist/
 build/
 out/
 coverage/
+__pycache__/
 
 # Local runtime state
 .env

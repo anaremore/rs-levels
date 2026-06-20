@@ -1,6 +1,21 @@
 # HTML Dashboard Example
 
-Planned minimal browser example that reads the local API and renders the latest levels.
+Static browser dashboard for the RS Levels local API.
+
+Open `index.html` in a browser, or serve this folder with any static file server. The dashboard defaults to:
+
+```text
+http://127.0.0.1:8765
+```
+
+It can:
+
+- read `/snapshot`
+- subscribe to `/stream`
+- render per-symbol level rows
+- copy TradingView payloads from `/tradingview/:symbol`
+- copy JSON exports from `/tradingview/:symbol?format=json`
+
+For Tailscale or another trusted private network, change the API field in the dashboard to the service URL you enabled in the local service.
 
 This example is display-only.
-

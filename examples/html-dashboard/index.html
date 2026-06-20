@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RS Levels Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <p class="eyebrow">RS Levels</p>
+        <h1>Level Feed</h1>
+      </div>
+      <div class="status-strip">
+        <span id="connection" class="pill muted">WAITING</span>
+        <span id="freshness" class="metric">--</span>
+      </div>
+    </header>
+
+    <section class="controls" aria-label="Feed controls">
+      <label class="field service-field">
+        <span>API</span>
+        <input id="service-url" type="url" value="http://127.0.0.1:8765" spellcheck="false">
+      </label>
+      <label class="field symbol-field">
+        <span>Symbol</span>
+        <select id="symbol"></select>
+      </label>
+      <button id="refresh" type="button">Refresh</button>
+      <button id="connect" type="button">Stream</button>
+    </section>
+
+    <section class="summary-grid" aria-label="Feed summary">
+      <div class="summary-cell">
+        <span>State</span>
+        <strong id="source-state">waiting</strong>
+      </div>
+      <div class="summary-cell">
+        <span>Symbols</span>
+        <strong id="symbol-count">0</strong>
+      </div>
+      <div class="summary-cell">
+        <span>Levels</span>
+        <strong id="level-count">0</strong>
+      </div>
+      <div class="summary-cell">
+        <span>Captured</span>
+        <strong id="captured-at">--</strong>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Export actions">
+      <button id="copy-tv" type="button">Copy TradingView</button>
+      <button id="copy-json" type="button">Copy JSON</button>
+      <button id="open-api" type="button">Open API</button>
+      <p id="message" class="message"></p>
+    </section>
+
+    <section class="levels-wrap" aria-label="Levels">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Kind</th>
+            <th class="num">Price</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="levels-body">
+          <tr><td colspan="4" class="empty">No levels captured</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

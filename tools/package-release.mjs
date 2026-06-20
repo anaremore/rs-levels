@@ -33,6 +33,7 @@ const excludedNames = new Set([
   'build',
   'out',
   'coverage',
+  '__pycache__',
   'captures',
   'snapshots',
   'screenshots',

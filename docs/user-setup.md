@@ -90,6 +90,17 @@ http://100.x.y.z:8765
 
 Chrome will ask for permission to reach that specific origin. The extension does not auto-discover or broadcast service locations.
 
+## Use Examples
+
+The `examples/` folder includes dependency-free clients for local API exploration:
+
+- `examples/html-dashboard/index.html`
+- `examples/node-client/snapshot.mjs`
+- `examples/node-client/stream.mjs`
+- `examples/python-client/snapshot.py`
+- `examples/python-client/stream.py`
+
+All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the dashboard API field for Tailscale/private-network URLs.
 ## Troubleshooting
 
 - `OFFLINE` in the popup: start the API or check the service URL.
