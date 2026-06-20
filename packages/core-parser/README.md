@@ -9,3 +9,5 @@ The parser accepts generic display-level shapes:
 - objects with display names such as `name`, `label`, or `pivotName` and prices such as `price`, `value`, or `pivotPrice`
 - compact rows such as `["OVNHP", "7,537.00", 41, 98, 255]`
 - colors as hex strings, `[red, green, blue]`, `{ r, g, b }`, or `{ red, green, blue }`
+
+Endpoint summaries use path-only keys and scrub long numeric or identifier-like path segments before they reach public snapshots.

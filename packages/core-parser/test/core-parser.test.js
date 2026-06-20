@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { collectLevels, normalizeCapture } from '../src/index.js';
+import { collectLevels, endpointKey, normalizeCapture } from '../src/index.js';
 
 const body = {
   symbol: 'MES',
@@ -55,5 +55,10 @@ const colorObject = collectLevels({
 assert.equal(colorObject.length, 1);
 assert.equal(colorObject[0].price, 5111.25);
 assert.equal(colorObject[0].color, '#4CAF50');
+
+assert.equal(
+  endpointKey({ url: 'https://example.test/platform/api/users/1234567890/feeds/abcdef1234567890/ddbands/MES?private=value' }),
+  '/platform/api/users/:id/feeds/:id/ddbands/MES'
+);
 
 console.log('core parser tests passed');

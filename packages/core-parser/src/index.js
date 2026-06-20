@@ -75,7 +75,7 @@ export function collectLevels(root, options = {}) {
 
 export function endpointKey(capture = {}) {
   const raw = stringValue(capture.endpoint || capture.path || capture.url || 'capture');
-  return raw.replace(/^https?:\/\/[^/]+/i, '').split('?')[0] || 'capture';
+  return scrubEndpointKey(raw.replace(/^https?:\/\/[^/]+/i, '').split('?')[0] || 'capture');
 }
 
 function candidateFromObject(node, options) {
@@ -224,6 +224,22 @@ function displayMetadata(node) {
     if (node[key] != null && typeof node[key] !== 'object') out[key] = node[key];
   });
   return out;
+}
+
+function scrubEndpointKey(value) {
+  const text = stringValue(value) || 'capture';
+  return text.split('/').map(scrubEndpointSegment).join('/') || 'capture';
+}
+
+function scrubEndpointSegment(segment) {
+  const text = stringValue(segment);
+  if (!text) return segment;
+  const upper = text.toUpperCase();
+  if (upper.includes('MES') || upper.includes('MNQ') || upper === 'ES' || upper === 'NQ') return text;
+  if (/^\d{4,}$/.test(text)) return ':id';
+  if (/^[0-9a-f]{8,}$/i.test(text)) return ':id';
+  if (/^[A-Za-z0-9_-]{20,}$/.test(text)) return ':id';
+  return text;
 }
 
 function shallowPick(value, keys) {
