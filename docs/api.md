@@ -22,6 +22,7 @@ GET  /swagger.yaml
 GET  /diagnostics
 GET  /health
 GET  /status
+GET  /plugins
 GET  /snapshot
 GET  /levels
 GET  /levels/:symbol
@@ -45,7 +46,7 @@ Returns service metadata and endpoint hints.
   "ok": true,
   "name": "RS Levels local service",
   "version": "0.0.0",
-  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -161,6 +162,18 @@ Returns a compact status payload for UI badges and plugin diagnostics. Display p
 ```
 
 `symbolSummaries` is scrubbed and safe for display plugins. It lets UI clients verify that a selected symbol has captured levels before requesting `/levels/:symbol` or `/tradingview/:symbol`.
+
+## GET /plugins
+
+Returns the public display-plugin manifest from `plugins/manifest.json` with a response timestamp. The manifest lists included adapter entry files, README paths, platform names, integration modes, and read-only local API endpoints.
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "generatedAt": "2026-06-19T14:30:00.000Z",
+  "plugins": []
+}
+```
 
 ## GET /snapshot
 

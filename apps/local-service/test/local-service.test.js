@@ -46,6 +46,7 @@ try {
   assert.ok(root.endpoints.includes('/docs'));
   assert.ok(root.endpoints.includes('/openapi.yaml'));
   assert.ok(root.endpoints.includes('/diagnostics'));
+  assert.ok(root.endpoints.includes('/plugins'));
   assert.equal(root.version, '0.0.0');
 
   const docsPage = await getText(`${baseUrl}/docs`);
@@ -84,6 +85,11 @@ try {
   assert.equal(compactStatus.symbolCount, 0);
   assert.equal(compactStatus.levelCount, 0);
   assert.deepEqual(compactStatus.symbolSummaries, []);
+
+  const pluginManifest = await getJson(`${baseUrl}/plugins`);
+  assert.equal(pluginManifest.schemaVersion, '0.1.0');
+  assert.ok(pluginManifest.plugins.some((plugin) => plugin.id === 'tradingview'));
+  assert.ok(pluginManifest.plugins.every((plugin) => plugin.displayOnly === true));
 
   const extensionCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'chrome-extension://abcdefghijklmnop' } });
   assert.equal(extensionCors.headers.get('access-control-allow-origin'), 'chrome-extension://abcdefghijklmnop');

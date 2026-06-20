@@ -77,6 +77,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
+  /plugins:
+    get:
+      summary: Display plugin manifest
+      responses:
+        '200':
+          description: Public inventory of display-only adapters included with this release
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginManifest'
   /snapshot:
     get:
       summary: Full level snapshot
@@ -307,6 +317,49 @@ components:
           type: array
           items:
             type: string
+    PluginManifest:
+      type: object
+      required: [schemaVersion, generatedAt, plugins]
+      properties:
+        schemaVersion:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        plugins:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginEntry'
+    PluginEntry:
+      type: object
+      required: [id, name, platform, kind, status, displayOnly, entry, readme, api]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        platform:
+          type: string
+        kind:
+          type: string
+        status:
+          type: string
+        displayOnly:
+          type: boolean
+        entry:
+          type: string
+        readme:
+          type: string
+        api:
+          type: object
+          required: [mode, endpoints]
+          properties:
+            mode:
+              type: string
+            endpoints:
+              type: array
+              items:
+                type: string
     Snapshot:
       type: object
       required: [schemaVersion, generatedAt, capturedAt, source, symbols, warnings]

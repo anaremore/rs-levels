@@ -52,6 +52,7 @@ GET  /swagger.yaml
 GET  /diagnostics
 GET  /health
 GET  /status
+GET  /plugins
 GET  /snapshot
 GET  /levels
 GET  /levels/:symbol
@@ -67,6 +68,8 @@ POST /capture/api
 /tradingview/:symbol returns the compact text payload used by the TradingView Pine indicator. ?format=json returns a copy-friendly JSON export for tooling.
 
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
+
+/plugins returns the public display-plugin manifest from `plugins/manifest.json`.
 
 /docs is a lightweight local API docs page. /openapi.yaml serves the OpenAPI 3.1 spec for Swagger UI, Redoc, Postman, Insomnia, and compatible clients.
 

@@ -8,6 +8,7 @@ import { levelsToSierraText } from './sierra-format.js';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const OPENAPI_YAML = readFileSync(new URL('../../../docs/openapi.yaml', import.meta.url), 'utf8');
+const PLUGIN_MANIFEST = JSON.parse(readFileSync(new URL('../../../plugins/manifest.json', import.meta.url), 'utf8'));
 const PACKAGE_JSON = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const SERVICE_VERSION = String(PACKAGE_JSON.version || '0.0.0');
 
@@ -32,6 +33,7 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/diagnostics') return sendJson(res, 200, diagnostics(store, config));
       if (req.method === 'GET' && pathname === '/health') return sendJson(res, 200, health(store, config));
       if (req.method === 'GET' && pathname === '/status') return sendJson(res, 200, status(store, config));
+      if (req.method === 'GET' && pathname === '/plugins') return sendJson(res, 200, pluginManifest());
       if (req.method === 'GET' && pathname === '/snapshot') return sendJson(res, 200, store.getSnapshot());
       if (req.method === 'GET' && pathname === '/levels') return sendJson(res, 200, { levels: store.flatLevels() });
       if (req.method === 'GET' && pathname === '/ddbands') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => level.kind === 'dd-band') });
@@ -80,8 +82,15 @@ export function rootInfo(config) {
     ok: true,
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
+  };
+}
+
+export function pluginManifest() {
+  return {
+    ...PLUGIN_MANIFEST,
+    generatedAt: new Date().toISOString()
   };
 }
 
@@ -316,6 +325,8 @@ function docsHtml() {
     <pre id="spec-url">/openapi.yaml</pre>
     <p>Common read endpoints:</p>
     <pre>GET /health
+GET /status
+GET /plugins
 GET /snapshot
 GET /diagnostics
 GET /levels
