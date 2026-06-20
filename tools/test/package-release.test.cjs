@@ -10,7 +10,7 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /16 critical entries/);
+assert.match(checkOutput, /17 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /extension zip enabled/);
 
@@ -41,12 +41,15 @@ assert.match(releaseHelp, /RS_LEVELS_HOST/);
 assert.match(releaseHelp, /trusted private networks/);
 
 const zip = readFileSync(zipPath);
+const zipText = zip.toString('utf8');
 assert.equal(zip.readUInt32LE(0), 0x04034b50);
-assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/README\.md/);
-assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/plugins\/manifest\.json/);
-assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);
-assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/scripts\/start-local-service\.ps1/);
-assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/scripts\/start-local-service\.sh/);
+assert.match(zipText, /rs-levels-0\.0\.0\/README\.md/);
+assert.match(zipText, /rs-levels-0\.0\.0\/apps\/local-service\/src\/build-info\.js/);
+assert.match(zipText, /rs-levels-0\.0\.0\/plugins\/manifest\.json/);
+assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);
+assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.ps1/);
+assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.sh/);
+assert.match(zipText, /SERVICE_BUILD/);
 
 const checksum = readFileSync(`${zipPath}.sha256`, 'utf8').trim();
 assert.match(checksum, /^[a-f0-9]{64}  rs-levels-0\.0\.0\.zip$/);

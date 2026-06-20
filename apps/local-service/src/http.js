@@ -8,6 +8,7 @@ import {
   createTradingViewPayload
 } from '../../../packages/exporters/src/index.js';
 import { normalizeSymbol } from '../../../packages/schemas/src/index.js';
+import { SERVICE_BUILD } from './build-info.js';
 import { networkStatus } from './config.js';
 import { levelsToSierraText } from './sierra-format.js';
 
@@ -98,6 +99,7 @@ export function rootInfo(config) {
     ok: true,
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
+    build: serviceBuildInfo(),
     endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
@@ -116,6 +118,7 @@ export function health(store, config) {
     ok: true,
     service: 'rs-levels',
     version: SERVICE_VERSION,
+    build: serviceBuildInfo(),
     schemaVersion: snapshot.schemaVersion,
     generatedAt: new Date().toISOString(),
     network: networkStatus(config),
@@ -131,6 +134,7 @@ export function status(store, config) {
   return {
     ok: true,
     version: SERVICE_VERSION,
+    build: serviceBuildInfo(),
     network: networkStatus(config),
     source: snapshot.source,
     symbolCount: summaries.length,
@@ -151,6 +155,7 @@ export function diagnostics(store, config) {
     ok: true,
     service: 'rs-levels',
     version: SERVICE_VERSION,
+    build: serviceBuildInfo(),
     schemaVersion: snapshot.schemaVersion,
     generatedAt: new Date().toISOString(),
     docs: {
@@ -165,6 +170,14 @@ export function diagnostics(store, config) {
     levelCount: levels.length,
     checks: diagnosticChecks({ source, levels, symbols, network }),
     hints: diagnosticHints({ source, levels, network })
+  };
+}
+
+function serviceBuildInfo() {
+  return {
+    revision: String(SERVICE_BUILD.revision || ''),
+    generatedAt: String(SERVICE_BUILD.generatedAt || ''),
+    source: String(SERVICE_BUILD.source || 'source')
   };
 }
 

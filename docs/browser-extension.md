@@ -39,7 +39,7 @@ The popup distinguishes live, waiting, offline, and stale source states so an ol
 
 Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.0.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
-The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.0+abc1234`. `Copy Diagnostics` includes the same build identity.
+The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.0+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 The collapsed `Debug` section includes aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 

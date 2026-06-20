@@ -270,7 +270,7 @@ components:
   schemas:
     RootInfo:
       type: object
-      required: [ok, name, version, endpoints, network]
+      required: [ok, name, version, build, endpoints, network]
       properties:
         ok:
           type: boolean
@@ -278,6 +278,8 @@ components:
           type: string
         version:
           type: string
+        build:
+          $ref: '#/components/schemas/BuildInfo'
         endpoints:
           type: array
           items:
@@ -286,7 +288,7 @@ components:
           $ref: '#/components/schemas/Network'
     Health:
       type: object
-      required: [ok, service, version, schemaVersion, generatedAt, network, source, symbolCount, levelCount]
+      required: [ok, service, version, build, schemaVersion, generatedAt, network, source, symbolCount, levelCount]
       properties:
         ok:
           type: boolean
@@ -294,6 +296,8 @@ components:
           type: string
         version:
           type: string
+        build:
+          $ref: '#/components/schemas/BuildInfo'
         schemaVersion:
           type: string
         generatedAt:
@@ -309,12 +313,14 @@ components:
           type: integer
     Status:
       type: object
-      required: [ok, version, network, source, symbolCount, levelCount, symbols, symbolSummaries]
+      required: [ok, version, build, network, source, symbolCount, levelCount, symbols, symbolSummaries]
       properties:
         ok:
           type: boolean
         version:
           type: string
+        build:
+          $ref: '#/components/schemas/BuildInfo'
         network:
           $ref: '#/components/schemas/Network'
         source:
@@ -331,6 +337,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SymbolSummary'
+    BuildInfo:
+      type: object
+      required: [revision, generatedAt, source]
+      properties:
+        revision:
+          type: string
+          description: Short git revision for packaged builds, blank for source checkouts.
+        generatedAt:
+          type: string
+          description: Package build timestamp, blank for source checkouts.
+        source:
+          type: string
+          enum: [source, package]
     Network:
       type: object
       required: [host, requestedHost, port, remoteAccess, corsOrigins, warnings]
@@ -633,7 +652,7 @@ components:
             - type: string
     Diagnostics:
       type: object
-      required: [ok, service, version, schemaVersion, generatedAt, docs, network, source, symbols, symbolSummaries, levelCount, checks, hints]
+      required: [ok, service, version, build, schemaVersion, generatedAt, docs, network, source, symbols, symbolSummaries, levelCount, checks, hints]
       properties:
         ok:
           type: boolean
@@ -641,6 +660,8 @@ components:
           type: string
         version:
           type: string
+        build:
+          $ref: '#/components/schemas/BuildInfo'
         schemaVersion:
           type: string
         generatedAt:

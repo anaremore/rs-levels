@@ -73,7 +73,7 @@ async function refresh() {
     const sourceState = source.state || 'waiting';
     els.sourceState.textContent = sourceState;
     els.levelCount.textContent = String(health.levelCount || 0);
-    els.serviceVersion.textContent = String(health.version || 'unknown');
+    els.serviceVersion.textContent = serviceVersionText(health);
     els.postedCount.textContent = String(extState.postedCount || 0);
     els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
     els.lastPost.textContent = formatTime(extState.lastPostAt);
@@ -395,6 +395,13 @@ function renderBuildIdentity() {
     info.revision ? `Revision ${info.revision}` : 'Source build',
     info.generatedAt ? `Built ${info.generatedAt}` : ''
   ].filter(Boolean).join('\n');
+}
+
+function serviceVersionText(health = {}) {
+  const build = health.build || {};
+  const revision = String(build.revision || '');
+  const suffix = revision ? `+${revision}` : '';
+  return `${String(health.version || 'unknown')}${suffix}`;
 }
 
 function extensionBuildInfo() {

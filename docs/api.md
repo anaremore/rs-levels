@@ -49,6 +49,11 @@ Returns service metadata and endpoint hints.
   "ok": true,
   "name": "RS Levels local service",
   "version": "0.0.0",
+  "build": {
+    "revision": "",
+    "generatedAt": "",
+    "source": "source"
+  },
   "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/zones", "/tradingview", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
@@ -77,6 +82,11 @@ Public source endpoint summaries intentionally omit raw captured URLs. Endpoint 
   "ok": true,
   "service": "rs-levels",
   "version": "0.0.0",
+  "build": {
+    "revision": "",
+    "generatedAt": "",
+    "source": "source"
+  },
   "docs": {
     "local": "/docs",
     "openApi": "/openapi.yaml",
@@ -108,6 +118,11 @@ Health includes network posture, source state, symbol count, and level count. So
   "ok": true,
   "service": "rs-levels",
   "version": "0.0.0",
+  "build": {
+    "revision": "",
+    "generatedAt": "",
+    "source": "source"
+  },
   "schemaVersion": "0.1.0",
   "generatedAt": "2026-06-19T14:30:00.000Z",
   "network": {
@@ -147,6 +162,11 @@ Returns a compact status payload for UI badges and plugin diagnostics. Display p
 {
   "ok": true,
   "version": "0.0.0",
+  "build": {
+    "revision": "",
+    "generatedAt": "",
+    "source": "source"
+  },
   "network": {},
   "source": {},
   "symbolCount": 1,
@@ -165,6 +185,8 @@ Returns a compact status payload for UI badges and plugin diagnostics. Display p
 ```
 
 `symbolSummaries` is scrubbed and safe for display plugins. It lets UI clients verify that a selected symbol has captured levels before requesting `/levels/:symbol` or `/tradingview/:symbol`.
+
+`build.source` is `source` for local source checkouts and `package` for generated release packages. Packaged builds include a short git `build.revision`.
 
 ## GET /plugins
 

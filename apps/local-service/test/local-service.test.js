@@ -96,6 +96,8 @@ try {
   assert.ok(root.endpoints.includes('/plugins'));
   assert.ok(root.endpoints.includes('/tradingview'));
   assert.equal(root.version, '0.0.0');
+  assert.equal(root.build.source, 'source');
+  assert.equal(root.build.revision, '');
   assert.equal(service.config.staleMs, 23 * 60 * 60 * 1000);
 
   const docsPage = await getText(`${baseUrl}/docs`);
@@ -115,12 +117,14 @@ try {
   const health = await healthResponse.json();
   assert.equal(health.ok, true);
   assert.equal(health.version, '0.0.0');
+  assert.equal(health.build.source, 'source');
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
 
   const waitingDiagnostics = await getJson(`${baseUrl}/diagnostics`);
   assert.equal(waitingDiagnostics.ok, true);
   assert.equal(waitingDiagnostics.version, '0.0.0');
+  assert.equal(waitingDiagnostics.build.source, 'source');
   assert.equal(waitingDiagnostics.source.connected, false);
   assert.equal(waitingDiagnostics.levelCount, 0);
   assert.ok(waitingDiagnostics.checks.some((check) => check.id === 'source' && check.status === 'waiting'));
@@ -131,6 +135,7 @@ try {
 
   const compactStatus = await getJson(`${baseUrl}/status`);
   assert.equal(compactStatus.version, '0.0.0');
+  assert.equal(compactStatus.build.source, 'source');
   assert.equal(compactStatus.symbolCount, 0);
   assert.equal(compactStatus.levelCount, 0);
   assert.deepEqual(compactStatus.symbolSummaries, []);

@@ -22,7 +22,12 @@ const extensionReleaseName = `${packageJson.name}-browser-extension-${extensionV
 const extensionZipPath = path.join(distRoot, `${extensionReleaseName}.zip`);
 const extensionZipShaPath = `${extensionZipPath}.sha256`;
 const gitRevision = revisionFromGit();
-const buildInfo = buildInfoSource({
+const extensionBuildInfo = extensionBuildInfoSource({
+  revision: gitRevision,
+  generatedAt: new Date().toISOString(),
+  source: 'package'
+});
+const serviceBuildInfo = serviceBuildInfoSource({
   revision: gitRevision,
   generatedAt: new Date().toISOString(),
   source: 'package'
@@ -48,6 +53,7 @@ const requiredReleaseEntries = [
   'README.md',
   'docs/openapi.yaml',
   'docs/user-setup.md',
+  'apps/local-service/src/build-info.js',
   'apps/local-service/src/cli.js',
   'apps/browser-extension/manifest.json',
   'apps/browser-extension/src/popup.html',
@@ -140,7 +146,9 @@ for (const file of files) {
   const target = path.join(outDir, file.relative);
   await fs.mkdir(path.dirname(target), { recursive: true });
   if (file.relative === 'apps/browser-extension/src/build-info.js') {
-    await fs.writeFile(target, buildInfo);
+    await fs.writeFile(target, extensionBuildInfo);
+  } else if (file.relative === 'apps/local-service/src/build-info.js') {
+    await fs.writeFile(target, serviceBuildInfo);
   } else {
     await fs.copyFile(file.absolute, target);
   }
@@ -245,8 +253,16 @@ function revisionFromGit() {
   }
 }
 
-function buildInfoSource(info) {
+function extensionBuildInfoSource(info) {
   return `globalThis.RS_LEVELS_BUILD = Object.freeze(${JSON.stringify({
+    revision: info.revision || '',
+    generatedAt: info.generatedAt || '',
+    source: info.source || 'source'
+  }, null, 2)});\n`;
+}
+
+function serviceBuildInfoSource(info) {
+  return `export const SERVICE_BUILD = Object.freeze(${JSON.stringify({
     revision: info.revision || '',
     generatedAt: info.generatedAt || '',
     source: info.source || 'source'
