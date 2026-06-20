@@ -9,6 +9,7 @@ const els = {
   message: document.getElementById('message'),
   sourceState: document.getElementById('source-state'),
   levelCount: document.getElementById('level-count'),
+  serviceVersion: document.getElementById('service-version'),
   postedCount: document.getElementById('posted-count'),
   lastCapture: document.getElementById('last-capture'),
   lastPost: document.getElementById('last-post'),
@@ -58,6 +59,7 @@ async function refresh() {
     const sourceState = source.state || 'waiting';
     els.sourceState.textContent = sourceState;
     els.levelCount.textContent = String(health.levelCount || 0);
+    els.serviceVersion.textContent = String(health.version || 'unknown');
     els.postedCount.textContent = String(extState.postedCount || 0);
     els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
     els.lastPost.textContent = formatTime(extState.lastPostAt);
@@ -75,6 +77,7 @@ async function refresh() {
   } catch (err) {
     latestHealth = null;
     renderTradingViewCopy({ levelCount: 0, source: { connected: false } });
+    els.serviceVersion.textContent = 'unknown';
     setPill('OFFLINE', 'error');
     setMessage(err && err.message ? err.message : 'Local service unavailable', 'error');
   }

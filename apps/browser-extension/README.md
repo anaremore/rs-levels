@@ -16,7 +16,7 @@ The extension runs only on `rocketscooter.com` host patterns, injects a page hoo
 
 ## Popup
 
-The popup shows local service health, captured level counts, post timing, capture-hook counters, and the last extension-side issue. It includes:
+The popup shows local service health, service version, captured level counts, post timing, capture-hook counters, and the last extension-side issue. It includes:
 
 - symbol selector
 - `Copy TradingView`
