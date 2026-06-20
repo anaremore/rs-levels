@@ -48,11 +48,12 @@ export function createHttpApp({ store, config }) {
 
       if (req.method === 'GET' && pathname === '/tradingview') {
         const snapshot = store.getSnapshot();
-        if (!Object.keys(snapshot.symbols || {}).length) return sendJson(res, 404, { ok: false, error: 'no symbols found' });
+        const bundle = createTradingViewBundleJsonExport(snapshot);
+        if (!bundle.symbols.length) return sendJson(res, 404, { ok: false, error: 'no futures symbols found' });
         if (url.searchParams.get('format') === 'json') {
-          return sendJson(res, 200, createTradingViewBundleJsonExport(snapshot));
+          return sendJson(res, 200, bundle);
         }
-        return sendText(res, 200, createTradingViewBundlePayload(snapshot), 'text/plain; charset=utf-8');
+        return sendText(res, 200, bundle.compactPayload, 'text/plain; charset=utf-8');
       }
 
       const tradingViewMatch = pathname.match(/^\/tradingview\/([^/]+)$/);

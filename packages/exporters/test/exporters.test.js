@@ -52,11 +52,23 @@ const bundleSnapshot = {
       capturedAt: '2026-06-19T14:30:30.000Z',
       levels: [{ name: 'BrZT1', price: 30450, kind: 'zone-bear', color: '#F06292' }]
     },
-    MES: row
+    MES: row,
+    SPY: {
+      symbol: 'SPY',
+      capturedAt: '2026-06-19T14:30:30.000Z',
+      levels: [{ name: 'PrevDayClose', price: 740.96, kind: 'open-close' }]
+    },
+    QQQ: {
+      symbol: 'QQQ',
+      capturedAt: '2026-06-19T14:30:30.000Z',
+      levels: [{ name: 'LastOpen', price: 747.76, kind: 'open-close' }]
+    }
   }
 };
 const bundlePayload = createTradingViewBundlePayload(bundleSnapshot);
 assert.equal(bundlePayload, 'RSLEVELS|2|2026-06-19T14:31:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper bad chars,7579.75,dd-band;BZT1,7588.00,zone-bull;BrZT1,7612.00,zone-bear|MNQ|2026-06-19T14:30:30.000Z|BrZT1,30450.00,zone-bear');
+assert.equal(bundlePayload.includes('|SPY|'), false);
+assert.equal(bundlePayload.includes('|QQQ|'), false);
 
 const bundleJson = createTradingViewBundleJsonExport(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' });
 assert.equal(bundleJson.exportFormat, 'tradingview-bundle-json');

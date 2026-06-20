@@ -91,8 +91,12 @@ function bundleRows(snapshot, options) {
   delete rowOptions.symbol;
   return Object.values(symbols || {})
     .map((row) => normalizeRow(row, rowOptions))
-    .filter((row) => row.symbol && Array.isArray(row.levels) && row.levels.some((level) => Number.isFinite(level.price)))
+    .filter((row) => isTradingViewBundleSymbol(row.symbol) && Array.isArray(row.levels) && row.levels.some((level) => Number.isFinite(level.price)))
     .sort((a, b) => a.symbol.localeCompare(b.symbol));
+}
+
+function isTradingViewBundleSymbol(symbol) {
+  return symbol === 'MES' || symbol === 'MNQ';
 }
 
 function levelsPayload(levels, options) {

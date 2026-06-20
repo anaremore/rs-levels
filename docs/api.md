@@ -218,7 +218,7 @@ Columns are `name,price,red,green,blue`. Missing symbols return an empty text bo
 
 ## GET /tradingview
 
-Returns a compact all-symbol text payload for the included TradingView Pine indicator. The extension popup uses this route for `Copy TradingView` so one copied payload can contain both MES and MNQ. The Pine indicator reads the chart family and draws the matching section on ES/MES or NQ/MNQ charts.
+Returns a compact all-symbol futures text payload for the included TradingView Pine indicator. The extension popup uses this route for `Copy TradingView` so one copied payload can contain both MES and MNQ. The Pine indicator reads the chart family and draws the matching section on ES/MES or NQ/MNQ charts. SPY, QQQ, and other watchlist/ETF symbols are intentionally omitted.
 
 ```text
 RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear

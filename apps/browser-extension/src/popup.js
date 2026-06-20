@@ -106,7 +106,9 @@ async function copyTradingView() {
       setMessage(issue, 'warning');
       return;
     }
-    await copyFromEndpoint('/tradingview', 'TradingView payload copied');
+    const text = await tradingViewBundleText();
+    await navigator.clipboard.writeText(text);
+    setMessage('TradingView payload copied', 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
   }
@@ -139,16 +141,95 @@ async function reconnectActiveTab() {
   }
 }
 
-async function copyFromEndpoint(path, success, prettyJson = false) {
+async function copyFromEndpoint(path, success, prettyJson = false, options = {}) {
   try {
-    const url = `${settings.serviceUrl}${path}`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`No data for ${selectedSymbol()}`);
-    const text = prettyJson ? JSON.stringify(await response.json(), null, 2) : await response.text();
+    const text = await fetchEndpointText(path, prettyJson, options);
     await navigator.clipboard.writeText(text);
     setMessage(success, 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'Copy failed', 'error');
+  }
+}
+
+async function tradingViewBundleText() {
+  const response = await fetch(`${settings.serviceUrl}/tradingview`);
+  if (response.ok) return response.text();
+
+  const detail = await responseErrorDetail(response);
+  if (response.status === 404 && /not found/i.test(detail)) {
+    return tradingViewFallbackBundleText();
+  }
+  throw new Error(copyFailureMessage(response.status, detail, { allSymbols: true }));
+}
+
+async function tradingViewFallbackBundleText() {
+  const status = latestServiceStatus || await getJson('/status');
+  const fallbackSymbols = futuresSymbols(Array.isArray(status.symbols) && status.symbols.length ? status.symbols : globalThis.RS_LEVELS.defaults.symbols);
+  const sections = [];
+  for (const symbol of fallbackSymbols) {
+    const response = await fetch(`${settings.serviceUrl}/tradingview/${encodeURIComponent(symbol)}`);
+    if (!response.ok) continue;
+    const section = v1TradingViewSection(await response.text());
+    if (section) sections.push(...section);
+  }
+  if (!sections.length) {
+    throw new Error('Restart the local service to enable all-symbol TradingView export.');
+  }
+  return ['RSLEVELS', '2', new Date().toISOString(), ...sections].join('|');
+}
+
+function futuresSymbols(input) {
+  const out = [];
+  const seen = new Set();
+  (Array.isArray(input) ? input : []).forEach((symbol) => {
+    const normalized = globalThis.RS_LEVELS.normalizeDisplaySymbol(symbol);
+    if ((normalized === 'MES' || normalized === 'MNQ') && !seen.has(normalized)) {
+      seen.add(normalized);
+      out.push(normalized);
+    }
+  });
+  return out.length ? out : globalThis.RS_LEVELS.defaults.symbols.slice();
+}
+
+function v1TradingViewSection(payload) {
+  const parts = String(payload || '').trim().split('|');
+  if (parts.length < 5 || parts[0] !== 'RSLEVELS' || parts[1] !== '1') return null;
+  return [parts[2], parts[3], parts.slice(4).join('|')];
+}
+
+async function fetchEndpointText(path, prettyJson = false, options = {}) {
+  const url = `${settings.serviceUrl}${path}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(copyFailureMessage(response.status, await responseErrorDetail(response), options));
+  }
+  return prettyJson ? JSON.stringify(await response.json(), null, 2) : response.text();
+}
+
+function copyFailureMessage(status, detail = '', options = {}) {
+  if (options.allSymbols) {
+    if (status === 404 && /not found/i.test(detail)) {
+      return 'Restart the local service to enable all-symbol TradingView export.';
+    }
+    if (/no symbols|no futures|symbol not found|no captured/i.test(detail)) {
+      return 'No captured ES/MES or NQ/MNQ levels are available yet.';
+    }
+    return `All-symbol TradingView export unavailable (${status})${detail ? `: ${detail}` : ''}`;
+  }
+  if (status === 404) return `No data for ${selectedSymbol()}`;
+  return `Copy failed (${status})${detail ? `: ${detail}` : ''}`;
+}
+
+async function responseErrorDetail(response) {
+  try {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await response.json();
+      return String(payload.error || payload.message || '').trim();
+    }
+    return (await response.text()).trim();
+  } catch (_err) {
+    return '';
   }
 }
 
