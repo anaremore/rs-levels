@@ -259,7 +259,7 @@ components:
       description: Symbol or alias. ES/MES and CQG EP contracts normalize to MES; NQ/MNQ and CQG ENQ contracts normalize to MNQ.
       schema:
         type: string
-        examples: [MES, MNQ, ES, NQ, F.US.EPU26, F.US.ENQU26]
+        examples: [MES, MNQ, ES, NQ, F.US.EPU, F.US.EPU26, F.US.ENQU, F.US.ENQU26]
   responses:
     NotFound:
       description: Symbol not found

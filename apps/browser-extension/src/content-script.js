@@ -26,7 +26,7 @@
     if (data.type === 'diagnostic') {
       chrome.runtime.sendMessage({ type: 'rs-levels.capture-diagnostic', stats: data.stats });
       const reason = data.stats && data.stats.lastReason || '';
-      if (reason === 'hook-installed' || reason === 'hook-reconnected') {
+      if (reason === 'hook-installed' || reason === 'hook-reconnected' || reason === 'reader-installed' || reason === 'reader-reconnected') {
         syncSettings();
       }
     }

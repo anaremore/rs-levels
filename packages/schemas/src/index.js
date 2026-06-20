@@ -166,8 +166,8 @@ function isNqFamilySymbol(text) {
     part === 'MNQ' ||
     part === 'NQ' ||
     part === 'ENQ' ||
-    /^M?NQ[FGHJKMNQUVXZ]\d{1,2}$/.test(part) ||
-    /^ENQ[FGHJKMNQUVXZ]\d{1,2}$/.test(part)
+    /^M?NQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) ||
+    /^ENQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part)
   )) || /\bNASDAQ\b/.test(text) || /\bNQ[-\s]?100\b/.test(text);
 }
 
@@ -177,8 +177,8 @@ function isEsFamilySymbol(text) {
     part === 'MES' ||
     part === 'ES' ||
     part === 'EP' ||
-    /^M?ES[FGHJKMNQUVXZ]\d{1,2}$/.test(part) ||
-    /^EP[FGHJKMNQUVXZ]\d{1,2}$/.test(part)
+    /^M?ES[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) ||
+    /^EP[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part)
   )) || /\bS\s*&\s*P\s*500\b/.test(text) || /\bS\s+AND\s+P\s+500\b/.test(text) || /\bSPX?\s*500\b/.test(text);
 }
 

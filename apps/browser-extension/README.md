@@ -2,9 +2,9 @@
 
 For the full user workflow, see docs/user-setup.md.
 
-Manifest V3 extension for allowlisted RocketScooter response capture.
+Manifest V3 extension for allowlisted RocketScooter response capture and display-only chart-level reading.
 
-The extension runs only on RocketScooter app host patterns (`rocket.place` and `rocketscooter.com`), injects a page hook at `document_start`, observes fetch/XHR responses, and forwards only URL-allowlisted response bodies to the local RS Levels service.
+The extension runs only on RocketScooter app host patterns (`rocket.place` and `rocketscooter.com`), injects a page hook at `document_start`, observes fetch/XHR responses, and forwards only URL-allowlisted response bodies to the local RS Levels service. It also injects a display-only page reader that polls TradingView chart objects for visible futures lines, study plots, and bull/bear zone shapes when API response bodies are not parseable as generic level JSON.
 
 The page hook skips clearly non-text response content types before reading a body. Empty content types are allowed because some browser API responses omit the header.
 
@@ -39,6 +39,8 @@ The capture toggle updates the same `captureEnabled` setting as the options page
 
 Capture is not limited by the selected popup symbol. The extension posts every allowlisted response it observes, and the local parser can store both MES and MNQ from one combined response. The symbol selector controls selected-symbol JSON export; the TradingView payload can carry all captured symbols.
 
+The page-reader fallback posts a synthetic `/page-reader/display` capture through the same local ingest endpoint. It emits only display names, prices, public kind labels, futures chart-family symbols, colors, and small metadata needed for diagnostics. It skips SPY/QQQ chart families and does not forward account, broker, execution, order-entry, raw DOM text, cookies, headers, or credentials.
+
 If the popup remains waiting, `Hook: hook-installed` or `Hook: settings-synced` means the page hook is alive and waiting for RocketScooter traffic. `Observed: 0` means the hook has not seen fetch/XHR responses yet; use `Reconnect Tab`, then reload RocketScooter data or the tab so startup requests run with the hook installed.
 
 ## Options
@@ -58,4 +60,4 @@ For Tailscale/private-network use, point the service URL at the trusted machine 
 
 ## Safety Boundary
 
-The extension does not store credentials, forward request auth data, read arbitrary page text, or include strategy/execution behavior. It forwards response bodies only when their URL matches the configured allowlist. Capture-hook diagnostics are aggregate counters and scrubbed reasons; they do not include ignored URLs, headers, cookies, bodies, or page text.
+The extension does not store credentials, forward request auth data, read arbitrary page text, or include strategy/execution behavior. It forwards response bodies only when their URL matches the configured allowlist. The page-reader fallback reads only TradingView chart object metadata needed for display levels. Capture diagnostics are aggregate counters and scrubbed reasons; they do not include ignored URLs, headers, cookies, bodies, or page text.

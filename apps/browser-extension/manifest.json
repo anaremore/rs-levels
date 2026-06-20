@@ -51,7 +51,8 @@
       ],
       "js": [
         "src/capture-rules.js",
-        "src/page-hook.js"
+        "src/page-hook.js",
+        "src/page-reader.js"
       ],
       "run_at": "document_start",
       "world": "MAIN"
@@ -61,7 +62,8 @@
     {
       "resources": [
         "src/capture-rules.js",
-        "src/page-hook.js"
+        "src/page-hook.js",
+        "src/page-reader.js"
       ],
       "matches": [
         "https://rocket.place/*",

@@ -150,6 +150,24 @@ assert.equal(cqgRolloverSymbol.symbols.MNQ.length, 1);
 assert.equal(cqgRolloverSymbol.symbols.MES[0].symbol, 'MES');
 assert.equal(cqgRolloverSymbol.symbols.MNQ[0].symbol, 'MNQ');
 
+const cqgMonthOnlySymbol = normalizeCapture({
+  endpoint: '/platform/api/v1/chart/display',
+  status: 200,
+  capturedAt: '2026-12-14T14:31:31.000Z',
+  body: {
+    charts: {
+      'F.US.EPU': {
+        levels: [{ name: 'OVNHP', price: 7557.75 }]
+      },
+      'F.US.ENQU': {
+        levels: [{ name: 'OVNMHP', price: 30625.75 }]
+      }
+    }
+  }
+});
+assert.equal(cqgMonthOnlySymbol.symbols.MES.length, 1);
+assert.equal(cqgMonthOnlySymbol.symbols.MNQ.length, 1);
+
 const cqgMultiSymbol = normalizeCapture({
   endpoint: '/platform/api/v1/chart/display',
   status: 200,
@@ -246,6 +264,28 @@ assert.equal(unsupportedSymbolPanels.symbols.MES[0].price, 732.5);
 assert.equal(unsupportedSymbolPanels.symbols.MES.some((level) => level.price === 722.51), false);
 assert.equal(unsupportedSymbolPanels.symbols.SPY, undefined);
 assert.equal(unsupportedSymbolPanels.symbols.QQQ, undefined);
+
+const pageReaderCapture = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:57.000Z',
+  body: {
+    source: 'page-reader',
+    capturedAt: '2026-06-19T14:31:57.000Z',
+    levels: [
+      { symbol: 'MES', name: 'OVNHP', price: 7565, kind: 'hp', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'BZT1', price: 30667.5, kind: 'zone-bull', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'BZB1', price: 30638, kind: 'zone-bull', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'BrZT1', price: 30450, kind: 'zone-bear', source: 'rocketscooter-page' },
+      { symbol: 'QQQ', name: 'LastOpen', price: 747.76, kind: 'open-close', source: 'rocketscooter-page' }
+    ]
+  }
+});
+assert.equal(pageReaderCapture.symbols.MES.length, 1);
+assert.equal(pageReaderCapture.symbols.MNQ.length, 3);
+assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BZT1').kind, 'zone-bull');
+assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BrZT1').kind, 'zone-bear');
+assert.equal(pageReaderCapture.symbols.QQQ, undefined);
 
 const manyZones = collectLevels({
   MES: {

@@ -75,8 +75,8 @@
   function normalizeDisplaySymbol(value) {
     const text = String(value || '').trim().toUpperCase();
     const parts = text.split(/[^A-Z0-9]+/).filter(Boolean);
-    if (parts.some((part) => part === 'MNQ' || part === 'NQ' || part === 'ENQ' || /^M?NQ[FGHJKMNQUVXZ]\d{1,2}$/.test(part) || /^ENQ[FGHJKMNQUVXZ]\d{1,2}$/.test(part))) return 'MNQ';
-    if (parts.some((part) => part === 'MES' || part === 'ES' || part === 'EP' || /^M?ES[FGHJKMNQUVXZ]\d{1,2}$/.test(part) || /^EP[FGHJKMNQUVXZ]\d{1,2}$/.test(part))) return 'MES';
+    if (parts.some((part) => part === 'MNQ' || part === 'NQ' || part === 'ENQ' || /^M?NQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) || /^ENQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part))) return 'MNQ';
+    if (parts.some((part) => part === 'MES' || part === 'ES' || part === 'EP' || /^M?ES[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) || /^EP[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part))) return 'MES';
     if (/\bNASDAQ\b/.test(text) || /\bNQ[-\s]?100\b/.test(text)) return 'MNQ';
     if (/\bS\s*&\s*P\s*500\b/.test(text) || /\bS\s+AND\s+P\s+500\b/.test(text) || /\bSPX?\s*500\b/.test(text)) return 'MES';
     return text || 'MES';

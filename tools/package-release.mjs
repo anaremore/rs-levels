@@ -79,6 +79,7 @@ const requiredExtensionEntries = [
   'src/options.html',
   'src/options.js',
   'src/page-hook.js',
+  'src/page-reader.js',
   'src/popup.html',
   'src/popup.js',
   'src/shared.js'

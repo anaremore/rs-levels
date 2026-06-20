@@ -98,7 +98,7 @@ async function injectActiveTab() {
     });
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['src/capture-rules.js', 'src/page-hook.js'],
+      files: ['src/capture-rules.js', 'src/page-hook.js', 'src/page-reader.js'],
       world: 'MAIN'
     });
     state.lastError = '';
