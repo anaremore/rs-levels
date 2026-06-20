@@ -27,6 +27,7 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/') return sendJson(res, 200, rootInfo(config));
       if (req.method === 'GET' && pathname === '/docs') return sendText(res, 200, docsHtml(), 'text/html; charset=utf-8');
       if (req.method === 'GET' && (pathname === '/openapi.yaml' || pathname === '/swagger.yaml')) return sendText(res, 200, OPENAPI_YAML, 'application/yaml; charset=utf-8');
+      if (req.method === 'GET' && pathname === '/diagnostics') return sendJson(res, 200, diagnostics(store, config));
       if (req.method === 'GET' && pathname === '/health') return sendJson(res, 200, health(store, config));
       if (req.method === 'GET' && pathname === '/status') return sendJson(res, 200, status(store, config));
       if (req.method === 'GET' && pathname === '/snapshot') return sendJson(res, 200, store.getSnapshot());
@@ -76,7 +77,7 @@ export function rootInfo(config) {
   return {
     ok: true,
     name: 'RS Levels local service',
-    endpoints: ['/docs', '/openapi.yaml', '/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -102,6 +103,88 @@ export function status(store, config) {
     source: store.getSnapshot().source,
     symbols: Object.keys(store.getSnapshot().symbols)
   };
+}
+
+export function diagnostics(store, config) {
+  const snapshot = store.getSnapshot();
+  const levels = store.flatLevels();
+  const symbols = Object.keys(snapshot.symbols);
+  const network = networkStatus(config);
+  const source = sourceDiagnostics(snapshot.source);
+  return {
+    ok: true,
+    service: 'rs-levels',
+    schemaVersion: snapshot.schemaVersion,
+    generatedAt: new Date().toISOString(),
+    docs: {
+      local: '/docs',
+      openApi: '/openapi.yaml',
+      swagger: '/swagger.yaml'
+    },
+    network,
+    source,
+    symbols,
+    levelCount: levels.length,
+    checks: diagnosticChecks({ source, levels, symbols, network }),
+    hints: diagnosticHints({ source, levels, network })
+  };
+}
+
+function sourceDiagnostics(source = {}) {
+  const endpoints = Array.isArray(source.endpoints) ? source.endpoints : [];
+  return {
+    state: typeof source.state === 'string' ? source.state : 'waiting',
+    connected: Boolean(source.connected),
+    lastCaptureAt: typeof source.lastCaptureAt === 'string' ? source.lastCaptureAt : '',
+    ageMs: Number.isFinite(Number(source.ageMs)) ? Number(source.ageMs) : null,
+    endpointCount: endpoints.length,
+    endpoints: endpoints.map((endpoint) => ({
+      key: String(endpoint.key || ''),
+      status: Number.isInteger(endpoint.status) ? endpoint.status : null,
+      capturedAt: String(endpoint.capturedAt || ''),
+      parser: String(endpoint.parser || ''),
+      ok: endpoint.ok !== false
+    })),
+    warnings: Array.isArray(source.warnings) ? source.warnings.map((warning) => String(warning)).filter(Boolean) : []
+  };
+}
+
+function diagnosticChecks({ source, levels, symbols, network }) {
+  return [
+    {
+      id: 'service',
+      label: 'Local API',
+      status: 'ok',
+      detail: 'HTTP API is responding.'
+    },
+    {
+      id: 'network',
+      label: 'Network',
+      status: network.warnings.length || network.remoteAccess ? 'warning' : 'ok',
+      detail: network.remoteAccess ? `Remote access is enabled on ${network.host}:${network.port}.` : `Loopback access on ${network.host}:${network.port}.`
+    },
+    {
+      id: 'source',
+      label: 'Capture source',
+      status: source.connected ? 'ok' : source.state === 'error' ? 'error' : 'waiting',
+      detail: source.connected ? `Last capture ${source.lastCaptureAt || 'recently'}.` : 'Waiting for captured level responses.'
+    },
+    {
+      id: 'levels',
+      label: 'Level snapshot',
+      status: levels.length ? 'ok' : 'waiting',
+      detail: levels.length ? `${levels.length} levels across ${symbols.length} symbol(s).` : 'No levels are available yet.'
+    }
+  ];
+}
+
+function diagnosticHints({ source, levels, network }) {
+  const hints = [];
+  if (!source.connected) hints.push('Open RocketScooter with the browser extension enabled, then refresh this status.');
+  if (!levels.length) hints.push('Use the demo capture command to verify the API before connecting a browser session.');
+  if (network.warnings.length) hints.push(...network.warnings);
+  if (network.remoteAccess) hints.push('Remote binding is enabled; use it only on a trusted private network.');
+  return hints;
 }
 
 function streamSnapshots(req, res, clients, store) {
@@ -194,6 +277,7 @@ function docsHtml() {
     <p>Common read endpoints:</p>
     <pre>GET /health
 GET /snapshot
+GET /diagnostics
 GET /levels
 GET /levels/:symbol
 GET /tradingview/:symbol

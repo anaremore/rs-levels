@@ -4,10 +4,15 @@ const els = {
   symbol: document.getElementById('symbol'),
   copyTv: document.getElementById('copy-tv'),
   copyJson: document.getElementById('copy-json'),
+  copyDiagnostics: document.getElementById('copy-diagnostics'),
+  openDocs: document.getElementById('open-docs'),
   message: document.getElementById('message'),
   sourceState: document.getElementById('source-state'),
   levelCount: document.getElementById('level-count'),
   postedCount: document.getElementById('posted-count'),
+  lastCapture: document.getElementById('last-capture'),
+  lastPost: document.getElementById('last-post'),
+  lastError: document.getElementById('last-error'),
   refresh: document.getElementById('refresh'),
   options: document.getElementById('options')
 };
@@ -30,6 +35,8 @@ function bindEvents() {
   els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
   els.copyTv.addEventListener('click', () => copyFromEndpoint(`/tradingview/${selectedSymbol()}`, 'TradingView payload copied'));
   els.copyJson.addEventListener('click', () => copyFromEndpoint(`/tradingview/${selectedSymbol()}?format=json`, 'JSON copied', true));
+  els.copyDiagnostics.addEventListener('click', copyDiagnostics);
+  els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
 }
 
 async function refresh() {
@@ -38,13 +45,21 @@ async function refresh() {
     const health = await getJson('/health');
     const status = await getJson('/status');
     const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
+    const extState = extensionState && extensionState.state ? extensionState.state : {};
     symbols = status.symbols && status.symbols.length ? status.symbols : globalThis.RS_LEVELS.defaults.symbols.slice();
     renderSymbols(symbols);
     els.sourceState.textContent = health.source && health.source.state || 'waiting';
     els.levelCount.textContent = String(health.levelCount || 0);
-    els.postedCount.textContent = String(extensionState && extensionState.state ? extensionState.state.postedCount : 0);
+    els.postedCount.textContent = String(extState.postedCount || 0);
+    els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
+    els.lastPost.textContent = formatTime(extState.lastPostAt);
+    els.lastError.textContent = extState.lastError || 'none';
     setPill(health.source && health.source.connected ? 'LIVE' : 'WAITING', health.source && health.source.connected ? 'live' : 'waiting');
-    setMessage(health.levelCount ? 'Levels are available.' : 'Waiting for captured levels.', health.levelCount ? 'ok' : '');
+    if (extState.lastError && !health.levelCount) {
+      setMessage(extState.lastError, 'error');
+    } else {
+      setMessage(health.levelCount ? 'Levels are available.' : 'Waiting for captured levels.', health.levelCount ? 'ok' : '');
+    }
   } catch (err) {
     setPill('OFFLINE', 'error');
     setMessage(err && err.message ? err.message : 'Local service unavailable', 'error');
@@ -61,6 +76,23 @@ async function copyFromEndpoint(path, success, prettyJson = false) {
     setMessage(success, 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'Copy failed', 'error');
+  }
+}
+
+async function copyDiagnostics() {
+  try {
+    const diagnostics = await getJson('/diagnostics');
+    const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      serviceUrl: settings.serviceUrl,
+      service: diagnostics,
+      extension: cleanExtensionState(extensionState && extensionState.state)
+    };
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    setMessage('Diagnostics copied', 'ok');
+  } catch (err) {
+    setMessage(err && err.message ? err.message : 'Diagnostics copy failed', 'error');
   }
 }
 
@@ -83,6 +115,22 @@ function renderSymbols(nextSymbols) {
 
 function selectedSymbol() {
   return els.symbol.value || symbols[0] || 'MES';
+}
+
+function cleanExtensionState(state = {}) {
+  return {
+    postedCount: Number(state.postedCount) || 0,
+    lastCaptureAt: String(state.lastCaptureAt || ''),
+    lastPostAt: String(state.lastPostAt || ''),
+    lastError: String(state.lastError || '')
+  };
+}
+
+function formatTime(value) {
+  if (!value) return 'none';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 function setPill(text, mode) {

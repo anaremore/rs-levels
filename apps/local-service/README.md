@@ -48,6 +48,7 @@ GET  /
 GET  /docs
 GET  /openapi.yaml
 GET  /swagger.yaml
+GET  /diagnostics
 GET  /health
 GET  /status
 GET  /snapshot
@@ -65,6 +66,8 @@ POST /capture/api
 /tradingview/:symbol returns the compact text payload used by the TradingView Pine indicator. ?format=json returns a copy-friendly JSON export for tooling.
 
 /docs is a lightweight local API docs page. /openapi.yaml serves the OpenAPI 3.1 spec for Swagger UI, Redoc, Postman, Insomnia, and compatible clients.
+
+/diagnostics returns scrubbed setup checks and hints for local API, capture, and private-network troubleshooting. It does not include raw captured URLs.
 
 /stream is an SSE stream that emits the current snapshot immediately and emits a new snapshot after each accepted capture.
 

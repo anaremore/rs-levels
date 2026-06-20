@@ -72,6 +72,12 @@ Each symbol key maps to a display snapshot:
 - `stat`
 - `unknown`
 
+## Diagnostics
+
+`GET /diagnostics` returns a scrubbed setup bundle for local support and extension troubleshooting. It includes network posture, source state, setup checks, hints, symbol names, and level counts.
+
+Captured source endpoint summaries omit raw URLs. They include only normalized endpoint keys, status codes, parser names, timestamps, and parse status.
+
 ## Samples And Validation
 
 Sample payloads live in `packages/schemas/examples/`.

@@ -148,7 +148,7 @@ button:disabled {
 dl {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -156,6 +156,7 @@ dd {
   margin: 4px 0 0;
   color: #eef6ff;
   font-weight: 700;
+  word-break: break-word;
 }
 
 footer button {

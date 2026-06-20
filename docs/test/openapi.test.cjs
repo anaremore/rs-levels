@@ -4,11 +4,11 @@ const { join } = require('node:path');
 
 const spec = readFileSync(join(__dirname, '..', 'openapi.yaml'), 'utf8');
 
-for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/health', '/status', '/snapshot', '/levels', '/levels/{symbol}', '/ddbands', '/references', '/tradingview/{symbol}', '/stream', '/capture/api']) {
+for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/diagnostics', '/health', '/status', '/snapshot', '/levels', '/levels/{symbol}', '/ddbands', '/references', '/tradingview/{symbol}', '/stream', '/capture/api']) {
   assert.match(spec, new RegExp(`^  ${path.replace(/[{}]/g, '\\$&')}:`, 'm'));
 }
 
-for (const schema of ['Snapshot', 'SymbolSnapshot', 'Level', 'TradingViewExport', 'CapturePayload']) {
+for (const schema of ['Snapshot', 'SymbolSnapshot', 'Level', 'TradingViewExport', 'CapturePayload', 'Diagnostics', 'DiagnosticCheck']) {
   assert.match(spec, new RegExp(`^    ${schema}:`, 'm'));
 }
 

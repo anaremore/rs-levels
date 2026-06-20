@@ -17,6 +17,7 @@ GET  /
 GET  /docs
 GET  /openapi.yaml
 GET  /swagger.yaml
+GET  /diagnostics
 GET  /health
 GET  /status
 GET  /snapshot
@@ -41,7 +42,7 @@ Returns service metadata and endpoint hints.
 {
   "ok": true,
   "name": "RS Levels local service",
-  "endpoints": ["/docs", "/openapi.yaml", "/health", "/status", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -55,6 +56,36 @@ Returns a lightweight local HTML page with links to the OpenAPI spec and common 
 Returns the OpenAPI 3.1 YAML spec. Use this URL with Swagger UI, Redoc, Postman, Insomnia, or other OpenAPI-compatible tools.
 
 `/swagger.yaml` is an alias for tools that look for Swagger-named specs.
+
+## GET /diagnostics
+
+Returns a scrubbed setup and support bundle for local API and browser-extension troubleshooting. It includes network posture, source state, symbol count, level count, setup checks, and hints.
+
+The response intentionally omits raw captured URLs from source endpoint summaries. Endpoint diagnostics include the normalized endpoint key, status, parser name, timestamp, and parse result only.
+
+```json
+{
+  "ok": true,
+  "service": "rs-levels",
+  "docs": {
+    "local": "/docs",
+    "openApi": "/openapi.yaml",
+    "swagger": "/swagger.yaml"
+  },
+  "source": {
+    "state": "waiting",
+    "connected": false,
+    "endpointCount": 0,
+    "endpoints": []
+  },
+  "symbols": [],
+  "levelCount": 0,
+  "checks": [
+    { "id": "service", "label": "Local API", "status": "ok", "detail": "HTTP API is responding." }
+  ],
+  "hints": []
+}
+```
 
 ## GET /health
 

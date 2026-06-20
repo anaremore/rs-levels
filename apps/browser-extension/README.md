@@ -16,15 +16,17 @@ The extension runs only on `rocketscooter.com` host patterns, injects a page hoo
 
 ## Popup
 
-The popup shows local service health and captured level counts. It includes:
+The popup shows local service health, captured level counts, post timing, and the last extension-side issue. It includes:
 
 - symbol selector
 - `Copy TradingView`
 - `Copy JSON`
+- `Copy Diagnostics`
+- `API Docs`
 - refresh
 - options shortcut
 
-`Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`.
+`Copy TradingView` reads `/tradingview/:symbol` from the local service. `Copy JSON` reads `/tradingview/:symbol?format=json`. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page without adding extension permissions.
 
 ## Options
 

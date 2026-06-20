@@ -23,6 +23,7 @@ const contentScript = readFileSync(join(root, 'src', 'content-script.js'), 'utf8
 const pageHook = readFileSync(join(root, 'src', 'page-hook.js'), 'utf8');
 const background = readFileSync(join(root, 'src', 'background.js'), 'utf8');
 const popup = readFileSync(join(root, 'src', 'popup.js'), 'utf8');
+const popupHtml = readFileSync(join(root, 'src', 'popup.html'), 'utf8');
 const options = readFileSync(join(root, 'src', 'options.js'), 'utf8');
 
 assert.match(contentScript, /capture-rules\.js/);
@@ -39,6 +40,10 @@ assert.match(background, /importScripts\('shared\.js'\)/);
 assert.match(background, /\/capture\/api/);
 assert.match(popup, /\/tradingview\/\$\{selectedSymbol\(\)\}/);
 assert.match(popup, /format=json/);
+assert.match(popup, /\/diagnostics/);
+assert.match(popup, /cleanExtensionState/);
+assert.match(popupHtml, /copy-diagnostics/);
+assert.match(popupHtml, /open-docs/);
 assert.match(options, /chrome\.permissions\.request/);
 
 console.log('browser extension static tests passed');

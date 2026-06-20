@@ -11,6 +11,7 @@ try {
   const root = await getJson(`${baseUrl}/`);
   assert.ok(root.endpoints.includes('/docs'));
   assert.ok(root.endpoints.includes('/openapi.yaml'));
+  assert.ok(root.endpoints.includes('/diagnostics'));
 
   const docsPage = await getText(`${baseUrl}/docs`);
   assert.match(docsPage, /RS Levels API Docs/);
@@ -26,6 +27,12 @@ try {
   assert.equal(health.ok, true);
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
+
+  const waitingDiagnostics = await getJson(`${baseUrl}/diagnostics`);
+  assert.equal(waitingDiagnostics.ok, true);
+  assert.equal(waitingDiagnostics.source.connected, false);
+  assert.equal(waitingDiagnostics.levelCount, 0);
+  assert.ok(waitingDiagnostics.checks.some((check) => check.id === 'source' && check.status === 'waiting'));
   assert.ok(health.network.corsOrigins.includes('http://127.0.0.1:*'));
 
   const loopbackCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'http://127.0.0.1:5173' } });
@@ -54,6 +61,14 @@ try {
   });
   assert.equal(captureResponse.ok, true);
   assert.equal(captureResponse.snapshot.symbols.MES.levels.length, 2);
+
+  const captureDiagnostics = await getJson(`${baseUrl}/diagnostics`);
+  assert.equal(captureDiagnostics.source.connected, true);
+  assert.equal(captureDiagnostics.levelCount, 2);
+  assert.equal(captureDiagnostics.source.endpointCount, 1);
+  assert.equal(captureDiagnostics.source.endpoints[0].key, '/platform/api/v1/ddbands/MES');
+  assert.equal(Object.hasOwn(captureDiagnostics.source.endpoints[0], 'url'), false);
+  assert.ok(captureDiagnostics.checks.some((check) => check.id === 'levels' && check.status === 'ok'));
 
   const levels = await getJson(`${baseUrl}/levels/MES`);
   assert.equal(levels.symbol, 'MES');

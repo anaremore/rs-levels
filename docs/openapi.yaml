@@ -47,6 +47,16 @@ paths:
             application/yaml:
               schema:
                 type: string
+  /diagnostics:
+    get:
+      summary: Local setup diagnostics
+      responses:
+        '200':
+          description: Scrubbed local service diagnostics for setup and support
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Diagnostics'
   /health:
     get:
       summary: Health and freshness
@@ -450,6 +460,96 @@ components:
           oneOf:
             - type: object
             - type: string
+    Diagnostics:
+      type: object
+      required: [ok, service, schemaVersion, generatedAt, docs, network, source, symbols, levelCount, checks, hints]
+      properties:
+        ok:
+          type: boolean
+        service:
+          type: string
+        schemaVersion:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        docs:
+          type: object
+          required: [local, openApi, swagger]
+          properties:
+            local:
+              type: string
+            openApi:
+              type: string
+            swagger:
+              type: string
+        network:
+          $ref: '#/components/schemas/Network'
+        source:
+          $ref: '#/components/schemas/DiagnosticSource'
+        symbols:
+          type: array
+          items:
+            type: string
+        levelCount:
+          type: integer
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiagnosticCheck'
+        hints:
+          type: array
+          items:
+            type: string
+    DiagnosticSource:
+      type: object
+      required: [state, connected, lastCaptureAt, ageMs, endpointCount, endpoints, warnings]
+      properties:
+        state:
+          type: string
+        connected:
+          type: boolean
+        lastCaptureAt:
+          type: string
+        ageMs:
+          type: number
+          nullable: true
+        endpointCount:
+          type: integer
+        endpoints:
+          type: array
+          items:
+            type: object
+            required: [key, status, capturedAt, parser, ok]
+            properties:
+              key:
+                type: string
+              status:
+                type: integer
+                nullable: true
+              capturedAt:
+                type: string
+              parser:
+                type: string
+              ok:
+                type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+    DiagnosticCheck:
+      type: object
+      required: [id, label, status, detail]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        status:
+          type: string
+          enum: [ok, waiting, warning, error]
+        detail:
+          type: string
     Error:
       type: object
       required: [ok, error]

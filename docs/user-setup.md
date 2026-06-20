@@ -72,7 +72,7 @@ In another terminal:
 npm run demo:capture
 ```
 
-Then open the dashboard, run a client example, or copy a TradingView payload from `http://127.0.0.1:8765/tradingview/MES`.
+Then open the dashboard, run a client example, copy a TradingView payload from `http://127.0.0.1:8765/tradingview/MES`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
 
 ## 3. Capture Levels
 
@@ -127,7 +127,7 @@ All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the
 
 ## Troubleshooting
 
-- `OFFLINE` in the popup: start the API or check the service URL.
+- `OFFLINE` in the popup: start the API or check the service URL. Use `Copy Diagnostics` for a scrubbed setup bundle.
 - No symbols in the popup: open RocketScooter and wait for allowlisted level responses.
 - TradingView lines do not update: copy a fresh payload and paste it into the indicator input.
 - Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and Chrome granted the extension origin permission.
