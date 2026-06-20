@@ -50,6 +50,7 @@ Status: initial source artifacts complete; platform compile/install validation p
 - Quantower display indicator. Initial indicator source included.
 - Bookmap display add-on. Initial Java source included.
 - TradingView Pine indicator with paste-based level input, kind toggles, line controls, status label, and max-level display control.
+- Public `plugins/manifest.json` inventory with static display-only validation.
 
 ## Milestone 5: Packaging
 

@@ -28,12 +28,15 @@ Plugins may:
 
 ```text
 plugins/
+  manifest.json
   sierra-chart/
   ninjatrader/
   quantower/
   bookmap/
   tradingview/
 ```
+
+`plugins/manifest.json` is the public inventory of display adapters included in the release package. It lists each adapter entry file, README, platform, integration mode, and read-only local API endpoints.
 
 Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API directly when their platform runtime allows local HTTP polling. Sierra Chart includes an initial display-only ACSIL source file at `plugins/sierra-chart/rs-levels-sierra.cpp`, NinjaTrader includes an initial display-only NinjaScript indicator at `plugins/ninjatrader/RSLevelsDisplay.cs`, Quantower includes an initial display-only indicator at `plugins/quantower/RSLevelsDisplayQuantower.cs`, and Bookmap includes an initial display-only Java add-on source file at `plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java`.
 

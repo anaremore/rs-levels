@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "0.1.0",
+  "plugins": [
+    {
+      "id": "tradingview",
+      "name": "RS Levels TradingView Pine Indicator",
+      "platform": "TradingView",
+      "kind": "paste-indicator",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/tradingview/rs-levels.pine",
+      "readme": "plugins/tradingview/README.md",
+      "api": {
+        "mode": "manual-paste",
+        "endpoints": [
+          "GET /tradingview/:symbol",
+          "GET /tradingview/:symbol?format=json"
+        ]
+      }
+    },
+    {
+      "id": "sierra-chart",
+      "name": "RS Levels Sierra Chart Study",
+      "platform": "Sierra Chart",
+      "kind": "direct-polling-study",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/sierra-chart/rs-levels-sierra.cpp",
+      "readme": "plugins/sierra-chart/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /levels/:symbol?format=sierra"
+        ]
+      }
+    },
+    {
+      "id": "ninjatrader",
+      "name": "RS Levels NinjaTrader Indicator",
+      "platform": "NinjaTrader",
+      "kind": "direct-polling-indicator",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/ninjatrader/RSLevelsDisplay.cs",
+      "readme": "plugins/ninjatrader/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /levels/:symbol?format=sierra"
+        ]
+      }
+    },
+    {
+      "id": "quantower",
+      "name": "RS Levels Quantower Indicator",
+      "platform": "Quantower",
+      "kind": "direct-polling-indicator",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/quantower/RSLevelsDisplayQuantower.cs",
+      "readme": "plugins/quantower/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /levels/:symbol?format=sierra"
+        ]
+      }
+    },
+    {
+      "id": "bookmap",
+      "name": "RS Levels Bookmap Add-on",
+      "platform": "Bookmap",
+      "kind": "direct-polling-add-on",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java",
+      "readme": "plugins/bookmap/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /levels/:symbol?format=sierra"
+        ]
+      }
+    }
+  ]
+}

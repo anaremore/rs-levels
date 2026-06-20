@@ -66,6 +66,7 @@ packages/
   schemas/
   core-parser/
 plugins/
+  manifest.json
   sierra-chart/
   ninjatrader/
   quantower/

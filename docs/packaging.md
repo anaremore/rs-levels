@@ -23,6 +23,7 @@ The release directory includes:
 - browser extension
 - schema/parser/exporter packages
 - TradingView Pine indicator
+- display plugin manifest
 - examples
 - documentation
 - OpenAPI spec

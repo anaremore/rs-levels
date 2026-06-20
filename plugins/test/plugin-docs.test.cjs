@@ -1,9 +1,28 @@
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const root = join(__dirname, '..');
 const platforms = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'tradingview'];
+const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
+
+assert.equal(manifest.schemaVersion, '0.1.0');
+assert.deepEqual(manifest.plugins.map((plugin) => plugin.id).sort(), [...platforms].sort());
+
+for (const plugin of manifest.plugins) {
+  assert.equal(plugin.displayOnly, true, `${plugin.id} must be display-only`);
+  assert.ok(existsSync(join(root, '..', plugin.entry)), `${plugin.id} entry file must exist`);
+  assert.ok(existsSync(join(root, '..', plugin.readme)), `${plugin.id} readme must exist`);
+  assert.ok(Array.isArray(plugin.api.endpoints) && plugin.api.endpoints.length > 0, `${plugin.id} must list API endpoints`);
+  if (plugin.id === 'tradingview') {
+    assert.equal(plugin.api.mode, 'manual-paste');
+    assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
+  } else {
+    assert.equal(plugin.api.mode, 'local-http');
+    assert.ok(plugin.api.endpoints.includes('GET /status'), `${plugin.id} must poll status`);
+    assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
+  }
+}
 
 for (const platform of platforms) {
   const text = readFileSync(join(root, platform, 'README.md'), 'utf8');
@@ -52,6 +71,12 @@ assert.match(bookmapSource, /\/status/);
 assert.match(bookmapSource, /format=sierra/);
 assert.match(bookmapSource, /setHorizontalValueLinesInfo/);
 assertNoPlatformApiTerms(bookmapSource);
+
+const tradingViewSource = readFileSync(join(root, 'tradingview', 'rs-levels.pine'), 'utf8');
+assert.match(tradingViewSource, /^indicator\(/m);
+assert.doesNotMatch(tradingViewSource, /\bstrategy\s*\(/i);
+assert.doesNotMatch(tradingViewSource, /\bstrategy\./i);
+assert.doesNotMatch(tradingViewSource, /\balertcondition\s*\(/i);
 
 console.log('plugin documentation tests passed');
 

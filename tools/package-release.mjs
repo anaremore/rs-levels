@@ -39,6 +39,7 @@ const requiredReleaseEntries = [
   'scripts/start-local-service.cmd',
   'scripts/start-local-service.ps1',
   'scripts/start-local-service.sh',
+  'plugins/manifest.json',
   'plugins/tradingview/rs-levels.pine',
   'plugins/sierra-chart/rs-levels-sierra.cpp',
   'plugins/ninjatrader/RSLevelsDisplay.cs',
