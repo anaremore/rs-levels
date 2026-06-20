@@ -30,7 +30,13 @@ Health check:
 curl http://127.0.0.1:8765/health
 ```
 
-The OpenAPI spec is in [openapi.yaml](openapi.yaml). It can be opened with Swagger UI, Redoc, or any OpenAPI-compatible client tooling.
+Local API docs:
+
+```text
+http://127.0.0.1:8765/docs
+```
+
+The OpenAPI/Swagger-compatible spec is served at `http://127.0.0.1:8765/openapi.yaml` and checked into [openapi.yaml](openapi.yaml). It can be opened with Swagger UI, Redoc, Postman, Insomnia, or other OpenAPI-compatible client tooling.
 
 ## Packaged Release
 
@@ -41,6 +47,7 @@ npm run package
 ```
 
 Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
+
 ## 2. Load The Browser Extension
 
 1. Open `chrome://extensions` or the equivalent Chromium extension page.
@@ -66,6 +73,7 @@ npm run demo:capture
 ```
 
 Then open the dashboard, run a client example, or copy a TradingView payload from `http://127.0.0.1:8765/tradingview/MES`.
+
 ## 3. Capture Levels
 
 1. Start the local API.
@@ -116,6 +124,7 @@ The `examples/` folder includes dependency-free clients for local API exploratio
 - `examples/python-client/stream.py`
 
 All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the dashboard API field for Tailscale/private-network URLs.
+
 ## Troubleshooting
 
 - `OFFLINE` in the popup: start the API or check the service URL.

@@ -42,7 +42,7 @@ npm run package
 
 See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
 
-OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml).
+OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml), also served at `http://127.0.0.1:8765/openapi.yaml` after startup. Local API docs: `http://127.0.0.1:8765/docs`.
 
 Examples: `examples/html-dashboard`, `examples/node-client`, and `examples/python-client`.
 

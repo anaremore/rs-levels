@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import { createTradingViewJsonExport, createTradingViewPayload } from '../../../packages/exporters/src/index.js';
 import { normalizeSymbol } from '../../../packages/schemas/src/index.js';
@@ -6,6 +7,7 @@ import { networkStatus } from './config.js';
 import { levelsToSierraText } from './sierra-format.js';
 
 const MAX_BODY_BYTES = 1024 * 1024;
+const OPENAPI_YAML = readFileSync(new URL('../../../docs/openapi.yaml', import.meta.url), 'utf8');
 
 export function createHttpApp({ store, config }) {
   const clients = new Set();
@@ -23,6 +25,8 @@ export function createHttpApp({ store, config }) {
       const pathname = url.pathname.replace(/\/+$/, '') || '/';
 
       if (req.method === 'GET' && pathname === '/') return sendJson(res, 200, rootInfo(config));
+      if (req.method === 'GET' && pathname === '/docs') return sendText(res, 200, docsHtml(), 'text/html; charset=utf-8');
+      if (req.method === 'GET' && (pathname === '/openapi.yaml' || pathname === '/swagger.yaml')) return sendText(res, 200, OPENAPI_YAML, 'application/yaml; charset=utf-8');
       if (req.method === 'GET' && pathname === '/health') return sendJson(res, 200, health(store, config));
       if (req.method === 'GET' && pathname === '/status') return sendJson(res, 200, status(store, config));
       if (req.method === 'GET' && pathname === '/snapshot') return sendJson(res, 200, store.getSnapshot());
@@ -72,7 +76,7 @@ export function rootInfo(config) {
   return {
     ok: true,
     name: 'RS Levels local service',
-    endpoints: ['/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/health', '/status', '/snapshot', '/levels', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -161,6 +165,43 @@ function sendJson(res, statusCode, value) {
 function sendText(res, statusCode, value, contentType) {
   res.writeHead(statusCode, { 'Content-Type': contentType });
   res.end(value);
+}
+
+function docsHtml() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RS Levels API Docs</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; padding: 32px; line-height: 1.5; background: Canvas; color: CanvasText; }
+    main { max-width: 780px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 2rem; }
+    p { margin: 0 0 16px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+    pre { padding: 16px; overflow: auto; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 8px; }
+    a { color: LinkText; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>RS Levels API Docs</h1>
+    <p>Local-first RocketScooter display-level capture API. This service is display-only.</p>
+    <p><a href="/openapi.yaml">Open the OpenAPI YAML spec</a>, or point Swagger UI, Redoc, Postman, Insomnia, or another OpenAPI-compatible tool at this URL:</p>
+    <pre id="spec-url">/openapi.yaml</pre>
+    <p>Common read endpoints:</p>
+    <pre>GET /health
+GET /snapshot
+GET /levels
+GET /levels/:symbol
+GET /tradingview/:symbol
+GET /stream</pre>
+  </main>
+  <script>document.getElementById("spec-url").textContent = new URL("/openapi.yaml", window.location.href).href;</script>
+</body>
+</html>`;
 }
 
 function readJson(req) {

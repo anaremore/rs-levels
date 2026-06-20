@@ -17,6 +17,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RootInfo'
+  /docs:
+    get:
+      summary: Built-in API docs page
+      responses:
+        '200':
+          description: Lightweight local API documentation page
+          content:
+            text/html:
+              schema:
+                type: string
+  /openapi.yaml:
+    get:
+      summary: OpenAPI YAML spec
+      responses:
+        '200':
+          description: Machine-readable OpenAPI 3.1 specification
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /swagger.yaml:
+    get:
+      summary: Swagger-compatible OpenAPI YAML alias
+      responses:
+        '200':
+          description: Alias for the machine-readable OpenAPI 3.1 specification
+          content:
+            application/yaml:
+              schema:
+                type: string
   /health:
     get:
       summary: Health and freshness

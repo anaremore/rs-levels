@@ -10,7 +10,9 @@ The service receives browser-extension captures, normalizes display levels, keep
 npm start
 ```
 
-OpenAPI spec: docs/openapi.yaml.
+Built-in docs: http://127.0.0.1:8765/docs.
+
+OpenAPI spec: http://127.0.0.1:8765/openapi.yaml, also checked in at docs/openapi.yaml.
 
 Default URL:
 
@@ -43,6 +45,9 @@ If a non-loopback host is requested without `RS_LEVELS_ALLOW_REMOTE=1`, the serv
 
 ```text
 GET  /
+GET  /docs
+GET  /openapi.yaml
+GET  /swagger.yaml
 GET  /health
 GET  /status
 GET  /snapshot
@@ -58,6 +63,8 @@ POST /capture/api
 ```
 
 /tradingview/:symbol returns the compact text payload used by the TradingView Pine indicator. ?format=json returns a copy-friendly JSON export for tooling.
+
+/docs is a lightweight local API docs page. /openapi.yaml serves the OpenAPI 3.1 spec for Swagger UI, Redoc, Postman, Insomnia, and compatible clients.
 
 /stream is an SSE stream that emits the current snapshot immediately and emits a new snapshot after each accepted capture.
 

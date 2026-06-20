@@ -8,6 +8,20 @@ const address = await listen(service);
 const baseUrl = `http://127.0.0.1:${address.port}`;
 
 try {
+  const root = await getJson(`${baseUrl}/`);
+  assert.ok(root.endpoints.includes('/docs'));
+  assert.ok(root.endpoints.includes('/openapi.yaml'));
+
+  const docsPage = await getText(`${baseUrl}/docs`);
+  assert.match(docsPage, /RS Levels API Docs/);
+  assert.match(docsPage, /OpenAPI YAML spec/);
+
+  const openapiYaml = await getText(`${baseUrl}/openapi.yaml`);
+  assert.match(openapiYaml, /openapi: 3\.1\.0/);
+  assert.match(openapiYaml, /\/capture\/api:/);
+
+  const swaggerYaml = await getText(`${baseUrl}/swagger.yaml`);
+  assert.equal(swaggerYaml, openapiYaml);
   const health = await getJson(`${baseUrl}/health`);
   assert.equal(health.ok, true);
   assert.equal(health.network.remoteAccess, false);

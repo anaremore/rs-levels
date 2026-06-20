@@ -37,6 +37,8 @@ Check health:
 curl http://127.0.0.1:8765/health
 ```
 
+Open local API docs at `http://127.0.0.1:8765/docs`. The OpenAPI/Swagger-compatible spec is served at `http://127.0.0.1:8765/openapi.yaml` and checked into `docs/openapi.yaml`.
+
 ## Trusted Private Network Use
 
 Loopback is the default. For Tailscale or another trusted private network, intentionally opt in:

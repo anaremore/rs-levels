@@ -8,12 +8,15 @@ http://127.0.0.1:8765
 
 The local service is read-mostly. The only write endpoint is browser-capture ingest.
 
-A machine-readable OpenAPI 3.1 spec is available at [openapi.yaml](openapi.yaml).
+A machine-readable OpenAPI 3.1 spec is checked in at [openapi.yaml](openapi.yaml) and served by the running API at `http://127.0.0.1:8765/openapi.yaml`. A lightweight local docs page is available at `http://127.0.0.1:8765/docs`.
 
 ## Endpoints
 
 ```text
 GET  /
+GET  /docs
+GET  /openapi.yaml
+GET  /swagger.yaml
 GET  /health
 GET  /status
 GET  /snapshot
@@ -38,10 +41,20 @@ Returns service metadata and endpoint hints.
 {
   "ok": true,
   "name": "RS Levels local service",
-  "endpoints": ["/health", "/status", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/health", "/status", "/snapshot", "/levels", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
+
+## GET /docs
+
+Returns a lightweight local HTML page with links to the OpenAPI spec and common read endpoints.
+
+## GET /openapi.yaml
+
+Returns the OpenAPI 3.1 YAML spec. Use this URL with Swagger UI, Redoc, Postman, Insomnia, or other OpenAPI-compatible tools.
+
+`/swagger.yaml` is an alias for tools that look for Swagger-named specs.
 
 ## GET /health
 
@@ -58,6 +71,16 @@ Health includes network posture, source state, symbol count, and level count.
     "requestedHost": "127.0.0.1",
     "port": 8765,
     "remoteAccess": false,
+    "corsOrigins": [
+      "http://127.0.0.1",
+      "http://127.0.0.1:*",
+      "http://localhost",
+      "http://localhost:*",
+      "http://[::1]:*",
+      "null",
+      "chrome-extension://*",
+      "moz-extension://*"
+    ],
     "warnings": []
   },
   "source": {
