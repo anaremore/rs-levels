@@ -17,38 +17,44 @@ Status: complete.
 
 ## Milestone 2: Local Service
 
-Status: in progress.
+Status: public API foundation complete; app wrapper planned.
 
 - Cross-platform localhost service.
-- Implemented `/health`, `/status`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/stream`, and `/capture/api`.
+- Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
 - Safe loopback default with explicit Tailscale/private-network opt-in.
 - Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state.
+- Public source endpoint summaries omit raw URLs and scrub identifier-like path segments.
+- API responses report the local service version and use `Cache-Control: no-store`.
 - Next: persisted settings and packaged app wrapper.
 
 ## Milestone 3: Browser Extension
 
-Status: shell complete.
+Status: public setup foundation complete; field validation planned.
 
 - Manifest V3 extension shell.
 - Capture only allowlisted RocketScooter responses.
-- Show connection status, post timing, and last issue in a popup.
+- Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
-- Next: field testing against real RocketScooter endpoint shapes and parser hardening.
+- Add options-page service reachability check for localhost and trusted private-network URLs.
+- Guard TradingView copy while source data is waiting or stale.
+- Next: field testing against real RocketScooter endpoint shapes.
 
 ## Milestone 4: Display Plugins
 
-Status: in progress.
+Status: initial source artifacts complete; platform compile/install validation planned.
 
 - Sierra Chart display study. Initial ACSIL source included.
 - NinjaTrader display indicator. Initial NinjaScript source included.
 - Quantower display indicator. Initial indicator source included.
 - Bookmap display add-on. Initial Java source included.
-- TradingView Pine indicator with paste-based level input. Implemented as the first display plugin path.
+- TradingView Pine indicator with paste-based level input, kind toggles, line controls, status label, and max-level display control.
 
 ## Milestone 5: Packaging
 
-Status: planned.
+Status: in progress.
 
-- Build zip artifacts.
-- Add checksums.
+- Build source-style release directory.
+- Add `RELEASE-MANIFEST.json` and `SHA256SUMS.txt`.
+- Verify critical API, extension, TradingView, plugin, docs, and scan artifacts in `npm run package:check`.
+- Next: zip artifacts and packaged app wrapper.
 - Test clean install on Windows, macOS, and Linux.

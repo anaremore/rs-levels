@@ -60,31 +60,32 @@ Deliverables:
 
 ## Slice 5: Parser Extraction
 
-Status: next.
+Status: in progress.
 
 Goal: carefully extract only display-level parsing.
 
 Deliverables:
 
-- allowlisted endpoint capture parsing
-- normalized level rows
-- source freshness and warnings
+- allowlisted endpoint capture parsing: implemented through generic display-level parser
+- normalized level rows: implemented for object and compact row shapes
+- source freshness and warnings: implemented in the local service/store
+- endpoint summary scrubbing: implemented for raw URLs and identifier-like path segments
 - private-term scan reviewed before commit
 
 Do not copy strategy, execution, account, or automation code.
 
 ## Slice 6: Platform Display Plugins
 
-Status: in progress.
+Status: initial source artifacts complete.
 
 Goal: add display integrations one platform at a time.
 
 Recommended order:
 
 1. TradingView paste-based Pine indicator. Implemented first because TradingView is a priority and Pine cannot poll localhost directly.
-2. Sierra Chart
-3. NinjaTrader
-4. Quantower
+2. Sierra Chart. Initial ACSIL source included.
+3. NinjaTrader. Initial NinjaScript source included.
+4. Quantower. Initial indicator source included.
 5. Bookmap. Initial Java add-on source included.
 
 Each plugin must include a safety test or review note confirming it does not call platform order APIs.
