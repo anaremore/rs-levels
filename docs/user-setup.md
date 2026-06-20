@@ -48,6 +48,14 @@ npm run package
 
 Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 
+Release packages include cross-platform service launch scripts:
+
+```text
+scripts/start-local-service.cmd
+scripts/start-local-service.ps1
+scripts/start-local-service.sh
+```
+
 ## 2. Load The Browser Extension
 
 1. Open `chrome://extensions` or the equivalent Chromium extension page.

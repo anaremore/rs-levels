@@ -27,6 +27,14 @@ npm run scan:secrets
 npm start
 ```
 
+Release packages also include launch wrappers:
+
+```text
+scripts/start-local-service.cmd
+scripts/start-local-service.ps1
+scripts/start-local-service.sh
+```
+
 Default URL:
 
 ```text

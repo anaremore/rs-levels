@@ -17,7 +17,7 @@ Status: complete.
 
 ## Milestone 2: Local Service
 
-Status: public API foundation complete; app wrapper planned.
+Status: public API foundation complete; launch scripts included; app wrapper planned.
 
 - Cross-platform localhost service.
 - Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
@@ -25,7 +25,7 @@ Status: public API foundation complete; app wrapper planned.
 - Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state.
 - Public source endpoint summaries omit raw URLs and scrub identifier-like path segments.
 - API responses report the local service version and use `Cache-Control: no-store`.
-- Next: persisted settings and packaged app wrapper.
+- Next: persisted settings and native packaged app wrapper.
 
 ## Milestone 3: Browser Extension
 
@@ -56,5 +56,7 @@ Status: in progress.
 - Build source-style release directory.
 - Add `RELEASE-MANIFEST.json` and `SHA256SUMS.txt`.
 - Verify critical API, extension, TradingView, plugin, docs, and scan artifacts in `npm run package:check`.
-- Next: zip artifacts and packaged app wrapper.
+- Build zip archive and checksum sidecar.
+- Include cross-platform local service launch scripts.
+- Next: native packaged app wrapper.
 - Test clean install on Windows, macOS, and Linux.

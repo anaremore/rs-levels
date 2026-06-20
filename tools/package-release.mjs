@@ -25,6 +25,7 @@ const includeEntries = [
   'plugins',
   'examples',
   'docs',
+  'scripts',
   'tools'
 ];
 
@@ -35,6 +36,9 @@ const requiredReleaseEntries = [
   'apps/local-service/src/cli.js',
   'apps/browser-extension/manifest.json',
   'apps/browser-extension/src/popup.html',
+  'scripts/start-local-service.cmd',
+  'scripts/start-local-service.ps1',
+  'scripts/start-local-service.sh',
   'plugins/tradingview/rs-levels.pine',
   'plugins/sierra-chart/rs-levels-sierra.cpp',
   'plugins/ninjatrader/RSLevelsDisplay.cs',

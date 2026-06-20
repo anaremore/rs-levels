@@ -42,6 +42,8 @@ npm run package
 
 The release output includes a source-style directory, a zip archive, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and a zip checksum sidecar.
 
+Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`.
+
 See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml), also served at `http://127.0.0.1:8765/openapi.yaml` after startup. Local API docs: `http://127.0.0.1:8765/docs`.
@@ -74,6 +76,7 @@ examples/
   node-client/
   python-client/
 docs/
+scripts/
 ```
 
 ## Status

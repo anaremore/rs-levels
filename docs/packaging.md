@@ -19,6 +19,7 @@ dist/rs-levels-0.0.0.zip.sha256
 The release directory includes:
 
 - local API service
+- cross-platform service launch scripts
 - browser extension
 - schema/parser/exporter packages
 - TradingView Pine indicator
@@ -54,6 +55,16 @@ From the package root:
 ```powershell
 npm start
 ```
+
+Packaged releases also include wrapper scripts:
+
+```text
+scripts/start-local-service.cmd
+scripts/start-local-service.ps1
+scripts/start-local-service.sh
+```
+
+The scripts call the same local service CLI as `npm start`. Existing environment variables such as `RS_LEVELS_HOST`, `RS_LEVELS_PORT`, and `RS_LEVELS_ALLOW_REMOTE` still control loopback and trusted private-network behavior.
 
 Default URL:
 

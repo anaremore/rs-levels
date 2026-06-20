@@ -10,7 +10,7 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /critical entries/);
+assert.match(checkOutput, /15 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 
 const packageOutput = execFileSync(process.execPath, ['tools/package-release.mjs'], {
@@ -25,6 +25,9 @@ const zipPath = join(root, 'dist', 'rs-levels-0.0.0.zip');
 const zip = readFileSync(zipPath);
 assert.equal(zip.readUInt32LE(0), 0x04034b50);
 assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/README\.md/);
+assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);
+assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/scripts\/start-local-service\.ps1/);
+assert.match(zip.toString('utf8'), /rs-levels-0\.0\.0\/scripts\/start-local-service\.sh/);
 
 const checksum = readFileSync(`${zipPath}.sha256`, 'utf8').trim();
 assert.match(checksum, /^[a-f0-9]{64}  rs-levels-0\.0\.0\.zip$/);
