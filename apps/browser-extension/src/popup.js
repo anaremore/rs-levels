@@ -2,6 +2,7 @@ const els = {
   serviceUrl: document.getElementById('service-url'),
   statusPill: document.getElementById('status-pill'),
   symbol: document.getElementById('symbol'),
+  captureEnabled: document.getElementById('capture-enabled'),
   copyTv: document.getElementById('copy-tv'),
   copyJson: document.getElementById('copy-json'),
   copyDiagnostics: document.getElementById('copy-diagnostics'),
@@ -32,6 +33,7 @@ init();
 async function init() {
   settings = globalThis.RS_LEVELS.cleanSettings(await chrome.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']));
   els.serviceUrl.textContent = settings.serviceUrl;
+  els.captureEnabled.checked = settings.captureEnabled;
   renderSymbols(symbols);
   bindEvents();
   await refresh();
@@ -46,6 +48,7 @@ function bindEvents() {
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
   els.openPlugins.addEventListener('click', () => window.open(`${settings.serviceUrl}/plugins`, '_blank', 'noopener'));
   els.symbol.addEventListener('change', () => renderTradingViewCopy(latestServiceStatus));
+  els.captureEnabled.addEventListener('change', toggleCapture);
 }
 
 async function refresh() {
@@ -143,6 +146,20 @@ async function copyDiagnostics() {
     setMessage('Diagnostics copied', 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'Diagnostics copy failed', 'error');
+  }
+}
+
+async function toggleCapture() {
+  try {
+    settings = {
+      ...settings,
+      captureEnabled: els.captureEnabled.checked
+    };
+    await chrome.storage.local.set({ captureEnabled: settings.captureEnabled });
+    setMessage(settings.captureEnabled ? 'Capture enabled.' : 'Capture paused.', settings.captureEnabled ? 'ok' : 'warning');
+  } catch (err) {
+    els.captureEnabled.checked = settings.captureEnabled;
+    setMessage(err && err.message ? err.message : 'Capture setting failed', 'error');
   }
 }
 

@@ -85,6 +85,21 @@ p {
   gap: 5px;
 }
 
+.switch {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #c6d6ea;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.switch input {
+  width: auto;
+}
+
 label,
 dt {
   color: #8ea2ba;

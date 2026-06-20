@@ -38,6 +38,7 @@ Status: public setup foundation complete; field validation planned.
 - Capture only allowlisted RocketScooter responses.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
+- Add popup capture pause/resume toggle backed by extension storage.
 - Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
