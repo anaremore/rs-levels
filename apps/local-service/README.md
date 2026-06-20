@@ -26,6 +26,7 @@ The service is plain Node.js and is intended to run on Windows, macOS, and Linux
 RS_LEVELS_HOST=127.0.0.1
 RS_LEVELS_PORT=8765
 RS_LEVELS_ALLOW_REMOTE=0
+RS_LEVELS_CORS_ORIGINS=
 ```
 
 Loopback is the safe default. To expose the API to another machine on Tailscale or another trusted private network, set both an explicit non-loopback host and the remote-access flag:

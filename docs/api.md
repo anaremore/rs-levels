@@ -189,10 +189,19 @@ Accepted payload shape:
 
 ## CORS
 
-The service currently allows local browser tooling with:
+The service is origin-aware by default. It allows loopback browser tools, file-open dashboards, and browser-extension origins, but it does not return `Access-Control-Allow-Origin` for arbitrary websites.
+
+Default allowed origins:
 
 ```text
-Access-Control-Allow-Origin: *
+http://127.0.0.1
+http://127.0.0.1:*
+http://localhost
+http://localhost:*
+http://[::1]:*
+null
+chrome-extension://*
+moz-extension://*
 ```
 
-Remote binding remains opt-in through `RS_LEVELS_ALLOW_REMOTE=1`; see [networking](networking.md).
+Use `RS_LEVELS_CORS_ORIGINS` for explicit additional origins, separated by commas. Remote binding remains opt-in through `RS_LEVELS_ALLOW_REMOTE=1`; see [networking](networking.md).

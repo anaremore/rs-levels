@@ -12,6 +12,19 @@ try {
   assert.equal(health.ok, true);
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
+  assert.ok(health.network.corsOrigins.includes('http://127.0.0.1:*'));
+
+  const loopbackCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'http://127.0.0.1:5173' } });
+  assert.equal(loopbackCors.headers.get('access-control-allow-origin'), 'http://127.0.0.1:5173');
+
+  const extensionCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'chrome-extension://abcdefghijklmnop' } });
+  assert.equal(extensionCors.headers.get('access-control-allow-origin'), 'chrome-extension://abcdefghijklmnop');
+
+  const fileCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'null' } });
+  assert.equal(fileCors.headers.get('access-control-allow-origin'), 'null');
+
+  const blockedCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'https://example.com' } });
+  assert.equal(blockedCors.headers.get('access-control-allow-origin'), null);
 
   const captureResponse = await postJson(`${baseUrl}/capture/api`, {
     endpoint: '/platform/api/v1/ddbands/MES',
@@ -60,6 +73,11 @@ try {
   assert.equal(tailscaleService.config.host, '0.0.0.0');
   assert.equal(tailscaleService.config.remoteAccess, true);
 
+  const customCorsService = createService({
+    config: { host: '127.0.0.1', port: 0, corsOrigins: ['https://dashboard.example'] }
+  });
+  assert.deepEqual(customCorsService.config.corsOrigins, ['https://dashboard.example']);
+
   console.log('local service tests passed');
 } finally {
   await new Promise((resolve) => service.server.close(resolve));
@@ -86,4 +104,3 @@ async function postJson(url, payload) {
   assert.equal(response.ok, true, `${url} returned ${response.status}`);
   return response.json();
 }
-

@@ -12,7 +12,7 @@ export function createHttpApp({ store, config }) {
 
   const server = http.createServer(async (req, res) => {
     try {
-      setCommonHeaders(res);
+      setCommonHeaders(req, res, config);
       if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();
@@ -121,11 +121,36 @@ function sendSse(res, event, data) {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-function setCommonHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+function setCommonHeaders(req, res, config) {
+  const allowedOrigin = corsAllowedOrigin(req.headers.origin, config.corsOrigins || []);
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+}
+
+function corsAllowedOrigin(origin, allowedOrigins) {
+  const value = String(origin || '').trim();
+  if (!value) return '';
+  if (allowedOrigins.includes(value)) return value;
+  if (allowedOrigins.includes('http://127.0.0.1:*') && loopbackOriginWithPort(value, '127.0.0.1')) return value;
+  if (allowedOrigins.includes('http://localhost:*') && loopbackOriginWithPort(value, 'localhost')) return value;
+  if (allowedOrigins.includes('http://[::1]:*') && loopbackOriginWithPort(value, '[::1]')) return value;
+  if (value.startsWith('chrome-extension://') && allowedOrigins.includes('chrome-extension://*')) return value;
+  if (value.startsWith('moz-extension://') && allowedOrigins.includes('moz-extension://*')) return value;
+  return '';
+}
+
+function loopbackOriginWithPort(origin, host) {
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' && url.host === `${host}:${url.port}` && Boolean(url.port);
+  } catch (_err) {
+    return false;
+  }
 }
 
 function sendJson(res, statusCode, value) {

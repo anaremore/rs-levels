@@ -1,7 +1,19 @@
+const DEFAULT_CORS_ORIGINS = Object.freeze([
+  'http://127.0.0.1',
+  'http://127.0.0.1:*',
+  'http://localhost',
+  'http://localhost:*',
+  'http://[::1]:*',
+  'null',
+  'chrome-extension://*',
+  'moz-extension://*'
+]);
+
 export function loadConfig(env = process.env, overrides = {}) {
   const host = stringValue(overrides.host || env.RS_LEVELS_HOST || '127.0.0.1');
   const port = numberInRange(overrides.port || env.RS_LEVELS_PORT, 1, 65535, 8765);
   const allowRemote = booleanValue(overrides.allowRemote ?? env.RS_LEVELS_ALLOW_REMOTE);
+  const corsOrigins = normalizeCorsOrigins(overrides.corsOrigins ?? env.RS_LEVELS_CORS_ORIGINS);
   const isLoopback = host === '127.0.0.1' || host === 'localhost' || host === '::1';
   const effectiveHost = isLoopback || allowRemote ? host : '127.0.0.1';
   const warnings = [];
@@ -17,6 +29,7 @@ export function loadConfig(env = process.env, overrides = {}) {
     port,
     allowRemote,
     remoteAccess: !isLoopback && allowRemote,
+    corsOrigins,
     warnings
   };
 }
@@ -27,8 +40,19 @@ export function networkStatus(config) {
     requestedHost: config.requestedHost,
     port: config.port,
     remoteAccess: config.remoteAccess,
+    corsOrigins: config.corsOrigins,
     warnings: config.warnings
   };
+}
+
+function normalizeCorsOrigins(value) {
+  if (Array.isArray(value)) {
+    const clean = value.map(stringValue).filter(Boolean);
+    return clean.length ? clean : Array.from(DEFAULT_CORS_ORIGINS);
+  }
+  const text = stringValue(value);
+  if (!text) return Array.from(DEFAULT_CORS_ORIGINS);
+  return text.split(',').map(stringValue).filter(Boolean);
 }
 
 function numberInRange(value, min, max, fallback) {
@@ -45,4 +69,3 @@ function booleanValue(value) {
 function stringValue(value) {
   return value == null ? '' : String(value).trim();
 }
-
