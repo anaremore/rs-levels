@@ -3,7 +3,17 @@ indicator("RS Levels", overlay = true, max_lines_count = 100, max_labels_count =
 
 payload = input.string("", "RS Levels Payload")
 showLabels = input.bool(true, "Labels")
+showStatus = input.bool(true, "Status")
+showDdBands = input.bool(true, "DD bands")
+showHp = input.bool(true, "HP")
+showMhp = input.bool(true, "MHP")
+showOpenClose = input.bool(true, "Open/close")
+showReference = input.bool(true, "References")
+showZones = input.bool(true, "Zones")
+showUnknown = input.bool(true, "Unknown")
 lineWidth = input.int(1, "Line width", minval = 1, maxval = 4)
+labelOffset = input.int(1, "Label offset", minval = 0, maxval = 20)
+lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"])
 
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
@@ -24,27 +34,61 @@ kindColor(kind) =>
         "zone" => color.rgb(76, 175, 80)
         => color.rgb(158, 158, 158)
 
+kindEnabled(kind) =>
+    switch kind
+        "dd-band" => showDdBands
+        "hp" => showHp
+        "mhp" => showMhp
+        "open-close" => showOpenClose
+        "reference" => showReference
+        "zone" => showZones
+        => showUnknown
+
+lineStyle() =>
+    switch lineStyleInput
+        "Dashed" => line.style_dashed
+        "Dotted" => line.style_dotted
+        => line.style_solid
+
 drawLevel(name, priceText, kind) =>
     price = str.tonumber(priceText)
-    if not na(price)
+    drawn = false
+    if not na(price) and kindEnabled(kind)
         levelColor = kindColor(kind)
-        newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth)
+        newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth, style = lineStyle())
         array.push(rsLines, newLine)
         if showLabels
             text = name + " " + str.tostring(price, format.mintick)
-            newLabel = label.new(bar_index, price, text, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
+            newLabel = label.new(bar_index + labelOffset, price, text, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
             array.push(rsLabels, newLabel)
+        drawn := true
+    drawn
+
+drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount) =>
+    if showStatus
+        statusText = validPayload ? "RS Levels " + symbolText + " " + str.tostring(drawnCount) + "/" + str.tostring(totalCount) + " " + capturedText : "RS Levels: paste RSLEVELS payload"
+        statusColor = validPayload ? color.new(color.rgb(18, 54, 93), 0) : color.new(color.rgb(80, 39, 39), 0)
+        statusTextColor = validPayload ? color.rgb(234, 245, 255) : color.rgb(255, 190, 190)
+        newStatus = label.new(bar_index, high, statusText, style = label.style_label_down, textcolor = statusTextColor, color = statusColor, size = size.small)
+        array.push(rsLabels, newStatus)
 
 if barstate.islast
     clearDrawings()
     parts = str.split(payload, "|")
-    validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS"
+    validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS" and array.get(parts, 1) == "1"
+    symbolText = validPayload ? array.get(parts, 2) : ""
+    capturedText = validPayload ? array.get(parts, 3) : ""
+    drawnCount = 0
+    totalCount = 0
     if validPayload
         levelText = array.get(parts, 4)
-        items = str.split(levelText, ";")
-        count = math.min(array.size(items), 40)
-        if count > 0
+        if levelText != ""
+            items = str.split(levelText, ";")
+            count = math.min(array.size(items), 40)
+            totalCount := count
             for i = 0 to count - 1
                 fields = str.split(array.get(items, i), ",")
                 if array.size(fields) >= 3
-                    drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2))
+                    if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2))
+                        drawnCount := drawnCount + 1
+    drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount)

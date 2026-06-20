@@ -9,7 +9,13 @@ assert.doesNotMatch(pine, /\bstrategy\s*\(/i);
 assert.doesNotMatch(pine, /\bstrategy\./i);
 assert.doesNotMatch(pine, new RegExp('\\b' + 'ord' + 'er' + '\\b', 'i'));
 assert.doesNotMatch(pine, /\balertcondition\s*\(/i);
+assert.doesNotMatch(pine, /\brequest\./i);
 assert.match(pine, /RSLEVELS/);
 assert.match(pine, /str\.split/);
+assert.match(pine, /showStatus/);
+assert.match(pine, /showDdBands/);
+assert.match(pine, /showHp/);
+assert.match(pine, /lineStyleInput/);
+assert.match(pine, /label\.style_label_down/);
 
 console.log('TradingView plugin tests passed');
