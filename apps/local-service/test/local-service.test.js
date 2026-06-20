@@ -81,6 +81,9 @@ try {
 
   const compactStatus = await getJson(`${baseUrl}/status`);
   assert.equal(compactStatus.version, '0.0.0');
+  assert.equal(compactStatus.symbolCount, 0);
+  assert.equal(compactStatus.levelCount, 0);
+  assert.deepEqual(compactStatus.symbolSummaries, []);
 
   const extensionCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'chrome-extension://abcdefghijklmnop' } });
   assert.equal(extensionCors.headers.get('access-control-allow-origin'), 'chrome-extension://abcdefghijklmnop');
@@ -110,6 +113,7 @@ try {
   const captureDiagnostics = await getJson(`${baseUrl}/diagnostics`);
   assert.equal(captureDiagnostics.source.connected, true);
   assert.equal(captureDiagnostics.levelCount, 2);
+  assert.deepEqual(captureDiagnostics.symbolSummaries.map((row) => [row.symbol, row.levelCount]), [['MES', 2]]);
   assert.equal(captureDiagnostics.source.endpointCount, 1);
   assert.equal(captureDiagnostics.source.endpoints[0].key, '/platform/api/v1/ddbands/MES');
   assert.equal(Object.hasOwn(captureDiagnostics.source.endpoints[0], 'url'), false);
@@ -124,6 +128,15 @@ try {
   const levels = await getJson(`${baseUrl}/levels/MES`);
   assert.equal(levels.symbol, 'MES');
   assert.equal(levels.levels[1].kind, 'dd-band');
+
+  const statusAfterCapture = await getJson(`${baseUrl}/status`);
+  assert.equal(statusAfterCapture.symbolCount, 1);
+  assert.equal(statusAfterCapture.levelCount, 2);
+  assert.deepEqual(statusAfterCapture.symbols, ['MES']);
+  assert.equal(statusAfterCapture.symbolSummaries[0].symbol, 'MES');
+  assert.equal(statusAfterCapture.symbolSummaries[0].displaySymbol, 'MES');
+  assert.equal(statusAfterCapture.symbolSummaries[0].levelCount, 2);
+  assert.equal(statusAfterCapture.symbolSummaries[0].capturedAt, capturedAt);
 
   const aliasLevels = await getJson(`${baseUrl}/levels/ES`);
   assert.equal(aliasLevels.symbol, 'MES');

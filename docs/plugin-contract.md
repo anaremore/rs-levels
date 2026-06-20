@@ -24,6 +24,8 @@ GET /status
 GET /levels/:symbol
 ```
 
+`GET /status` includes a stable `symbols` list and scrubbed `symbolSummaries` with per-symbol level counts. Plugins should check the selected symbol summary before treating a chart overlay as available.
+
 Optional format-specific calls:
 
 ```text

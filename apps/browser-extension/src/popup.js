@@ -24,7 +24,7 @@ const els = {
 
 let settings = globalThis.RS_LEVELS.cleanSettings({});
 let symbols = globalThis.RS_LEVELS.defaults.symbols.slice();
-let latestHealth = null;
+let latestServiceStatus = null;
 
 init();
 
@@ -40,17 +40,18 @@ function bindEvents() {
   els.refresh.addEventListener('click', refresh);
   els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
   els.copyTv.addEventListener('click', copyTradingView);
-  els.copyJson.addEventListener('click', () => copyFromEndpoint(`/tradingview/${selectedSymbol()}?format=json`, 'JSON copied', true));
+  els.copyJson.addEventListener('click', copyJsonExport);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
+  els.symbol.addEventListener('change', () => renderTradingViewCopy(latestServiceStatus));
 }
 
 async function refresh() {
   setMessage('Checking local service');
   try {
     const health = await getJson('/health');
-    latestHealth = health;
     const status = await getJson('/status');
+    latestServiceStatus = combineServiceStatus(health, status);
     const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
     const extState = extensionState && extensionState.state ? extensionState.state : {};
     symbols = status.symbols && status.symbols.length ? status.symbols : globalThis.RS_LEVELS.defaults.symbols.slice();
@@ -65,7 +66,7 @@ async function refresh() {
     els.lastPost.textContent = formatTime(extState.lastPostAt);
     els.lastError.textContent = extState.lastError || 'none';
     renderCaptureStats(extState.captureStats);
-    renderTradingViewCopy(health);
+    renderTradingViewCopy(latestServiceStatus);
     renderPill(source);
     if (extState.lastError && !health.levelCount) {
       setMessage(extState.lastError, 'error');
@@ -75,7 +76,7 @@ async function refresh() {
       setMessage(health.levelCount ? 'Levels are available.' : 'Waiting for captured levels.', health.levelCount ? 'ok' : '');
     }
   } catch (err) {
-    latestHealth = null;
+    latestServiceStatus = null;
     renderTradingViewCopy({ levelCount: 0, source: { connected: false } });
     els.serviceVersion.textContent = 'unknown';
     setPill('OFFLINE', 'error');
@@ -85,10 +86,9 @@ async function refresh() {
 
 async function copyTradingView() {
   try {
-    const health = await getJson('/health');
-    latestHealth = health;
-    renderTradingViewCopy(health);
-    const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(health);
+    latestServiceStatus = await getJson('/status');
+    renderTradingViewCopy(latestServiceStatus);
+    const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(latestServiceStatus, selectedSymbol());
     if (issue) {
       setMessage(issue, 'warning');
       return;
@@ -96,6 +96,21 @@ async function copyTradingView() {
     await copyFromEndpoint(`/tradingview/${selectedSymbol()}`, 'TradingView payload copied');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
+  }
+}
+
+async function copyJsonExport() {
+  try {
+    latestServiceStatus = await getJson('/status');
+    renderTradingViewCopy(latestServiceStatus);
+    const issue = globalThis.RS_LEVELS.selectedSymbolIssue(latestServiceStatus, selectedSymbol());
+    if (issue) {
+      setMessage(issue, 'warning');
+      return;
+    }
+    await copyFromEndpoint(`/tradingview/${selectedSymbol()}?format=json`, 'JSON copied', true);
+  } catch (err) {
+    setMessage(err && err.message ? err.message : 'JSON copy failed', 'error');
   }
 }
 
@@ -150,6 +165,16 @@ function selectedSymbol() {
   return els.symbol.value || symbols[0] || 'MES';
 }
 
+function combineServiceStatus(health = {}, status = {}) {
+  return {
+    ...health,
+    ...status,
+    source: status.source || health.source || {},
+    levelCount: status.levelCount == null ? health.levelCount : status.levelCount,
+    symbolCount: status.symbolCount == null ? health.symbolCount : status.symbolCount
+  };
+}
+
 function cleanExtensionState(state = {}) {
   return {
     postedCount: Number(state.postedCount) || 0,
@@ -183,10 +208,14 @@ function renderCaptureStats(stats = {}) {
   els.hookReason.textContent = clean.lastReason || 'none';
 }
 
-function renderTradingViewCopy(health = latestHealth || {}) {
-  const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(health);
+function renderTradingViewCopy(serviceStatus = latestServiceStatus || {}) {
+  const selected = selectedSymbol();
+  const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(serviceStatus, selected);
+  const jsonIssue = globalThis.RS_LEVELS.selectedSymbolIssue(serviceStatus, selected);
   els.copyTv.disabled = Boolean(issue);
   els.copyTv.title = issue || 'Copy TradingView payload';
+  els.copyJson.disabled = Boolean(jsonIssue);
+  els.copyJson.title = jsonIssue || 'Copy JSON export';
 }
 
 function formatTime(value) {

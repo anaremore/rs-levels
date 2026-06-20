@@ -145,9 +145,22 @@ Returns a compact status payload for UI badges and plugin diagnostics. Display p
   "version": "0.0.0",
   "network": {},
   "source": {},
-  "symbols": ["MES", "MNQ"]
+  "symbolCount": 1,
+  "levelCount": 6,
+  "symbols": ["MES"],
+  "symbolSummaries": [
+    {
+      "symbol": "MES",
+      "displaySymbol": "MES",
+      "levelCount": 6,
+      "capturedAt": "2026-06-19T14:29:59.500Z",
+      "warnings": []
+    }
+  ]
 }
 ```
+
+`symbolSummaries` is scrubbed and safe for display plugins. It lets UI clients verify that a selected symbol has captured levels before requesting `/levels/:symbol` or `/tradingview/:symbol`.
 
 ## GET /snapshot
 

@@ -101,19 +101,25 @@ export function health(store, config) {
 }
 
 export function status(store, config) {
+  const snapshot = store.getSnapshot();
+  const summaries = symbolSummaries(snapshot);
   return {
     ok: true,
     version: SERVICE_VERSION,
     network: networkStatus(config),
-    source: store.getSnapshot().source,
-    symbols: Object.keys(store.getSnapshot().symbols)
+    source: snapshot.source,
+    symbolCount: summaries.length,
+    levelCount: summaries.reduce((sum, summary) => sum + summary.levelCount, 0),
+    symbols: summaries.map((summary) => summary.symbol),
+    symbolSummaries: summaries
   };
 }
 
 export function diagnostics(store, config) {
   const snapshot = store.getSnapshot();
   const levels = store.flatLevels();
-  const symbols = Object.keys(snapshot.symbols);
+  const summaries = symbolSummaries(snapshot);
+  const symbols = summaries.map((summary) => summary.symbol);
   const network = networkStatus(config);
   const source = sourceDiagnostics(snapshot.source);
   return {
@@ -130,6 +136,7 @@ export function diagnostics(store, config) {
     network,
     source,
     symbols,
+    symbolSummaries: summaries,
     levelCount: levels.length,
     checks: diagnosticChecks({ source, levels, symbols, network }),
     hints: diagnosticHints({ source, levels, network })
@@ -153,6 +160,17 @@ function sourceDiagnostics(source = {}) {
     })),
     warnings: Array.isArray(source.warnings) ? source.warnings.map((warning) => String(warning)).filter(Boolean) : []
   };
+}
+
+function symbolSummaries(snapshot = {}) {
+  const rows = Object.values(snapshot.symbols || {});
+  return rows.map((row) => ({
+    symbol: String(row.symbol || ''),
+    displaySymbol: String(row.displaySymbol || row.symbol || ''),
+    levelCount: Array.isArray(row.levels) ? row.levels.length : 0,
+    capturedAt: String(row.capturedAt || ''),
+    warnings: Array.isArray(row.warnings) ? row.warnings.map((warning) => String(warning)).filter(Boolean) : []
+  })).sort((a, b) => a.symbol.localeCompare(b.symbol));
 }
 
 function diagnosticChecks({ source, levels, symbols, network }) {

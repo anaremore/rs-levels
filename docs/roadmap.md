@@ -25,6 +25,7 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 - Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state.
 - Public source endpoint summaries omit raw URLs and scrub identifier-like path segments.
 - API responses report the local service version and use `Cache-Control: no-store`.
+- `/status` and diagnostics expose scrubbed per-symbol summaries for plugin and extension readiness checks.
 - Next: persisted settings and native packaged app wrapper.
 
 ## Milestone 3: Browser Extension
@@ -37,6 +38,7 @@ Status: public setup foundation complete; field validation planned.
 - Add copy/export actions for TradingView paste payloads, JSON, and scrubbed diagnostics.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
+- Guard TradingView and JSON copy actions when the selected symbol has no captured levels.
 - Next: field testing against real RocketScooter endpoint shapes.
 
 ## Milestone 4: Display Plugins

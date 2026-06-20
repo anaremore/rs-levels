@@ -8,7 +8,7 @@ for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/diagnostic
   assert.match(spec, new RegExp(`^  ${path.replace(/[{}]/g, '\\$&')}:`, 'm'));
 }
 
-for (const schema of ['Snapshot', 'SymbolSnapshot', 'Level', 'TradingViewExport', 'CapturePayload', 'Diagnostics', 'DiagnosticCheck']) {
+for (const schema of ['Snapshot', 'SymbolSnapshot', 'SymbolSummary', 'Level', 'TradingViewExport', 'CapturePayload', 'Diagnostics', 'DiagnosticCheck']) {
   assert.match(spec, new RegExp(`^    ${schema}:`, 'm'));
 }
 

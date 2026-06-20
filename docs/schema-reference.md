@@ -76,7 +76,9 @@ Each symbol key maps to a display snapshot:
 
 ## Diagnostics
 
-`GET /diagnostics` returns a scrubbed setup bundle for local support and extension troubleshooting. It includes network posture, source state, setup checks, hints, symbol names, and level counts.
+`GET /status` and `GET /diagnostics` include scrubbed `symbolSummaries` entries with symbol, display symbol, level count, captured timestamp, and symbol warnings. Display plugins and the browser extension can use these summaries to verify that a selected symbol has captured levels before requesting an export.
+
+`GET /diagnostics` returns a scrubbed setup bundle for local support and extension troubleshooting. It includes network posture, source state, setup checks, hints, symbol names, symbol summaries, and level counts.
 
 Captured source endpoint summaries omit raw URLs. They include only normalized endpoint keys, status codes, parser names, timestamps, and parse status.
 

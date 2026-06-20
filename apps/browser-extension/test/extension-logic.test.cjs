@@ -23,7 +23,15 @@ assert.equal(sharedContext.RS_LEVELS.cleanSettings({ maxCaptureBytes: 99999999 }
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('ftp://example.test'), /http or https/);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('not a url'), /Invalid URL/);
 assert.equal(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: true, state: 'live' } }), '');
+assert.equal(sharedContext.RS_LEVELS.symbolLevelCount({
+  levelCount: 3,
+  symbolSummaries: [{ symbol: 'MES', levelCount: 3 }]
+}, 'ES'), 3);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured levels/);
+assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
+  levelCount: 3,
+  symbolSummaries: [{ symbol: 'MNQ', levelCount: 3 }]
+}, 'MES'), /MES/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'stale' } }), /stale/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
 

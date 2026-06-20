@@ -265,7 +265,7 @@ components:
           type: integer
     Status:
       type: object
-      required: [ok, version, network, source, symbols]
+      required: [ok, version, network, source, symbolCount, levelCount, symbols, symbolSummaries]
       properties:
         ok:
           type: boolean
@@ -275,10 +275,18 @@ components:
           $ref: '#/components/schemas/Network'
         source:
           $ref: '#/components/schemas/SourceState'
+        symbolCount:
+          type: integer
+        levelCount:
+          type: integer
         symbols:
           type: array
           items:
             type: string
+        symbolSummaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/SymbolSummary'
     Network:
       type: object
       required: [host, requestedHost, port, remoteAccess, corsOrigins, warnings]
@@ -384,6 +392,22 @@ components:
           type: array
           items:
             type: string
+    SymbolSummary:
+      type: object
+      required: [symbol, displaySymbol, levelCount, capturedAt, warnings]
+      properties:
+        symbol:
+          type: string
+        displaySymbol:
+          type: string
+        levelCount:
+          type: integer
+        capturedAt:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
     Level:
       type: object
       required: [id, symbol, name, price, kind, color, source, capturedAt, metadata]
@@ -470,7 +494,7 @@ components:
             - type: string
     Diagnostics:
       type: object
-      required: [ok, service, version, schemaVersion, generatedAt, docs, network, source, symbols, levelCount, checks, hints]
+      required: [ok, service, version, schemaVersion, generatedAt, docs, network, source, symbols, symbolSummaries, levelCount, checks, hints]
       properties:
         ok:
           type: boolean
@@ -501,6 +525,10 @@ components:
           type: array
           items:
             type: string
+        symbolSummaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/SymbolSummary'
         levelCount:
           type: integer
         checks:

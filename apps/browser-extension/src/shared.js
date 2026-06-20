@@ -36,6 +36,13 @@
     return Math.max(0, Math.trunc(number));
   }
 
+  function normalizeDisplaySymbol(value) {
+    const text = String(value || '').trim().toUpperCase();
+    if (text.includes('NQ')) return 'MNQ';
+    if (text.includes('ES')) return 'MES';
+    return text || 'MES';
+  }
+
   function cleanSettings(input = {}) {
     return {
       serviceUrl: cleanServiceUrl(input.serviceUrl),
@@ -45,10 +52,28 @@
     };
   }
 
-  function tradingViewCopyIssue(status = {}) {
-    const source = status.source || {};
+  function symbolLevelCount(status = {}, symbol = '') {
+    const summaries = Array.isArray(status.symbolSummaries) ? status.symbolSummaries : [];
+    if (!summaries.length) return null;
+    const target = normalizeDisplaySymbol(symbol);
+    const match = summaries.find((summary) => normalizeDisplaySymbol(summary.symbol) === target);
+    return match ? nonNegativeInteger(match.levelCount) : 0;
+  }
+
+  function selectedSymbolIssue(status = {}, symbol = '') {
     const levelCount = nonNegativeInteger(status.levelCount);
     if (levelCount < 1) return 'No captured levels are available yet.';
+    const selectedLevelCount = symbolLevelCount(status, symbol);
+    if (selectedLevelCount === 0) {
+      return `No captured levels are available for ${normalizeDisplaySymbol(symbol)}.`;
+    }
+    return '';
+  }
+
+  function tradingViewCopyIssue(status = {}, symbol = '') {
+    const source = status.source || {};
+    const symbolIssue = selectedSymbolIssue(status, symbol);
+    if (symbolIssue) return symbolIssue;
     if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before copying TradingView.';
     if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before copying TradingView.';
     return '';
@@ -59,6 +84,8 @@
     cleanServiceUrl,
     cleanPatterns,
     cleanSettings,
+    selectedSymbolIssue,
+    symbolLevelCount,
     tradingViewCopyIssue
   };
 })();
