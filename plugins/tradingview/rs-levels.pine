@@ -14,7 +14,8 @@ showBullZones = input.bool(true, "Bull zones")
 showBearZones = input.bool(true, "Bear zones")
 showUnknown = input.bool(true, "Unknown")
 lineWidth = input.int(1, "Line width", minval = 1, maxval = 4)
-labelOffset = input.int(1, "Label offset", minval = 0, maxval = 20)
+labelBarsOffset = input.int(1, "Label bar offset", minval = 0, maxval = 20)
+labelVerticalOffset = input.int(6, "Label vertical offset (ticks)", minval = 1, maxval = 100)
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"])
 
@@ -61,6 +62,23 @@ chartPayloadSymbol() =>
     chartText = str.upper(syminfo.root + " " + syminfo.ticker)
     str.contains(chartText, "NQ") ? "MNQ" : str.contains(chartText, "ES") ? "MES" : ""
 
+labelDirection(name, kind) =>
+    upperName = str.upper(name)
+    if str.contains(upperName, "LOWER") or str.contains(upperName, "BZB") or str.contains(upperName, "BRZB")
+        -1
+    else if str.contains(upperName, "UPPER") or str.contains(upperName, "BZT") or str.contains(upperName, "BRZT")
+        1
+    else
+        switch kind
+            "zone-bull" => -1
+            "zone-bear" => 1
+            "dd-band" => -1
+            => 1
+
+labelPrice(name, kind, price) =>
+    tickOffset = math.max(labelVerticalOffset * syminfo.mintick, syminfo.mintick)
+    price + tickOffset * labelDirection(name, kind)
+
 drawLevel(name, priceText, kind) =>
     price = str.tonumber(priceText)
     drawn = false
@@ -70,7 +88,8 @@ drawLevel(name, priceText, kind) =>
         array.push(rsLines, newLine)
         if showLabels and array.size(rsLabels) < 499
             labelText = name + " " + str.tostring(price, format.mintick)
-            newLabel = label.new(bar_index + labelOffset, price, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
+            labelY = labelPrice(name, kind, price)
+            newLabel = label.new(bar_index + labelBarsOffset, labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
             array.push(rsLabels, newLabel)
         drawn := true
     drawn
