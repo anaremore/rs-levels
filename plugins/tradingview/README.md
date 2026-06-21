@@ -17,7 +17,7 @@ The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicato
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp
 ```
 
-The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds. DD/Res/MRes/WRes/Map context uses `stat` rows; the indicator renders those values in its stats panel and does not draw them as price lines.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. DD/Res/MRes/WRes/Map context uses `stat` rows; the indicator renders those values in its stats panel and does not draw them as price lines.
 
 ## Safety Boundary
 

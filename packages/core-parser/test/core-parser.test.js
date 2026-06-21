@@ -287,6 +287,26 @@ assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BZT1'
 assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BrZT1').kind, 'zone-bear');
 assert.equal(pageReaderCapture.symbols.QQQ, undefined);
 
+const manyManualLines = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:57.500Z',
+  body: {
+    source: 'page-reader',
+    capturedAt: '2026-06-19T14:31:57.500Z',
+    levels: [
+      { symbol: 'F.US.EPU26', name: 'Yellow Line', price: 7598, kind: 'yellow-line', source: 'rocketscooter-page' },
+      { symbol: 'F.US.EPU26', name: 'Yellow Line', price: 7632, kind: 'yellow-line', source: 'rocketscooter-page' },
+      { symbol: 'F.US.EPU26', name: 'Red Line', price: 7520, kind: 'red-line', source: 'rocketscooter-page' },
+      { symbol: 'F.US.EPU26', name: 'Red Line', price: 7496, kind: 'red-line', source: 'rocketscooter-page' }
+    ]
+  }
+});
+assert.equal(manyManualLines.symbols.MES.length, 4);
+assert.equal(manyManualLines.symbols.MES.filter((level) => level.kind === 'yellow-line').length, 2);
+assert.equal(manyManualLines.symbols.MES.filter((level) => level.kind === 'red-line').length, 2);
+assert.equal(new Set(manyManualLines.symbols.MES.map((level) => level.id)).size, 4);
+
 const pageReaderSnapshotArrays = normalizeCapture({
   endpoint: '/page-reader/display',
   status: 200,
@@ -298,7 +318,9 @@ const pageReaderSnapshotArrays = normalizeCapture({
     chartLines: [
       { index: 'ES', chart: 'F.US.EPU26', text: 'OVNHP', price: 7565, color: '#2962ff' },
       { index: 'ES', chart: 'F.US.EPU26', price: 7598, color: '#ffeb3b' },
+      { index: 'ES', chart: 'F.US.EPU26', price: 7632, color: '#ffeb3b' },
       { index: 'ES', chart: 'F.US.EPU26', text: 'RL', price: 7520, linecolor: 'rgb(242, 54, 69)' },
+      { index: 'ES', chart: 'F.US.EPU26', text: 'RL', price: 7496, linecolor: 'rgb(242, 54, 69)' },
       { index: 'NQ', chart: 'F.US.ENQU26', text: 'OVNMHP', price: 30667.5, color: '#ff9800' },
       { index: 'NQ', chart: 'F.US.ENQU26', text: 'CAT', price: 31232.74, color: '#7e57c2' },
       { index: 'SPY', chart: 'SPY', text: 'PrevDayClose', price: 722.51 }
@@ -313,11 +335,11 @@ const pageReaderSnapshotArrays = normalizeCapture({
     ]
   }
 });
-assert.equal(pageReaderSnapshotArrays.symbols.MES.length, 6);
+assert.equal(pageReaderSnapshotArrays.symbols.MES.length, 8);
 assert.equal(pageReaderSnapshotArrays.symbols.MNQ.length, 5);
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'OVNHP').kind, 'hp');
-assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'Yellow Line').kind, 'yellow-line');
-assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'RL').kind, 'red-line');
+assert.equal(pageReaderSnapshotArrays.symbols.MES.filter((level) => level.kind === 'yellow-line').length, 2);
+assert.equal(pageReaderSnapshotArrays.symbols.MES.filter((level) => level.kind === 'red-line').length, 2);
 assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name === 'CAT').kind, 'cat');
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'LastOpen').kind, 'open-close');
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'BZT1').kind, 'zone-bull');

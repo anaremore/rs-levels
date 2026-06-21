@@ -15,7 +15,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 {
     public class RSLevelsDisplay : Indicator
     {
-        private const int MaxLevels = 100;
+        private const int MaxLevels = 500;
         private static readonly HttpClient Client = new HttpClient();
         private readonly object sync = new object();
         private List<LevelRow> levels = new List<LevelRow>();

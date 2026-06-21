@@ -18,12 +18,14 @@ assert.equal(
   levelsToDisplayRowsText([
     { name: 'text SPY Open : 7,559 Liquidity Map horizontal_line', price: 7559, kind: 'open-close' },
     { name: 'Yellow Line', price: 7598, kind: 'yellow-line' },
+    { name: 'Yellow Line', price: 7632, kind: 'yellow-line' },
     { name: 'Red Line', price: 7520, kind: 'red-line' },
+    { name: 'Red Line', price: 7496, kind: 'red-line' },
     { name: 'CAT', price: 31232.74, kind: 'cat' },
     { name: 'Bull Zone Top', price: 7526, kind: 'zone-bull' },
     { name: 'Bear Zone Bottom', price: 7588, kind: 'zone-bear' }
   ]),
-  'Open,7559.00,255,255,255,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
+  'Open,7559.00,255,255,255,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nYellow Line,7632.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nRed Line,7496.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
 );
 assert.equal(levelsToDisplayRowsText([]), '\n');
 
@@ -347,13 +349,15 @@ try {
       source: 'page-reader',
       levels: [
         { symbol: 'F.US.EPU26', name: 'Yellow Line', price: 7598, kind: 'yellow-line', color: '#ffeb3b' },
+        { symbol: 'F.US.EPU26', name: 'Yellow Line', price: 7632, kind: 'yellow-line', color: '#ffeb3b' },
         { symbol: 'F.US.EPU26', name: 'Red Line', price: 7520, kind: 'red-line', color: '#f23645' },
+        { symbol: 'F.US.EPU26', name: 'Red Line', price: 7496, kind: 'red-line', color: '#f23645' },
         { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat', color: '#7e57c2' }
       ]
     }
   });
-  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'yellow-line'), true);
-  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'red-line'), true);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.kind === 'yellow-line').length, 2);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.kind === 'red-line').length, 2);
   assert.equal(manualLineCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'cat'), true);
 
   const statsCapture = await postJson(`${baseUrl}/capture/api`, {
@@ -404,10 +408,15 @@ try {
   assert.match(sierraStatsFeed, /MRes,49\.87/);
   assert.match(sierraStatsFeed, /WRes,-29\.29/);
   assert.match(sierraStatsFeed, /Map,BLD/);
+  const sierraManualFeed = await getText(`${baseUrl}/sierra/MES`);
+  assert.match(sierraManualFeed, /Yellow Line,7598\.00,255,235,59,yellow-line/);
+  assert.match(sierraManualFeed, /Yellow Line,7632\.00,255,235,59,yellow-line/);
+  assert.match(sierraManualFeed, /Red Line,7520\.00,242,54,69,red-line/);
+  assert.match(sierraManualFeed, /Red Line,7496\.00,242,54,69,red-line/);
 
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
   assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 5);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 7);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 3);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').stats.mapCode, 'BLD');
 
@@ -417,7 +426,9 @@ try {
   assert.match(bundledTradingViewPayload, /BZT1,7580,zone-bull/);
   assert.match(bundledTradingViewPayload, /BrZT1,30450,zone-bear/);
   assert.match(bundledTradingViewPayload, /Yellow Line,7598,yellow-line/);
+  assert.match(bundledTradingViewPayload, /Yellow Line,7632,yellow-line/);
   assert.match(bundledTradingViewPayload, /Red Line,7520,red-line/);
+  assert.match(bundledTradingViewPayload, /Red Line,7496,red-line/);
   assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
   assert.match(bundledTradingViewPayload, /DD,0\.66,stat/);
   assert.match(bundledTradingViewPayload, /Res,73\.82,stat/);
@@ -430,7 +441,9 @@ try {
   assert.match(mesRowsWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
   assert.match(mesRowsWithKinds, /BZB1,7560\.00,76,175,80,zone-bull/);
   assert.match(mesRowsWithKinds, /Yellow Line,7598\.00,255,235,59,yellow-line/);
+  assert.match(mesRowsWithKinds, /Yellow Line,7632\.00,255,235,59,yellow-line/);
   assert.match(mesRowsWithKinds, /Red Line,7520\.00,242,54,69,red-line/);
+  assert.match(mesRowsWithKinds, /Red Line,7496\.00,242,54,69,red-line/);
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|NQ\|/);
@@ -445,9 +458,9 @@ try {
   assert.equal(zones.levels.some((level) => level.kind === 'zone-bear'), true);
 
   const references = await getJson(`${baseUrl}/references`);
-  assert.equal(references.levels.length, 3);
-  assert.equal(references.levels.some((level) => level.kind === 'yellow-line'), true);
-  assert.equal(references.levels.some((level) => level.kind === 'red-line'), true);
+  assert.equal(references.levels.length, 5);
+  assert.equal(references.levels.filter((level) => level.kind === 'yellow-line').length, 2);
+  assert.equal(references.levels.filter((level) => level.kind === 'red-line').length, 2);
   assert.equal(references.levels.some((level) => level.kind === 'cat'), true);
 
   const remoteService = createService({

@@ -87,7 +87,7 @@ Display settings should call the fallback category `Other levels` even though th
 
 New extractors should emit `zone-bull` or `zone-bear` for every zone. Generic `zone` remains schema-compatible for older or ambiguous captures, but display settings should not expose a separate generic Zones toggle; treat it as `Other levels` unless a platform needs a backward-compatible neutral fallback. When a platform can draw filled regions, matching top/bottom zone rows such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom` should be filled with a low-opacity version of the matching bull or bear zone color.
 
-Manual RocketScooter chart lines should use `yellow-line`, `red-line`, or `cat` when the extractor sees those explicit labels or their visible yellow, red, or purple line colors. Display settings should expose them as first-class categories when the platform supports kind controls.
+Manual RocketScooter chart lines should use `yellow-line`, `red-line`, or `cat` when the extractor sees those explicit labels or their visible yellow, red, or purple line colors. Multiple manual lines of the same kind must remain separate rows when their prices differ. Display settings should expose them as first-class categories when the platform supports kind controls.
 
 The generic display row text feed is:
 

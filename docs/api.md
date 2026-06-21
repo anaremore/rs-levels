@@ -318,7 +318,7 @@ Returns the all-symbol futures `RSLEVELS|2` paste payload for the included Tradi
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull;DD,0.66,stat;Map BLD,0,stat|NQ|2026-06-19T14:29:59.500Z|BrZT1,30450,zone-bear;Res,73.82,stat;MRes,49.87,stat;WRes,-29.29,stat
 ```
 
-The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set. User-added RocketScooter yellow, red, and purple CAT chart lines are exported as `yellow-line`, `red-line`, and `cat` kinds when they are captured. Display context travels as `stat` rows; the included Pine indicator uses those rows for its stats panel and does not draw them as price levels.
+The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set. User-added RocketScooter yellow, red, and purple CAT chart lines are exported as `yellow-line`, `red-line`, and `cat` kinds when they are captured. Multiple yellow or red lines are preserved as separate rows when they have distinct prices. Display context travels as `stat` rows; the included Pine indicator uses those rows for its stats panel and does not draw them as price levels.
 
 ## GET /tradingview/:symbol
 
@@ -375,7 +375,7 @@ Accepted payload shape:
 
 `body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both ES/MES and NQ/MNQ sections, including CQG-style keys such as `F.US.EP...` and `F.US.ENQ...`, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
 
-The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, `zoneRectangles`, and `stats` data. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. User-added yellow, red, and purple CAT chart lines are captured from visible futures chart objects when they expose a finite price. Header/study/scanner context such as DD, Res, MRes, WRes, and liquidity-map `Map` codes is stored as stats, not price levels. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line or the source of display-only map context.
+The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, `zoneRectangles`, and `stats` data. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. User-added yellow, red, and purple CAT chart lines are captured from visible futures chart objects when they expose a finite price, and repeated same-kind manual lines stay separate by price. Header/study/scanner context such as DD, Res, MRes, WRes, and liquidity-map `Map` codes is stored as stats, not price levels. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line or the source of display-only map context.
 
 ## CORS
 
