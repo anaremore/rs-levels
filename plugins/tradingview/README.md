@@ -29,9 +29,9 @@ This indicator only draws lines and labels. It does not contain strategy logic, 
 - `Labels`: show or hide level labels.
 - `Status`: show a small paste/status label on the latest bar.
 - Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and unknown levels.
-- `Line width`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. Level labels render a few ticks above or below their line so the horizontal level does not run through the label text.
+- `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. Level labels render a few ticks above or below their line and automatically stagger into rows/columns so dense HP/MHP clusters do not sit on top of each other.
 
-The status label shows the payload symbol, captured timestamp, and drawn/available row count. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limit. If the payload is missing or invalid, it prompts for a valid `RSLEVELS` payload instead of silently drawing nothing.
+The status label shows the payload symbol, captured timestamp, and drawn/available row count. The pasted payload input is hidden from TradingView's status line to avoid chart-header clutter. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limit. If the payload is missing or invalid, it prompts for a valid `RSLEVELS` payload instead of silently drawing nothing.
 
 ## Payload Format
 

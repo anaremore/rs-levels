@@ -1,7 +1,7 @@
 //@version=6
 indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500)
 
-payload = input.string("", "RS Levels Payload")
+payload = input.string("", "RS Levels Payload", display = display.none)
 showLabels = input.bool(true, "Labels")
 showStatus = input.bool(true, "Status")
 showDdBands = input.bool(true, "DD bands")
@@ -13,11 +13,15 @@ showZones = input.bool(true, "Zones")
 showBullZones = input.bool(true, "Bull zones")
 showBearZones = input.bool(true, "Bear zones")
 showUnknown = input.bool(true, "Unknown")
-lineWidth = input.int(1, "Line width", minval = 1, maxval = 4)
-labelBarsOffset = input.int(1, "Label bar offset", minval = 0, maxval = 20)
-labelVerticalOffset = input.int(6, "Label vertical offset (ticks)", minval = 1, maxval = 100)
-maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500)
-lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"])
+lineWidth = input.int(1, "Line width", minval = 1, maxval = 4, display = display.none)
+fontSizeInput = input.string("Small", "Font size", options = ["Tiny", "Small", "Normal", "Large", "Huge"], display = display.none)
+labelBarsOffset = input.int(1, "Label bar offset", minval = 0, maxval = 20, display = display.none)
+labelVerticalOffset = input.int(6, "Label vertical offset (ticks)", minval = 1, maxval = 100, display = display.none)
+maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
+lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
+
+labelStackRows = 6
+labelStackColumnBars = 4
 
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
@@ -58,6 +62,14 @@ lineStyle() =>
         "Dotted" => line.style_dotted
         => line.style_solid
 
+labelSize() =>
+    switch fontSizeInput
+        "Tiny" => size.tiny
+        "Normal" => size.normal
+        "Large" => size.large
+        "Huge" => size.huge
+        => size.small
+
 chartPayloadSymbol() =>
     chartText = str.upper(syminfo.root + " " + syminfo.ticker)
     str.contains(chartText, "NQ") ? "MNQ" : str.contains(chartText, "ES") ? "MES" : ""
@@ -70,16 +82,27 @@ labelDirection(name, kind) =>
         1
     else
         switch kind
+            "mhp" => -1
             "zone-bull" => -1
             "zone-bear" => 1
             "dd-band" => -1
             => 1
 
-labelPrice(name, kind, price) =>
-    tickOffset = math.max(labelVerticalOffset * syminfo.mintick, syminfo.mintick)
+labelStackRow(labelIndex) =>
+    labelIndex % labelStackRows
+
+labelStackColumn(labelIndex) =>
+    int(math.floor(labelIndex / labelStackRows)) % labelStackRows
+
+labelX(labelIndex) =>
+    bar_index + labelBarsOffset + labelStackColumn(labelIndex) * labelStackColumnBars
+
+labelPrice(name, kind, price, labelIndex) =>
+    stackMultiplier = labelStackRow(labelIndex) + 1
+    tickOffset = math.max(labelVerticalOffset * stackMultiplier * syminfo.mintick, syminfo.mintick)
     price + tickOffset * labelDirection(name, kind)
 
-drawLevel(name, priceText, kind) =>
+drawLevel(name, priceText, kind, labelIndex) =>
     price = str.tonumber(priceText)
     drawn = false
     if not na(price) and kindEnabled(kind)
@@ -88,8 +111,8 @@ drawLevel(name, priceText, kind) =>
         array.push(rsLines, newLine)
         if showLabels and array.size(rsLabels) < 499
             labelText = name + " " + str.tostring(price, format.mintick)
-            labelY = labelPrice(name, kind, price)
-            newLabel = label.new(bar_index + labelBarsOffset, labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = size.small)
+            labelY = labelPrice(name, kind, price, labelIndex)
+            newLabel = label.new(labelX(labelIndex), labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 80), size = labelSize())
             array.push(rsLabels, newLabel)
         drawn := true
     drawn
@@ -104,7 +127,7 @@ drawLevelText(levelText, maxCount) =>
         for i = 0 to count - 1
             fields = str.split(array.get(items, i), ",")
             if array.size(fields) >= 3
-                if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2))
+                if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2), drawnCount)
                     drawnCount := drawnCount + 1
     [drawnCount, totalCount]
 
@@ -113,7 +136,7 @@ drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount) =>
         statusText = validPayload ? "RS Levels " + symbolText + " " + str.tostring(drawnCount) + "/" + str.tostring(totalCount) + " " + capturedText : "RS Levels: paste RSLEVELS payload"
         statusColor = validPayload ? color.new(color.rgb(18, 54, 93), 0) : color.new(color.rgb(80, 39, 39), 0)
         statusTextColor = validPayload ? color.rgb(234, 245, 255) : color.rgb(255, 190, 190)
-        newStatus = label.new(bar_index, high, statusText, style = label.style_label_down, textcolor = statusTextColor, color = statusColor, size = size.small)
+        newStatus = label.new(bar_index, high, statusText, style = label.style_label_down, textcolor = statusTextColor, color = statusColor, size = labelSize())
         array.push(rsLabels, newStatus)
 
 if barstate.islast
