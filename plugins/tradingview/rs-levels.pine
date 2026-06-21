@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500)
+indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 showLabels = input.bool(true, "Labels")
@@ -11,11 +11,13 @@ showReference = input.bool(true, "References")
 showZones = input.bool(true, "Zones")
 showBullZones = input.bool(true, "Bull zones")
 showBearZones = input.bool(true, "Bear zones")
+showZoneFills = input.bool(true, "Zone fills")
 showUnknown = input.bool(true, "Unknown")
 lineWidth = input.int(1, "Line width", minval = 1, maxval = 4, display = display.none)
 fontSizeInput = input.string("Small", "Font size", options = ["Tiny", "Small", "Normal", "Large", "Huge"], display = display.none)
 labelBarsOffset = input.int(1, "Label bar offset", minval = 0, maxval = 20, display = display.none)
 labelVerticalOffset = input.int(6, "Label vertical offset (ticks)", minval = 1, maxval = 100, display = display.none)
+zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval = 50, display = display.none)
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
 
@@ -24,8 +26,11 @@ labelStackColumnBars = 4
 
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
+var box[] rsBoxes = array.new_box()
 
 clearDrawings() =>
+    while array.size(rsBoxes) > 0
+        box.delete(array.pop(rsBoxes))
     while array.size(rsLines) > 0
         line.delete(array.pop(rsLines))
     while array.size(rsLabels) > 0
@@ -54,6 +59,18 @@ kindEnabled(kind) =>
         "zone-bear" => showZones and showBearZones
         "zone" => showZones
         => showUnknown
+
+zoneKind(kind) =>
+    kind == "zone-bull" or kind == "zone-bear" or kind == "zone"
+
+zoneBoundarySide(name) =>
+    upperName = str.upper(name)
+    if str.contains(upperName, "TOP") or str.contains(upperName, "UPPER") or str.contains(upperName, "BZT") or str.contains(upperName, "BRZT")
+        1
+    else if str.contains(upperName, "BOTTOM") or str.contains(upperName, "LOWER") or str.contains(upperName, "BZB") or str.contains(upperName, "BRZB")
+        -1
+    else
+        0
 
 lineStyle() =>
     switch lineStyleInput
@@ -146,6 +163,61 @@ drawLevel(name, priceText, kind, labelIndex) =>
         drawn := true
     drawn
 
+drawZoneFill(topPrice, bottomPrice, kind) =>
+    if showZoneFills and zoneKind(kind) and kindEnabled(kind) and not na(topPrice) and not na(bottomPrice) and array.size(rsBoxes) < 500
+        zoneColor = kindColor(kind)
+        zoneTop = math.max(topPrice, bottomPrice)
+        zoneBottom = math.min(topPrice, bottomPrice)
+        fillTransparency = 100 - zoneFillOpacityInput
+        newBox = box.new(left = bar_index - 1, top = zoneTop, right = bar_index, bottom = zoneBottom, border_color = color.new(zoneColor, 100), border_width = 1, extend = extend.both, bgcolor = color.new(zoneColor, fillTransparency))
+        array.push(rsBoxes, newBox)
+
+drawZoneFills(levelText, maxCount) =>
+    float bullTop = na
+    float bullBottom = na
+    float bearTop = na
+    float bearBottom = na
+    float genericTop = na
+    float genericBottom = na
+    if levelText != "" and showZoneFills
+        items = str.split(levelText, ";")
+        count = math.min(array.size(items), maxCount)
+        for i = 0 to count - 1
+            fields = str.split(array.get(items, i), ",")
+            if array.size(fields) >= 3
+                name = array.get(fields, 0)
+                price = str.tonumber(array.get(fields, 1))
+                kind = array.get(fields, 2)
+                side = zoneBoundarySide(name)
+                if not na(price) and zoneKind(kind) and kindEnabled(kind) and side != 0
+                    if kind == "zone-bull"
+                        if side == 1
+                            bullTop := price
+                        else
+                            bullBottom := price
+                        if not na(bullTop) and not na(bullBottom)
+                            drawZoneFill(bullTop, bullBottom, kind)
+                            bullTop := na
+                            bullBottom := na
+                    else if kind == "zone-bear"
+                        if side == 1
+                            bearTop := price
+                        else
+                            bearBottom := price
+                        if not na(bearTop) and not na(bearBottom)
+                            drawZoneFill(bearTop, bearBottom, kind)
+                            bearTop := na
+                            bearBottom := na
+                    else
+                        if side == 1
+                            genericTop := price
+                        else
+                            genericBottom := price
+                        if not na(genericTop) and not na(genericBottom)
+                            drawZoneFill(genericTop, genericBottom, kind)
+                            genericTop := na
+                            genericBottom := na
+
 drawLevelText(levelText, maxCount) =>
     drawnCount = 0
     totalCount = 0
@@ -153,6 +225,7 @@ drawLevelText(levelText, maxCount) =>
         items = str.split(levelText, ";")
         totalCount := array.size(items)
         count = math.min(totalCount, maxCount)
+        drawZoneFills(levelText, maxCount)
         for i = 0 to count - 1
             fields = str.split(array.get(items, i), ",")
             if array.size(fields) >= 3

@@ -28,9 +28,10 @@ This indicator only draws lines and labels. It does not contain strategy logic, 
 - `RS Levels Payload`: compact `RSLEVELS|...` text from the extension or local API. The current indicator accepts v1 single-symbol payloads and v2 all-symbol payloads.
 - `Labels`: show or hide level labels.
 - Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and unknown levels.
+- `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. Level labels render a few ticks above or below their line, automatically stagger into rows/columns, and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels.
 
-The pasted payload input is hidden from TradingView's status line to avoid chart-header clutter. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limit.
+The pasted payload input is hidden from TradingView's status line to avoid chart-header clutter. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limits.
 
 ## Payload Format
 
@@ -52,6 +53,6 @@ All-symbol v2 payloads use repeated symbol sections:
 RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
 ```
 
-Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still accepted.
+Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still accepted. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
 
 The local service sanitizes delimiters in level names so Pine can parse the payload with `str.split()`.
