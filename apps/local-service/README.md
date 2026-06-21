@@ -64,9 +64,11 @@ GET  /snapshot
 GET  /levels
 GET  /levels/:symbol
 GET  /levels/:symbol?format=rows
+GET  /levels/:symbol/rows
 GET  /stats
 GET  /stats/:symbol
 GET  /stats/:symbol?format=rows
+GET  /stats/:symbol/rows
 GET  /ddbands
 GET  /zones
 GET  /references
@@ -78,9 +80,9 @@ POST /capture/api
 
 /tradingview returns the all-symbol `RSLEVELS|2` paste payload used by the TradingView Pine indicator. /tradingview/:symbol returns a single-family payload for ES/MES or NQ/MNQ charts.
 
-Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
+Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/levels/:symbol/rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
 
-/stats returns display-only context such as DD ratio, Res, MRes, WRes, and liquidity-map codes like `Map BLD`. /stats/:symbol?format=rows provides a simple row feed for direct platform plugins.
+/stats returns display-only context such as DD ratio, Res, MRes, WRes, and liquidity-map codes like `Map BLD`. /stats/:symbol?format=rows and /stats/:symbol/rows provide simple row feeds for direct platform plugins.
 
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
 

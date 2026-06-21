@@ -742,12 +742,12 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         SCString url;
         if (requestType == RS_REQUEST_STATUS)
         {
-            url.Format("%s/levels/%s?format=rows", baseUrl.GetChars(), Symbol.GetString());
+            url.Format("%s/levels/%s/rows", baseUrl.GetChars(), Symbol.GetString());
             requestType = RS_REQUEST_LEVELS;
         }
         else if (requestType == RS_REQUEST_LEVELS)
         {
-            url.Format("%s/stats/%s?format=rows", baseUrl.GetChars(), Symbol.GetString());
+            url.Format("%s/stats/%s/rows", baseUrl.GetChars(), Symbol.GetString());
             requestType = RS_REQUEST_STATS;
         }
         else

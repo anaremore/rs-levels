@@ -137,6 +137,19 @@ paths:
                 description: Display rows as name,price,red,green,blue,kind. Empty feeds return a blank line for ACSIL clients.
         '404':
           $ref: '#/components/responses/NotFound'
+  /levels/{symbol}/rows:
+    get:
+      summary: Symbol levels row feed
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+      responses:
+        '200':
+          description: Generic display row feed without a query string for direct platform clients.
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Display rows as name,price,red,green,blue,kind. Empty feeds return a blank line for ACSIL clients.
   /stats:
     get:
       summary: Display context stats
@@ -171,6 +184,19 @@ paths:
                 description: Display context rows as name,value. Empty feeds return a blank line for ACSIL clients.
         '404':
           $ref: '#/components/responses/NotFound'
+  /stats/{symbol}/rows:
+    get:
+      summary: Symbol display context row feed
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+      responses:
+        '200':
+          description: Generic display-context row feed without a query string for direct platform clients.
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Display context rows as name,value. Empty feeds return a blank line for ACSIL clients.
   /ddbands:
     get:
       summary: DD band levels

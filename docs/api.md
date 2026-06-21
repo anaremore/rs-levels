@@ -29,9 +29,11 @@ GET  /snapshot
 GET  /levels
 GET  /levels/:symbol
 GET  /levels/:symbol?format=rows
+GET  /levels/:symbol/rows
 GET  /stats
 GET  /stats/:symbol
 GET  /stats/:symbol?format=rows
+GET  /stats/:symbol/rows
 GET  /ddbands
 GET  /zones
 GET  /references
@@ -248,6 +250,8 @@ DD Upper,7579.75,41,182,246,dd-band
 
 Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories for fills and settings. Missing symbols return a blank-line text body with status `200` so chart studies can poll safely before capture begins and Sierra Chart ACSIL clients can observe HTTP completion.
 
+`GET /levels/:symbol/rows` returns the same body without a query string. Sierra Chart uses this path because some ACSIL HTTP configurations are easier to debug with query-free URLs.
+
 ## GET /stats
 
 Returns display context stats for every symbol with captured stats:
@@ -286,6 +290,8 @@ Map,BLD
 ```
 
 Aliases resolve the same way as `/levels/:symbol`. Missing stats return a blank-line text body with status `200` for row format so ACSIL clients do not stall on a completed empty response.
+
+`GET /stats/:symbol/rows` returns the same body without a query string for Sierra Chart compatibility.
 
 ## GET /tradingview
 

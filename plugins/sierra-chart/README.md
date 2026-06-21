@@ -12,8 +12,8 @@ The included study polls:
 
 ```text
 GET /status
-GET /levels/:symbol?format=rows
-GET /stats/:symbol?format=rows
+GET /levels/:symbol/rows
+GET /stats/:symbol/rows
 ```
 
 Text rows are:
@@ -22,7 +22,7 @@ Text rows are:
 name,price,red,green,blue,kind
 ```
 
-The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. `/stats/:symbol?format=rows` provides display context rows such as `DD`, `Res`, `MRes`, `WRes`, and `Map` for the chart corner. The row feeds avoid requiring a JSON parser inside ACSIL.
+The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. `/stats/:symbol/rows` provides display context rows such as `DD`, `Res`, `MRes`, `WRes`, and `Map` for the chart corner. The row feeds avoid requiring a JSON parser inside ACSIL.
 
 Blank row feeds return a newline so Sierra Chart can observe that the HTTP request completed even when no levels or stats are available yet.
 
@@ -49,7 +49,7 @@ Blank row feeds return a newline so Sierra Chart can observe that the HTTP reque
 
 ## Rendering Plan
 
-- Poll `/status` for source state, `/levels/:symbol?format=rows` for display rows, and `GET /stats/:symbol?format=rows` for DD/Res/MRes/WRes/Map context.
+- Poll `/status` for source state, `/levels/:symbol/rows` for display rows, and `GET /stats/:symbol/rows` for DD/Res/MRes/WRes/Map context.
 - Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.

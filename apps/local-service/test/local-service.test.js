@@ -162,8 +162,12 @@ try {
 
   const emptyLevelRows = await getText(`${baseUrl}/levels/MES?format=rows`);
   assert.equal(emptyLevelRows, '\n');
+  const emptyLevelRowsPath = await getText(`${baseUrl}/levels/MES/rows`);
+  assert.equal(emptyLevelRowsPath, '\n');
   const emptyStatsRows = await getText(`${baseUrl}/stats/MES?format=rows`);
   assert.equal(emptyStatsRows, '\n');
+  const emptyStatsRowsPath = await getText(`${baseUrl}/stats/MES/rows`);
+  assert.equal(emptyStatsRowsPath, '\n');
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
 
@@ -280,6 +284,8 @@ try {
   const text = await getText(`${baseUrl}/levels/MES?format=rows`);
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
   assert.match(text, /OVNHP,7537\.00,41,98,255,hp/);
+  const pathRowsText = await getText(`${baseUrl}/levels/MES/rows`);
+  assert.equal(pathRowsText, text);
   const rowsText = await getText(`${baseUrl}/levels/ES?format=rows`);
   assert.equal(rowsText, text);
 
@@ -376,6 +382,8 @@ try {
   assert.equal(esStats.stats.monthlyResilience, 19.87);
   assert.equal(esStats.stats.mapCode, 'BLD');
   const nqStatsRows = await getText(`${baseUrl}/stats/NQ?format=rows`);
+  const nqStatsPathRows = await getText(`${baseUrl}/stats/NQ/rows`);
+  assert.equal(nqStatsPathRows, nqStatsRows);
   assert.match(nqStatsRows, /DD,0\.66/);
   assert.match(nqStatsRows, /Res,73\.82/);
   assert.match(nqStatsRows, /MRes,49\.87/);

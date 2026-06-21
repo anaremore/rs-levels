@@ -31,8 +31,8 @@
         "mode": "local-http",
         "endpoints": [
           "GET /status",
-          "GET /levels/:symbol?format=rows",
-          "GET /stats/:symbol?format=rows"
+          "GET /levels/:symbol/rows",
+          "GET /stats/:symbol/rows"
         ]
       }
     },

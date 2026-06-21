@@ -63,6 +63,13 @@ export function createHttpApp({ store, config }) {
         return sendText(res, 200, payload, 'text/plain; charset=utf-8');
       }
 
+      const symbolRowsMatch = pathname.match(/^\/levels\/([^/]+)\/rows$/);
+      if (req.method === 'GET' && symbolRowsMatch) {
+        const symbol = normalizeSymbol(symbolRowsMatch[1]);
+        const row = store.getSnapshot().symbols[symbol] || null;
+        return sendText(res, 200, levelsToDisplayRowsText(row ? row.levels : []), 'text/plain; charset=utf-8');
+      }
+
       const symbolMatch = pathname.match(/^\/levels\/([^/]+)$/);
       if (req.method === 'GET' && symbolMatch) {
         const symbol = normalizeSymbol(symbolMatch[1]);
@@ -71,6 +78,13 @@ export function createHttpApp({ store, config }) {
           return sendText(res, 200, levelsToDisplayRowsText(row ? row.levels : []), 'text/plain; charset=utf-8');
         }
         return sendJson(res, row ? 200 : 404, row ? publicSymbolSnapshot(row) : { ok: false, error: 'symbol not found' });
+      }
+
+      const statsRowsMatch = pathname.match(/^\/stats\/([^/]+)\/rows$/);
+      if (req.method === 'GET' && statsRowsMatch) {
+        const symbol = normalizeSymbol(statsRowsMatch[1]);
+        const row = store.getSnapshot().symbols[symbol] || null;
+        return sendText(res, 200, statsToRowsText(row ? row.stats : {}), 'text/plain; charset=utf-8');
       }
 
       const statsMatch = pathname.match(/^\/stats\/([^/]+)$/);
@@ -105,7 +119,7 @@ export function rootInfo(config) {
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
     build: serviceBuildInfo(),
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/stats', '/stats/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -450,8 +464,10 @@ GET /snapshot
 GET /diagnostics
 GET /levels
 GET /levels/:symbol
+GET /levels/:symbol/rows
 GET /stats
 GET /stats/:symbol
+GET /stats/:symbol/rows
 GET /zones
 GET /tradingview
 GET /tradingview/:symbol

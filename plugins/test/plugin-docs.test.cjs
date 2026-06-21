@@ -23,6 +23,10 @@ for (const plugin of manifest.plugins) {
     assert.ok(plugin.api.endpoints.includes('GET /status'), `${plugin.id} must poll status`);
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/stats/:symbol')), `${plugin.id} must poll symbol stats`);
+    if (plugin.id === 'sierra-chart') {
+      assert.ok(plugin.api.endpoints.includes('GET /levels/:symbol/rows'));
+      assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol/rows'));
+    }
   }
 }
 
@@ -52,7 +56,8 @@ assertManualKinds(contract);
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
 assert.match(sierraSource, /\/status/);
-assert.match(sierraSource, /format=rows/);
+assert.match(sierraSource, /\/levels\/%s\/rows/);
+assert.match(sierraSource, /\/stats\/%s\/rows/);
 assert.match(sierraSource, /\/stats\//);
 assert.match(sierraSource, /RS_REQUEST_STATS/);
 assert.match(sierraSource, /DrawStats/);

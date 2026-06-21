@@ -32,9 +32,13 @@ Optional format-specific calls:
 ```text
 GET /levels/:symbol?format=rows
 GET /stats/:symbol?format=rows
+GET /levels/:symbol/rows
+GET /stats/:symbol/rows
 GET /tradingview
 GET /tradingview/:symbol
 ```
+
+The `/rows` paths return the same text bodies as `?format=rows` and exist for direct clients, such as Sierra Chart ACSIL studies, where query-free URLs are easier to debug.
 
 Plugins should accept `ES`/`MES` and `NQ`/`MNQ` aliases the same way the API does. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the ES family, and `/levels/F.US.ENQ...` resolves to the NQ family. JSON status, `/levels/:symbol` responses, and TradingView payloads use user-facing `ES`/`NQ` labels.
 
