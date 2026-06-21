@@ -388,14 +388,14 @@ public class RSLevelsDisplayBookmap implements CustomModule {
     private static final class RsColorScheme extends velox.compat.classreplace.v1.api.layer1.messages.indicators.IndicatorColorScheme {
         private final IndicatorColorScheme.ColorDescription[] colors = new IndicatorColorScheme.ColorDescription[] {
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_BLUE, new Color(41, 98, 255), true),
-            new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_CYAN, new Color(41, 182, 246), true),
+            new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_CYAN, new Color(0, 188, 212), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_GREEN, new Color(76, 175, 80), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_ORANGE, new Color(255, 152, 0), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_PINK, new Color(240, 98, 146), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_PURPLE, new Color(126, 87, 194), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_RED, new Color(242, 54, 69), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_YELLOW, new Color(255, 235, 59), true),
-            new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_WHITE, new Color(220, 220, 220), true)
+            new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_WHITE, new Color(255, 255, 255), true)
         };
 
         @Override

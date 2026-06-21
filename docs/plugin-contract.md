@@ -65,10 +65,10 @@ Plugins should draw:
 Recommended kind colors:
 
 ```text
-dd-band     #29B6F6
+dd-band     #00BCD4
 hp          #2962FF
 mhp         #FF9800
-open-close  #E0E0E0
+open-close  #FFFFFF
 reference   #FFEB3B
 yellow-line #FFEB3B
 red-line    #F23645

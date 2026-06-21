@@ -1,5 +1,5 @@
 export function levelsToDisplayRowsText(levels) {
-  return levels.map((level) => {
+  const rows = levels.map((level) => {
     const [r, g, b] = hexToRgb(level.color || kindColor(level.kind));
     return [
       csvCell(displayLevelName(level)),
@@ -9,7 +9,8 @@ export function levelsToDisplayRowsText(levels) {
       b,
       csvCell(level.kind || 'unknown')
     ].join(',');
-  }).join('\n') + (levels.length ? '\n' : '');
+  });
+  return rows.length ? `${rows.join('\n')}\n` : '\n';
 }
 
 function hexToRgb(hex) {
@@ -24,13 +25,13 @@ function hexToRgb(hex) {
 function kindColor(kind) {
   switch (kind) {
     case 'dd-band':
-      return '#29B6F6';
+      return '#00BCD4';
     case 'hp':
       return '#2962FF';
     case 'mhp':
       return '#FF9800';
     case 'open-close':
-      return '#E0E0E0';
+      return '#FFFFFF';
     case 'reference':
       return '#FFEB3B';
     case 'yellow-line':

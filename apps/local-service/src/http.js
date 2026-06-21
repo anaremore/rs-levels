@@ -264,7 +264,7 @@ function statsToRowsText(stats = {}) {
   if (clean.monthlyResilience != null) rows.push(`MRes,${formatMetric(clean.monthlyResilience)}`);
   if (clean.weeklyResilience != null) rows.push(`WRes,${formatMetric(clean.weeklyResilience)}`);
   if (clean.mapCode) rows.push(`Map,${clean.mapCode}`);
-  return `${rows.join('\n')}${rows.length ? '\n' : ''}`;
+  return rows.length ? `${rows.join('\n')}\n` : '\n';
 }
 
 function hasPublicStats(stats = {}) {

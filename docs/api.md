@@ -246,7 +246,7 @@ OVNHP,7537.00,41,98,255,hp
 DD Upper,7579.75,41,182,246,dd-band
 ```
 
-Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories for fills and settings. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
+Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories for fills and settings. Missing symbols return a blank-line text body with status `200` so chart studies can poll safely before capture begins and Sierra Chart ACSIL clients can observe HTTP completion.
 
 ## GET /stats
 
@@ -285,7 +285,7 @@ WRes,-29.29
 Map,BLD
 ```
 
-Aliases resolve the same way as `/levels/:symbol`. Missing stats return an empty text body with status `200` for row format.
+Aliases resolve the same way as `/levels/:symbol`. Missing stats return a blank-line text body with status `200` for row format so ACSIL clients do not stall on a completed empty response.
 
 ## GET /tradingview
 

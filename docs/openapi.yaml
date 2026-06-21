@@ -134,7 +134,7 @@ paths:
             text/plain:
               schema:
                 type: string
-                description: Display rows as name,price,red,green,blue,kind.
+                description: Display rows as name,price,red,green,blue,kind. Empty feeds return a blank line for ACSIL clients.
         '404':
           $ref: '#/components/responses/NotFound'
   /stats:
@@ -168,7 +168,7 @@ paths:
             text/plain:
               schema:
                 type: string
-                description: Display context rows as name,value.
+                description: Display context rows as name,value. Empty feeds return a blank line for ACSIL clients.
         '404':
           $ref: '#/components/responses/NotFound'
   /ddbands:

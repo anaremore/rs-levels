@@ -22,6 +22,7 @@ constexpr int RS_REQUEST_NONE = 0;
 constexpr int RS_REQUEST_STATUS = 1;
 constexpr int RS_REQUEST_LEVELS = 2;
 constexpr int RS_REQUEST_STATS = 3;
+constexpr int RS_HTTP_TIMEOUT_SEC = 10;
 
 struct RsLevel
 {
@@ -32,6 +33,45 @@ struct RsLevel
     int blue = 158;
     std::string kind = "unknown";
 };
+
+struct DisplayColors
+{
+    COLORREF dd;
+    COLORREF hp;
+    COLORREF mhp;
+    COLORREF openClose;
+    COLORREF reference;
+    COLORREF yellowLine;
+    COLORREF redLine;
+    COLORREF cat;
+    COLORREF bullZone;
+    COLORREF bearZone;
+    COLORREF other;
+};
+
+void DisableToolAutoLabels(s_UseTool& tool)
+{
+    tool.DisplayHorizontalLineValue = 0;
+    tool.ShowTickDifference = 0;
+    tool.ShowCurrencyValue = 0;
+    tool.ShowPriceDifference = 0;
+    tool.ShowPercentChange = 0;
+    tool.ShowTimeDifference = 0;
+    tool.ShowNumberOfBars = 0;
+    tool.ShowAngle = 0;
+    tool.ShowEndPointPrice = 0;
+    tool.ShowEndPointDateTime = 0;
+    tool.ShowEndPointDate = 0;
+    tool.ShowEndPointTime = 0;
+    tool.ShowPercent = 0;
+    tool.ShowPrice = 0;
+    tool.ShowVolume = 0;
+    tool.ShowLabels = 0;
+    tool.ShowLabelsAtEnd = 0;
+    tool.ShowBeginMark = 0;
+    tool.ShowEndMark = 0;
+    tool.ClearExistingText = 1;
+}
 
 std::string Trim(const std::string& value)
 {
@@ -267,6 +307,7 @@ void DrawStationaryText(SCStudyInterfaceRef sc, int lineNumber, const char* text
     tool.Region = sc.GraphRegion;
     tool.BeginValue = y;
     tool.BeginDateTime = x;
+    tool.UseRelativeVerticalValues = 1;
     tool.Color = color;
     tool.FontSize = fontSize;
     tool.Text = text;
@@ -286,6 +327,31 @@ void DrawStats(SCStudyInterfaceRef sc, const char* text)
 bool IsZone(const std::string& kind)
 {
     return kind == "zone" || kind == "zone-bull" || kind == "zone-bear";
+}
+
+COLORREF LevelColor(const RsLevel& level, const DisplayColors& colors)
+{
+    if (level.kind == "dd-band")
+        return colors.dd;
+    if (level.kind == "hp")
+        return colors.hp;
+    if (level.kind == "mhp")
+        return colors.mhp;
+    if (level.kind == "open-close")
+        return colors.openClose;
+    if (level.kind == "reference")
+        return colors.reference;
+    if (level.kind == "yellow-line")
+        return colors.yellowLine;
+    if (level.kind == "red-line")
+        return colors.redLine;
+    if (level.kind == "cat")
+        return colors.cat;
+    if (level.kind == "zone-bull")
+        return colors.bullZone;
+    if (level.kind == "zone-bear")
+        return colors.bearZone;
+    return colors.other;
 }
 
 int ZoneBoundarySide(const std::string& name)
@@ -350,21 +416,27 @@ std::string DisplayLabel(const RsLevel& level)
     return cleaned.empty() ? "Level" : cleaned;
 }
 
-void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int lineWidth, bool showLabels, int labelOffsetTicks)
+void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int lineWidth, bool showLabels, int labelOffsetTicks, const DisplayColors& colors)
 {
     const int lineNumber = RS_LINE_BASE + index;
-    const COLORREF color = RGB(level.red, level.green, level.blue);
+    const COLORREF color = LevelColor(level, colors);
+    const int endIndex = AtLeast(0, sc.ArraySize - 1);
 
     s_UseTool lineTool;
     lineTool.Clear();
     lineTool.ChartNumber = sc.ChartNumber;
-    lineTool.DrawingType = DRAWING_HORIZONTALLINE;
+    lineTool.DrawingType = DRAWING_LINE;
     lineTool.LineNumber = lineNumber;
     lineTool.AddMethod = UTAM_ADD_OR_ADJUST;
     lineTool.Region = sc.GraphRegion;
+    lineTool.BeginIndex = 0;
+    lineTool.EndIndex = endIndex;
     lineTool.BeginValue = static_cast<float>(level.price);
+    lineTool.EndValue = static_cast<float>(level.price);
     lineTool.Color = color;
-    lineTool.LineWidth = lineWidth;
+    lineTool.LineWidth = static_cast<unsigned short>(lineWidth);
+    lineTool.LineStyle = LINESTYLE_SOLID;
+    DisableToolAutoLabels(lineTool);
     sc.UseTool(lineTool);
 
     if (!showLabels)
@@ -385,29 +457,33 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     labelTool.LineNumber = RS_LABEL_BASE + index;
     labelTool.AddMethod = UTAM_ADD_OR_ADJUST;
     labelTool.Region = sc.GraphRegion;
-    labelTool.BeginIndex = AtLeast(0, sc.ArraySize - 1);
+    labelTool.BeginDateTime = -2;
     labelTool.BeginValue = static_cast<float>(level.price) + labelOffset;
     labelTool.Color = color;
     labelTool.FontSize = 9;
+    labelTool.FontBold = 1;
+    labelTool.TransparentLabelBackground = 1;
+    DisableToolAutoLabels(labelTool);
     labelTool.Text = label;
     sc.UseTool(labelTool);
 }
 
-void DrawZoneFill(SCStudyInterfaceRef sc, const RsLevel& first, const RsLevel& second, int index, int opacityPercent)
+void DrawZoneFill(SCStudyInterfaceRef sc, const RsLevel& first, const RsLevel& second, int index, int opacityPercent, const DisplayColors& colors)
 {
     const double top = HigherPrice(first.price, second.price);
     const double bottom = LowerPrice(first.price, second.price);
-    const COLORREF color = RGB(first.red, first.green, first.blue);
+    const COLORREF color = LevelColor(first, colors);
+    const int endIndex = AtLeast(0, sc.ArraySize - 1);
 
     s_UseTool tool;
     tool.Clear();
     tool.ChartNumber = sc.ChartNumber;
-    tool.DrawingType = DRAWING_RECTANGLE_EXT_HIGHLIGHT;
+    tool.DrawingType = DRAWING_RECTANGLEHIGHLIGHT;
     tool.LineNumber = RS_ZONE_BASE + index;
     tool.AddMethod = UTAM_ADD_OR_ADJUST;
     tool.Region = sc.GraphRegion;
-    tool.BeginIndex = AtLeast(0, sc.ArraySize - 2);
-    tool.EndIndex = AtLeast(0, sc.ArraySize - 1);
+    tool.BeginIndex = 0;
+    tool.EndIndex = endIndex;
     tool.BeginValue = static_cast<float>(top);
     tool.EndValue = static_cast<float>(bottom);
     tool.Color = color;
@@ -416,7 +492,7 @@ void DrawZoneFill(SCStudyInterfaceRef sc, const RsLevel& first, const RsLevel& s
     sc.UseTool(tool);
 }
 
-int DrawZoneFills(SCStudyInterfaceRef sc, const std::vector<RsLevel>& levels, bool showZoneFills, int opacityPercent)
+int DrawZoneFills(SCStudyInterfaceRef sc, const std::vector<RsLevel>& levels, bool showZoneFills, int opacityPercent, const DisplayColors& colors)
 {
     if (!showZoneFills)
         return 0;
@@ -458,7 +534,7 @@ int DrawZoneFills(SCStudyInterfaceRef sc, const std::vector<RsLevel>& levels, bo
             }
             if (hasBullTop && hasBullBottom && nextIndex < RS_MAX_LEVELS)
             {
-                DrawZoneFill(sc, bullTop, bullBottom, nextIndex++, opacityPercent);
+                DrawZoneFill(sc, bullTop, bullBottom, nextIndex++, opacityPercent, colors);
                 hasBullTop = false;
                 hasBullBottom = false;
             }
@@ -477,7 +553,7 @@ int DrawZoneFills(SCStudyInterfaceRef sc, const std::vector<RsLevel>& levels, bo
             }
             if (hasBearTop && hasBearBottom && nextIndex < RS_MAX_LEVELS)
             {
-                DrawZoneFill(sc, bearTop, bearBottom, nextIndex++, opacityPercent);
+                DrawZoneFill(sc, bearTop, bearBottom, nextIndex++, opacityPercent, colors);
                 hasBearTop = false;
                 hasBearBottom = false;
             }
@@ -496,7 +572,7 @@ int DrawZoneFills(SCStudyInterfaceRef sc, const std::vector<RsLevel>& levels, bo
             }
             if (hasZoneTop && hasZoneBottom && nextIndex < RS_MAX_LEVELS)
             {
-                DrawZoneFill(sc, zoneTop, zoneBottom, nextIndex++, opacityPercent);
+                DrawZoneFill(sc, zoneTop, zoneBottom, nextIndex++, opacityPercent, colors);
                 hasZoneTop = false;
                 hasZoneBottom = false;
             }
@@ -537,6 +613,17 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     SCInputRef ZoneFillOpacity = sc.Input[6];
     SCInputRef LabelOffsetTicks = sc.Input[7];
     SCInputRef LineWidth = sc.Input[8];
+    SCInputRef DdColor = sc.Input[9];
+    SCInputRef HpColor = sc.Input[10];
+    SCInputRef MhpColor = sc.Input[11];
+    SCInputRef OpenCloseColor = sc.Input[12];
+    SCInputRef ReferenceColor = sc.Input[13];
+    SCInputRef YellowLineColor = sc.Input[14];
+    SCInputRef RedLineColor = sc.Input[15];
+    SCInputRef CatColor = sc.Input[16];
+    SCInputRef BullZoneColor = sc.Input[17];
+    SCInputRef BearZoneColor = sc.Input[18];
+    SCInputRef OtherColor = sc.Input[19];
 
     if (sc.SetDefaults)
     {
@@ -580,6 +667,39 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         LineWidth.SetInt(1);
         LineWidth.SetIntLimits(1, 5);
 
+        DdColor.Name = "DD band color";
+        DdColor.SetColor(RGB(0, 188, 212));
+
+        HpColor.Name = "HP color";
+        HpColor.SetColor(RGB(41, 98, 255));
+
+        MhpColor.Name = "MHP color";
+        MhpColor.SetColor(RGB(255, 152, 0));
+
+        OpenCloseColor.Name = "Open/close color";
+        OpenCloseColor.SetColor(RGB(255, 255, 255));
+
+        ReferenceColor.Name = "Reference color";
+        ReferenceColor.SetColor(RGB(255, 235, 59));
+
+        YellowLineColor.Name = "Yellow line color";
+        YellowLineColor.SetColor(RGB(255, 235, 59));
+
+        RedLineColor.Name = "Red line color";
+        RedLineColor.SetColor(RGB(242, 54, 69));
+
+        CatColor.Name = "CAT color";
+        CatColor.SetColor(RGB(126, 87, 194));
+
+        BullZoneColor.Name = "Bull zone color";
+        BullZoneColor.SetColor(RGB(76, 175, 80));
+
+        BearZoneColor.Name = "Bear zone color";
+        BearZoneColor.SetColor(RGB(240, 98, 146));
+
+        OtherColor.Name = "Other level color";
+        OtherColor.SetColor(RGB(158, 158, 158));
+
         return;
     }
 
@@ -587,12 +707,34 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     int& requestType = sc.GetPersistentInt(2);
     int& lastRequestSeconds = sc.GetPersistentInt(3);
     int& lastLevelsSeconds = sc.GetPersistentInt(4);
+    int& lastLevelCount = sc.GetPersistentInt(5);
     SCString& sourceState = sc.GetPersistentSCString(1);
     SCString& statsText = sc.GetPersistentSCString(2);
+    SCString& lastIssue = sc.GetPersistentSCString(3);
 
     const int nowSeconds = sc.CurrentSystemDateTime.GetTimeInSeconds();
     const int refreshSeconds = AtLeast(1, RefreshMs.GetInt() / 1000);
     const int staleSeconds = AtLeast(1, StaleSeconds.GetInt());
+    const DisplayColors colors = {
+        DdColor.GetColor(),
+        HpColor.GetColor(),
+        MhpColor.GetColor(),
+        OpenCloseColor.GetColor(),
+        ReferenceColor.GetColor(),
+        YellowLineColor.GetColor(),
+        RedLineColor.GetColor(),
+        CatColor.GetColor(),
+        BullZoneColor.GetColor(),
+        BearZoneColor.GetColor(),
+        OtherColor.GetColor()
+    };
+
+    if (lastRequestSeconds > 0 && nowSeconds < lastRequestSeconds)
+    {
+        requestState = RS_REQUEST_NONE;
+        requestType = RS_REQUEST_NONE;
+        lastRequestSeconds = 0;
+    }
 
     if (requestState == RS_REQUEST_NONE && (lastRequestSeconds == 0 || nowSeconds - lastRequestSeconds >= refreshSeconds))
     {
@@ -620,6 +762,14 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         lastRequestSeconds = nowSeconds;
     }
 
+    if (requestState != RS_REQUEST_NONE && sc.HTTPResponse.GetLength() == 0 && nowSeconds - lastRequestSeconds >= RS_HTTP_TIMEOUT_SEC)
+    {
+        lastIssue = "HTTP timeout";
+        requestState = RS_REQUEST_NONE;
+        requestType = RS_REQUEST_NONE;
+        sc.HTTPResponse = "";
+    }
+
     if (requestState != RS_REQUEST_NONE && sc.HTTPResponse.GetLength() > 0)
     {
         if (requestState == RS_REQUEST_STATUS)
@@ -629,11 +779,12 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         else if (requestState == RS_REQUEST_LEVELS)
         {
             const std::vector<RsLevel> levels = ParseLevelsText(sc.HTTPResponse);
-            const int zoneCount = DrawZoneFills(sc, levels, ShowZoneFills.GetYesNo() != 0, ZoneFillOpacity.GetInt());
+            const int zoneCount = DrawZoneFills(sc, levels, ShowZoneFills.GetYesNo() != 0, ZoneFillOpacity.GetInt(), colors);
             for (int i = 0; i < static_cast<int>(levels.size()); ++i)
-                DrawLevel(sc, levels[i], i, LineWidth.GetInt(), ShowLabels.GetYesNo() != 0, LabelOffsetTicks.GetInt());
+                DrawLevel(sc, levels[i], i, LineWidth.GetInt(), ShowLabels.GetYesNo() != 0, LabelOffsetTicks.GetInt(), colors);
             DeleteUnusedDrawings(sc, static_cast<int>(levels.size()), zoneCount);
             lastLevelsSeconds = nowSeconds;
+            lastLevelCount = static_cast<int>(levels.size());
         }
         else if (requestState == RS_REQUEST_STATS)
         {
@@ -641,6 +792,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         }
 
         requestState = RS_REQUEST_NONE;
+        lastIssue = "";
         sc.HTTPResponse = "";
     }
 
@@ -648,16 +800,24 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     SCString statusText;
     if (lastLevelsSeconds == 0)
     {
-        statusText = "RS Levels waiting";
+        if (lastIssue.GetLength())
+            statusText = lastIssue;
+        else
+            statusText = "RS Levels waiting";
+    }
+    else if (lastIssue.GetLength())
+    {
+        statusText.Format("RS Levels issue (%s, %d rows)", lastIssue.GetChars(), lastLevelCount);
+        statusColor = RGB(242, 54, 69);
     }
     else if (nowSeconds - lastLevelsSeconds > staleSeconds || sourceState == "stale")
     {
-        statusText.Format("RS Levels stale (%s)", sourceState.GetChars());
+        statusText.Format("RS Levels stale (%s, %d rows)", sourceState.GetChars(), lastLevelCount);
         statusColor = RGB(255, 152, 0);
     }
     else
     {
-        statusText.Format("RS Levels live (%s)", sourceState.GetLength() ? sourceState.GetChars() : "unknown");
+        statusText.Format("RS Levels live (%s, %d rows)", sourceState.GetLength() ? sourceState.GetChars() : "unknown", lastLevelCount);
         statusColor = RGB(76, 175, 80);
     }
     DrawStatus(sc, statusText.GetChars(), statusColor);

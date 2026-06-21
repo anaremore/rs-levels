@@ -24,6 +24,8 @@ name,price,red,green,blue,kind
 
 The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. `/stats/:symbol?format=rows` provides display context rows such as `DD`, `Res`, `MRes`, `WRes`, and `Map` for the chart corner. The row feeds avoid requiring a JSON parser inside ACSIL.
 
+Blank row feeds return a newline so Sierra Chart can observe that the HTTP request completed even when no levels or stats are available yet.
+
 ## Study Inputs
 
 - service URL, default `http://127.0.0.1:8765`
@@ -35,6 +37,7 @@ The first five columns are stable for older studies. The optional sixth `kind` c
 - zone fill opacity
 - label offset ticks
 - line width
+- per-kind colors for DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT, bull zones, bear zones, and other levels
 
 ## Install
 
@@ -47,10 +50,10 @@ The first five columns are stable for older studies. The optional sixth `kind` c
 ## Rendering Plan
 
 - Poll `/status` for source state, `/levels/:symbol?format=rows` for display rows, and `GET /stats/:symbol?format=rows` for DD/Res/MRes/WRes/Map context.
-- Draw horizontal lines in the chart region at each price, up to 500 rows.
-- Draw cleaned labels near the right edge of the chart, offset above or below the line.
+- Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study.
+- Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
-- Show waiting, offline, or stale state as a small chart text marker, plus a bottom-left stats marker when context is available.
+- Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
 
 ## Safety Boundary
 

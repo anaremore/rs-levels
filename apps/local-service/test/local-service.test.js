@@ -23,8 +23,9 @@ assert.equal(
     { name: 'Bull Zone Top', price: 7526, kind: 'zone-bull' },
     { name: 'Bear Zone Bottom', price: 7588, kind: 'zone-bear' }
   ]),
-  'Open,7559.00,224,224,224,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
+  'Open,7559.00,255,255,255,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
 );
+assert.equal(levelsToDisplayRowsText([]), '\n');
 
 let nowMs = Date.parse('2026-06-20T12:00:00.000Z');
 const freshnessStore = createLevelStore({
@@ -158,6 +159,11 @@ try {
   assert.equal(health.ok, true);
   assert.equal(health.version, '0.0.0');
   assert.equal(health.build.source, 'source');
+
+  const emptyLevelRows = await getText(`${baseUrl}/levels/MES?format=rows`);
+  assert.equal(emptyLevelRows, '\n');
+  const emptyStatsRows = await getText(`${baseUrl}/stats/MES?format=rows`);
+  assert.equal(emptyStatsRows, '\n');
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
 
