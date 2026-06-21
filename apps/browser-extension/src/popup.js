@@ -81,12 +81,13 @@ async function refresh() {
     renderCaptureStats(extState.captureStats);
     renderCopyState(latestServiceStatus);
     renderPill(source);
-    if (extState.lastError && !health.levelCount) {
+    const hasDisplayData = globalThis.RS_LEVELS.hasAnyDisplayData(latestServiceStatus);
+    if (extState.lastError && !hasDisplayData) {
       setMessage(extState.lastError, 'error');
     } else if (sourceState === 'stale') {
       setMessage('Captured levels are stale.', 'warning');
     } else {
-      setMessage(health.levelCount ? 'Levels are available.' : 'Waiting for captured levels.', health.levelCount ? 'ok' : '');
+      setMessage(hasDisplayData ? 'Display data is available.' : 'Waiting for captured display data.', hasDisplayData ? 'ok' : '');
     }
   } catch (err) {
     latestServiceStatus = null;
@@ -263,7 +264,9 @@ function availableFamilies(status = {}) {
   const out = new Set();
   const summaries = Array.isArray(status.symbolSummaries) ? status.symbolSummaries : [];
   summaries.forEach((summary) => {
-    if (Number(summary.levelCount) > 0) out.add(globalThis.RS_LEVELS.publicDisplaySymbol(summary.symbol || summary.displaySymbol));
+    if (globalThis.RS_LEVELS.summaryHasDisplayData(summary)) {
+      out.add(globalThis.RS_LEVELS.publicDisplaySymbol(summary.symbol || summary.displaySymbol));
+    }
   });
   if (out.size) return out;
   (Array.isArray(status.symbols) ? status.symbols : []).forEach((symbol) => out.add(globalThis.RS_LEVELS.publicDisplaySymbol(symbol)));

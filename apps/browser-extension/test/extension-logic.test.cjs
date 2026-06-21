@@ -60,8 +60,22 @@ assert.equal(sharedContext.RS_LEVELS.symbolLevelCount({
   levelCount: 3,
   symbolSummaries: [{ symbol: 'ES', levelCount: 3 }]
 }, 'ES'), 3);
-assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured levels/);
-assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured levels/);
+assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured display data/);
+assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured display data/);
+assert.equal(sharedContext.RS_LEVELS.hasAnyDisplayData({
+  levelCount: 0,
+  symbolSummaries: [{ symbol: 'ES', levelCount: 0, stats: { mapCode: 'BLD' } }]
+}), true);
+assert.equal(sharedContext.RS_LEVELS.summaryHasDisplayData({ levelCount: 0, stats: { dd: 0 } }), true);
+assert.equal(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({
+  levelCount: 0,
+  source: { connected: true, state: 'capturing' },
+  symbolSummaries: [{ symbol: 'ES', levelCount: 0, stats: { mapCode: 'BLD' } }]
+}), '');
+assert.equal(sharedContext.RS_LEVELS.selectedSymbolIssue({
+  levelCount: 0,
+  symbolSummaries: [{ symbol: 'ES', levelCount: 0, stats: { mapCode: 'BLD' } }]
+}, 'ES'), '');
 assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
   levelCount: 3,
   symbolSummaries: [{ symbol: 'NQ', levelCount: 3 }]

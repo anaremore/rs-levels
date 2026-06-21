@@ -129,12 +129,32 @@
     return match ? nonNegativeInteger(match.levelCount) : 0;
   }
 
+  function summaryHasStats(summary = {}) {
+    const stats = summary.stats || {};
+    return Boolean(stats.mapCode) ||
+      [stats.dd, stats.resilience, stats.monthlyResilience, stats.weeklyResilience]
+        .some((value) => value != null && value !== '' && Number.isFinite(Number(value)));
+  }
+
+  function summaryHasDisplayData(summary = {}) {
+    return nonNegativeInteger(summary.levelCount) > 0 || summaryHasStats(summary);
+  }
+
+  function hasAnyDisplayData(status = {}) {
+    if (nonNegativeInteger(status.levelCount) > 0) return true;
+    const summaries = Array.isArray(status.symbolSummaries) ? status.symbolSummaries : [];
+    return summaries.some(summaryHasStats);
+  }
+
   function selectedSymbolIssue(status = {}, symbol = '') {
-    const levelCount = nonNegativeInteger(status.levelCount);
-    if (levelCount < 1) return 'No captured levels are available yet.';
-    const selectedLevelCount = symbolLevelCount(status, symbol);
-    if (selectedLevelCount === 0) {
-      return `No captured levels are available for ${publicDisplaySymbol(symbol)}.`;
+    if (!hasAnyDisplayData(status)) return 'No captured display data is available yet.';
+    const summaries = Array.isArray(status.symbolSummaries) ? status.symbolSummaries : [];
+    if (summaries.length) {
+      const target = normalizeDisplaySymbol(symbol);
+      const match = summaries.find((summary) => normalizeDisplaySymbol(summary.symbol) === target);
+      if (!match || !summaryHasDisplayData(match)) {
+        return `No captured display data is available for ${publicDisplaySymbol(symbol)}.`;
+      }
     }
     return '';
   }
@@ -150,8 +170,7 @@
 
   function tradingViewBundleCopyIssue(status = {}) {
     const source = status.source || {};
-    const levelCount = nonNegativeInteger(status.levelCount);
-    if (levelCount < 1) return 'No captured levels are available yet.';
+    if (!hasAnyDisplayData(status)) return 'No captured display data is available yet.';
     if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before copying TradingView.';
     if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before copying TradingView.';
     return '';
@@ -407,7 +426,9 @@
     migrateSettings,
     normalizeDisplaySymbol,
     publicDisplaySymbol,
+    hasAnyDisplayData,
     selectedSymbolIssue,
+    summaryHasDisplayData,
     symbolLevelCount,
     cleanTradingViewPayload,
     captureToTradingViewSnapshot,
