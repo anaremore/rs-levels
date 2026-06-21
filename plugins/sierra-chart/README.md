@@ -11,24 +11,22 @@ Initial ACSIL source is included at `rs-levels-sierra.cpp`.
 The included study polls:
 
 ```text
-GET /status
-GET /levels/:symbol
-GET /stats/:symbol
+GET /sierra/:symbol
 ```
 
-The Sierra study consumes the normal public JSON responses first. It uses `levels[]` rows with `name`, `price`, `kind`, and `color` fields, and `stats` fields for `DD`, `Res`, `MRes`, `WRes`, and `Map` context.
-
-It also keeps a compatibility fallback for row feeds:
+The Sierra feed is a compact plain-text response with source state, levels, and stats in one body:
 
 ```text
-GET /levels/:symbol/rows
-GET /stats/:symbol/rows
+STATE,capturing
 name,price,red,green,blue,kind
+DD,0.66
+Res,73.82
+MRes,49.87
+WRes,-29.29
+Map,BLD
 ```
 
-`/status` provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories.
-
-Blank row feeds return a newline so Sierra Chart can observe that the HTTP request completed even when no levels or stats are available yet.
+The `STATE` row provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories. Empty feeds still return a `STATE` row so Sierra Chart can observe that the HTTP request completed before levels are available.
 
 ## Study Inputs
 
@@ -54,7 +52,7 @@ Blank row feeds return a newline so Sierra Chart can observe that the HTTP reque
 
 ## Rendering Plan
 
-- Poll `/status` for source state, `/levels/:symbol` for display levels, and `GET /stats/:symbol` for DD/Res/MRes/WRes/Map context.
+- Poll `/sierra/:symbol` for source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
 - Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.

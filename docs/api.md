@@ -34,6 +34,7 @@ GET  /stats
 GET  /stats/:symbol
 GET  /stats/:symbol?format=rows
 GET  /stats/:symbol/rows
+GET  /sierra/:symbol
 GET  /ddbands
 GET  /zones
 GET  /references
@@ -59,7 +60,7 @@ Returns service metadata and endpoint hints.
     "generatedAt": "",
     "source": "source"
   },
-  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/stats", "/stats/:symbol", "/zones", "/tradingview", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/stats", "/stats/:symbol", "/sierra/:symbol", "/zones", "/tradingview", "/tradingview/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -250,7 +251,7 @@ DD Upper,7579.75,41,182,246,dd-band
 
 Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories for fills and settings. Missing symbols return a blank-line text body with status `200` so chart studies can poll safely before capture begins.
 
-`GET /levels/:symbol/rows` returns the same body without a query string for clients that prefer compact text parsing. The included Sierra Chart study now prefers the normal JSON `GET /levels/:symbol` response and keeps row parsing as a fallback.
+`GET /levels/:symbol/rows` returns the same body without a query string for clients that prefer compact text parsing. The included Sierra Chart study uses `GET /sierra/:symbol`, which combines state, levels, and stats in one plain-text response.
 
 ## GET /stats
 
@@ -292,6 +293,22 @@ Map,BLD
 Aliases resolve the same way as `/levels/:symbol`. Missing stats return a blank-line text body with status `200` for row format so direct clients can observe a completed empty response.
 
 `GET /stats/:symbol/rows` returns the same body without a query string for clients that prefer compact text parsing.
+
+## GET /sierra/:symbol
+
+Returns a Sierra Chart compatibility feed that combines source state, display levels, and display stats in one plain-text response:
+
+```text
+STATE,capturing
+OVNHP,7537.00,41,98,255,hp
+DD,0.66
+Res,73.82
+MRes,49.87
+WRes,-29.29
+Map,BLD
+```
+
+The first row is always `STATE,<state>` so ACSIL studies can observe a completed response before levels are available. Level rows use `name,price,red,green,blue,kind`. Stats rows use `name,value`. Aliases resolve the same way as `/levels/:symbol`.
 
 ## GET /tradingview
 

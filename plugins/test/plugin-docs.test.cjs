@@ -20,14 +20,12 @@ for (const plugin of manifest.plugins) {
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
   } else {
     assert.equal(plugin.api.mode, 'local-http');
-    assert.ok(plugin.api.endpoints.includes('GET /status'), `${plugin.id} must poll status`);
-    assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
-    assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/stats/:symbol')), `${plugin.id} must poll symbol stats`);
     if (plugin.id === 'sierra-chart') {
-      assert.ok(plugin.api.endpoints.includes('GET /levels/:symbol'));
-      assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol'));
-      assert.ok(plugin.api.endpoints.includes('GET /levels/:symbol/rows'));
-      assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol/rows'));
+      assert.ok(plugin.api.endpoints.includes('GET /sierra/:symbol'));
+    } else {
+      assert.ok(plugin.api.endpoints.includes('GET /status'), `${plugin.id} must poll status`);
+      assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
+      assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/stats/:symbol')), `${plugin.id} must poll symbol stats`);
     }
   }
 }
@@ -37,9 +35,13 @@ for (const platform of platforms) {
   assert.match(text, /display-only/i, `${platform} must state display-only boundary`);
   assert.match(text, /Safety Boundary/i, `${platform} must include a safety boundary`);
   if (platform !== 'tradingview') {
-    assert.match(text, /GET \/status/, `${platform} must document status polling`);
-    assert.match(text, /GET \/levels\//, `${platform} must document levels polling`);
-    assert.match(text, /GET \/stats\//, `${platform} must document stats polling`);
+    if (platform === 'sierra-chart') {
+      assert.match(text, /GET \/sierra\//, `${platform} must document Sierra feed polling`);
+    } else {
+      assert.match(text, /GET \/status/, `${platform} must document status polling`);
+      assert.match(text, /GET \/levels\//, `${platform} must document levels polling`);
+      assert.match(text, /GET \/stats\//, `${platform} must document stats polling`);
+    }
     assert.match(text, /stale/i, `${platform} must document stale handling`);
   } else {
     assert.match(text, /RSLEVELS\|2/, 'tradingview must document the short paste payload');
@@ -57,14 +59,12 @@ assertManualKinds(contract);
 
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
-assert.match(sierraSource, /\/status/);
-assert.match(sierraSource, /\/levels\/%s/);
-assert.match(sierraSource, /\/stats\/%s/);
-assert.match(sierraSource, /\/stats\//);
-assert.match(sierraSource, /RS_REQUEST_STATS/);
-assert.match(sierraSource, /ParseLevelsJson/);
-assert.match(sierraSource, /FormatStatsJson/);
-assert.match(sierraSource, /JsonStringField/);
+assert.match(sierraSource, /\/sierra\/%s/);
+assert.match(sierraSource, /STATE/);
+assert.match(sierraSource, /FindFeedSourceState/);
+assert.doesNotMatch(sierraSource, /ParseLevelsJson/);
+assert.doesNotMatch(sierraSource, /FormatStatsJson/);
+assert.doesNotMatch(sierraSource, /JsonStringField/);
 assert.match(sierraSource, /DrawStats/);
 assert.match(sierraSource, /DRAWING_LINE/);
 assert.match(sierraSource, /DRAWING_RECTANGLEHIGHLIGHT/);

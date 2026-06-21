@@ -197,6 +197,19 @@ paths:
               schema:
                 type: string
                 description: Display context rows as name,value. Empty feeds return a blank line for ACSIL clients.
+  /sierra/{symbol}:
+    get:
+      summary: Sierra Chart compatibility feed
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+      responses:
+        '200':
+          description: Source state, display levels, and display stats in one plain-text feed for ACSIL studies.
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: First row is STATE,state. Level rows are name,price,red,green,blue,kind. Stats rows are name,value.
   /ddbands:
     get:
       summary: DD band levels

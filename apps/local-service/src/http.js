@@ -46,6 +46,14 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp', 'yellow-line', 'red-line', 'cat'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/stream') return streamSnapshots(req, res, clients, store);
 
+      const sierraMatch = pathname.match(/^\/sierra\/([^/]+)$/);
+      if (req.method === 'GET' && sierraMatch) {
+        const symbol = normalizeSymbol(sierraMatch[1]);
+        const snapshot = store.getSnapshot();
+        const row = snapshot.symbols[symbol] || null;
+        return sendText(res, 200, sierraFeedText(snapshot.source, row), 'text/plain; charset=utf-8');
+      }
+
       if (req.method === 'GET' && pathname === '/tradingview') {
         const snapshot = store.getSnapshot();
         const payload = createTradingViewBundlePayloadExport(snapshot);
@@ -119,7 +127,7 @@ export function rootInfo(config) {
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
     build: serviceBuildInfo(),
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -281,6 +289,19 @@ function statsToRowsText(stats = {}) {
   return rows.length ? `${rows.join('\n')}\n` : '\n';
 }
 
+function sierraFeedText(source = {}, row = null) {
+  const rows = [`STATE,${rowCell(source.state || 'waiting')}`];
+  const levelRows = levelsToDisplayRowsText(row ? row.levels : []).trim();
+  if (levelRows) rows.push(...levelRows.split(/\r?\n/));
+  const statRows = statsToRowsText(row ? row.stats : {}).trim();
+  if (statRows) rows.push(...statRows.split(/\r?\n/));
+  return `${rows.join('\n')}\n`;
+}
+
+function rowCell(value) {
+  return String(value || '').replace(/,/g, ' ');
+}
+
 function hasPublicStats(stats = {}) {
   return Boolean(stats.mapCode) ||
     [stats.dd, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
@@ -423,13 +444,21 @@ function loopbackOriginWithPort(origin, host) {
 }
 
 function sendJson(res, statusCode, value) {
-  res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify(value, null, 2));
+  const body = JSON.stringify(value, null, 2);
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': Buffer.byteLength(body)
+  });
+  res.end(body);
 }
 
 function sendText(res, statusCode, value, contentType) {
-  res.writeHead(statusCode, { 'Content-Type': contentType });
-  res.end(value);
+  const body = String(value || '');
+  res.writeHead(statusCode, {
+    'Content-Type': contentType,
+    'Content-Length': Buffer.byteLength(body)
+  });
+  res.end(body);
 }
 
 function docsHtml() {
@@ -468,6 +497,7 @@ GET /levels/:symbol/rows
 GET /stats
 GET /stats/:symbol
 GET /stats/:symbol/rows
+GET /sierra/:symbol
 GET /zones
 GET /tradingview
 GET /tradingview/:symbol

@@ -136,6 +136,7 @@ try {
   assert.ok(root.endpoints.includes('/diagnostics'));
   assert.ok(root.endpoints.includes('/plugins'));
   assert.ok(root.endpoints.includes('/tradingview'));
+  assert.ok(root.endpoints.includes('/sierra/:symbol'));
   assert.equal(root.version, '0.0.0');
   assert.equal(root.build.source, 'source');
   assert.equal(root.build.revision, '');
@@ -168,6 +169,8 @@ try {
   assert.equal(emptyStatsRows, '\n');
   const emptyStatsRowsPath = await getText(`${baseUrl}/stats/MES/rows`);
   assert.equal(emptyStatsRowsPath, '\n');
+  const emptySierraFeed = await getText(`${baseUrl}/sierra/MES`);
+  assert.equal(emptySierraFeed, 'STATE,waiting\n');
   assert.equal(health.network.remoteAccess, false);
   assert.equal(health.levelCount, 0);
 
@@ -288,6 +291,10 @@ try {
   assert.equal(pathRowsText, text);
   const rowsText = await getText(`${baseUrl}/levels/ES?format=rows`);
   assert.equal(rowsText, text);
+  const sierraFeed = await getText(`${baseUrl}/sierra/MES`);
+  assert.match(sierraFeed, /^STATE,capturing/m);
+  assert.match(sierraFeed, /OVNHP,7537\.00,41,98,255,hp/);
+  assert.doesNotMatch(sierraFeed, /"levels"/);
 
   const tradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(tradingViewResponse.ok, true, `${baseUrl}/tradingview/ES returned ${tradingViewResponse.status}`);
@@ -389,6 +396,14 @@ try {
   assert.match(nqStatsRows, /MRes,49\.87/);
   assert.match(nqStatsRows, /WRes,-29\.29/);
   assert.match(nqStatsRows, /Map,BLD/);
+  const sierraStatsFeed = await getText(`${baseUrl}/sierra/MNQ`);
+  assert.match(sierraStatsFeed, /^STATE,capturing/m);
+  assert.match(sierraStatsFeed, /BrZT1,30450\.00,240,98,146,zone-bear/);
+  assert.match(sierraStatsFeed, /DD,0\.66/);
+  assert.match(sierraStatsFeed, /Res,73\.82/);
+  assert.match(sierraStatsFeed, /MRes,49\.87/);
+  assert.match(sierraStatsFeed, /WRes,-29\.29/);
+  assert.match(sierraStatsFeed, /Map,BLD/);
 
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
   assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
