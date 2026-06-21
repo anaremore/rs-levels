@@ -38,7 +38,7 @@ GET /tradingview
 GET /tradingview/:symbol
 ```
 
-The `/rows` paths return the same text bodies as `?format=rows` and exist for direct clients, such as Sierra Chart ACSIL studies, where query-free URLs are easier to debug.
+The `/rows` paths return the same text bodies as `?format=rows` and exist for direct clients that prefer compact text parsing. Sierra Chart prefers the normal JSON `GET /levels/:symbol` and `GET /stats/:symbol` responses, with row parsing retained as a compatibility fallback.
 
 Plugins should accept `ES`/`MES` and `NQ`/`MNQ` aliases the same way the API does. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the ES family, and `/levels/F.US.ENQ...` resolves to the NQ family. JSON status, `/levels/:symbol` responses, and TradingView payloads use user-facing `ES`/`NQ` labels.
 

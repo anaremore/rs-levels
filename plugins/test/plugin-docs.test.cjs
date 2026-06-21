@@ -24,6 +24,8 @@ for (const plugin of manifest.plugins) {
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/stats/:symbol')), `${plugin.id} must poll symbol stats`);
     if (plugin.id === 'sierra-chart') {
+      assert.ok(plugin.api.endpoints.includes('GET /levels/:symbol'));
+      assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol'));
       assert.ok(plugin.api.endpoints.includes('GET /levels/:symbol/rows'));
       assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol/rows'));
     }
@@ -56,10 +58,13 @@ assertManualKinds(contract);
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
 assert.match(sierraSource, /\/status/);
-assert.match(sierraSource, /\/levels\/%s\/rows/);
-assert.match(sierraSource, /\/stats\/%s\/rows/);
+assert.match(sierraSource, /\/levels\/%s/);
+assert.match(sierraSource, /\/stats\/%s/);
 assert.match(sierraSource, /\/stats\//);
 assert.match(sierraSource, /RS_REQUEST_STATS/);
+assert.match(sierraSource, /ParseLevelsJson/);
+assert.match(sierraSource, /FormatStatsJson/);
+assert.match(sierraSource, /JsonStringField/);
 assert.match(sierraSource, /DrawStats/);
 assert.match(sierraSource, /DRAWING_LINE/);
 assert.match(sierraSource, /DRAWING_RECTANGLEHIGHLIGHT/);
@@ -77,6 +82,7 @@ assert.match(sierraSource, /LevelColor/);
 assert.match(sierraSource, /HTTP timeout/);
 assert.match(sierraSource, /RS_SIERRA_BUILD/);
 assert.match(sierraSource, /Show debug status/);
+assert.match(sierraSource, /ShowDebugStatus\.SetYesNo\(0\)/);
 assert.match(sierraSource, /DrawDebug/);
 assert.match(sierraSource, /ResponseShape/);
 assert.match(sierraSource, /parsed=%d/);

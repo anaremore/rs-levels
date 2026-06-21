@@ -12,7 +12,7 @@ SCDLLName("RS Levels Display")
 
 namespace
 {
-constexpr const char* RS_SIERRA_BUILD = "sierra-debug-2026-06-21.2";
+constexpr const char* RS_SIERRA_BUILD = "sierra-json-2026-06-21.1";
 constexpr int RS_MAX_LEVELS = 500;
 constexpr int RS_LINE_BASE = 730000;
 constexpr int RS_LABEL_BASE = 731000;
@@ -228,6 +228,249 @@ std::vector<RsLevel> ParseLevelsText(const SCString& body)
     return levels;
 }
 
+size_t SkipJsonWhitespace(const std::string& text, size_t position)
+{
+    while (position < text.size() && std::isspace(static_cast<unsigned char>(text[position])))
+        ++position;
+    return position;
+}
+
+bool FindJsonValueStart(const std::string& text, const char* key, size_t from, size_t& keyPosition, size_t& valueStart)
+{
+    const std::string needle = std::string("\"") + key + "\"";
+    keyPosition = text.find(needle, from);
+    while (keyPosition != std::string::npos)
+    {
+        const size_t colonPosition = text.find(':', keyPosition + needle.size());
+        if (colonPosition == std::string::npos)
+            return false;
+        valueStart = SkipJsonWhitespace(text, colonPosition + 1);
+        if (valueStart < text.size())
+            return true;
+        keyPosition = text.find(needle, keyPosition + needle.size());
+    }
+    return false;
+}
+
+size_t FindMatchingJsonBlock(const std::string& text, size_t openPosition, char openChar, char closeChar)
+{
+    bool inString = false;
+    bool escaped = false;
+    int depth = 0;
+
+    for (size_t i = openPosition; i < text.size(); ++i)
+    {
+        const char ch = text[i];
+        if (inString)
+        {
+            if (escaped)
+                escaped = false;
+            else if (ch == '\\')
+                escaped = true;
+            else if (ch == '"')
+                inString = false;
+            continue;
+        }
+
+        if (ch == '"')
+            inString = true;
+        else if (ch == openChar)
+            ++depth;
+        else if (ch == closeChar)
+        {
+            --depth;
+            if (depth == 0)
+                return i;
+        }
+    }
+
+    return std::string::npos;
+}
+
+std::string JsonBlockContent(const std::string& text, const char* key, char openChar, char closeChar)
+{
+    size_t from = 0;
+    size_t keyPosition = 0;
+    size_t valueStart = 0;
+    while (FindJsonValueStart(text, key, from, keyPosition, valueStart))
+    {
+        if (text[valueStart] == openChar)
+        {
+            const size_t closePosition = FindMatchingJsonBlock(text, valueStart, openChar, closeChar);
+            if (closePosition != std::string::npos)
+                return text.substr(valueStart + 1, closePosition - valueStart - 1);
+        }
+        from = keyPosition + 1;
+    }
+    return "";
+}
+
+std::string JsonArrayContent(const std::string& text, const char* key)
+{
+    return JsonBlockContent(text, key, '[', ']');
+}
+
+std::string JsonObjectContent(const std::string& text, const char* key)
+{
+    return JsonBlockContent(text, key, '{', '}');
+}
+
+bool ParseJsonStringAt(const std::string& text, size_t position, std::string& out)
+{
+    position = SkipJsonWhitespace(text, position);
+    if (position >= text.size() || text[position] != '"')
+        return false;
+
+    out.clear();
+    bool escaped = false;
+    for (size_t i = position + 1; i < text.size(); ++i)
+    {
+        const char ch = text[i];
+        if (escaped)
+        {
+            if (ch == 'n')
+                out += '\n';
+            else if (ch == 'r')
+                out += '\r';
+            else if (ch == 't')
+                out += '\t';
+            else
+                out += ch;
+            escaped = false;
+        }
+        else if (ch == '\\')
+        {
+            escaped = true;
+        }
+        else if (ch == '"')
+        {
+            return true;
+        }
+        else
+        {
+            out += ch;
+        }
+    }
+
+    return false;
+}
+
+std::string JsonStringField(const std::string& objectText, const char* key)
+{
+    size_t keyPosition = 0;
+    size_t valueStart = 0;
+    std::string value;
+    if (FindJsonValueStart(objectText, key, 0, keyPosition, valueStart) && ParseJsonStringAt(objectText, valueStart, value))
+        return value;
+    return "";
+}
+
+std::string JsonScalarField(const std::string& objectText, const char* key)
+{
+    size_t keyPosition = 0;
+    size_t valueStart = 0;
+    if (!FindJsonValueStart(objectText, key, 0, keyPosition, valueStart))
+        return "";
+
+    std::string stringValue;
+    if (ParseJsonStringAt(objectText, valueStart, stringValue))
+        return stringValue;
+
+    size_t valueEnd = valueStart;
+    while (valueEnd < objectText.size() && objectText[valueEnd] != ',' && objectText[valueEnd] != '}' && objectText[valueEnd] != ']')
+        ++valueEnd;
+
+    const std::string value = Trim(objectText.substr(valueStart, valueEnd - valueStart));
+    return value == "null" ? "" : value;
+}
+
+bool JsonNumberField(const std::string& objectText, const char* key, double& out)
+{
+    const std::string value = JsonScalarField(objectText, key);
+    if (value.empty())
+        return false;
+
+    char* end = nullptr;
+    const double parsed = std::strtod(value.c_str(), &end);
+    if (end == value.c_str())
+        return false;
+
+    out = parsed;
+    return true;
+}
+
+int HexDigit(char ch)
+{
+    if (ch >= '0' && ch <= '9')
+        return ch - '0';
+    if (ch >= 'a' && ch <= 'f')
+        return ch - 'a' + 10;
+    if (ch >= 'A' && ch <= 'F')
+        return ch - 'A' + 10;
+    return -1;
+}
+
+void ApplyHexColor(const std::string& color, RsLevel& level)
+{
+    if (color.size() != 7 || color[0] != '#')
+        return;
+
+    const int r1 = HexDigit(color[1]);
+    const int r2 = HexDigit(color[2]);
+    const int g1 = HexDigit(color[3]);
+    const int g2 = HexDigit(color[4]);
+    const int b1 = HexDigit(color[5]);
+    const int b2 = HexDigit(color[6]);
+    if (r1 < 0 || r2 < 0 || g1 < 0 || g2 < 0 || b1 < 0 || b2 < 0)
+        return;
+
+    level.red = r1 * 16 + r2;
+    level.green = g1 * 16 + g2;
+    level.blue = b1 * 16 + b2;
+}
+
+bool ParseLevelJsonObject(const std::string& objectText, RsLevel& out)
+{
+    double price = 0.0;
+    if (!JsonNumberField(objectText, "price", price))
+        return false;
+
+    out.name = JsonStringField(objectText, "name");
+    if (out.name.empty())
+        out.name = "Level";
+    out.price = price;
+    out.kind = JsonStringField(objectText, "kind");
+    if (out.kind.empty())
+        out.kind = InferKind(out.name);
+    ApplyHexColor(JsonStringField(objectText, "color"), out);
+    return true;
+}
+
+std::vector<RsLevel> ParseLevelsJson(const SCString& body)
+{
+    std::vector<RsLevel> levels;
+    const std::string arrayText = JsonArrayContent(body.GetChars(), "levels");
+    size_t position = 0;
+    while (position < arrayText.size() && static_cast<int>(levels.size()) < RS_MAX_LEVELS)
+    {
+        const size_t objectStart = arrayText.find('{', position);
+        if (objectStart == std::string::npos)
+            break;
+
+        const size_t objectEnd = FindMatchingJsonBlock(arrayText, objectStart, '{', '}');
+        if (objectEnd == std::string::npos)
+            break;
+
+        RsLevel level;
+        if (ParseLevelJsonObject(arrayText.substr(objectStart + 1, objectEnd - objectStart - 1), level))
+            levels.push_back(level);
+
+        position = objectEnd + 1;
+    }
+
+    return levels;
+}
+
 std::string FormatMetric(const std::string& value)
 {
     char* end = nullptr;
@@ -308,34 +551,39 @@ SCString FormatStatsText(const SCString& body, const char* symbol)
     return text.c_str();
 }
 
+SCString FormatStatsJson(const SCString& body, const char* symbol)
+{
+    std::string statsObject = JsonObjectContent(body.GetChars(), "stats");
+    if (statsObject.empty())
+        statsObject = body.GetChars();
+
+    const std::string dd = FormatMetric(JsonScalarField(statsObject, "dd"));
+    const std::string res = FormatMetric(JsonScalarField(statsObject, "resilience"));
+    const std::string mres = FormatMetric(JsonScalarField(statsObject, "monthlyResilience"));
+    const std::string wres = FormatMetric(JsonScalarField(statsObject, "weeklyResilience"));
+    const std::string map = JsonScalarField(statsObject, "mapCode");
+
+    std::string values;
+    values = AppendStatText(values, "DD", dd);
+    values = AppendStatText(values, "Res", res);
+    values = AppendStatText(values, "MRes", mres);
+    values = AppendStatText(values, "WRes", wres);
+    if (map.empty() && values.empty())
+        return "";
+
+    std::string text = "RS Levels " + DisplaySymbol(symbol);
+    if (!map.empty())
+        text += "  Map " + map;
+    if (!values.empty())
+        text += "\n" + values;
+    return text.c_str();
+}
+
 std::string FindSourceState(const SCString& body)
 {
-    const std::string text(body.GetChars());
-    size_t sourcePos = text.find("\"source\"");
-    while (sourcePos != std::string::npos)
-    {
-        const size_t colonPos = text.find(':', sourcePos);
-        if (colonPos == std::string::npos)
-            return "unknown";
-
-        const size_t objectStart = text.find_first_not_of(" \t\r\n", colonPos + 1);
-        if (objectStart != std::string::npos && text[objectStart] == '{')
-        {
-            const size_t statePos = text.find("\"state\"", objectStart);
-            if (statePos == std::string::npos)
-                return "unknown";
-            const size_t stateColonPos = text.find(':', statePos);
-            const size_t firstQuote = text.find('"', stateColonPos);
-            const size_t secondQuote = text.find('"', firstQuote + 1);
-            if (firstQuote == std::string::npos || secondQuote == std::string::npos)
-                return "unknown";
-            return text.substr(firstQuote + 1, secondQuote - firstQuote - 1);
-        }
-
-        sourcePos = text.find("\"source\"", sourcePos + 8);
-    }
-
-    return "unknown";
+    const std::string sourceObject = JsonObjectContent(body.GetChars(), "source");
+    const std::string state = JsonStringField(sourceObject, "state");
+    return state.empty() ? "unknown" : state;
 }
 
 void DrawStationaryText(SCStudyInterfaceRef sc, int lineNumber, const char* text, COLORREF color, int x, int y, int fontSize)
@@ -760,7 +1008,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         OtherColor.SetColor(RGB(158, 158, 158));
 
         ShowDebugStatus.Name = "Show debug status";
-        ShowDebugStatus.SetYesNo(1);
+        ShowDebugStatus.SetYesNo(0);
 
         return;
     }
@@ -809,13 +1057,13 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         SCString url;
         if (requestType == RS_REQUEST_STATUS)
         {
-            path.Format("/levels/%s/rows", Symbol.GetString());
+            path.Format("/levels/%s", Symbol.GetString());
             url.Format("%s%s", baseUrl.GetChars(), path.GetChars());
             requestType = RS_REQUEST_LEVELS;
         }
         else if (requestType == RS_REQUEST_LEVELS)
         {
-            path.Format("/stats/%s/rows", Symbol.GetString());
+            path.Format("/stats/%s", Symbol.GetString());
             url.Format("%s%s", baseUrl.GetChars(), path.GetChars());
             requestType = RS_REQUEST_STATS;
         }
@@ -865,7 +1113,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         }
         else if (requestState == RS_REQUEST_LEVELS)
         {
-            const std::vector<RsLevel> levels = ParseLevelsText(sc.HTTPResponse);
+            const std::vector<RsLevel> levels = shape == "json" ? ParseLevelsJson(sc.HTTPResponse) : ParseLevelsText(sc.HTTPResponse);
             const int zoneCount = DrawZoneFills(sc, levels, ShowZoneFills.GetYesNo() != 0, ZoneFillOpacity.GetInt(), colors);
             for (int i = 0; i < static_cast<int>(levels.size()); ++i)
                 DrawLevel(sc, levels[i], i, LineWidth.GetInt(), ShowLabels.GetYesNo() != 0, LabelOffsetTicks.GetInt(), colors);
@@ -876,7 +1124,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         }
         else if (requestState == RS_REQUEST_STATS)
         {
-            statsText = FormatStatsText(sc.HTTPResponse, Symbol.GetString());
+            statsText = shape == "json" ? FormatStatsJson(sc.HTTPResponse, Symbol.GetString()) : FormatStatsText(sc.HTTPResponse, Symbol.GetString());
             lastStatsDebug.Format("stats %s len=%d rows=%d shape=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, shape.c_str());
         }
 

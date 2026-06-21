@@ -12,17 +12,21 @@ The included study polls:
 
 ```text
 GET /status
-GET /levels/:symbol/rows
-GET /stats/:symbol/rows
+GET /levels/:symbol
+GET /stats/:symbol
 ```
 
-Text rows are:
+The Sierra study consumes the normal public JSON responses first. It uses `levels[]` rows with `name`, `price`, `kind`, and `color` fields, and `stats` fields for `DD`, `Res`, `MRes`, `WRes`, and `Map` context.
+
+It also keeps a compatibility fallback for row feeds:
 
 ```text
+GET /levels/:symbol/rows
+GET /stats/:symbol/rows
 name,price,red,green,blue,kind
 ```
 
-The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. `/stats/:symbol/rows` provides display context rows such as `DD`, `Res`, `MRes`, `WRes`, and `Map` for the chart corner. The row feeds avoid requiring a JSON parser inside ACSIL.
+`/status` provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories.
 
 Blank row feeds return a newline so Sierra Chart can observe that the HTTP request completed even when no levels or stats are available yet.
 
@@ -38,7 +42,7 @@ Blank row feeds return a newline so Sierra Chart can observe that the HTTP reque
 - label offset ticks
 - line width
 - per-kind colors for DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT, bull zones, bear zones, and other levels
-- show debug status, default yes while the Sierra adapter is stabilizing
+- show debug status, default off
 
 ## Install
 
@@ -50,12 +54,12 @@ Blank row feeds return a newline so Sierra Chart can observe that the HTTP reque
 
 ## Rendering Plan
 
-- Poll `/status` for source state, `/levels/:symbol/rows` for display rows, and `GET /stats/:symbol/rows` for DD/Res/MRes/WRes/Map context.
+- Poll `/status` for source state, `/levels/:symbol` for display levels, and `GET /stats/:symbol` for DD/Res/MRes/WRes/Map context.
 - Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
-- When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
+- When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
 
 ## Safety Boundary
 
