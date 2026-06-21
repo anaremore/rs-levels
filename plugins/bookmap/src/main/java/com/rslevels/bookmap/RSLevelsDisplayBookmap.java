@@ -57,6 +57,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
     private ScheduledExecutorService worker;
     private volatile Map<Double, String> horizontalLines = Collections.emptyMap();
     private volatile String sourceState = "waiting";
+    private volatile String statsSummary = "";
     private volatile long lastLevelsMs = 0L;
     private volatile Layer1ApiUserMessageModifyIndicator indicatorMessage;
 
@@ -90,9 +91,11 @@ public class RSLevelsDisplayBookmap implements CustomModule {
     }
 
     private void registerIndicator() {
+        if (api != null && indicatorMessage != null)
+            api.sendUserMessage(new Layer1ApiUserMessageModifyIndicator(indicatorMessage, false));
         indicatorMessage = Layer1ApiUserMessageModifyIndicator
             .builder(RSLevelsDisplayBookmap.class, INDICATOR_NAME)
-            .extendFullName(aliasSuffix(alias))
+            .extendFullName(aliasSuffix(alias) + statsSuffix())
             .setGraphType(GraphType.PRIMARY)
             .setIndicatorColorScheme(new RsColorScheme())
             .setIndicatorLineStyle(IndicatorLineStyle.DEFAULT)
@@ -112,6 +115,8 @@ public class RSLevelsDisplayBookmap implements CustomModule {
             sourceState = findSourceState(status);
             String rows = httpGet(serviceUrl + "/levels/" + urlPart(symbol) + "?format=rows", 1500);
             horizontalLines = parseRows(rows);
+            String statsRows = httpGet(serviceUrl + "/stats/" + urlPart(symbol) + "?format=rows", 1500);
+            updateStatsSummary(formatStatsSummary(statsRows));
             lastLevelsMs = System.currentTimeMillis();
         } catch (Exception ex) {
             sourceState = "offline";
@@ -123,6 +128,15 @@ public class RSLevelsDisplayBookmap implements CustomModule {
 
     private boolean isStale() {
         return lastLevelsMs == 0L || System.currentTimeMillis() - lastLevelsMs > TimeUnit.SECONDS.toMillis(staleSeconds) || "stale".equals(sourceState);
+    }
+
+    private void updateStatsSummary(String nextStatsSummary) {
+        String next = nextStatsSummary == null ? "" : nextStatsSummary;
+        if (next.equals(statsSummary))
+            return;
+        statsSummary = next;
+        if (api != null)
+            registerIndicator();
     }
 
     private static Map<Double, String> parseRows(String rows) {
@@ -144,6 +158,65 @@ public class RSLevelsDisplayBookmap implements CustomModule {
             }
         }
         return Collections.unmodifiableMap(out);
+    }
+
+    private static String formatStatsSummary(String rows) {
+        String dd = "";
+        String res = "";
+        String mres = "";
+        String wres = "";
+        String map = "";
+        String[] lines = (rows == null ? "" : rows).split("\\r?\\n");
+        for (String line : lines) {
+            String[] parts = line.split(",");
+            if (parts.length < 2)
+                continue;
+            String name = parts[0].trim().toUpperCase(Locale.ROOT);
+            String value = parts[1].trim();
+            if ("MAP".equals(name) || "MAPCODE".equals(name))
+                map = value;
+            else if ("DD".equals(name))
+                dd = formatMetric(value);
+            else if ("RES".equals(name))
+                res = formatMetric(value);
+            else if ("MRES".equals(name))
+                mres = formatMetric(value);
+            else if ("WRES".equals(name))
+                wres = formatMetric(value);
+        }
+
+        String text = "";
+        if (!map.isEmpty())
+            text = appendPart(text, "Map " + map);
+        text = appendPart(text, metricPart("DD", dd));
+        text = appendPart(text, metricPart("Res", res));
+        text = appendPart(text, metricPart("MRes", mres));
+        text = appendPart(text, metricPart("WRes", wres));
+        return text;
+    }
+
+    private static String metricPart(String name, String value) {
+        return value.isEmpty() ? "" : name + " " + value;
+    }
+
+    private static String appendPart(String text, String part) {
+        if (part == null || part.isEmpty())
+            return text;
+        return text.isEmpty() ? part : text + "  " + part;
+    }
+
+    private static String formatMetric(String value) {
+        try {
+            double number = Double.parseDouble(value);
+            String text = String.format(Locale.ROOT, "%.2f", number);
+            while (text.contains(".") && text.endsWith("0"))
+                text = text.substring(0, text.length() - 1);
+            if (text.endsWith("."))
+                text = text.substring(0, text.length() - 1);
+            return text;
+        } catch (NumberFormatException ex) {
+            return value == null ? "" : value;
+        }
     }
 
     private static double uniquePrice(TreeMap<Double, String> existing, double price) {
@@ -293,6 +366,10 @@ public class RSLevelsDisplayBookmap implements CustomModule {
 
     private static String aliasSuffix(String value) {
         return value == null || value.trim().isEmpty() ? "default" : value.replaceAll("[^A-Za-z0-9_.-]", "_");
+    }
+
+    private String statsSuffix() {
+        return statsSummary == null || statsSummary.isEmpty() ? "" : " " + statsSummary;
     }
 
     private static final class AliasFilter implements Predicate<String> {

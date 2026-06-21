@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using TradingPlatform.BusinessLayer;
 using TradingPlatform.BusinessLayer.Chart;
@@ -15,6 +16,7 @@ namespace RSLevelsQuantower
         private static readonly HttpClient Client = new HttpClient();
         private readonly object sync = new object();
         private List<LevelRow> levels = new List<LevelRow>();
+        private StatsRow stats = new StatsRow();
         private DateTime nextPollUtc = DateTime.MinValue;
         private DateTime lastLevelsUtc = DateTime.MinValue;
         private bool polling;
@@ -98,6 +100,7 @@ namespace RSLevelsQuantower
             string state;
             string issue;
             string symbol;
+            StatsRow statsCopy;
             lock (sync)
             {
                 copy = new List<LevelRow>(levels);
@@ -105,12 +108,14 @@ namespace RSLevelsQuantower
                 state = sourceState;
                 issue = lastIssue;
                 symbol = lastSymbol;
+                statsCopy = stats.Copy();
             }
 
             Rectangle rect = args.Rectangle;
             DrawZoneFills(args.Graphics, mainWindow, rect, copy);
             DrawLevels(args.Graphics, mainWindow, rect, copy);
             DrawStatus(args.Graphics, rect, symbol, state, issue, lastLevels);
+            DrawStats(args.Graphics, rect, symbol, statsCopy);
         }
 
         private async Task PollAsync(string symbol)
@@ -123,10 +128,13 @@ namespace RSLevelsQuantower
                 string nextState = FindSourceState(statusText);
                 string rows = await Client.GetStringAsync(baseUrl + "/levels/" + Uri.EscapeDataString(symbol) + "?format=rows").ConfigureAwait(false);
                 List<LevelRow> nextLevels = ParseLevels(rows);
+                string statsRows = await Client.GetStringAsync(baseUrl + "/stats/" + Uri.EscapeDataString(symbol) + "?format=rows").ConfigureAwait(false);
+                StatsRow nextStats = ParseStats(statsRows);
 
                 lock (sync)
                 {
                     levels = nextLevels;
+                    stats = nextStats;
                     sourceState = nextState;
                     lastLevelsUtc = DateTime.UtcNow;
                     lastIssue = "";
@@ -145,6 +153,23 @@ namespace RSLevelsQuantower
             finally
             {
                 polling = false;
+            }
+        }
+
+        private void DrawStats(Graphics graphics, Rectangle rect, string symbol, StatsRow statsRow)
+        {
+            string text = FormatStats(statsRow, symbol);
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            using (Font font = new Font("Consolas", 10, FontStyle.Bold))
+            using (Brush textBrush = new SolidBrush(Color.White))
+            using (Brush backBrush = new SolidBrush(Color.FromArgb(170, 16, 20, 24)))
+            {
+                SizeF size = graphics.MeasureString(text, font);
+                RectangleF box = new RectangleF(rect.Left + 8, rect.Bottom - size.Height - 10, size.Width + 10, size.Height + 6);
+                graphics.FillRectangle(backBrush, box);
+                graphics.DrawString(text, font, textBrush, box.Left + 5, box.Top + 3);
             }
         }
 
@@ -287,6 +312,7 @@ namespace RSLevelsQuantower
             lock (sync)
             {
                 levels = new List<LevelRow>();
+                stats = new StatsRow();
                 sourceState = "waiting";
                 lastIssue = "";
                 lastSymbol = "";
@@ -364,6 +390,69 @@ namespace RSLevelsQuantower
                 });
             }
             return result;
+        }
+
+        private static StatsRow ParseStats(string rows)
+        {
+            StatsRow result = new StatsRow();
+            string[] lines = (rows ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string[] parts = line.Split(',');
+                if (parts.Length < 2)
+                    continue;
+                string name = parts[0].Trim();
+                string value = parts[1].Trim();
+                if (name.Equals("Map", StringComparison.OrdinalIgnoreCase) || name.Equals("MapCode", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.MapCode = value;
+                    continue;
+                }
+                double number;
+                if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
+                    continue;
+                if (name.Equals("DD", StringComparison.OrdinalIgnoreCase))
+                    result.Dd = number;
+                else if (name.Equals("Res", StringComparison.OrdinalIgnoreCase))
+                    result.Res = number;
+                else if (name.Equals("MRes", StringComparison.OrdinalIgnoreCase))
+                    result.MRes = number;
+                else if (name.Equals("WRes", StringComparison.OrdinalIgnoreCase))
+                    result.WRes = number;
+            }
+            return result;
+        }
+
+        private static string FormatStats(StatsRow row, string symbol)
+        {
+            if (row == null || !row.HasValues)
+                return "";
+            StringBuilder text = new StringBuilder();
+            text.Append("RS Levels ").Append(DisplaySymbol(symbol));
+            if (!string.IsNullOrWhiteSpace(row.MapCode))
+                text.Append("  Map ").Append(row.MapCode);
+            string values = "";
+            values = AppendStat(values, "DD", row.Dd);
+            values = AppendStat(values, "Res", row.Res);
+            values = AppendStat(values, "MRes", row.MRes);
+            values = AppendStat(values, "WRes", row.WRes);
+            if (!string.IsNullOrWhiteSpace(values))
+                text.Append('\n').Append(values);
+            return text.ToString();
+        }
+
+        private static string AppendStat(string text, string name, double? value)
+        {
+            if (!value.HasValue)
+                return text;
+            string part = name + " " + value.Value.ToString("0.##", CultureInfo.InvariantCulture);
+            return string.IsNullOrWhiteSpace(text) ? part : text + "  " + part;
+        }
+
+        private static string DisplaySymbol(string symbol)
+        {
+            string normalized = NormalizeSymbol(symbol);
+            return normalized == "MNQ" ? "NQ" : "ES";
         }
 
         private static int ParseColor(string value)
@@ -446,6 +535,35 @@ namespace RSLevelsQuantower
             public int Green;
             public int Blue;
             public string Kind;
+        }
+
+        private sealed class StatsRow
+        {
+            public double? Dd;
+            public double? Res;
+            public double? MRes;
+            public double? WRes;
+            public string MapCode;
+
+            public bool HasValues
+            {
+                get
+                {
+                    return Dd.HasValue || Res.HasValue || MRes.HasValue || WRes.HasValue || !string.IsNullOrWhiteSpace(MapCode);
+                }
+            }
+
+            public StatsRow Copy()
+            {
+                return new StatsRow
+                {
+                    Dd = Dd,
+                    Res = Res,
+                    MRes = MRes,
+                    WRes = WRes,
+                    MapCode = MapCode
+                };
+            }
         }
     }
 }

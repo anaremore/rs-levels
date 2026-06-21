@@ -4,6 +4,8 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const root = join(__dirname, '..', '..');
+const extensionManifest = JSON.parse(readFileSync(join(root, 'apps', 'browser-extension', 'manifest.json'), 'utf8'));
+const extensionVersion = extensionManifest.version || '0.0.0';
 const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs', '--check'], {
   cwd: root,
   encoding: 'utf8'
@@ -25,7 +27,7 @@ assert.match(packageOutput, /browser extension zip written/);
 assert.match(packageOutput, /browser extension zip checksum written/);
 
 const zipPath = join(root, 'dist', 'rs-levels-0.0.0.zip');
-const extensionZipPath = join(root, 'dist', 'rs-levels-browser-extension-0.1.1.zip');
+const extensionZipPath = join(root, 'dist', `rs-levels-browser-extension-${extensionVersion}.zip`);
 const releaseRoot = join(root, 'dist', 'rs-levels-0.0.0');
 const releaseCli = join(releaseRoot, 'apps', 'local-service', 'src', 'cli.js');
 const releaseVersion = execFileSync(process.execPath, [releaseCli, '--version'], {
@@ -68,6 +70,6 @@ assert.match(extensionZipText, /"source": "package"/);
 assert.doesNotMatch(extensionZipText, /test\/extension\.test\.cjs/);
 
 const extensionChecksum = readFileSync(`${extensionZipPath}.sha256`, 'utf8').trim();
-assert.match(extensionChecksum, /^[a-f0-9]{64}  rs-levels-browser-extension-0\.1\.1\.zip$/);
+assert.match(extensionChecksum, new RegExp(`^[a-f0-9]{64}  rs-levels-browser-extension-${extensionVersion.replaceAll('.', '\\.')}.zip$`));
 
 console.log('package release tests passed');

@@ -95,6 +95,8 @@ Then open the dashboard, run a client example, copy a TradingView paste payload 
 
 You can keep the current ES and NQ futures contracts visible in RocketScooter. CQG-style symbols such as `F.US.EP...` are treated as the ES family, and `F.US.ENQ...` is treated as the NQ family, so the same captured levels can be used on ES/MES and NQ/MNQ charts in the destination platform.
 
+When RocketScooter exposes DD ratio, Res, MRes, WRes, or liquidity-map context such as `Map BLD`, RS Levels carries those values as display stats. TradingView shows them in its stats panel, and direct platform plugins read them from `/stats/:symbol`.
+
 If capture does not start, open extension options and review the endpoint allowlist.
 
 ## 4. Use TradingView

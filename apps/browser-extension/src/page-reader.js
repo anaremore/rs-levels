@@ -88,13 +88,13 @@
     }
 
     const snapshot = readDisplaySnapshot();
-    if (!snapshot.levels.length) {
+    if (!snapshot.levels.length && !snapshotHasStats(snapshot)) {
       stats.skippedEmptyCount += 1;
       publishDiagnostic(snapshot.reader.chartCount ? 'reader-empty' : 'reader-waiting');
       return;
     }
 
-    const hash = stableHash(snapshot.levels);
+    const hash = stableHash(snapshot);
     if (hash === lastHash && Date.now() - lastCaptureAt < 15000) {
       stats.ignoredCount += 1;
       publishDiagnostic('reader-unchanged');
@@ -111,6 +111,7 @@
       source: 'page-reader',
       capturedAt,
       levels: [],
+      stats: {},
       chartLines: [],
       referenceLines: [],
       zoneRectangles: [],
@@ -119,6 +120,7 @@
         shapeCount: 0,
         studyCount: 0,
         levelCount: 0,
+        statCount: 0,
         chartLineCount: 0,
         referenceLineCount: 0,
         zoneRectangleCount: 0
@@ -143,15 +145,118 @@
         if (!symbol) continue;
         readShapeLevels(chart, symbol, rawSymbol, state, seen);
         readStudyLevels(chart, symbol, rawSymbol, state, seen);
+        readStudyStats(chart, symbol, state);
       }
+      readHeaderStats(state);
+      readMapCodeStats(state);
     } catch (_err) {
       stats.readErrorCount += 1;
     }
     state.reader.levelCount = state.levels.length;
+    state.reader.statCount = Object.keys(state.stats).length;
     state.reader.chartLineCount = state.chartLines.length;
     state.reader.referenceLineCount = state.referenceLines.length;
     state.reader.zoneRectangleCount = state.zoneRectangles.length;
     return state;
+  }
+
+  function readHeaderStats(state) {
+    try {
+      const nav = globalThis.document && document.querySelector ? document.querySelector('nav.navbar') : null;
+      const text = compact(nav && nav.textContent);
+      if (!text) return;
+      const sp = text.match(/SP500:\s*DD:\s*([-\d.]+)\s*Res:?\s*([-\d.]+)\s*\|\s*([-\d.]+)\s*HP:\s*([-\d.]+)\s*MHP:\s*([-\d.]+)/i);
+      if (sp) {
+        addStats(state, 'MES', {
+          dd: numberValue(sp[1]),
+          resilience: numberValue(sp[2]),
+          monthlyResilience: numberValue(sp[3])
+        });
+      }
+
+      const nq = text.match(/NQ100:\s*Res:?\s*([-\d.]+)\s*\|\s*([-\d.]+)\s*HP:\s*([-\d.]+)\s*MHP:\s*([-\d.]+)/i);
+      if (nq) {
+        const esStats = state.stats.MES || {};
+        addStats(state, 'MNQ', {
+          dd: esStats.dd,
+          resilience: numberValue(nq[1]),
+          monthlyResilience: numberValue(nq[2])
+        });
+      }
+    } catch (_err) {
+      stats.readErrorCount += 1;
+    }
+  }
+
+  function readMapCodeStats(state) {
+    try {
+      const table = globalThis.RS_SOCK && RS_SOCK.scanner && RS_SOCK.scanner.MASTER_TABLE && RS_SOCK.scanner.MASTER_TABLE.data;
+      if (!plainObject(table)) return;
+      addStats(state, 'MES', { mapCode: mapCodeFromNode(table.SPY || table.SPX || table.SP500) });
+      addStats(state, 'MNQ', { mapCode: mapCodeFromNode(table.QQQ || table.NDX || table.NQ100) });
+    } catch (_err) {
+      stats.readErrorCount += 1;
+    }
+  }
+
+  function readStudyStats(chart, symbol, state) {
+    const studies = safeArray(call(chart, 'getAllStudies'));
+    for (const study of studies) {
+      try {
+        if (!/Resilience/i.test(safeString(study.name))) continue;
+        const studyObject = chart.getStudyById ? chart.getStudyById(study.id) : null;
+        const data = studyObject && studyObject._study && studyObject._study.data && studyObject._study.data();
+        if (!data || typeof data.each !== 'function') continue;
+        let best = null;
+        data.each((_rowIndex, value) => {
+          if (!Array.isArray(value) || value.length < 4) return;
+          const resilience = numberValue(value[1]);
+          const monthlyResilience = numberValue(value[2]);
+          const weeklyResilience = numberValue(value[3]);
+          if (resilience == null || monthlyResilience == null || weeklyResilience == null) return;
+          if (resilience === 0 && monthlyResilience === 0 && weeklyResilience === 0) return;
+          best = { resilience, monthlyResilience, weeklyResilience };
+        });
+        if (best) addStats(state, symbol, best);
+      } catch (_err) {
+        stats.readErrorCount += 1;
+      }
+    }
+  }
+
+  function addStats(state, symbolInput, statsInput = {}) {
+    const symbol = futuresSymbol(symbolInput);
+    if (!symbol || !plainObject(statsInput)) return;
+    const clean = {
+      dd: firstFinite(statsInput.dd, statsInput.ddRatio),
+      resilience: firstFinite(statsInput.resilience, statsInput.res, statsInput.dailyResilience),
+      monthlyResilience: firstFinite(statsInput.monthlyResilience, statsInput.mres, statsInput.resilience2),
+      weeklyResilience: firstFinite(statsInput.weeklyResilience, statsInput.wres, statsInput.resilience3),
+      mapCode: normalizeMapCode(statsInput.mapCode)
+    };
+    if (!hasStats(clean)) return;
+    const existing = state.stats[symbol] || {};
+    state.stats[symbol] = {
+      dd: clean.dd == null ? existing.dd : clean.dd,
+      resilience: clean.resilience == null ? existing.resilience : clean.resilience,
+      monthlyResilience: clean.monthlyResilience == null ? existing.monthlyResilience : clean.monthlyResilience,
+      weeklyResilience: clean.weeklyResilience == null ? existing.weeklyResilience : clean.weeklyResilience,
+      mapCode: clean.mapCode || existing.mapCode || ''
+    };
+  }
+
+  function mapCodeFromNode(node) {
+    if (!plainObject(node)) return '';
+    const direct = normalizeMapCode(node.mapCode || node.map || node.liquidityMap || node.code);
+    if (direct) return direct;
+    return normalizeMapCode([
+      node.BBrMr,
+      node.zone,
+      node.LS,
+      node.hedging,
+      node.UD,
+      node.timePressure
+    ].map(safeString).filter(Boolean).join(''));
   }
 
   function readShapeLevels(chart, symbol, rawSymbol, state, seen) {
@@ -556,11 +661,44 @@
     }
   }
 
-  function stableHash(levels) {
-    return levels
+  function stableHash(snapshot) {
+    const levelHash = snapshot.levels
       .map((level) => [level.symbol, level.name, Number(level.price).toFixed(2), level.kind].join(':'))
       .sort()
       .join('|');
+    const statHash = Object.entries(snapshot.stats || {})
+      .map(([symbol, values]) => [
+        symbol,
+        values.dd,
+        values.resilience,
+        values.monthlyResilience,
+        values.weeklyResilience,
+        values.mapCode
+      ].join(':'))
+      .sort()
+      .join('|');
+    return `${levelHash}#${statHash}`;
+  }
+
+  function snapshotHasStats(snapshot) {
+    return Object.values(snapshot.stats || {}).some(hasStats);
+  }
+
+  function hasStats(values = {}) {
+    return Boolean(values.mapCode) ||
+      [values.dd, values.resilience, values.monthlyResilience, values.weeklyResilience].some((value) => value != null);
+  }
+
+  function firstFinite(...values) {
+    for (const value of values) {
+      const number = numberValue(value);
+      if (number != null) return number;
+    }
+    return null;
+  }
+
+  function normalizeMapCode(value) {
+    return safeString(value).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12);
   }
 
   function plainObject(value) {
@@ -572,6 +710,7 @@
   }
 
   function numberValue(value) {
+    if (value == null || value === '') return null;
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }

@@ -20,7 +20,7 @@ Status: complete.
 Status: public API foundation complete; launch scripts included; app wrapper planned.
 
 - Cross-platform localhost service.
-- Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/plugins`, `/diagnostics`, `/snapshot`, `/levels`, `/ddbands`, `/references`, `/tradingview`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
+- Implemented `/docs`, `/openapi.yaml`, `/swagger.yaml`, `/health`, `/status`, `/plugins`, `/diagnostics`, `/snapshot`, `/levels`, `/stats`, `/stats/:symbol`, `/ddbands`, `/references`, `/tradingview`, `/tradingview/:symbol`, `/stream`, and `/capture/api`.
 - Safe loopback default with explicit Tailscale/private-network opt-in.
 - Generic display parser normalizes object, compact row, and keyed map level shapes.
 - Recaptures replace previous levels from the same scrubbed endpoint key while preserving other display endpoints.
@@ -45,7 +45,6 @@ Status: public setup foundation complete; field validation planned.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
-- Guard JSON copy actions when the selected export has no captured levels.
 - Next: field testing against real RocketScooter endpoint shapes.
 
 ## Milestone 4: Display Plugins
@@ -56,7 +55,8 @@ Status: public source artifacts complete; platform compile/install validation pl
 - NinjaTrader display indicator with local polling, kind-aware labels, and zone fills.
 - Quantower display indicator with local polling, kind-aware labels, and zone fills.
 - Bookmap display add-on with local polling and kind-aware value-line colors.
-- TradingView Pine indicator with paste-based level input, kind toggles, color controls, line controls, zone fills, label controls, and max-level display control.
+- TradingView Pine indicator with paste-based level input, kind toggles, color controls, line controls, zone fills, stats panel, label controls, and max-level display control.
+- Direct platform adapters display DD/Res/MRes/WRes/liquidity-map context from `/stats/:symbol?format=rows` where the platform supports chart text overlays.
 - Public `plugins/manifest.json` inventory with static display-only validation.
 
 ## Milestone 5: Packaging

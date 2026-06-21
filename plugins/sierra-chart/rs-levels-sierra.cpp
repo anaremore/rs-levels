@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
 #include <sstream>
 #include <string>
@@ -16,9 +17,11 @@ constexpr int RS_LINE_BASE = 730000;
 constexpr int RS_LABEL_BASE = 731000;
 constexpr int RS_STATUS_LINE = 732000;
 constexpr int RS_ZONE_BASE = 733000;
+constexpr int RS_STATS_LINE = 734000;
 constexpr int RS_REQUEST_NONE = 0;
 constexpr int RS_REQUEST_STATUS = 1;
 constexpr int RS_REQUEST_LEVELS = 2;
+constexpr int RS_REQUEST_STATS = 3;
 
 struct RsLevel
 {
@@ -122,6 +125,86 @@ std::vector<RsLevel> ParseLevelsText(const SCString& body)
     return levels;
 }
 
+std::string FormatMetric(const std::string& value)
+{
+    char* end = nullptr;
+    const double parsed = std::strtod(value.c_str(), &end);
+    if (end == value.c_str())
+        return value;
+    char buffer[32] = {};
+    std::snprintf(buffer, sizeof(buffer), "%.2f", parsed);
+    std::string text(buffer);
+    while (text.size() > 1 && text.find('.') != std::string::npos && text[text.size() - 1] == '0')
+        text.pop_back();
+    if (!text.empty() && text[text.size() - 1] == '.')
+        text.pop_back();
+    return text;
+}
+
+void AssignStat(const std::string& name, const std::string& value, std::string& dd, std::string& res, std::string& mres, std::string& wres, std::string& map)
+{
+    const std::string upper = Upper(name);
+    if (upper == "MAP" || upper == "MAPCODE")
+        map = value;
+    else if (upper == "DD")
+        dd = FormatMetric(value);
+    else if (upper == "RES")
+        res = FormatMetric(value);
+    else if (upper == "MRES")
+        mres = FormatMetric(value);
+    else if (upper == "WRES")
+        wres = FormatMetric(value);
+}
+
+std::string AppendStatText(const std::string& text, const char* name, const std::string& value)
+{
+    if (value.empty())
+        return text;
+    return text.empty() ? std::string(name) + " " + value : text + "  " + name + " " + value;
+}
+
+std::string DisplaySymbol(const char* input)
+{
+    const std::string upper = Upper(input ? input : "");
+    return upper.find("NQ") != std::string::npos ? "NQ" : "ES";
+}
+
+SCString FormatStatsText(const SCString& body, const char* symbol)
+{
+    std::string dd;
+    std::string res;
+    std::string mres;
+    std::string wres;
+    std::string map;
+    std::stringstream stream(body.GetChars());
+    std::string row;
+    while (std::getline(stream, row))
+    {
+        std::vector<std::string> fields;
+        std::stringstream rowStream(row);
+        std::string field;
+        while (std::getline(rowStream, field, ','))
+            fields.push_back(Trim(field));
+        if (fields.size() >= 2)
+            AssignStat(fields[0], fields[1], dd, res, mres, wres, map);
+    }
+
+    std::string values;
+    values = AppendStatText(values, "DD", dd);
+    values = AppendStatText(values, "Res", res);
+    values = AppendStatText(values, "MRes", mres);
+    values = AppendStatText(values, "WRes", wres);
+    if (map.empty() && values.empty())
+        return "";
+
+    std::string text = "RS Levels " + DisplaySymbol(symbol);
+    if (!map.empty())
+        text += "  Map " + map;
+    if (!values.empty())
+        text += "\n" + values;
+    return text.c_str();
+}
+
 std::string FindSourceState(const SCString& body)
 {
     const std::string text(body.GetChars());
@@ -139,21 +222,37 @@ std::string FindSourceState(const SCString& body)
     return text.substr(firstQuote + 1, secondQuote - firstQuote - 1);
 }
 
-void DrawStatus(SCStudyInterfaceRef sc, const char* text, COLORREF color)
+void DrawStationaryText(SCStudyInterfaceRef sc, int lineNumber, const char* text, COLORREF color, int x, int y, int fontSize)
 {
+    if (text == nullptr || text[0] == '\0')
+    {
+        sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, lineNumber);
+        return;
+    }
+
     s_UseTool tool;
     tool.Clear();
     tool.ChartNumber = sc.ChartNumber;
     tool.DrawingType = DRAWING_STATIONARY_TEXT;
-    tool.LineNumber = RS_STATUS_LINE;
+    tool.LineNumber = lineNumber;
     tool.AddMethod = UTAM_ADD_OR_ADJUST;
     tool.Region = sc.GraphRegion;
-    tool.BeginValue = 5;
-    tool.BeginDateTime = 5;
+    tool.BeginValue = y;
+    tool.BeginDateTime = x;
     tool.Color = color;
-    tool.FontSize = 10;
+    tool.FontSize = fontSize;
     tool.Text = text;
     sc.UseTool(tool);
+}
+
+void DrawStatus(SCStudyInterfaceRef sc, const char* text, COLORREF color)
+{
+    DrawStationaryText(sc, RS_STATUS_LINE, text, color, 5, 5, 10);
+}
+
+void DrawStats(SCStudyInterfaceRef sc, const char* text)
+{
+    DrawStationaryText(sc, RS_STATS_LINE, text, RGB(255, 255, 255), 5, 92, 10);
 }
 
 bool IsZone(const std::string& kind)
@@ -461,6 +560,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     int& lastRequestSeconds = sc.GetPersistentInt(3);
     int& lastLevelsSeconds = sc.GetPersistentInt(4);
     SCString& sourceState = sc.GetPersistentSCString(1);
+    SCString& statsText = sc.GetPersistentSCString(2);
 
     const int nowSeconds = sc.CurrentSystemDateTime.GetTimeInSeconds();
     const int refreshSeconds = std::max(1, RefreshMs.GetInt() / 1000);
@@ -474,6 +574,11 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         {
             url.Format("%s/levels/%s?format=rows", baseUrl.GetChars(), Symbol.GetString());
             requestType = RS_REQUEST_LEVELS;
+        }
+        else if (requestType == RS_REQUEST_LEVELS)
+        {
+            url.Format("%s/stats/%s?format=rows", baseUrl.GetChars(), Symbol.GetString());
+            requestType = RS_REQUEST_STATS;
         }
         else
         {
@@ -502,6 +607,10 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
             DeleteUnusedDrawings(sc, static_cast<int>(levels.size()), zoneCount);
             lastLevelsSeconds = nowSeconds;
         }
+        else if (requestState == RS_REQUEST_STATS)
+        {
+            statsText = FormatStatsText(sc.HTTPResponse, Symbol.GetString());
+        }
 
         requestState = RS_REQUEST_NONE;
         sc.HTTPResponse = "";
@@ -524,4 +633,5 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         statusColor = RGB(76, 175, 80);
     }
     DrawStatus(sc, statusText.GetChars(), statusColor);
+    DrawStats(sc, statsText.GetChars());
 }

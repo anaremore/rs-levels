@@ -19,6 +19,8 @@ service from a background worker.
 GET /status
 GET /levels/ES?format=rows
 GET /levels/NQ?format=rows
+GET /stats/ES?format=rows
+GET /stats/NQ?format=rows
 ```
 
 The add-on parses the generic display rows because that export is compact,
@@ -29,6 +31,10 @@ the original first five columns and uses the optional `kind` column when present
 so bull zones, bear zones, HP, MHP, DD bands, references, open/close levels,
 yellow lines, red lines, and CAT lines land in distinct Bookmap color slots.
 
+Stats rows are `name,value` and can include `DD`, `Res`, `MRes`, `WRes`, and
+`Map`. Bookmap exposes that display context in the indicator full name because
+the public value-line API is optimized for horizontal price markers.
+
 ## Add-On Settings
 
 - service URL: JVM system property `rslevels.serviceUrl`, default `http://127.0.0.1:8765`
@@ -38,10 +44,11 @@ yellow lines, red lines, and CAT lines land in distinct Bookmap color slots.
 
 ## Rendering
 
-- Polls `GET /status` and `GET /levels/:symbol?format=rows`.
+- Polls `GET /status`, `GET /levels/:symbol?format=rows`, and `GET /stats/:symbol?format=rows`.
 - Draws up to 500 horizontal level markers through Bookmap indicator value lines.
 - Uses the optional `kind` column for category-aware colors, including separate
   bull zone, bear zone, yellow-line, red-line, and CAT colors.
+- Shows DD/Res/MRes/WRes/Map context in the indicator full name when available.
 - Clears displayed lines after stale/offline data exceeds the configured threshold.
 - Logs feed availability warnings through Bookmap's logging API.
 

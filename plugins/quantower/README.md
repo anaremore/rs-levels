@@ -11,9 +11,10 @@ Initial Quantower indicator source is included at `RSLevelsDisplayQuantower.cs`.
 ```text
 GET /status
 GET /levels/:symbol?format=rows
+GET /stats/:symbol?format=rows
 ```
 
-The indicator uses the generic display row feed to keep parsing simple inside Quantower. `/status` provides source freshness.
+The indicator uses generic text row feeds to keep parsing simple inside Quantower. `/levels/:symbol?format=rows` provides horizontal display levels. `/stats/:symbol?format=rows` provides chart-corner display context such as `DD`, `Res`, `MRes`, `WRes`, and `Map`. `/status` provides source freshness.
 
 ## Indicator Settings
 
@@ -43,6 +44,7 @@ The indicator uses the generic display row feed to keep parsing simple inside Qu
 - Draw horizontal overlays in the chart paint routine, including yellow-line, red-line, and CAT manual-line kinds from the row feed.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the line to avoid struck-through text.
+- Render DD/Res/MRes/WRes/Map context in the chart corner when available.
 - Render a small freshness marker for waiting, stale, and offline states.
 
 ## Safety Boundary

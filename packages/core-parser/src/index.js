@@ -2,6 +2,7 @@ import {
   inferLevelKind,
   normalizeEndpointSummary,
   normalizeLevel,
+  normalizeStats,
   normalizeSymbol,
   stableLevelId
 } from '../../schemas/src/index.js';
@@ -43,8 +44,9 @@ export function normalizeCapture(capture = {}) {
     source: 'rocketscooter',
     warnings
   });
+  const stats = collectStats(parsed, { symbolHint });
 
-  if (!levels.length) {
+  if (!levels.length && !Object.keys(stats).length) {
     warnings.push('No display levels were recognized in this capture.');
   }
 
@@ -54,13 +56,14 @@ export function normalizeCapture(capture = {}) {
     status: integerOrNull(capture.status),
     capturedAt,
     parser: 'generic-display-levels',
-    ok: levels.length > 0
+    ok: levels.length > 0 || Object.keys(stats).length > 0
   });
 
   return {
     endpoint,
     capturedAt,
     symbols: groupLevelsBySymbol(levels),
+    stats,
     warnings
   };
 }
@@ -104,9 +107,153 @@ export function collectLevels(root, options = {}) {
   return levels;
 }
 
+export function collectStats(root, options = {}) {
+  const grouped = {};
+  const merge = (symbolInput, statsInput) => {
+    const symbol = candidateSymbol(symbolInput || options.symbolHint);
+    if (!symbol || !statsInput || typeof statsInput !== 'object' || Array.isArray(statsInput)) return;
+    const normalized = normalizeStats(statsInput);
+    if (!hasMeaningfulStats(normalized)) return;
+    grouped[symbol] = mergeStatsValues(grouped[symbol], normalized);
+  };
+
+  visitStats(root, '', merge, options);
+  return grouped;
+}
+
 export function endpointKey(capture = {}) {
   const raw = stringValue(capture.endpoint || capture.path || capture.url || 'capture');
   return scrubEndpointKey(raw.replace(/^https?:\/\/[^/]+/i, '').split('?')[0] || 'capture');
+}
+
+function visitStats(value, keyHint, merge, options) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+
+  const nodeSymbol = candidateSymbolFromStatsNode(value, options.symbolHint || keyHint);
+  if (value.stats && typeof value.stats === 'object') {
+    mergeStatsContainer(value.stats, nodeSymbol || keyHint || options.symbolHint, merge, options);
+  }
+  if (value.headerBar && typeof value.headerBar === 'object' && !Array.isArray(value.headerBar)) {
+    mergeHeaderBarStats(value.headerBar, merge);
+  }
+  if (value.mapCodes && typeof value.mapCodes === 'object' && !Array.isArray(value.mapCodes)) {
+    mergeMapCodeStats(value.mapCodes, merge);
+  }
+  if (looksLikeStatsNode(value)) {
+    merge(nodeSymbol || keyHint || options.symbolHint, value);
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    if (!child || typeof child !== 'object' || Array.isArray(child)) continue;
+    const symbol = symbolFromStatsKey(key);
+    if (symbol) {
+      if (looksLikeStatsNode(child)) merge(symbol, child);
+      visitStats(child, symbol, merge, options);
+    } else if (key !== 'levels' && key !== 'chartLines' && key !== 'referenceLines' && key !== 'zoneRectangles') {
+      visitStats(child, keyHint, merge, options);
+    }
+  }
+}
+
+function mergeStatsContainer(container, keyHint, merge, options) {
+  if (Array.isArray(container)) {
+    container.forEach((entry) => merge(candidateSymbolFromStatsNode(entry, keyHint || options.symbolHint), entry));
+    return;
+  }
+
+  const directSymbol = candidateSymbolFromStatsNode(container, keyHint || options.symbolHint);
+  if (looksLikeStatsNode(container) && directSymbol) merge(directSymbol, container);
+
+  Object.entries(container).forEach(([key, value]) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const symbol = symbolFromStatsKey(key) || candidateSymbolFromStatsNode(value, keyHint || options.symbolHint);
+    if (symbol) merge(symbol, value);
+  });
+}
+
+function mergeHeaderBarStats(headerBar, merge) {
+  const sp = headerBar.sp500 || headerBar.SP500 || headerBar.spx || headerBar.SPX || headerBar.es || headerBar.ES;
+  const nq = headerBar.nq100 || headerBar.NQ100 || headerBar.ndx || headerBar.NDX || headerBar.nq || headerBar.NQ;
+  const spStats = normalizeStats(sp || {});
+  if (hasMeaningfulStats(spStats)) merge('MES', spStats);
+  if (nq && typeof nq === 'object') {
+    const nqStats = normalizeStats({
+      ...(spStats.dd == null ? {} : { dd: spStats.dd }),
+      ...nq
+    });
+    if (hasMeaningfulStats(nqStats)) merge('MNQ', nqStats);
+  }
+}
+
+function mergeMapCodeStats(mapCodes, merge) {
+  Object.entries(mapCodes).forEach(([key, value]) => {
+    const symbol = mapCodeSymbol(key);
+    if (!symbol || !value || typeof value !== 'object' || Array.isArray(value)) return;
+    const mapCode = mapCodeFromNode(value);
+    if (mapCode) merge(symbol, { mapCode });
+  });
+}
+
+function mapCodeSymbol(value) {
+  const key = stringValue(value).toUpperCase();
+  if (key === 'SPY' || key === 'SPX' || key === 'SP500') return 'MES';
+  if (key === 'QQQ' || key === 'NDX' || key === 'NQ100') return 'MNQ';
+  return candidateSymbol(key);
+}
+
+function symbolFromStatsKey(value) {
+  const key = stringValue(value);
+  if (/^(sp500|spx|spy)$/i.test(key)) return 'MES';
+  if (/^(nq100|ndx|qqq)$/i.test(key)) return 'MNQ';
+  return candidateSymbol(key);
+}
+
+function candidateSymbolFromStatsNode(node, fallback = '') {
+  if (!node || typeof node !== 'object') return candidateSymbol(fallback);
+  return candidateSymbol(firstString(node, SYMBOL_KEYS)) || candidateSymbol(fallback);
+}
+
+function looksLikeStatsNode(node) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) return false;
+  if (mapCodeFromNode(node)) return true;
+  return [
+    node.dd,
+    node.ddRatio,
+    node.resilience,
+    node.res,
+    node.dailyResilience,
+    node.weeklyResilience,
+    node.wres,
+    node.resilience3,
+    node.monthlyResilience,
+    node.mres,
+    node.resilience2
+  ].some((value) => numberValue(value) != null);
+}
+
+function hasMeaningfulStats(stats = {}) {
+  return Boolean(stats.mapCode) ||
+    [stats.dd, stats.resilience, stats.weeklyResilience, stats.monthlyResilience]
+      .some((value) => value != null && Number.isFinite(Number(value)));
+}
+
+function mergeStatsValues(existing = {}, next = {}) {
+  const merged = normalizeStats(existing);
+  ['dd', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
+    if (next[key] != null && Number.isFinite(Number(next[key]))) merged[key] = Number(next[key]);
+  });
+  if (next.mapCode) merged.mapCode = next.mapCode;
+  return merged;
+}
+
+function mapCodeFromNode(node) {
+  if (!node || typeof node !== 'object') return '';
+  const direct = stringValue(node.mapCode || node.map || node.liquidityMap || node.code);
+  if (direct) return direct;
+  return [node.BBrMr, node.zone, node.LS, node.hedging, node.UD, node.timePressure]
+    .map(stringValue)
+    .filter(Boolean)
+    .join('');
 }
 
 function candidateFromObject(node, options) {
@@ -446,13 +593,14 @@ function contextFromKey(context, key) {
   const text = stringValue(key);
   const symbol = symbolFromKey(text);
   const quoteContext = context.quoteContext || isQuoteContextKey(text);
+  const statsContext = isStatsContextKey(text);
   const unsupportedSymbol = !symbol && isUnsupportedSymbolContext(text);
   const zoneSide = zoneSideFromText(text);
   return {
     symbolHint: unsupportedSymbol ? '' : symbol || context.symbolHint || '',
     zoneSide: zoneSide || context.zoneSide || '',
     nameHint: symbol || zoneSide || unsupportedSymbol ? context.nameHint || '' : text || context.nameHint || '',
-    ignore: quoteContext || unsupportedSymbol || (context.ignore && !symbol),
+    ignore: context.ignore || quoteContext || statsContext || unsupportedSymbol,
     quoteContext
   };
 }
@@ -513,6 +661,10 @@ function candidateSymbolFromNode(node, options = {}) {
 
 function isQuoteContextKey(key) {
   return /(watchlist|quote|quotes|ticker|screener|scanner)/i.test(stringValue(key));
+}
+
+function isStatsContextKey(key) {
+  return /^(stats|headerBar|mapCodes)$/i.test(stringValue(key));
 }
 
 function isUnsupportedSymbolContext(value) {

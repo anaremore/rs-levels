@@ -69,7 +69,7 @@ assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'stale' } }), /stale/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
 assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
-const bundlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,7565,hp|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp');
+const bundlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,7565,hp;DD,0.66,stat|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp;Map BLD,0,stat');
 assert.match(bundlePayload, /^RSLEVELS\|2\|/);
 const singlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp');
 assert.match(singlePayload, /\|NQ\|/);
@@ -85,7 +85,11 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
       { symbol: 'F.US.ENQU26', name: 'OVNMHP', price: 30475, kind: 'mhp' },
       { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat' },
       { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
-    ]
+    ],
+    stats: {
+      ES: { dd: 0.66, resilience: 14.47, monthlyResilience: 19.87, mapCode: 'BLD' },
+      NQ: { dd: 0.66, resilience: 73.82, monthlyResilience: 49.87, weeklyResilience: -29.29, mapCode: 'BLD' }
+    }
   })
 });
 assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSON.stringify(['ES', 'NQ']));
@@ -94,8 +98,13 @@ assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
 assert.match(localPayload, /Yellow Line,7598,yellow-line/);
 assert.match(localPayload, /Red Line,7520,red-line/);
+assert.match(localPayload, /DD,0\.66,stat/);
+assert.match(localPayload, /Res,14\.47,stat/);
+assert.match(localPayload, /MRes,19\.87,stat/);
+assert.match(localPayload, /Map BLD,0,stat/);
 assert.match(localPayload, /\|NQ\|2026-06-21T03:47:02\.097Z\|OVNMHP,30475,mhp/);
 assert.match(localPayload, /CAT,31232\.74,cat/);
+assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 assert.throws(

@@ -22,14 +22,16 @@ Direct polling plugins should use:
 ```text
 GET /status
 GET /levels/:symbol
+GET /stats/:symbol
 ```
 
-`GET /status` includes a stable `symbols` list and scrubbed `symbolSummaries` with per-symbol level counts. Plugins should check the selected symbol summary before treating a chart overlay as available.
+`GET /status` includes a stable `symbols` list and scrubbed `symbolSummaries` with per-symbol level counts and display stats. Plugins should check the selected symbol summary before treating a chart overlay as available.
 
 Optional format-specific calls:
 
 ```text
 GET /levels/:symbol?format=rows
+GET /stats/:symbol?format=rows
 GET /tradingview
 GET /tradingview/:symbol
 ```
@@ -89,6 +91,18 @@ name,price,red,green,blue,kind
 ```
 
 Clients should read the sixth `kind` column for category-aware styling and may fall back to inferring the kind from the display name when it is absent.
+
+Display-context stats are separate from price levels:
+
+```text
+DD,0.66
+Res,73.82
+MRes,49.87
+WRes,-29.29
+Map,BLD
+```
+
+Direct plugins should render these rows as chart-corner context when the platform supports text overlays. Bookmap may surface them in the indicator full name because its public value-line API is focused on horizontal price markers. TradingView carries these values as `stat` rows inside the `RSLEVELS|2` payload and must not draw them as price lines.
 
 ## Safety Tests
 

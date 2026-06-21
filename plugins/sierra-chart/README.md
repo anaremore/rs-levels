@@ -13,6 +13,7 @@ The included study polls:
 ```text
 GET /status
 GET /levels/:symbol?format=rows
+GET /stats/:symbol?format=rows
 ```
 
 Text rows are:
@@ -21,7 +22,7 @@ Text rows are:
 name,price,red,green,blue,kind
 ```
 
-The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. The row feed provides simple rows that avoid requiring a JSON parser inside ACSIL.
+The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. `/stats/:symbol?format=rows` provides display context rows such as `DD`, `Res`, `MRes`, `WRes`, and `Map` for the chart corner. The row feeds avoid requiring a JSON parser inside ACSIL.
 
 ## Study Inputs
 
@@ -45,11 +46,11 @@ The first five columns are stable for older studies. The optional sixth `kind` c
 
 ## Rendering Plan
 
-- Poll `/status` for source state and `/levels/:symbol?format=rows` for display rows.
+- Poll `/status` for source state, `/levels/:symbol?format=rows` for display rows, and `GET /stats/:symbol?format=rows` for DD/Res/MRes/WRes/Map context.
 - Draw horizontal lines in the chart region at each price, up to 500 rows.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
-- Show waiting, offline, or stale state as a small chart text marker.
+- Show waiting, offline, or stale state as a small chart text marker, plus a bottom-left stats marker when context is available.
 
 ## Safety Boundary
 

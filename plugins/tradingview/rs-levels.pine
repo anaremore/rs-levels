@@ -4,6 +4,7 @@ indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count =
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 showLabels = input.bool(true, "Labels")
+showStatsPanel = input.bool(true, "Stats panel")
 showDdBands = input.bool(true, "DD bands", inline = "dd")
 ddBandColorInput = input.color(color.rgb(41, 182, 246), "", inline = "dd")
 showHp = input.bool(true, "HP", inline = "hp")
@@ -41,6 +42,7 @@ labelStackColumnBars = 4
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
 var box[] rsBoxes = array.new_box()
+var table rsStatsTable = table.new(position.bottom_left, 1, 2)
 
 clearDrawings() =>
     while array.size(rsBoxes) > 0
@@ -76,6 +78,7 @@ kindEnabled(kind) =>
         "cat" => showCatLines
         "zone-bull" => showBullZones
         "zone-bear" => showBearZones
+        "stat" => false
         => showOtherLevels
 
 zoneKind(kind) =>
@@ -183,6 +186,50 @@ levelTextForChart(payloadText) =>
     chartSymbol = chartPayloadSymbol()
     bestPayloadLevelText(payloadText, chartSymbol)
 
+statValue(levelText, metricName) =>
+    value = ""
+    target = str.upper(metricName)
+    if levelText != ""
+        items = str.split(levelText, ";")
+        for i = 0 to array.size(items) - 1
+            fields = str.split(array.get(items, i), ",")
+            if array.size(fields) >= 3
+                name = array.get(fields, 0)
+                kind = array.get(fields, 2)
+                upperName = str.upper(name)
+                if kind == "stat"
+                    if target == "MAP" and str.startswith(upperName, "MAP")
+                        mapText = str.replace_all(name, "Map ", "")
+                        mapText := str.replace_all(mapText, "MAP ", "")
+                        value := mapText
+                    else if upperName == target
+                        value := array.get(fields, 1)
+    value
+
+appendStatText(existingText, label, value) =>
+    value == "" ? existingText : existingText == "" ? label + " " + value : existingText + "  " + label + " " + value
+
+statsPanelBody(levelText) =>
+    lineText = ""
+    lineText := appendStatText(lineText, "DD", statValue(levelText, "DD"))
+    lineText := appendStatText(lineText, "Res", statValue(levelText, "RES"))
+    lineText := appendStatText(lineText, "MRes", statValue(levelText, "MRES"))
+    lineText := appendStatText(lineText, "WRes", statValue(levelText, "WRES"))
+    lineText
+
+drawStatsPanel(levelText) =>
+    mapText = statValue(levelText, "MAP")
+    bodyText = statsPanelBody(levelText)
+    hasStats = mapText != "" or bodyText != ""
+    if showStatsPanel and hasStats
+        symbolText = chartPayloadSymbol()
+        headerText = (symbolText == "" ? "RS Levels" : symbolText) + (mapText == "" ? "" : "  Map " + mapText)
+        table.cell(rsStatsTable, 0, 0, headerText, text_color = color.white, bgcolor = color.new(color.black, 15), text_size = labelSize())
+        table.cell(rsStatsTable, 0, 1, bodyText, text_color = color.white, bgcolor = color.new(color.black, 15), text_size = labelSize())
+    else
+        table.cell(rsStatsTable, 0, 0, "", bgcolor = color.new(color.black, 100))
+        table.cell(rsStatsTable, 0, 1, "", bgcolor = color.new(color.black, 100))
+
 labelDirection(name, kind) =>
     upperName = str.upper(name)
     if str.contains(upperName, "LOWER") or str.contains(upperName, "BZB") or str.contains(upperName, "BRZB")
@@ -288,5 +335,6 @@ drawLevelText(levelText, maxCount) =>
 if barstate.islast
     clearDrawings()
     levelText = levelTextForChart(payload)
+    drawStatsPanel(levelText)
     if levelText != ""
         [drawnCount, totalCount] = drawLevelText(levelText, maxLevelsInput)

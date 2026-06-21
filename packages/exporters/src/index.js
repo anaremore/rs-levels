@@ -3,10 +3,11 @@ import { displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/ind
 export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
   const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
+  const statRows = tradingViewStatsRows(row.stats);
   return tradingViewPayload([{
     symbol: displaySymbolFor(row.symbol),
     capturedAt: row.capturedAt,
-    levels
+    levels: [...levels, ...statRows]
   }], options);
 }
 
@@ -15,7 +16,10 @@ export function createTradingViewBundlePayloadExport(snapshot, options = {}) {
   return tradingViewPayload(rows.map((row) => ({
     symbol: displaySymbolFor(row.symbol),
     capturedAt: row.capturedAt,
-    levels: limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price))
+    levels: [
+      ...limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price)),
+      ...tradingViewStatsRows(row.stats)
+    ]
   })), {
     ...options,
     generatedAt: options.generatedAt || snapshot?.generatedAt
@@ -32,7 +36,7 @@ function bundleRows(snapshot, options) {
   delete rowOptions.symbol;
   return Object.values(symbols || {})
     .map((row) => normalizeRow(row, rowOptions))
-    .filter((row) => isTradingViewBundleSymbol(row.symbol) && Array.isArray(row.levels) && row.levels.some((level) => Number.isFinite(level.price)))
+    .filter((row) => isTradingViewBundleSymbol(row.symbol) && hasTradingViewRows(row))
     .sort((a, b) => a.symbol.localeCompare(b.symbol));
 }
 
@@ -56,6 +60,26 @@ function tradingViewLevelRow(level) {
   const price = tradingViewPrice(level?.price);
   const kind = field(level?.kind);
   return name && price && kind ? `${name},${price},${kind}` : '';
+}
+
+function hasTradingViewRows(row) {
+  return (Array.isArray(row.levels) && row.levels.some((level) => Number.isFinite(level.price))) ||
+    tradingViewStatsRows(row.stats).length > 0;
+}
+
+function tradingViewStatsRows(stats = {}) {
+  const rows = [];
+  const dd = finiteNumber(stats.dd);
+  const resilience = finiteNumber(stats.resilience);
+  const monthlyResilience = finiteNumber(stats.monthlyResilience);
+  const weeklyResilience = finiteNumber(stats.weeklyResilience);
+  const mapCode = field(stats.mapCode);
+  if (dd != null) rows.push({ name: 'DD', price: dd, kind: 'stat' });
+  if (resilience != null) rows.push({ name: 'Res', price: resilience, kind: 'stat' });
+  if (monthlyResilience != null) rows.push({ name: 'MRes', price: monthlyResilience, kind: 'stat' });
+  if (weeklyResilience != null) rows.push({ name: 'WRes', price: weeklyResilience, kind: 'stat' });
+  if (mapCode) rows.push({ name: `Map ${mapCode}`, price: 0, kind: 'stat' });
+  return rows;
 }
 
 function tradingViewLevelName(level) {
@@ -98,6 +122,12 @@ function field(value) {
 function tradingViewPrice(value) {
   const number = Number(value);
   return Number.isFinite(number) ? String(number) : '';
+}
+
+function finiteNumber(value) {
+  if (value == null || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 function limitLevels(levels, maxLevels) {

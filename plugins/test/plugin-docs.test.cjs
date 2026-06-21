@@ -22,6 +22,7 @@ for (const plugin of manifest.plugins) {
     assert.equal(plugin.api.mode, 'local-http');
     assert.ok(plugin.api.endpoints.includes('GET /status'), `${plugin.id} must poll status`);
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
+    assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/stats/:symbol')), `${plugin.id} must poll symbol stats`);
   }
 }
 
@@ -32,6 +33,7 @@ for (const platform of platforms) {
   if (platform !== 'tradingview') {
     assert.match(text, /GET \/status/, `${platform} must document status polling`);
     assert.match(text, /GET \/levels\//, `${platform} must document levels polling`);
+    assert.match(text, /GET \/stats\//, `${platform} must document stats polling`);
     assert.match(text, /stale/i, `${platform} must document stale handling`);
   } else {
     assert.match(text, /RSLEVELS\|2/, 'tradingview must document the short paste payload');
@@ -40,6 +42,7 @@ for (const platform of platforms) {
 
 const contract = readFileSync(join(root, '..', 'docs', 'plugin-contract.md'), 'utf8');
 assert.match(contract, /GET \/levels\/:symbol/);
+assert.match(contract, /GET \/stats\/:symbol/);
 assert.match(contract, /Freshness Rules/);
 assert.match(contract, /Safety Tests/);
 assert.match(contract, /name,price,red,green,blue,kind/);
@@ -50,6 +53,9 @@ const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.c
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
 assert.match(sierraSource, /\/status/);
 assert.match(sierraSource, /format=rows/);
+assert.match(sierraSource, /\/stats\//);
+assert.match(sierraSource, /RS_REQUEST_STATS/);
+assert.match(sierraSource, /DrawStats/);
 assert.match(sierraSource, /DRAWING_HORIZONTALLINE/);
 assert.match(sierraSource, /DRAWING_RECTANGLE_EXT_HIGHLIGHT/);
 assert.match(sierraSource, /RS_MAX_LEVELS = 500/);
@@ -64,6 +70,9 @@ const ninjaSource = readFileSync(join(root, 'ninjatrader', 'RSLevelsDisplay.cs')
 assert.match(ninjaSource, /class RSLevelsDisplay : Indicator/);
 assert.match(ninjaSource, /\/status/);
 assert.match(ninjaSource, /format=rows/);
+assert.match(ninjaSource, /\/stats\//);
+assert.match(ninjaSource, /ParseStats/);
+assert.match(ninjaSource, /FormatStats/);
 assert.match(ninjaSource, /Draw\.HorizontalLine/);
 assert.match(ninjaSource, /Draw\.Rectangle/);
 assert.match(ninjaSource, /Draw\.TextFixed/);
@@ -82,6 +91,9 @@ const quantowerSource = readFileSync(join(root, 'quantower', 'RSLevelsDisplayQua
 assert.match(quantowerSource, /class RSLevelsDisplayQuantower : Indicator/);
 assert.match(quantowerSource, /\/status/);
 assert.match(quantowerSource, /format=rows/);
+assert.match(quantowerSource, /\/stats\//);
+assert.match(quantowerSource, /ParseStats/);
+assert.match(quantowerSource, /DrawStats/);
 assert.match(quantowerSource, /OnPaintChart/);
 assert.match(quantowerSource, /DrawLine/);
 assert.match(quantowerSource, /DrawZoneFills/);
@@ -100,6 +112,8 @@ const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 
 assert.match(bookmapSource, /class RSLevelsDisplayBookmap implements CustomModule/);
 assert.match(bookmapSource, /\/status/);
 assert.match(bookmapSource, /format=rows/);
+assert.match(bookmapSource, /\/stats\//);
+assert.match(bookmapSource, /formatStatsSummary/);
 assert.match(bookmapSource, /setHorizontalValueLinesInfo/);
 assert.match(bookmapSource, /MAX_LEVELS = 500/);
 assert.match(bookmapSource, /parts\.length >= 6/);

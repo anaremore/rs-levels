@@ -3,6 +3,7 @@ import {
   createEmptySnapshot,
   normalizeSymbol,
   normalizeSourceState,
+  normalizeStats,
   normalizeSymbolSnapshot,
   validateSnapshot
 } from '../../../packages/schemas/src/index.js';
@@ -46,7 +47,8 @@ export function createLevelStore(options = {}) {
 
     const symbols = { ...snapshot.symbols };
     const parsedLevelCount = Object.values(parsed.symbols).reduce((sum, rows) => sum + rows.length, 0);
-    if (!parsedLevelCount) {
+    const parsedStatsCount = Object.keys(parsed.stats || {}).length;
+    if (!parsedLevelCount && !parsedStatsCount) {
       const nextSymbols = removeEndpointLevels(symbols, parsed.endpoint.key);
       const hasLevels = Object.values(nextSymbols).some((row) => Array.isArray(row.levels) && row.levels.length);
       snapshot = {
@@ -68,15 +70,19 @@ export function createLevelStore(options = {}) {
     }
 
     lastAcceptedAtMs = receivedAtDate.getTime();
-    Object.keys(parsed.symbols).forEach((symbol) => {
+    Array.from(new Set([...Object.keys(parsed.symbols), ...Object.keys(parsed.stats || {})])).forEach((symbol) => {
       const existing = symbols[symbol] || normalizeSymbolSnapshot(symbol, {});
-      const existingLevels = existing.levels.filter((level) => level.metadata?.endpointKey !== parsed.endpoint.key);
+      const parsedLevels = parsed.symbols[symbol] || [];
+      const existingLevels = parsedLevels.length
+        ? existing.levels.filter((level) => level.metadata?.endpointKey !== parsed.endpoint.key)
+        : existing.levels;
       const byId = new Map(existingLevels.map((level) => [level.id, level]));
-      parsed.symbols[symbol].forEach((level) => byId.set(level.id, level));
+      parsedLevels.forEach((level) => byId.set(level.id, level));
       symbols[symbol] = normalizeSymbolSnapshot(symbol, {
         ...existing,
         capturedAt: parsed.capturedAt,
-        levels: Array.from(byId.values())
+        levels: Array.from(byId.values()),
+        stats: parsed.stats?.[symbol] ? mergeStats(existing.stats, parsed.stats[symbol]) : existing.stats
       });
     });
 
@@ -152,6 +158,16 @@ export function createLevelStore(options = {}) {
       ageMs
     });
   }
+}
+
+function mergeStats(existing = {}, next = {}) {
+  const merged = normalizeStats(existing);
+  const incoming = normalizeStats(next);
+  ['dd', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
+    if (incoming[key] != null && Number.isFinite(Number(incoming[key]))) merged[key] = Number(incoming[key]);
+  });
+  if (incoming.mapCode) merged.mapCode = incoming.mapCode;
+  return merged;
 }
 
 function removeEndpointLevels(symbols, endpointKey) {

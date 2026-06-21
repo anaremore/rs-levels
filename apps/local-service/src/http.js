@@ -40,6 +40,7 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/plugins') return sendJson(res, 200, pluginManifest());
       if (req.method === 'GET' && pathname === '/snapshot') return sendJson(res, 200, store.getSnapshot());
       if (req.method === 'GET' && pathname === '/levels') return sendJson(res, 200, { levels: store.flatLevels() });
+      if (req.method === 'GET' && pathname === '/stats') return sendJson(res, 200, { symbols: publicStatsSnapshot(store.getSnapshot()) });
       if (req.method === 'GET' && pathname === '/ddbands') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => level.kind === 'dd-band') });
       if (req.method === 'GET' && pathname === '/zones') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['zone', 'zone-bull', 'zone-bear'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp', 'yellow-line', 'red-line', 'cat'].includes(level.kind)) });
@@ -72,6 +73,16 @@ export function createHttpApp({ store, config }) {
         return sendJson(res, row ? 200 : 404, row ? publicSymbolSnapshot(row) : { ok: false, error: 'symbol not found' });
       }
 
+      const statsMatch = pathname.match(/^\/stats\/([^/]+)$/);
+      if (req.method === 'GET' && statsMatch) {
+        const symbol = normalizeSymbol(statsMatch[1]);
+        const row = store.getSnapshot().symbols[symbol] || null;
+        if (isDisplayRowsFormat(url.searchParams.get('format'))) {
+          return sendText(res, 200, statsToRowsText(row ? row.stats : {}), 'text/plain; charset=utf-8');
+        }
+        return sendJson(res, row ? 200 : 404, row ? publicStatsRow(row) : { ok: false, error: 'symbol not found' });
+      }
+
       if (req.method === 'POST' && pathname === '/capture/api') {
         const payload = await readJson(req);
         const snapshot = store.applyCapture(payload);
@@ -94,7 +105,7 @@ export function rootInfo(config) {
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
     build: serviceBuildInfo(),
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/stats', '/stats/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -200,6 +211,7 @@ function symbolSummaries(snapshot = {}) {
     symbol: displaySymbolFor(row.symbol || row.displaySymbol || ''),
     displaySymbol: displaySymbolFor(row.displaySymbol || row.symbol || ''),
     levelCount: Array.isArray(row.levels) ? row.levels.length : 0,
+    stats: publicStats(row.stats),
     capturedAt: String(row.capturedAt || ''),
     warnings: Array.isArray(row.warnings) ? row.warnings.map((warning) => String(warning)).filter(Boolean) : []
   })).sort((a, b) => a.symbol.localeCompare(b.symbol));
@@ -212,8 +224,52 @@ function publicSymbolSnapshot(row = {}) {
     ...row,
     symbol: display,
     displaySymbol: display,
+    stats: publicStats(row.stats),
     levels: Array.isArray(row.levels) ? row.levels.map((level) => publicLevel(level, canonical, display)) : []
   };
+}
+
+function publicStatsSnapshot(snapshot = {}) {
+  return Object.values(snapshot.symbols || {})
+    .map(publicStatsRow)
+    .filter((row) => hasPublicStats(row.stats))
+    .sort((a, b) => a.symbol.localeCompare(b.symbol));
+}
+
+function publicStatsRow(row = {}) {
+  const display = displaySymbolFor(row.symbol || row.displaySymbol || '');
+  return {
+    symbol: display,
+    displaySymbol: display,
+    capturedAt: String(row.capturedAt || ''),
+    stats: publicStats(row.stats)
+  };
+}
+
+function publicStats(stats = {}) {
+  return {
+    dd: finiteNumberOrNull(stats.dd),
+    resilience: finiteNumberOrNull(stats.resilience),
+    weeklyResilience: finiteNumberOrNull(stats.weeklyResilience),
+    monthlyResilience: finiteNumberOrNull(stats.monthlyResilience),
+    mapCode: String(stats.mapCode || '')
+  };
+}
+
+function statsToRowsText(stats = {}) {
+  const clean = publicStats(stats);
+  const rows = [];
+  if (clean.dd != null) rows.push(`DD,${formatMetric(clean.dd)}`);
+  if (clean.resilience != null) rows.push(`Res,${formatMetric(clean.resilience)}`);
+  if (clean.monthlyResilience != null) rows.push(`MRes,${formatMetric(clean.monthlyResilience)}`);
+  if (clean.weeklyResilience != null) rows.push(`WRes,${formatMetric(clean.weeklyResilience)}`);
+  if (clean.mapCode) rows.push(`Map,${clean.mapCode}`);
+  return `${rows.join('\n')}${rows.length ? '\n' : ''}`;
+}
+
+function hasPublicStats(stats = {}) {
+  return Boolean(stats.mapCode) ||
+    [stats.dd, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
 }
 
 function publicLevel(level = {}, canonical, display) {
@@ -232,6 +288,17 @@ function isDisplayRowsFormat(format) {
 
 function hasTradingViewSections(payload) {
   return String(payload || '').split('|').length >= 6;
+}
+
+function finiteNumberOrNull(value) {
+  if (value == null || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function formatMetric(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2).replace(/\.?0+$/, '') : '';
 }
 
 function diagnosticChecks({ source, levels, symbols, network }) {
@@ -383,6 +450,8 @@ GET /snapshot
 GET /diagnostics
 GET /levels
 GET /levels/:symbol
+GET /stats
+GET /stats/:symbol
 GET /zones
 GET /tradingview
 GET /tradingview/:symbol

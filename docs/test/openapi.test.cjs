@@ -4,11 +4,11 @@ const { join } = require('node:path');
 
 const spec = readFileSync(join(__dirname, '..', 'openapi.yaml'), 'utf8');
 
-for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/{symbol}', '/ddbands', '/zones', '/references', '/tradingview', '/tradingview/{symbol}', '/stream', '/capture/api']) {
+for (const path of ['/', '/docs', '/openapi.yaml', '/swagger.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/{symbol}', '/stats', '/stats/{symbol}', '/ddbands', '/zones', '/references', '/tradingview', '/tradingview/{symbol}', '/stream', '/capture/api']) {
   assert.match(spec, new RegExp(`^  ${path.replace(/[{}]/g, '\\$&')}:`, 'm'));
 }
 
-for (const schema of ['Snapshot', 'SymbolSnapshot', 'SymbolSummary', 'PluginManifest', 'PluginEntry', 'Level', 'TradingViewPayload', 'CapturePayload', 'Diagnostics', 'DiagnosticCheck']) {
+for (const schema of ['Snapshot', 'SymbolSnapshot', 'SymbolSummary', 'StatsSnapshot', 'StatsRow', 'Stats', 'PluginManifest', 'PluginEntry', 'Level', 'TradingViewPayload', 'CapturePayload', 'Diagnostics', 'DiagnosticCheck']) {
   assert.match(spec, new RegExp(`^    ${schema}:`, 'm'));
 }
 

@@ -11,9 +11,10 @@ Initial NinjaScript source is included at `RSLevelsDisplay.cs`.
 ```text
 GET /status
 GET /levels/:symbol?format=rows
+GET /stats/:symbol?format=rows
 ```
 
-The indicator uses the generic display row feed to avoid adding a JSON dependency inside NinjaTrader. `/status` provides source freshness.
+The indicator uses generic text row feeds to avoid adding a JSON dependency inside NinjaTrader. `/levels/:symbol?format=rows` provides horizontal display levels. `/stats/:symbol?format=rows` provides chart-corner display context such as `DD`, `Res`, `MRes`, `WRes`, and `Map`. `/status` provides source freshness.
 
 ## Indicator Settings
 
@@ -47,6 +48,7 @@ Documents\NinjaTrader 8\bin\Custom\Indicators\RSLevelsDisplay.cs
 - Use the display row feed color columns and optional sixth `kind` column for display styling, including yellow-line, red-line, and CAT manual-line kinds.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the level line to avoid struck-through text.
+- Render DD/Res/MRes/WRes/Map context in the chart corner when the local API has it.
 - Show stale/offline state directly on the chart.
 
 ## Safety Boundary

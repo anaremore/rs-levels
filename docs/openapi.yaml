@@ -137,6 +137,40 @@ paths:
                 description: Display rows as name,price,red,green,blue,kind.
         '404':
           $ref: '#/components/responses/NotFound'
+  /stats:
+    get:
+      summary: Display context stats
+      responses:
+        '200':
+          description: Display-only DD, resilience, and liquidity-map context for all known symbols
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsSnapshot'
+  /stats/{symbol}:
+    get:
+      summary: Symbol display context stats
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [rows]
+      responses:
+        '200':
+          description: Symbol display context stats or generic display-context row feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsRow'
+            text/plain:
+              schema:
+                type: string
+                description: Display context rows as name,value.
+        '404':
+          $ref: '#/components/responses/NotFound'
   /ddbands:
     get:
       summary: DD band levels
@@ -474,7 +508,7 @@ components:
           items:
             $ref: '#/components/schemas/Level'
         stats:
-          type: object
+          $ref: '#/components/schemas/Stats'
         warnings:
           type: array
           items:
@@ -482,7 +516,7 @@ components:
     SymbolSummary:
       type: object
       description: User-facing status summary with ES/NQ family labels.
-      required: [symbol, displaySymbol, levelCount, capturedAt, warnings]
+      required: [symbol, displaySymbol, levelCount, stats, capturedAt, warnings]
       properties:
         symbol:
           type: string
@@ -490,12 +524,53 @@ components:
           type: string
         levelCount:
           type: integer
+        stats:
+          $ref: '#/components/schemas/Stats'
         capturedAt:
           type: string
         warnings:
           type: array
           items:
             type: string
+    StatsSnapshot:
+      type: object
+      required: [symbols]
+      properties:
+        symbols:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatsRow'
+    StatsRow:
+      type: object
+      required: [symbol, displaySymbol, capturedAt, stats]
+      properties:
+        symbol:
+          type: string
+        displaySymbol:
+          type: string
+        capturedAt:
+          type: string
+        stats:
+          $ref: '#/components/schemas/Stats'
+    Stats:
+      type: object
+      description: Display-only context such as DD ratio, resilience, and RocketScooter liquidity-map code.
+      required: [dd, resilience, weeklyResilience, monthlyResilience, mapCode]
+      properties:
+        dd:
+          type: number
+          nullable: true
+        resilience:
+          type: number
+          nullable: true
+        weeklyResilience:
+          type: number
+          nullable: true
+        monthlyResilience:
+          type: number
+          nullable: true
+        mapCode:
+          type: string
     Level:
       type: object
       required: [id, symbol, name, price, kind, color, source, capturedAt, metadata]

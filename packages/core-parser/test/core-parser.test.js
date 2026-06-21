@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { collectLevels, endpointKey, normalizeCapture } from '../src/index.js';
+import { collectLevels, collectStats, endpointKey, normalizeCapture } from '../src/index.js';
 
 const body = {
   symbol: 'MES',
@@ -323,6 +323,47 @@ assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name ===
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'BZT1').kind, 'zone-bull');
 assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name.startsWith('BrZT')).kind, 'zone-bear');
 assert.equal(pageReaderSnapshotArrays.symbols.SPY, undefined);
+
+const displayStats = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:59.000Z',
+  body: {
+    type: 'rs_snapshot',
+    headerBar: {
+      sp500: { ddRatio: 0.66, resilience: 14.47, resilience2: 19.87 },
+      nq100: { resilience: 73.82, resilience2: 49.87 }
+    },
+    mapCodes: {
+      SPY: { BBrMr: 'B', LS: 'L', UD: 'D' },
+      QQQ: { mapCode: 'BLD' }
+    },
+    stats: {
+      NQ: { resilience3: -29.29 }
+    }
+  }
+});
+assert.deepEqual(Object.keys(displayStats.symbols), []);
+assert.equal(displayStats.stats.MES.dd, 0.66);
+assert.equal(displayStats.stats.MES.resilience, 14.47);
+assert.equal(displayStats.stats.MES.monthlyResilience, 19.87);
+assert.equal(displayStats.stats.MES.mapCode, 'BLD');
+assert.equal(displayStats.stats.MNQ.dd, 0.66);
+assert.equal(displayStats.stats.MNQ.resilience, 73.82);
+assert.equal(displayStats.stats.MNQ.monthlyResilience, 49.87);
+assert.equal(displayStats.stats.MNQ.weeklyResilience, -29.29);
+assert.equal(displayStats.stats.MNQ.mapCode, 'BLD');
+assert.equal(displayStats.warnings.includes('No display levels were recognized in this capture.'), false);
+
+const collectedStats = collectStats({
+  stats: [
+    { symbol: 'ES', dd: 0, mapCode: 'bld' },
+    { symbol: 'F.US.ENQU26', wres: 0 }
+  ]
+});
+assert.equal(collectedStats.MES.dd, 0);
+assert.equal(collectedStats.MES.mapCode, 'BLD');
+assert.equal(collectedStats.MNQ.weeklyResilience, 0);
 
 const manyZones = collectLevels({
   MES: {

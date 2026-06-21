@@ -7,6 +7,13 @@ import {
 const row = {
   symbol: 'ES',
   capturedAt: '2026-06-19T14:29:59.500Z',
+  stats: {
+    dd: 0.66,
+    resilience: 73.82,
+    monthlyResilience: 49.87,
+    weeklyResilience: -29.29,
+    mapCode: 'BLD'
+  },
   levels: [
     { name: 'OVNHP', price: 7537, kind: 'hp', color: '#2962FF' },
     { name: 'DD Upper; bad|chars', price: 7579.75, kind: 'dd-band', color: '#29B6F6' },
@@ -28,6 +35,11 @@ assert.match(payload, /Yellow Line,7598,yellow-line/);
 assert.match(payload, /Red Line,7520,red-line/);
 assert.match(payload, /CAT,7820,cat/);
 assert.match(payload, /Open,7559,open-close/);
+assert.match(payload, /DD,0\.66,stat/);
+assert.match(payload, /Res,73\.82,stat/);
+assert.match(payload, /MRes,49\.87,stat/);
+assert.match(payload, /WRes,-29\.29,stat/);
+assert.match(payload, /Map BLD,0,stat/);
 assert.doesNotMatch(payload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);
 
 const manyLevels = {
@@ -66,6 +78,7 @@ const bundleSnapshot = {
 const bundlePayload = createTradingViewBundlePayloadExport(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' });
 assert.match(bundlePayload, /^RSLEVELS\|2\|2026-06-19T14:31:05\.000Z\|ES\|2026-06-19T14:29:59\.500Z\|/);
 assert.match(bundlePayload, /\|NQ\|2026-06-19T14:30:30\.000Z\|BrZT1,30450,zone-bear/);
+assert.match(bundlePayload, /Map BLD,0,stat/);
 assert.doesNotMatch(bundlePayload, /\|SPY\|/);
 assert.doesNotMatch(bundlePayload, /\|QQQ\|/);
 assert.doesNotMatch(bundlePayload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);

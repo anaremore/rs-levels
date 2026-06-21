@@ -192,6 +192,25 @@
     const levels = Array.isArray(body.levels) ? body.levels : [];
     const defaultSymbol = body.symbol || body.displaySymbol || '';
     const symbols = new Map();
+    const ensureSymbol = (symbolInput, capturedAtInput) => {
+      const symbol = publicDisplaySymbol(symbolInput);
+      if (symbol !== 'ES' && symbol !== 'NQ') return null;
+      if (!symbols.has(symbol)) {
+        symbols.set(symbol, {
+          symbol,
+          capturedAt: String(capturedAtInput || body.capturedAt || capture.capturedAt || new Date().toISOString()),
+          levels: [],
+          seen: new Set()
+        });
+      }
+      return symbols.get(symbol);
+    };
+    const addPayloadRow = (symbolInput, capturedAtInput, row) => {
+      const group = ensureSymbol(symbolInput, capturedAtInput);
+      if (!group || !row || group.seen.has(row)) return;
+      group.seen.add(row);
+      group.levels.push(row);
+    };
     levels.forEach((level) => {
       const symbol = publicDisplaySymbol(level && (level.symbol || level.displaySymbol) || defaultSymbol);
       if (symbol !== 'ES' && symbol !== 'NQ') return;
@@ -199,20 +218,13 @@
       const name = tradingViewField(tradingViewLevelName(level));
       const kind = tradingViewField(level && (level.kind || inferTradingViewKind(name)));
       if (!name || !Number.isFinite(price) || !kind) return;
-      if (!symbols.has(symbol)) {
-        symbols.set(symbol, {
-          symbol,
-          capturedAt: String(level.capturedAt || body.capturedAt || capture.capturedAt || new Date().toISOString()),
-          levels: [],
-          seen: new Set()
-        });
-      }
-      const row = `${name},${tradingViewPrice(price)},${kind}`;
-      const group = symbols.get(symbol);
-      if (group.seen.has(row)) return;
-      group.seen.add(row);
-      group.levels.push(row);
+      addPayloadRow(symbol, level.capturedAt, `${name},${tradingViewPrice(price)},${kind}`);
     });
+    for (const [symbol, stats] of captureStatsGroups(body)) {
+      for (const row of tradingViewStatsRows(stats)) {
+        addPayloadRow(symbol, body.capturedAt || capture.capturedAt, row);
+      }
+    }
     const rows = Array.from(symbols.values())
       .filter((row) => row.levels.length)
       .sort((a, b) => a.symbol.localeCompare(b.symbol))
@@ -225,6 +237,90 @@
       generatedAt: String(body.capturedAt || capture.capturedAt || new Date().toISOString()),
       symbols: rows
     } : null;
+  }
+
+  function captureStatsGroups(body = {}) {
+    const groups = new Map();
+    const merge = (symbolInput, statsInput) => {
+      const symbol = publicDisplaySymbol(symbolInput);
+      if (symbol !== 'ES' && symbol !== 'NQ') return;
+      const stats = normalizeStatsAliases(statsInput);
+      if (!hasStats(stats)) return;
+      groups.set(symbol, mergeStats(groups.get(symbol), stats));
+    };
+
+    if (body.stats && typeof body.stats === 'object' && !Array.isArray(body.stats)) {
+      Object.entries(body.stats).forEach(([key, value]) => merge(key, value));
+    }
+    const headerBar = body.headerBar && typeof body.headerBar === 'object' && !Array.isArray(body.headerBar) ? body.headerBar : {};
+    const sp = headerBar.sp500 || headerBar.SP500 || headerBar.es || headerBar.ES;
+    const nq = headerBar.nq100 || headerBar.NQ100 || headerBar.nq || headerBar.NQ;
+    const spStats = normalizeStatsAliases(sp || {});
+    if (hasStats(spStats)) merge('ES', spStats);
+    if (nq && typeof nq === 'object') merge('NQ', { ...(spStats.dd == null ? {} : { dd: spStats.dd }), ...nq });
+
+    const mapCodes = body.mapCodes && typeof body.mapCodes === 'object' && !Array.isArray(body.mapCodes) ? body.mapCodes : {};
+    Object.entries(mapCodes).forEach(([key, value]) => {
+      const mapCode = mapCodeFromNode(value);
+      if (mapCode && /^(SPY|SPX|SP500|ES|MES)$/i.test(key)) merge('ES', { mapCode });
+      if (mapCode && /^(QQQ|NDX|NQ100|NQ|MNQ)$/i.test(key)) merge('NQ', { mapCode });
+    });
+    return groups;
+  }
+
+  function normalizeStatsAliases(stats = {}) {
+    return {
+      dd: firstFinite(stats.dd, stats.ddRatio),
+      resilience: firstFinite(stats.resilience, stats.res, stats.dailyResilience),
+      monthlyResilience: firstFinite(stats.monthlyResilience, stats.mres, stats.resilience2),
+      weeklyResilience: firstFinite(stats.weeklyResilience, stats.wres, stats.resilience3),
+      mapCode: mapCodeFromNode(stats)
+    };
+  }
+
+  function mergeStats(existing = {}, next = {}) {
+    return {
+      dd: next.dd == null ? existing.dd : next.dd,
+      resilience: next.resilience == null ? existing.resilience : next.resilience,
+      monthlyResilience: next.monthlyResilience == null ? existing.monthlyResilience : next.monthlyResilience,
+      weeklyResilience: next.weeklyResilience == null ? existing.weeklyResilience : next.weeklyResilience,
+      mapCode: next.mapCode || existing.mapCode || ''
+    };
+  }
+
+  function tradingViewStatsRows(stats = {}) {
+    const rows = [];
+    if (stats.dd != null) rows.push(`DD,${tradingViewPrice(stats.dd)},stat`);
+    if (stats.resilience != null) rows.push(`Res,${tradingViewPrice(stats.resilience)},stat`);
+    if (stats.monthlyResilience != null) rows.push(`MRes,${tradingViewPrice(stats.monthlyResilience)},stat`);
+    if (stats.weeklyResilience != null) rows.push(`WRes,${tradingViewPrice(stats.weeklyResilience)},stat`);
+    if (stats.mapCode) rows.push(`${tradingViewField(`Map ${stats.mapCode}`)},0,stat`);
+    return rows;
+  }
+
+  function hasStats(stats = {}) {
+    return Boolean(stats.mapCode) ||
+      [stats.dd, stats.resilience, stats.monthlyResilience, stats.weeklyResilience].some((value) => value != null);
+  }
+
+  function firstFinite(...values) {
+    for (const value of values) {
+      if (value == null || value === '') continue;
+      const number = Number(value);
+      if (Number.isFinite(number)) return number;
+    }
+    return null;
+  }
+
+  function mapCodeFromNode(node = {}) {
+    if (!node || typeof node !== 'object') return '';
+    const direct = tradingViewField(node.mapCode || node.map || node.liquidityMap || node.code).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12);
+    if (direct) return direct;
+    return [node.BBrMr, node.zone, node.LS, node.hedging, node.UD, node.timePressure]
+      .map((part) => tradingViewField(part).toUpperCase().replace(/[^A-Z]/g, ''))
+      .filter(Boolean)
+      .join('')
+      .slice(0, 12);
   }
 
   function tradingViewPayloadFromSnapshot(snapshot, scope = 'ALL') {

@@ -88,11 +88,11 @@ export function normalizeLevel(symbol, level = {}) {
 
 export function normalizeStats(stats = {}) {
   return {
-    dd: finiteNumberOrNull(stats.dd),
-    resilience: finiteNumberOrNull(stats.resilience),
-    weeklyResilience: finiteNumberOrNull(stats.weeklyResilience),
-    monthlyResilience: finiteNumberOrNull(stats.monthlyResilience),
-    mapCode: stringValue(stats.mapCode)
+    dd: firstFiniteNumber(stats.dd, stats.ddRatio),
+    resilience: firstFiniteNumber(stats.resilience, stats.res, stats.dailyResilience),
+    weeklyResilience: firstFiniteNumber(stats.weeklyResilience, stats.wres, stats.resilience3),
+    monthlyResilience: firstFiniteNumber(stats.monthlyResilience, stats.mres, stats.resilience2),
+    mapCode: normalizeMapCode(stats.mapCode || stats.map || stats.liquidityMap)
   };
 }
 
@@ -240,8 +240,21 @@ function isIsoLike(value) {
 }
 
 function finiteNumberOrNull(value) {
+  if (value == null || value === '') return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function firstFiniteNumber(...values) {
+  for (const value of values) {
+    const n = finiteNumberOrNull(value);
+    if (n != null) return n;
+  }
+  return null;
+}
+
+function normalizeMapCode(value) {
+  return stringValue(value).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12);
 }
 
 function integerOrNull(value) {

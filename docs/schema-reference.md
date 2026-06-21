@@ -47,7 +47,23 @@ Each symbol key maps to a display snapshot:
 }
 ```
 
-Symbols are normalized to display families for cross-platform chart use. `ES`, `MES`, CQG `EP` contracts such as `F.US.EPU26`, and S&P 500 chart titles map to `MES`; `NQ`, `MNQ`, CQG `ENQ` contracts such as `F.US.ENQU26`, and NASDAQ-100 chart titles map to `MNQ`. ETF tickers such as `SPY` and `QQQ` stay separate so ETF/watchlist prices are not drawn on futures charts.
+Symbols are normalized to display families for cross-platform chart use. `ES`, `MES`, CQG `EP` contracts such as `F.US.EPU26`, and S&P 500 chart titles map to `MES`; `NQ`, `MNQ`, CQG `ENQ` contracts such as `F.US.ENQU26`, and NASDAQ-100 chart titles map to `MNQ`. ETF/watchlist chart prices such as `SPY` and `QQQ` are not drawn on futures charts. When RocketScooter exposes display context through those panels, for example liquidity-map codes, extractors may store that context on the matching futures family as stats.
+
+## Stats
+
+`stats` stores display context, not horizontal price levels:
+
+```json
+{
+  "dd": 0.66,
+  "resilience": 73.82,
+  "weeklyResilience": -29.29,
+  "monthlyResilience": 49.87,
+  "mapCode": "BLD"
+}
+```
+
+`mapCode` is the RocketScooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload and displays them in the stats panel instead of drawing price lines.
 
 ## Level
 

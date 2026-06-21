@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using NinjaTrader.Gui.Tools;
@@ -18,6 +19,7 @@ namespace NinjaTrader.NinjaScript.Indicators
         private static readonly HttpClient Client = new HttpClient();
         private readonly object sync = new object();
         private List<LevelRow> levels = new List<LevelRow>();
+        private StatsRow stats = new StatsRow();
         private DateTime lastPollUtc = DateTime.MinValue;
         private DateTime lastLevelsUtc = DateTime.MinValue;
         private bool polling;
@@ -75,11 +77,14 @@ namespace NinjaTrader.NinjaScript.Indicators
                 string nextState = FindSourceState(statusText);
                 string rows = await Client.GetStringAsync(baseUrl + "/levels/" + Uri.EscapeDataString(symbol) + "?format=rows").ConfigureAwait(false);
                 List<LevelRow> nextLevels = ParseLevels(rows);
+                string statsRows = await Client.GetStringAsync(baseUrl + "/stats/" + Uri.EscapeDataString(symbol) + "?format=rows").ConfigureAwait(false);
+                StatsRow nextStats = ParseStats(statsRows);
 
                 lock (sync)
                 {
                     sourceState = nextState;
                     levels = nextLevels;
+                    stats = nextStats;
                     lastLevelsUtc = DateTime.UtcNow;
                     lastIssue = "";
                 }
@@ -104,12 +109,14 @@ namespace NinjaTrader.NinjaScript.Indicators
             string state;
             string issue;
             DateTime lastLevels;
+            StatsRow statsCopy;
             lock (sync)
             {
                 copy = new List<LevelRow>(levels);
                 state = sourceState;
                 issue = lastIssue;
                 lastLevels = lastLevelsUtc;
+                statsCopy = stats.Copy();
             }
 
             bool stale = lastLevels == DateTime.MinValue || (DateTime.UtcNow - lastLevels).TotalSeconds > Math.Max(1, StaleSeconds) || state == "stale";
@@ -153,6 +160,21 @@ namespace NinjaTrader.NinjaScript.Indicators
                 Brushes.Transparent,
                 Brushes.Transparent,
                 0);
+
+            string statsText = FormatStats(statsCopy, ResolveSymbol());
+            if (!string.IsNullOrWhiteSpace(statsText))
+                Draw.TextFixed(
+                    this,
+                    Tag("stats", 0),
+                    statsText,
+                    TextPosition.BottomLeft,
+                    Brushes.White,
+                    new SimpleFont("Consolas", 12),
+                    Brushes.Transparent,
+                    Brushes.Black,
+                    80);
+            else
+                RemoveDrawObject(Tag("stats", 0));
         }
 
         private void ClearDrawings()
@@ -164,6 +186,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 RemoveDrawObject(Tag("zone", i));
             }
             RemoveDrawObject(Tag("status", 0));
+            RemoveDrawObject(Tag("stats", 0));
         }
 
         private void DrawZoneFills(List<LevelRow> rows)
@@ -324,6 +347,69 @@ namespace NinjaTrader.NinjaScript.Indicators
             return result;
         }
 
+        private static StatsRow ParseStats(string rows)
+        {
+            StatsRow result = new StatsRow();
+            string[] lines = (rows ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string[] parts = line.Split(',');
+                if (parts.Length < 2)
+                    continue;
+                string name = parts[0].Trim();
+                string value = parts[1].Trim();
+                if (name.Equals("Map", StringComparison.OrdinalIgnoreCase) || name.Equals("MapCode", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.MapCode = value;
+                    continue;
+                }
+                double number;
+                if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
+                    continue;
+                if (name.Equals("DD", StringComparison.OrdinalIgnoreCase))
+                    result.Dd = number;
+                else if (name.Equals("Res", StringComparison.OrdinalIgnoreCase))
+                    result.Res = number;
+                else if (name.Equals("MRes", StringComparison.OrdinalIgnoreCase))
+                    result.MRes = number;
+                else if (name.Equals("WRes", StringComparison.OrdinalIgnoreCase))
+                    result.WRes = number;
+            }
+            return result;
+        }
+
+        private static string FormatStats(StatsRow row, string symbol)
+        {
+            if (row == null || !row.HasValues)
+                return "";
+            StringBuilder text = new StringBuilder();
+            text.Append("RS Levels ").Append(DisplaySymbol(symbol));
+            if (!string.IsNullOrWhiteSpace(row.MapCode))
+                text.Append("  Map ").Append(row.MapCode);
+            string values = "";
+            values = AppendStat(values, "DD", row.Dd);
+            values = AppendStat(values, "Res", row.Res);
+            values = AppendStat(values, "MRes", row.MRes);
+            values = AppendStat(values, "WRes", row.WRes);
+            if (!string.IsNullOrWhiteSpace(values))
+                text.Append('\n').Append(values);
+            return text.ToString();
+        }
+
+        private static string AppendStat(string text, string name, double? value)
+        {
+            if (!value.HasValue)
+                return text;
+            string part = name + " " + value.Value.ToString("0.##", CultureInfo.InvariantCulture);
+            return string.IsNullOrWhiteSpace(text) ? part : text + "  " + part;
+        }
+
+        private static string DisplaySymbol(string symbol)
+        {
+            string normalized = NormalizeSymbol(symbol);
+            return normalized == "MNQ" ? "NQ" : "ES";
+        }
+
         private static int ParseColor(string value)
         {
             int parsed;
@@ -461,6 +547,35 @@ namespace NinjaTrader.NinjaScript.Indicators
             public int Green { get; set; }
             public int Blue { get; set; }
             public string Kind { get; set; }
+        }
+
+        private sealed class StatsRow
+        {
+            public double? Dd { get; set; }
+            public double? Res { get; set; }
+            public double? MRes { get; set; }
+            public double? WRes { get; set; }
+            public string MapCode { get; set; }
+
+            public bool HasValues
+            {
+                get
+                {
+                    return Dd.HasValue || Res.HasValue || MRes.HasValue || WRes.HasValue || !string.IsNullOrWhiteSpace(MapCode);
+                }
+            }
+
+            public StatsRow Copy()
+            {
+                return new StatsRow
+                {
+                    Dd = Dd,
+                    Res = Res,
+                    MRes = MRes,
+                    WRes = WRes,
+                    MapCode = MapCode
+                };
+            }
         }
     }
 }

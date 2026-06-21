@@ -95,6 +95,33 @@ endpointPruneStore.applyCapture({
 assert.equal(endpointPruneStore.flatLevels().length, 0);
 assert.equal(endpointPruneStore.getSnapshot().source.state, 'waiting');
 
+const statsOnlyStore = createLevelStore({
+  clock: () => new Date('2026-06-20T12:02:02.000Z')
+});
+statsOnlyStore.applyCapture({
+  endpoint: '/demo/levels/MES',
+  status: 200,
+  capturedAt: '2026-06-20T12:02:02.000Z',
+  body: {
+    symbol: 'MES',
+    levels: [{ name: 'OVNHP', price: 7537 }]
+  }
+});
+statsOnlyStore.applyCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-06-20T12:02:03.000Z',
+  body: {
+    stats: {
+      ES: { dd: 0, mapCode: 'BLD' }
+    }
+  }
+});
+assert.equal(statsOnlyStore.flatLevels().length, 1);
+assert.equal(statsOnlyStore.getSnapshot().symbols.MES.stats.dd, 0);
+assert.equal(statsOnlyStore.getSnapshot().symbols.MES.stats.mapCode, 'BLD');
+assert.equal(statsOnlyStore.getSnapshot().source.state, 'capturing');
+
 const service = createService({
   config: { host: '127.0.0.1', port: 0 }
 });
@@ -174,6 +201,8 @@ try {
   const emptyTradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(emptyTradingViewResponse.status, 404);
   assert.match(await emptyTradingViewResponse.text(), /no levels found/);
+  const emptyStats = await getJson(`${baseUrl}/stats`);
+  assert.deepEqual(emptyStats.symbols, []);
 
   const pluginManifest = await getJson(`${baseUrl}/plugins`);
   assert.equal(pluginManifest.schemaVersion, '0.1.0');
@@ -308,10 +337,50 @@ try {
   assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'red-line'), true);
   assert.equal(manualLineCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'cat'), true);
 
+  const statsCapture = await postJson(`${baseUrl}/capture/api`, {
+    endpoint: '/page-reader/display',
+    status: 200,
+    capturedAt,
+    body: {
+      headerBar: {
+        sp500: { ddRatio: 0.66, resilience: 14.47, resilience2: 19.87 },
+        nq100: { resilience: 73.82, resilience2: 49.87 }
+      },
+      mapCodes: {
+        SPY: { BBrMr: 'B', LS: 'L', UD: 'D' },
+        QQQ: { mapCode: 'BLD' }
+      },
+      stats: {
+        NQ: { resilience3: -29.29 }
+      }
+    }
+  });
+  assert.equal(statsCapture.snapshot.symbols.MES.stats.dd, 0.66);
+  assert.equal(statsCapture.snapshot.symbols.MES.stats.mapCode, 'BLD');
+  assert.equal(statsCapture.snapshot.symbols.MNQ.stats.dd, 0.66);
+  assert.equal(statsCapture.snapshot.symbols.MNQ.stats.weeklyResilience, -29.29);
+  assert.equal(statsCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'yellow-line'), true);
+
+  const allStats = await getJson(`${baseUrl}/stats`);
+  assert.deepEqual(allStats.symbols.map((row) => row.symbol), ['ES', 'NQ']);
+  const esStats = await getJson(`${baseUrl}/stats/ES`);
+  assert.equal(esStats.symbol, 'ES');
+  assert.equal(esStats.stats.dd, 0.66);
+  assert.equal(esStats.stats.resilience, 14.47);
+  assert.equal(esStats.stats.monthlyResilience, 19.87);
+  assert.equal(esStats.stats.mapCode, 'BLD');
+  const nqStatsRows = await getText(`${baseUrl}/stats/NQ?format=rows`);
+  assert.match(nqStatsRows, /DD,0\.66/);
+  assert.match(nqStatsRows, /Res,73\.82/);
+  assert.match(nqStatsRows, /MRes,49\.87/);
+  assert.match(nqStatsRows, /WRes,-29\.29/);
+  assert.match(nqStatsRows, /Map,BLD/);
+
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
   assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 5);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 3);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').stats.mapCode, 'BLD');
 
   const bundledTradingViewPayload = await getText(`${baseUrl}/tradingview`);
   assert.match(bundledTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|ES\|/);
@@ -321,6 +390,11 @@ try {
   assert.match(bundledTradingViewPayload, /Yellow Line,7598,yellow-line/);
   assert.match(bundledTradingViewPayload, /Red Line,7520,red-line/);
   assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
+  assert.match(bundledTradingViewPayload, /DD,0\.66,stat/);
+  assert.match(bundledTradingViewPayload, /Res,73\.82,stat/);
+  assert.match(bundledTradingViewPayload, /MRes,49\.87,stat/);
+  assert.match(bundledTradingViewPayload, /WRes,-29\.29,stat/);
+  assert.match(bundledTradingViewPayload, /Map BLD,0,stat/);
   assert.doesNotMatch(bundledTradingViewPayload, /tradingview-bundle-json|compactPayload|notes/);
 
   const mesRowsWithKinds = await getText(`${baseUrl}/levels/MES?format=rows`);
