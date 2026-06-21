@@ -103,7 +103,7 @@ If capture does not start, open extension options and review the endpoint allowl
 2. Paste the contents of `plugins/tradingview/rs-levels.pine`.
 3. Add the indicator to your chart.
 4. In the extension popup, keep the export dropdown on `ES + NQ` and click `Copy TradingView`.
-5. Paste the copied `RSLEVELS|2` text into the indicator's `RS Levels Payload` text-area input, then click `OK`. One all-symbol payload can carry ES and NQ together; in `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata. If TradingView does not expose enough symbol context, set `Chart family` to `ES` or `NQ`.
+5. Paste the copied `RSLEVELS|2` text into the indicator's `RS Levels Payload` input, then click `OK`. One all-symbol payload can carry ES and NQ together; in `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata. If TradingView does not expose enough symbol context, set `Chart family` to `ES` or `NQ`.
 
 `Copy TradingView` first uses the extension's latest normalized display capture, so it can work without the local API when the RocketScooter page-reader has captured visible ES/NQ chart levels. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
 
@@ -147,5 +147,5 @@ All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the
 
 - `OFFLINE` in the popup: start the API or check the service URL. Use `Copy Diagnostics` for a scrubbed setup bundle.
 - No symbols in the popup: open RocketScooter and wait for allowlisted level responses. If `Observed` stays at 0 after RocketScooter data is visible, click `Reconnect Tab`, then reload the RocketScooter tab or refresh chart data so startup requests run with the hook installed. If `Hook` stays `none`, reload the extension and the RocketScooter tab. If `Observed` rises but `Ignored` also rises, review the endpoint allowlist in extension options. If `Skipped` rises, check max capture bytes or whether the endpoint returns empty/non-text responses.
-- TradingView lines do not update: copy a fresh TradingView payload, paste it into the indicator's `RS Levels Payload` text-area input, click `OK`, and force `Chart family` to `ES` or `NQ` if the chart still does not draw.
+- TradingView lines do not update: copy a fresh TradingView payload, paste it into the indicator's `RS Levels Payload` input, click `OK`, and force `Chart family` to `ES` or `NQ` if the chart still does not draw.
 - Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and `Test Service` succeeds in the extension options page.

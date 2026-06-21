@@ -6,7 +6,7 @@ TradingView Pine scripts cannot poll the local API directly, so RS Levels uses a
 2. Capture RocketScooter levels with the browser extension.
 3. Use `Copy TradingView` in the extension popup.
 4. Add `plugins/tradingview/rs-levels.pine` to a TradingView chart.
-5. Paste the copied payload into the `RS Levels Payload` text-area input, then click `OK`.
+5. Paste the copied payload into the `RS Levels Payload` input, then click `OK`.
 
 The all-symbol export carries `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. The `Chart family` setting can force `ES` or `NQ` when needed. SPY, QQQ, and other non-futures panels may be open in RocketScooter without being included in the TradingView export.
 
@@ -38,10 +38,10 @@ The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;.
 
 ## Indicator Controls
 
-- `RS Levels Payload`: `RSLEVELS|2` text copied from the extension or local API. It uses TradingView's larger text-area input and is hidden from the status line to avoid chart-header clutter.
+- `RS Levels Payload`: `RSLEVELS|2` text copied from the extension or local API. It uses TradingView's single-row text input and is hidden from the status line to avoid chart-header clutter.
 - `Chart family`: leave on `Auto` for normal ES/MES and NQ/MNQ charts, or force `ES`/`NQ` when you intentionally want a specific bundle section.
 - `Labels`: show or hide level labels.
-- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind has its color picker on the same row as its checkbox.
+- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind keeps its color picker and checkbox on the same row, with swatches aligned first for easier scanning.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences.
 

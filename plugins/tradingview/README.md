@@ -7,7 +7,7 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels workf
 1. Run the local service.
 2. Capture RocketScooter levels with the browser extension or another approved local capture client.
 3. Use `Copy TradingView` in the extension popup, or copy the text from `http://127.0.0.1:8765/tradingview`.
-4. Add `rs-levels.pine` to a TradingView chart, paste the payload into the `RS Levels Payload` text-area input, and click `OK`.
+4. Add `rs-levels.pine` to a TradingView chart, paste the payload into the `RS Levels Payload` input, and click `OK`.
 
 The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. If TradingView does not expose enough symbol context, use the `Chart family` override.
 
@@ -25,10 +25,10 @@ This indicator only draws lines, labels, and zone fills. It does not contain str
 
 ## Indicator Controls
 
-- `RS Levels Payload`: `RSLEVELS|2` text from the extension or local API, pasted into a larger TradingView text-area input.
+- `RS Levels Payload`: `RSLEVELS|2` text from the extension or local API, pasted into TradingView's single-row text input.
 - `Chart family`: `Auto`, `ES`, or `NQ`.
 - `Labels`: show or hide level labels.
-- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind has its color picker on the same row as its checkbox.
+- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind keeps its color picker and checkbox on the same row, with the swatches aligned first for easier scanning.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. Level labels render a few ticks above or below their line, automatically stagger into rows/columns, and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels.
 
