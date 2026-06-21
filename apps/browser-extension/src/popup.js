@@ -149,7 +149,8 @@ async function fetchJsonText(path, options = {}) {
   if (!response.ok) {
     throw new Error(copyFailureMessage(response.status, await responseErrorDetail(response), options));
   }
-  return JSON.stringify(await response.json());
+  const payload = globalThis.RS_LEVELS.cleanTradingViewJsonExport(await response.text());
+  return JSON.stringify(payload);
 }
 
 function copyFailureMessage(status, detail = '', options = {}) {

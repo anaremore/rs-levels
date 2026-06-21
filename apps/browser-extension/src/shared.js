@@ -157,6 +157,51 @@
     return '';
   }
 
+  function cleanTradingViewJsonExport(text) {
+    let payload;
+    try {
+      payload = JSON.parse(String(text || ''));
+    } catch (_err) {
+      throw new Error('Local service returned legacy TradingView text. Restart the local service and reload the extension.');
+    }
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('Local service returned unsupported TradingView JSON.');
+    }
+    if (Object.hasOwn(payload, 'compactPayload')) {
+      throw new Error('Local service returned old TradingView JSON. Restart the local service and reload the extension.');
+    }
+    if (payload.exportFormat === 'tradingview-bundle-json') {
+      if (!Array.isArray(payload.symbols) || !payload.symbols.every(isTradingViewJsonSymbol)) {
+        throw new Error('Local service returned invalid bundled TradingView JSON.');
+      }
+      return payload;
+    }
+    if (payload.exportFormat === 'tradingview-json') {
+      if (typeof payload.symbol !== 'string' || !Array.isArray(payload.levels) || !payload.levels.every(isTradingViewJsonLevelRow)) {
+        throw new Error('Local service returned invalid TradingView JSON.');
+      }
+      return payload;
+    }
+    throw new Error('Local service returned unsupported TradingView JSON.');
+  }
+
+  function isTradingViewJsonSymbol(row) {
+    return Boolean(row)
+      && typeof row === 'object'
+      && !Array.isArray(row)
+      && typeof row.symbol === 'string'
+      && Array.isArray(row.levels)
+      && row.levels.every(isTradingViewJsonLevelRow);
+  }
+
+  function isTradingViewJsonLevelRow(row) {
+    return Array.isArray(row)
+      && row.length >= 3
+      && typeof row[0] === 'string'
+      && Number.isFinite(Number(row[1]))
+      && typeof row[2] === 'string';
+  }
+
   globalThis.RS_LEVELS = {
     defaults,
     cleanServiceUrl,
@@ -168,6 +213,7 @@
     publicDisplaySymbol,
     selectedSymbolIssue,
     symbolLevelCount,
+    cleanTradingViewJsonExport,
     tradingViewBundleCopyIssue,
     tradingViewCopyIssue
   };

@@ -69,6 +69,38 @@ assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'stale' } }), /stale/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
 assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
+const bundleJson = sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
+  exportFormat: 'tradingview-bundle-json',
+  symbols: [{ symbol: 'ES', levels: [['OVNHP', 7565, 'hp']] }]
+}));
+assert.equal(bundleJson.symbols[0].symbol, 'ES');
+const singleJson = sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
+  exportFormat: 'tradingview-json',
+  symbol: 'NQ',
+  levels: [['OVNMHP', 30475, 'mhp']]
+}));
+assert.equal(singleJson.symbol, 'NQ');
+assert.throws(
+  () => sharedContext.RS_LEVELS.cleanTradingViewJsonExport('RS' + 'LEVELS|1|MES|2026-06-21T03:12:03.127Z|OVNHP,7565.00,hp'),
+  /legacy TradingView text/
+);
+assert.throws(
+  () => sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
+    exportFormat: 'tradingview-json',
+    symbol: 'ES',
+    compactPayload: 'legacy',
+    levels: [{ name: 'OVNHP', price: 7565, kind: 'hp' }]
+  })),
+  /old TradingView JSON/
+);
+assert.throws(
+  () => sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
+    exportFormat: 'tradingview-json',
+    symbol: 'ES',
+    levels: [{ name: 'OVNHP', price: 7565, kind: 'hp' }]
+  })),
+  /invalid TradingView JSON/
+);
 
 const rulesContext = { URL };
 vm.createContext(rulesContext);

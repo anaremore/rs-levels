@@ -48,7 +48,7 @@ npm run package
 
 Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 
-The package command also writes `dist/rs-levels-browser-extension-0.1.0.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
+The package command also writes `dist/rs-levels-browser-extension-0.1.1.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
 
 Release packages include cross-platform service launch scripts:
 
