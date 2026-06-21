@@ -54,6 +54,7 @@ function makeStudy(id, name, plotTitle, value) {
 const charts = [
   makeChart('F.US.EPU26', [
     makeShape('es-hp', 'horizontal_line', [{ price: 7565 }], { text: 'OVNHP', linecolor: '#2962ff' }),
+    makeShape('es-open', 'horizontal_line', [{ price: 7559 }], { text: 'SPY Open : 7,559 Liquidity Map', linecolor: '#e0e0e0' }),
     makeShape('es-bull-zone', 'rectangle', [{ price: 7580 }, { price: 7560 }], { text: 'Bull Zone', backgroundColor: '#4caf50' })
   ]),
   makeChart('F.US.ENQU26', [
@@ -119,10 +120,12 @@ const body = JSON.parse(captureMessage.capture.body);
 assert.equal(body.type, 'rs_snapshot');
 assert.equal(body.source, 'page-reader');
 assert.equal(body.reader.chartCount, 3);
-assert.equal(body.chartLines.length, 1);
-assert.equal(body.referenceLines.length, 1);
+assert.equal(body.chartLines.length, 2);
+assert.equal(body.referenceLines.length, 2);
 assert.equal(body.zoneRectangles.length, 2);
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNHP' && level.price === 7565));
+assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'Open' && level.price === 7559));
+assert.equal(body.levels.some((level) => /Liquidity Map|horizontal|text/i.test(level.name)), false);
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.kind === 'zone-bear'));
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'MidGap'));
 assert.equal(body.levels.some((level) => level.symbol === 'SPY' || level.price === 722.51), false);

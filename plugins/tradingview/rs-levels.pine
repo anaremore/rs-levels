@@ -3,7 +3,6 @@ indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count =
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 showLabels = input.bool(true, "Labels")
-showStatus = input.bool(true, "Status")
 showDdBands = input.bool(true, "DD bands")
 showHp = input.bool(true, "HP")
 showMhp = input.bool(true, "MHP")
@@ -70,6 +69,36 @@ labelSize() =>
         "Huge" => size.huge
         => size.small
 
+displayLabelName(name, kind) =>
+    upperName = str.upper(name)
+    if str.contains(upperName, "PREVDAYCLOSE") or str.contains(upperName, "PREV DAY CLOSE")
+        "Prev Close"
+    else if str.contains(upperName, "MIDGAP") or str.contains(upperName, "HALFGAP") or str.contains(upperName, "HALF GAP") or str.contains(upperName, " HG")
+        "Mid Gap"
+    else if str.contains(upperName, "LASTOPEN") or (str.contains(upperName, "OPEN") and not str.contains(upperName, "CLOSE"))
+        "Open"
+    else if str.contains(upperName, "CLOSE")
+        "Close"
+    else if str.contains(upperName, "OVNMHP")
+        "OVNMHP"
+    else if str.contains(upperName, "OVNHP")
+        "OVNHP"
+    else if kind == "mhp" or str.contains(upperName, "MAN_MHP") or str.contains(upperName, " MHP")
+        "MHP"
+    else if kind == "hp" or str.contains(upperName, "MAN_HP") or str.contains(upperName, " HP")
+        "HP"
+    else if kind == "dd-band" or str.contains(upperName, "DD")
+        "DD"
+    else
+        cleaned = str.replace_all(name, "horizontal_line", "")
+        cleaned := str.replace_all(cleaned, "horizontal_ray", "")
+        cleaned := str.replace_all(cleaned, "horizontal", "")
+        cleaned := str.replace_all(cleaned, "Liquidity Map", "")
+        cleaned := str.replace_all(cleaned, "liq-map-history", "")
+        cleaned := str.replace_all(cleaned, "text", "")
+        cleaned := str.replace_all(cleaned, ":", " ")
+        cleaned
+
 chartPayloadSymbol() =>
     chartText = str.upper(syminfo.root + " " + syminfo.ticker)
     str.contains(chartText, "NQ") ? "MNQ" : str.contains(chartText, "ES") ? "MES" : ""
@@ -110,7 +139,7 @@ drawLevel(name, priceText, kind, labelIndex) =>
         newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth, style = lineStyle())
         array.push(rsLines, newLine)
         if showLabels and array.size(rsLabels) < 499
-            labelText = name + " " + str.tostring(price, format.mintick)
+            labelText = displayLabelName(name, kind) + " " + str.tostring(price, format.mintick)
             labelY = labelPrice(name, kind, price, labelIndex)
             newLabel = label.new(labelX(labelIndex), labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 80), size = labelSize())
             array.push(rsLabels, newLabel)
@@ -131,27 +160,17 @@ drawLevelText(levelText, maxCount) =>
                     drawnCount := drawnCount + 1
     [drawnCount, totalCount]
 
-drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount) =>
-    if showStatus and array.size(rsLabels) < 500
-        statusText = validPayload ? "RS Levels " + symbolText + " " + str.tostring(drawnCount) + "/" + str.tostring(totalCount) + " " + capturedText : "RS Levels: paste RSLEVELS payload"
-        statusColor = validPayload ? color.new(color.rgb(18, 54, 93), 0) : color.new(color.rgb(80, 39, 39), 0)
-        statusTextColor = validPayload ? color.rgb(234, 245, 255) : color.rgb(255, 190, 190)
-        newStatus = label.new(bar_index, high, statusText, style = label.style_label_down, textcolor = statusTextColor, color = statusColor, size = labelSize())
-        array.push(rsLabels, newStatus)
-
 if barstate.islast
     clearDrawings()
     parts = str.split(payload, "|")
     validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS" and (array.get(parts, 1) == "1" or array.get(parts, 1) == "2")
     payloadVersion = validPayload ? array.get(parts, 1) : ""
     symbolText = ""
-    capturedText = ""
     levelText = ""
     drawnCount = 0
     totalCount = 0
     if validPayload and payloadVersion == "1"
         symbolText := array.get(parts, 2)
-        capturedText := array.get(parts, 3)
         levelText := array.get(parts, 4)
     if validPayload and payloadVersion == "2"
         chartSymbol = chartPayloadSymbol()
@@ -162,11 +181,9 @@ if barstate.islast
             candidateSymbol = array.get(parts, sectionIndex)
             if symbolText == "" and (candidateSymbol == chartSymbol or (chartSymbol == "" and fallbackSymbol != "" and candidateSymbol == fallbackSymbol))
                 symbolText := candidateSymbol
-                capturedText := array.get(parts, sectionIndex + 1)
                 levelText := array.get(parts, sectionIndex + 2)
             sectionIndex += 3
     if validPayload
         [nextDrawnCount, nextTotalCount] = drawLevelText(levelText, maxLevelsInput)
         drawnCount := nextDrawnCount
         totalCount := nextTotalCount
-    drawStatus(validPayload, symbolText, capturedText, drawnCount, totalCount)

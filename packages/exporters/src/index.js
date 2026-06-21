@@ -40,7 +40,7 @@ export function createTradingViewJsonExport(symbolSnapshot, options = {}) {
     capturedAt: row.capturedAt,
     compactPayload: createTradingViewPayload(row, options),
     levels: levels.map((level) => ({
-      name: level.name,
+      name: tradingViewLevelName(level),
       price: level.price,
       kind: level.kind,
       color: level.color || ''
@@ -67,7 +67,7 @@ export function createTradingViewBundleJsonExport(snapshot, options = {}) {
         capturedAt: row.capturedAt,
         levelCount: levels.length,
         levels: levels.map((level) => ({
-          name: level.name,
+          name: tradingViewLevelName(level),
           price: level.price,
           kind: level.kind,
           color: level.color || ''
@@ -102,8 +102,38 @@ function isTradingViewBundleSymbol(symbol) {
 function levelsPayload(levels, options) {
   return limitLevels(levels, options.maxLevels)
     .filter((level) => Number.isFinite(level.price))
-    .map((level) => [field(level.name), Number(level.price).toFixed(2), field(level.kind)].join(','))
+    .map((level) => [field(tradingViewLevelName(level)), Number(level.price).toFixed(2), field(level.kind)].join(','))
     .join(';');
+}
+
+function tradingViewLevelName(level) {
+  const raw = field(level?.name);
+  if (!raw) return 'Level';
+  if (!/horizontal|liquidity\s*map|\btext\b|liq-map-history/i.test(raw)) return raw;
+  const upper = raw.toUpperCase();
+  const displayMatch = raw.match(/\b(BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);
+  if (displayMatch) return normalizedDisplayMatch(displayMatch[1]);
+  if (/\bOPEN\b/.test(upper) && !/\bCLOSE\b/.test(upper)) return 'Open';
+  if (/\bCLOSE\b/.test(upper)) return 'Close';
+  if (/\bMHP\b/.test(upper)) return 'MHP';
+  if (/\bHP\b/.test(upper)) return 'HP';
+  if (/\bDD\b/.test(upper)) return 'DD';
+  return field(raw
+    .replace(/horizontal[_\s-]*(line|ray)?/ig, ' ')
+    .replace(/\btext\b/ig, ' ')
+    .replace(/\bLiquidity\s*Map\b/ig, ' ')
+    .replace(/\bliq-map-history\b/ig, ' ')
+    .replace(/\s*:\s*/g, ' ')) || 'Level';
+}
+
+function normalizedDisplayMatch(matchText) {
+  const text = field(matchText);
+  if (/^man_mhp$/i.test(text)) return 'MHP';
+  if (/^man_hp$/i.test(text)) return 'HP';
+  if (/^midgap$/i.test(text) || /^halfgap$/i.test(text) || /^hg$/i.test(text)) return 'Mid Gap';
+  if (/^lastopen$/i.test(text)) return 'Open';
+  if (/^prevdayclose$/i.test(text)) return 'Prev Close';
+  return text;
 }
 
 function latestCapturedAt(rows) {

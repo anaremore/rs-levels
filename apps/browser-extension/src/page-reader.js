@@ -386,7 +386,9 @@
     const text = compact(label);
     const direct = text.match(/\b(OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bear\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*)\b/i);
     if (direct) return normalizeName(direct[1]);
-    const priced = text.match(/\b(Bull\s*Zone|Bear\s*Zone|MHP|HP|DD|Open|Close|Half\s*Gap|HG)\s*:?\s*-?\d+(?:\.\d+)?/i);
+    if (/\bOpen\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/\bClose\b/i.test(text)) return 'Open';
+    if (/\bClose\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/Prev\s*Close|PrevDayClose/i.test(text)) return 'Close';
+    const priced = text.match(/\b(Bull\s*Zone|Bear\s*Zone|MHP|HP|DD|Open|Close|Half\s*Gap|HG)\s*:?\s*-?[\d,]+(?:\.\d+)?/i);
     if (priced) return normalizeName(priced[1]);
     if (/Liquidity|liq-map-history/i.test(text)) {
       const byColor = hpMhpFromColor(color);
