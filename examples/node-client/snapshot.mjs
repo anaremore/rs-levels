@@ -22,15 +22,41 @@ function printSnapshot(snapshot) {
   console.log(`source=${snapshot.source?.state || 'unknown'} symbols=${symbols.length}`);
   for (const nextSymbol of symbols) {
     const row = snapshot.symbols[nextSymbol];
-    console.log(`${nextSymbol}: ${(row.levels || []).length} levels captured=${row.capturedAt || 'n/a'}`);
+    const stats = formatStats(row.stats);
+    console.log(`${displaySymbol(nextSymbol, row)}: ${(row.levels || []).length} levels captured=${row.capturedAt || 'n/a'}${stats ? ` ${stats}` : ''}`);
   }
 }
 
 function printSymbol(row) {
-  console.log(`${row.symbol}: ${(row.levels || []).length} levels`);
+  console.log(`${displaySymbol(row.symbol, row)}: ${(row.levels || []).length} levels`);
+  const stats = formatStats(row.stats);
+  if (stats) console.log(stats);
   for (const level of row.levels || []) {
     console.log(`${level.name}\t${level.kind}\t${Number(level.price).toFixed(2)}`);
   }
+}
+
+function displaySymbol(symbol, row = {}) {
+  const raw = String(row.displaySymbol || symbol || '').toUpperCase();
+  if (raw === 'MES') return 'ES';
+  if (raw === 'MNQ') return 'NQ';
+  return raw || 'MES';
+}
+
+function formatStats(stats = {}) {
+  const parts = [];
+  appendMetric(parts, 'DD', stats.dd);
+  appendMetric(parts, 'Res', stats.resilience);
+  appendMetric(parts, 'MRes', stats.monthlyResilience);
+  appendMetric(parts, 'WRes', stats.weeklyResilience);
+  if (stats.mapCode) parts.push(`Map=${stats.mapCode}`);
+  return parts.join(' ');
+}
+
+function appendMetric(parts, label, value) {
+  if (value == null || value === '') return;
+  const number = Number(value);
+  if (Number.isFinite(number)) parts.push(`${label}=${number.toFixed(2).replace(/\.?0+$/, '')}`);
 }
 
 function cleanBaseUrl(value) {

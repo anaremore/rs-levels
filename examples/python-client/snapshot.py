@@ -21,13 +21,48 @@ def print_snapshot(snapshot):
     print(f"RS Levels {snapshot.get('schemaVersion', '')}".strip())
     print(f"source={snapshot.get('source', {}).get('state', 'unknown')} symbols={len(symbols)}")
     for symbol, row in symbols.items():
-        print(f"{symbol}: {len(row.get('levels', []))} levels captured={row.get('capturedAt') or 'n/a'}")
+        stats = format_stats(row.get('stats', {}))
+        suffix = f" {stats}" if stats else ""
+        print(f"{display_symbol(symbol, row)}: {len(row.get('levels', []))} levels captured={row.get('capturedAt') or 'n/a'}{suffix}")
 
 
 def print_symbol(row):
-    print(f"{row.get('symbol')}: {len(row.get('levels', []))} levels")
+    print(f"{display_symbol(row.get('symbol'), row)}: {len(row.get('levels', []))} levels")
+    stats = format_stats(row.get('stats', {}))
+    if stats:
+        print(stats)
     for level in row.get('levels', []):
         print(f"{level.get('name')}\t{level.get('kind')}\t{float(level.get('price')):.2f}")
+
+
+def display_symbol(symbol, row=None):
+    raw = str((row or {}).get('displaySymbol') or symbol or '').upper()
+    if raw == 'MES':
+        return 'ES'
+    if raw == 'MNQ':
+        return 'NQ'
+    return raw or 'MES'
+
+
+def format_stats(stats):
+    parts = []
+    append_metric(parts, 'DD', stats.get('dd'))
+    append_metric(parts, 'Res', stats.get('resilience'))
+    append_metric(parts, 'MRes', stats.get('monthlyResilience'))
+    append_metric(parts, 'WRes', stats.get('weeklyResilience'))
+    if stats.get('mapCode'):
+        parts.append(f"Map={stats.get('mapCode')}")
+    return ' '.join(parts)
+
+
+def append_metric(parts, label, value):
+    if value is None or value == '':
+        return
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return
+    parts.append(f"{label}={number:.2f}".rstrip('0').rstrip('.'))
 
 
 def main():

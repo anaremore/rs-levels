@@ -10,6 +10,15 @@
       { "name": "YL", "price": 7632.0, "color": "#ffeb3b" },
       { "name": "RL", "price": 7472.0, "color": "#ff5252" },
       { "name": "BZB", "price": 7422.25, "color": "#4caf50" }
-    ]
+    ],
+    "stats": {
+      "MES": {
+        "dd": 0.66,
+        "resilience": 14.47,
+        "monthlyResilience": 19.87,
+        "weeklyResilience": -29.29,
+        "mapCode": "BLD"
+      }
+    }
   }
 }

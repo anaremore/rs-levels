@@ -16,18 +16,25 @@ const sampleCapture = JSON.parse(read('sample-captures/mes-levels.json'));
 assert.match(dashboardHtml, /<table>/);
 assert.match(dashboardHtml, /app\.js/);
 assert.match(dashboardCss, /summary-grid/);
+assert.match(dashboardCss, /stats-grid/);
 assert.match(dashboardJs, /\/snapshot/);
 assert.match(dashboardJs, /\/stream/);
 assert.match(dashboardJs, /\/tradingview\/\$\{selectedSymbol\(\)\}/);
+assert.match(dashboardJs, /renderStats/);
+assert.match(dashboardJs, /monthlyResilience/);
+assert.match(dashboardHtml, /stat-map/);
 assert.match(dashboardHtml, /Copy TradingView/);
 assert.match(dashboardJs, /copyTradingViewPayload/);
 assert.match(nodeSnapshot, /RS_LEVELS_URL/);
+assert.match(nodeSnapshot, /formatStats/);
 assert.match(nodeStream, /\/stream/);
 assert.match(pythonSnapshot, /urllib\.request/);
+assert.match(pythonSnapshot, /format_stats/);
 assert.match(pythonStream, /stream_events/);
 assert.equal(sampleCapture.body.symbol, 'MES');
 assert.equal(sampleCapture.body.levels.length, 5);
 assert.ok(sampleCapture.body.levels.every((level) => Number.isFinite(Number(level.price))));
+assert.equal(sampleCapture.body.stats.MES.mapCode, 'BLD');
 
 for (const source of [dashboardJs, nodeSnapshot, nodeStream, pythonSnapshot, pythonStream]) {
   assert.doesNotMatch(source, /\bstrategy\b/i);

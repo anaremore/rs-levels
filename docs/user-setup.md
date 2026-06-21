@@ -84,6 +84,8 @@ npm run demo:capture
 
 Then open the dashboard, run a client example, copy a TradingView paste payload from `http://127.0.0.1:8765/tradingview`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
 
+The demo fixture includes sample DD/Res/MRes/WRes and `Map BLD` context, so it is enough to verify both level rows and display stats before RocketScooter capture is available.
+
 ## 3. Capture Levels
 
 1. Start the local API.
