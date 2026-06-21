@@ -14,8 +14,6 @@ showOpenClose = input.bool(true, "Open/close", inline = "openClose")
 openCloseColorInput = input.color(color.rgb(224, 224, 224), "", inline = "openClose")
 showReference = input.bool(true, "References", inline = "reference")
 referenceColorInput = input.color(color.rgb(255, 235, 59), "", inline = "reference")
-showZones = input.bool(true, "Zones", inline = "zone")
-genericZoneColorInput = input.color(color.rgb(76, 175, 80), "", inline = "zone")
 showBullZones = input.bool(true, "Bull zones", inline = "bullZone")
 bullZoneColorInput = input.color(color.rgb(76, 175, 80), "", inline = "bullZone")
 showBearZones = input.bool(true, "Bear zones", inline = "bearZone")
@@ -55,7 +53,6 @@ kindColor(kind) =>
         "reference" => referenceColorInput
         "zone-bull" => bullZoneColorInput
         "zone-bear" => bearZoneColorInput
-        "zone" => genericZoneColorInput
         => otherLevelColorInput
 
 kindEnabled(kind) =>
@@ -65,13 +62,12 @@ kindEnabled(kind) =>
         "mhp" => showMhp
         "open-close" => showOpenClose
         "reference" => showReference
-        "zone-bull" => showZones and showBullZones
-        "zone-bear" => showZones and showBearZones
-        "zone" => showZones
+        "zone-bull" => showBullZones
+        "zone-bear" => showBearZones
         => showOtherLevels
 
 zoneKind(kind) =>
-    kind == "zone-bull" or kind == "zone-bear" or kind == "zone"
+    kind == "zone-bull" or kind == "zone-bear"
 
 zoneBoundarySide(name) =>
     upperName = str.upper(name)
@@ -226,8 +222,6 @@ drawZoneFills(levelText, maxCount) =>
     float bullBottom = na
     float bearTop = na
     float bearBottom = na
-    float genericTop = na
-    float genericBottom = na
     if levelText != "" and showZoneFills
         items = str.split(levelText, ";")
         count = math.min(array.size(items), maxCount)
@@ -257,15 +251,6 @@ drawZoneFills(levelText, maxCount) =>
                             drawZoneFill(bearTop, bearBottom, kind)
                             bearTop := na
                             bearBottom := na
-                    else
-                        if side == 1
-                            genericTop := price
-                        else
-                            genericBottom := price
-                        if not na(genericTop) and not na(genericBottom)
-                            drawZoneFill(genericTop, genericBottom, kind)
-                            genericTop := na
-                            genericBottom := na
 
 drawLevelText(levelText, maxCount) =>
     drawnCount = 0

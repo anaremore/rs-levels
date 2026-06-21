@@ -78,7 +78,7 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 - `stat`
 - `unknown`
 
-`zone-bull` and `zone-bear` identify bullish/demand/support zones and bearish/supply/resistance zones when the source exposes that distinction. `zone` remains valid for generic zones. Display plugins should label the machine fallback kind `unknown` as `Other levels` in user-facing settings.
+`zone-bull` and `zone-bear` identify bullish/demand/support zones and bearish/supply/resistance zones. New extractors should classify zones into one of those two kinds. `zone` remains schema-compatible for older or ambiguous captures, but display plugins should avoid a separate generic Zones setting and label fallback/ambiguous kinds as `Other levels` in user-facing settings.
 
 ## Diagnostics
 
