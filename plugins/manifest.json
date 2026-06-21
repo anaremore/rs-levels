@@ -14,9 +14,7 @@
         "mode": "manual-paste",
         "endpoints": [
           "GET /tradingview",
-          "GET /tradingview?format=json",
-          "GET /tradingview/:symbol",
-          "GET /tradingview/:symbol?format=json"
+          "GET /tradingview/:symbol"
         ]
       }
     },
@@ -33,7 +31,7 @@
         "mode": "local-http",
         "endpoints": [
           "GET /status",
-          "GET /levels/:symbol?format=sierra"
+          "GET /levels/:symbol?format=rows"
         ]
       }
     },
@@ -50,7 +48,7 @@
         "mode": "local-http",
         "endpoints": [
           "GET /status",
-          "GET /levels/:symbol?format=sierra"
+          "GET /levels/:symbol?format=rows"
         ]
       }
     },
@@ -67,7 +65,7 @@
         "mode": "local-http",
         "endpoints": [
           "GET /status",
-          "GET /levels/:symbol?format=sierra"
+          "GET /levels/:symbol?format=rows"
         ]
       }
     },
@@ -84,7 +82,7 @@
         "mode": "local-http",
         "endpoints": [
           "GET /status",
-          "GET /levels/:symbol?format=sierra"
+          "GET /levels/:symbol?format=rows"
         ]
       }
     }

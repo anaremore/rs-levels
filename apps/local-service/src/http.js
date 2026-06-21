@@ -3,14 +3,12 @@ import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import {
   createTradingViewBundleJsonExport,
-  createTradingViewBundlePayload,
-  createTradingViewJsonExport,
-  createTradingViewPayload
+  createTradingViewJsonExport
 } from '../../../packages/exporters/src/index.js';
-import { normalizeSymbol } from '../../../packages/schemas/src/index.js';
+import { displaySymbolFor, normalizeSymbol } from '../../../packages/schemas/src/index.js';
 import { SERVICE_BUILD } from './build-info.js';
 import { networkStatus } from './config.js';
-import { levelsToSierraText } from './sierra-format.js';
+import { levelsToDisplayRowsText } from './display-rows.js';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const OPENAPI_YAML = readFileSync(new URL('../../../docs/openapi.yaml', import.meta.url), 'utf8');
@@ -51,10 +49,7 @@ export function createHttpApp({ store, config }) {
         const snapshot = store.getSnapshot();
         const bundle = createTradingViewBundleJsonExport(snapshot);
         if (!bundle.symbols.length) return sendJson(res, 404, { ok: false, error: 'no futures symbols found' });
-        if (url.searchParams.get('format') === 'json') {
-          return sendJson(res, 200, bundle);
-        }
-        return sendText(res, 200, bundle.compactPayload, 'text/plain; charset=utf-8');
+        return sendJson(res, 200, bundle);
       }
 
       const tradingViewMatch = pathname.match(/^\/tradingview\/([^/]+)$/);
@@ -62,20 +57,17 @@ export function createHttpApp({ store, config }) {
         const symbol = normalizeSymbol(tradingViewMatch[1]);
         const row = store.getSnapshot().symbols[symbol] || null;
         if (!row) return sendJson(res, 404, { ok: false, error: 'symbol not found' });
-        if (url.searchParams.get('format') === 'json') {
-          return sendJson(res, 200, createTradingViewJsonExport(row));
-        }
-        return sendText(res, 200, createTradingViewPayload(row), 'text/plain; charset=utf-8');
+        return sendJson(res, 200, createTradingViewJsonExport(row));
       }
 
       const symbolMatch = pathname.match(/^\/levels\/([^/]+)$/);
       if (req.method === 'GET' && symbolMatch) {
         const symbol = normalizeSymbol(symbolMatch[1]);
         const row = store.getSnapshot().symbols[symbol] || null;
-        if (url.searchParams.get('format') === 'sierra') {
-          return sendText(res, 200, levelsToSierraText(row ? row.levels : []), 'text/plain; charset=utf-8');
+        if (isDisplayRowsFormat(url.searchParams.get('format'))) {
+          return sendText(res, 200, levelsToDisplayRowsText(row ? row.levels : []), 'text/plain; charset=utf-8');
         }
-        return sendJson(res, row ? 200 : 404, row || { ok: false, error: 'symbol not found' });
+        return sendJson(res, row ? 200 : 404, row ? publicSymbolSnapshot(row) : { ok: false, error: 'symbol not found' });
       }
 
       if (req.method === 'POST' && pathname === '/capture/api') {
@@ -203,12 +195,37 @@ function sourceDiagnostics(source = {}) {
 function symbolSummaries(snapshot = {}) {
   const rows = Object.values(snapshot.symbols || {});
   return rows.map((row) => ({
-    symbol: String(row.symbol || ''),
-    displaySymbol: String(row.displaySymbol || row.symbol || ''),
+    symbol: displaySymbolFor(row.symbol || row.displaySymbol || ''),
+    displaySymbol: displaySymbolFor(row.displaySymbol || row.symbol || ''),
     levelCount: Array.isArray(row.levels) ? row.levels.length : 0,
     capturedAt: String(row.capturedAt || ''),
     warnings: Array.isArray(row.warnings) ? row.warnings.map((warning) => String(warning)).filter(Boolean) : []
   })).sort((a, b) => a.symbol.localeCompare(b.symbol));
+}
+
+function publicSymbolSnapshot(row = {}) {
+  const canonical = normalizeSymbol(row.symbol || row.displaySymbol || '');
+  const display = displaySymbolFor(canonical);
+  return {
+    ...row,
+    symbol: display,
+    displaySymbol: display,
+    levels: Array.isArray(row.levels) ? row.levels.map((level) => publicLevel(level, canonical, display)) : []
+  };
+}
+
+function publicLevel(level = {}, canonical, display) {
+  const id = String(level.id || '');
+  return {
+    ...level,
+    id: id.startsWith(`${canonical}:`) ? `${display}:${id.slice(canonical.length + 1)}` : id,
+    symbol: display
+  };
+}
+
+function isDisplayRowsFormat(format) {
+  const value = String(format || '').toLowerCase();
+  return value === 'rows';
 }
 
 function diagnosticChecks({ source, levels, symbols, network }) {

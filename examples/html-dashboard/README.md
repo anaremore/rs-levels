@@ -13,8 +13,7 @@ It can:
 - read `/snapshot`
 - subscribe to `/stream`
 - render per-symbol level rows
-- copy TradingView payloads from `/tradingview/:symbol`
-- copy JSON exports from `/tradingview/:symbol?format=json`
+- copy TradingView JSON exports from `/tradingview/:symbol`
 
 For Tailscale or another trusted private network, change the API field in the dashboard to the service URL you enabled in the local service.
 

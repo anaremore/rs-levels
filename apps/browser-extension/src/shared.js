@@ -32,7 +32,7 @@
       'db/sp',
       'db/nq'
     ],
-    symbols: ['MES', 'MNQ'],
+    symbols: ['ES', 'NQ'],
     maxCaptureBytes: 1024 * 1024
   };
 
@@ -82,6 +82,13 @@
     return text || 'MES';
   }
 
+  function publicDisplaySymbol(value) {
+    const normalized = normalizeDisplaySymbol(value);
+    if (normalized === 'MES') return 'ES';
+    if (normalized === 'MNQ') return 'NQ';
+    return normalized;
+  }
+
   function cleanSettings(input = {}) {
     return {
       settingsVersion: defaults.settingsVersion,
@@ -127,7 +134,7 @@
     if (levelCount < 1) return 'No captured levels are available yet.';
     const selectedLevelCount = symbolLevelCount(status, symbol);
     if (selectedLevelCount === 0) {
-      return `No captured levels are available for ${normalizeDisplaySymbol(symbol)}.`;
+      return `No captured levels are available for ${publicDisplaySymbol(symbol)}.`;
     }
     return '';
   }
@@ -158,6 +165,7 @@
     cleanSettings,
     migrateSettings,
     normalizeDisplaySymbol,
+    publicDisplaySymbol,
     selectedSymbolIssue,
     symbolLevelCount,
     tradingViewBundleCopyIssue,

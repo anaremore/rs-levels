@@ -160,6 +160,13 @@ export function normalizeSymbol(value) {
   return text;
 }
 
+export function displaySymbolFor(value) {
+  const symbol = normalizeSymbol(value);
+  if (symbol === 'MES') return 'ES';
+  if (symbol === 'MNQ') return 'NQ';
+  return symbol;
+}
+
 function isNqFamilySymbol(text) {
   const parts = symbolParts(text);
   return parts.some((part) => (

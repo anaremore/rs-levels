@@ -1,4 +1,4 @@
-export function levelsToSierraText(levels) {
+export function levelsToDisplayRowsText(levels) {
   return levels.map((level) => {
     const [r, g, b] = hexToRgb(level.color || kindColor(level.kind));
     return [

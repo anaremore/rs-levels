@@ -13,7 +13,7 @@ Every direct API plugin should expose:
 - line visibility by kind
 - label visibility
 
-TradingView is the exception because Pine cannot poll localhost directly. It uses the paste payload documented in [TradingView](tradingview.md).
+TradingView is the exception because Pine cannot poll localhost directly. It uses the JSON paste workflow documented in [TradingView](tradingview.md).
 
 ## Required API Calls
 
@@ -29,14 +29,12 @@ GET /levels/:symbol
 Optional format-specific calls:
 
 ```text
-GET /levels/:symbol?format=sierra
+GET /levels/:symbol?format=rows
 GET /tradingview
-GET /tradingview?format=json
 GET /tradingview/:symbol
-GET /tradingview/:symbol?format=json
 ```
 
-Plugins should normalize `ES` to `MES` and `NQ` to `MNQ` the same way the API does, or simply rely on the API response symbol. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the `MES` family, and `/levels/F.US.ENQ...` resolves to the `MNQ` family.
+Plugins should accept `ES`/`MES` and `NQ`/`MNQ` aliases the same way the API does. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the ES family, and `/levels/F.US.ENQ...` resolves to the NQ family. JSON status, `/levels/:symbol` responses, and TradingView JSON exports use user-facing `ES`/`NQ` labels.
 
 The API sends `Cache-Control: no-store` on HTTP responses. Plugins should still poll on their own refresh interval and use `/status` freshness fields as the source of truth.
 
@@ -80,13 +78,13 @@ Display settings should call the fallback category `Other levels` even though th
 
 `zone-bull` and `zone-bear` are preferred when the source distinguishes bullish/demand/support zones from bearish/supply/resistance zones. Generic `zone` remains valid for sources that do not expose side. When a platform can draw filled regions, matching top/bottom zone rows such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom` should be filled with a low-opacity version of the same zone color.
 
-The Sierra-compatible text feed is:
+The generic display row text feed is:
 
 ```text
 name,price,red,green,blue,kind
 ```
 
-The first five columns are stable for older clients. Newer clients should read the sixth `kind` column when present and fall back to inferring the kind from the display name when it is absent.
+Clients should read the sixth `kind` column for category-aware styling and may fall back to inferring the kind from the display name when it is absent.
 
 ## Safety Tests
 

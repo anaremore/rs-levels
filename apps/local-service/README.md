@@ -63,19 +63,17 @@ GET  /plugins
 GET  /snapshot
 GET  /levels
 GET  /levels/:symbol
-GET  /levels/:symbol?format=sierra
+GET  /levels/:symbol?format=rows
 GET  /ddbands
 GET  /zones
 GET  /references
 GET  /tradingview
-GET  /tradingview?format=json
 GET  /tradingview/:symbol
-GET  /tradingview/:symbol?format=json
 GET  /stream
 POST /capture/api
 ```
 
-/tradingview returns the compact all-symbol text payload used by the TradingView Pine indicator. /tradingview/:symbol remains available for single-symbol compatibility. ?format=json returns a copy-friendly JSON export for tooling.
+/tradingview returns the all-symbol JSON paste export used by the TradingView Pine indicator. /tradingview/:symbol returns single-family JSON for ES/MES or NQ/MNQ charts.
 
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
 

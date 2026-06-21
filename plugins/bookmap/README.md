@@ -17,11 +17,11 @@ service from a background worker.
 
 ```text
 GET /status
-GET /levels/MES?format=sierra
-GET /levels/MNQ?format=sierra
+GET /levels/ES?format=rows
+GET /levels/NQ?format=rows
 ```
 
-The add-on parses the Sierra-compatible rows because that export is compact,
+The add-on parses the generic display rows because that export is compact,
 stable, and easy for chart-plugin runtimes to consume.
 
 Rows are `name,price,red,green,blue,kind`. The add-on remains compatible with
@@ -38,7 +38,7 @@ land in distinct Bookmap color slots.
 
 ## Rendering
 
-- Polls `GET /status` and `GET /levels/:symbol?format=sierra`.
+- Polls `GET /status` and `GET /levels/:symbol?format=rows`.
 - Draws up to 500 horizontal level markers through Bookmap indicator value lines.
 - Uses the optional `kind` column for category-aware colors, including separate
   bull and bear zone colors.

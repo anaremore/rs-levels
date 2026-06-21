@@ -121,7 +121,7 @@ namespace RSLevelsQuantower
                 string baseUrl = CleanBaseUrl(ServiceUrl);
                 string statusText = await Client.GetStringAsync(baseUrl + "/status").ConfigureAwait(false);
                 string nextState = FindSourceState(statusText);
-                string rows = await Client.GetStringAsync(baseUrl + "/levels/" + Uri.EscapeDataString(symbol) + "?format=sierra").ConfigureAwait(false);
+                string rows = await Client.GetStringAsync(baseUrl + "/levels/" + Uri.EscapeDataString(symbol) + "?format=rows").ConfigureAwait(false);
                 List<LevelRow> nextLevels = ParseLevels(rows);
 
                 lock (sync)

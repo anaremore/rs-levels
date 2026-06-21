@@ -34,7 +34,7 @@ for (const platform of platforms) {
     assert.match(text, /GET \/levels\//, `${platform} must document levels polling`);
     assert.match(text, /stale/i, `${platform} must document stale handling`);
   } else {
-    assert.match(text, /RSLEVELS/, 'tradingview must document paste payload');
+    assert.match(text, /tradingview-bundle-json/, 'tradingview must document JSON paste payload');
   }
 }
 
@@ -48,7 +48,7 @@ assert.match(contract, /Other levels/);
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
 assert.match(sierraSource, /\/status/);
-assert.match(sierraSource, /format=sierra/);
+assert.match(sierraSource, /format=rows/);
 assert.match(sierraSource, /DRAWING_HORIZONTALLINE/);
 assert.match(sierraSource, /DRAWING_RECTANGLE_EXT_HIGHLIGHT/);
 assert.match(sierraSource, /RS_MAX_LEVELS = 500/);
@@ -61,7 +61,7 @@ assertNoPlatformApiTerms(sierraSource);
 const ninjaSource = readFileSync(join(root, 'ninjatrader', 'RSLevelsDisplay.cs'), 'utf8');
 assert.match(ninjaSource, /class RSLevelsDisplay : Indicator/);
 assert.match(ninjaSource, /\/status/);
-assert.match(ninjaSource, /format=sierra/);
+assert.match(ninjaSource, /format=rows/);
 assert.match(ninjaSource, /Draw\.HorizontalLine/);
 assert.match(ninjaSource, /Draw\.Rectangle/);
 assert.match(ninjaSource, /Draw\.TextFixed/);
@@ -77,7 +77,7 @@ assertNoPlatformApiTerms(ninjaSource);
 const quantowerSource = readFileSync(join(root, 'quantower', 'RSLevelsDisplayQuantower.cs'), 'utf8');
 assert.match(quantowerSource, /class RSLevelsDisplayQuantower : Indicator/);
 assert.match(quantowerSource, /\/status/);
-assert.match(quantowerSource, /format=sierra/);
+assert.match(quantowerSource, /format=rows/);
 assert.match(quantowerSource, /OnPaintChart/);
 assert.match(quantowerSource, /DrawLine/);
 assert.match(quantowerSource, /DrawZoneFills/);
@@ -94,7 +94,7 @@ assertNoPlatformApiTerms(quantowerSource);
 const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'RSLevelsDisplayBookmap.java'), 'utf8');
 assert.match(bookmapSource, /class RSLevelsDisplayBookmap implements CustomModule/);
 assert.match(bookmapSource, /\/status/);
-assert.match(bookmapSource, /format=sierra/);
+assert.match(bookmapSource, /format=rows/);
 assert.match(bookmapSource, /setHorizontalValueLinesInfo/);
 assert.match(bookmapSource, /MAX_LEVELS = 500/);
 assert.match(bookmapSource, /parts\.length >= 6/);

@@ -24,7 +24,6 @@ The popup shows local service health, service version, extension version/build i
 
 - symbol selector
 - capture pause/resume toggle
-- `Copy TradingView`
 - `Copy JSON`
 - `Reconnect Tab`
 - `Copy Diagnostics`
@@ -33,11 +32,11 @@ The popup shows local service health, service version, extension version/build i
 - options shortcut
 - collapsed debug section with aggregate observed, ignored, skipped, posted counters, hook status reason, and manual status refresh
 
-The capture toggle updates the same `captureEnabled` setting as the options page. `Copy TradingView` reads the all-symbol futures `/tradingview` payload from the local service, and falls back to composing MES/MNQ from single-symbol exports if a running service process has not been restarted since the all-symbol endpoint was added. `Copy JSON` reads `/tradingview/:symbol?format=json` for the selected symbol. `Reconnect Tab` attaches the capture hook to the active RocketScooter tab if the extension was loaded after the page was already open. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`.
+The capture toggle updates the same `captureEnabled` setting as the options page. The export dropdown defaults to `ES + NQ` when both futures families are available and narrows to `ES` or `NQ` when only one family has captured levels. `Copy JSON` reads `/tradingview` for `ES + NQ`, or `/tradingview/:symbol` for a single family, and the copied JSON can be pasted directly into the TradingView indicator. `Reconnect Tab` attaches the capture hook to the active RocketScooter tab if the extension was loaded after the page was already open. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`.
 
-`Copy TradingView` is disabled while the local service is waiting for levels or reporting a stale source. Refresh RocketScooter to capture fresh levels before copying a Pine paste payload. `Copy JSON` remains available for inspection and tooling.
+`Copy JSON` is disabled while the local service is waiting for levels or reporting a stale source. Refresh RocketScooter to capture fresh levels before copying an export.
 
-Capture is not limited by the selected popup symbol. The extension posts every allowlisted response it observes, and the local parser can store both MES and MNQ from one combined response. The symbol selector controls selected-symbol JSON export; the TradingView payload can carry all captured symbols.
+Capture is not limited by the selected popup export. The extension posts every allowlisted response it observes, and the local parser can store both ES/MES and NQ/MNQ from one combined response. User-facing popup choices and TradingView JSON exports use `ES` and `NQ`.
 
 The page-reader fallback posts a synthetic `/page-reader/display` capture through the same local ingest endpoint. It emits generic display levels plus compatibility arrays named `chartLines`, `referenceLines`, and `zoneRectangles` so the local parser can consume RocketScooter live-chart drawings and study plots from both visible futures charts at once. It emits only display names, prices, public kind labels, futures chart-family symbols, colors, and small metadata needed for diagnostics. It skips SPY/QQQ chart families and does not forward account, broker, execution, order-entry, raw DOM text, cookies, headers, or credentials.
 

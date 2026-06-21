@@ -1,5 +1,3 @@
-export const TRADINGVIEW_PAYLOAD_PREFIX: 'RSLEVELS';
-
 export interface TradingViewExportOptions {
   symbol?: string;
   capturedAt?: string;
@@ -7,12 +5,7 @@ export interface TradingViewExportOptions {
   maxLevels?: number;
 }
 
-export interface TradingViewJsonLevel {
-  name: string;
-  price: number;
-  kind: string;
-  color: string;
-}
+export type TradingViewJsonLevel = [name: string, price: number, kind: string];
 
 export interface TradingViewJsonExport {
   schemaVersion: string;
@@ -21,9 +14,7 @@ export interface TradingViewJsonExport {
   generatedAt: string;
   symbol: string;
   capturedAt: string;
-  compactPayload: string;
   levels: TradingViewJsonLevel[];
-  notes: string[];
 }
 
 export interface TradingViewBundleJsonSymbol {
@@ -38,12 +29,8 @@ export interface TradingViewBundleJsonExport {
   exportFormat: 'tradingview-bundle-json';
   payloadVersion: 2;
   generatedAt: string;
-  compactPayload: string;
   symbols: TradingViewBundleJsonSymbol[];
-  notes: string[];
 }
 
-export function createTradingViewPayload(symbolSnapshot: unknown, options?: TradingViewExportOptions): string;
-export function createTradingViewBundlePayload(snapshot: unknown, options?: TradingViewExportOptions): string;
 export function createTradingViewJsonExport(symbolSnapshot: unknown, options?: TradingViewExportOptions): TradingViewJsonExport;
 export function createTradingViewBundleJsonExport(snapshot: unknown, options?: TradingViewExportOptions): TradingViewBundleJsonExport;

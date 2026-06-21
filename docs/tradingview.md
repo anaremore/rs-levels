@@ -1,56 +1,72 @@
 # TradingView
 
-TradingView support uses a manual paste workflow.
+TradingView Pine scripts cannot poll the local API directly, so RS Levels uses a copy/paste JSON workflow.
 
-The official Pine documentation lists supported `request.*` data sources such as symbols, timeframes, financial/economic data, footprint data, and Pine Seeds from GitHub. Pine does not provide arbitrary HTTP access to `localhost`, so a TradingView indicator cannot poll the RS Levels local API directly.
+1. Run the local service.
+2. Capture RocketScooter levels with the browser extension.
+3. Use `Copy JSON` in the extension popup.
+4. Add `plugins/tradingview/rs-levels.pine` to a TradingView chart.
+5. Paste the copied JSON into the hidden `RS Levels JSON` indicator input.
 
-References:
+The all-symbol export carries `ES` and `NQ` together. The indicator detects the current TradingView chart family and draws `ES` levels on ES/MES charts, or `NQ` levels on NQ/MNQ charts. SPY, QQQ, and other non-futures panels may be open in RocketScooter without being included in the TradingView export.
 
-- https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/
-- https://www.tradingview.com/pine-script-docs/writing/limitations/
-
-## Recommended UX
-
-- The browser extension popup should include `Copy TradingView` for an all-symbol payload.
-- The extension should only enable TradingView payload copy while the local service reports fresh captured levels.
-- The Pine indicator should select the matching MES or MNQ section from the all-symbol payload based on the chart symbol.
-- The local service exposes the same all-symbol payload at `/tradingview`.
-- `Copy JSON` should remain available for users and external tools.
-- The Pine indicator should parse the compact payload, not JSON.
-
-## Local Service Exports
+## API
 
 ```text
 GET /tradingview
-GET /tradingview?format=json
-GET /tradingview/MES
-GET /tradingview/MNQ
+GET /tradingview/ES
+GET /tradingview/NQ
 GET /tradingview/F.US.EP...
 GET /tradingview/F.US.ENQ...
-GET /tradingview/MES?format=json
-GET /tradingview/MNQ?format=json
 ```
 
-The CQG-style RocketScooter paths normalize to the same ES/MES and NQ/MNQ families as `/levels/:symbol`; users do not need to paste the exact current contract code into TradingView.
+Bundle JSON:
 
-Default all-symbol response is text/plain:
-
-```text
-RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
+```json
+{
+  "schemaVersion": "0.1.0",
+  "exportFormat": "tradingview-bundle-json",
+  "payloadVersion": 2,
+  "generatedAt": "2026-06-19T14:30:00.000Z",
+  "symbols": [
+    {
+      "symbol": "ES",
+      "capturedAt": "2026-06-19T14:29:59.500Z",
+      "levelCount": 2,
+      "levels": [["OVNHP", 7537, "hp"], ["BZT1", 7588, "zone-bull"]]
+    }
+  ]
+}
 ```
 
-Single-symbol compatibility response is also text/plain:
+Single-symbol JSON:
 
-```text
-RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
+```json
+{
+  "schemaVersion": "0.1.0",
+  "exportFormat": "tradingview-json",
+  "payloadVersion": 1,
+  "generatedAt": "2026-06-19T14:30:00.000Z",
+  "symbol": "ES",
+  "capturedAt": "2026-06-19T14:29:59.500Z",
+  "levels": [["OVNHP", 7537, "hp"], ["DD", 7579.75, "dd-band"]]
+}
 ```
 
-The JSON response is for inspection and third-party tooling. It includes `compactPayload` with the exact Pine-ready string. Pine users should paste the compact `RSLEVELS|...` payload into the included indicator. The local API does not silently truncate the export; the included Pine indicator draws up to TradingView's drawing limits.
+Each level row is `[name, price, kind]`. Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still displayed as a neutral zone. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
 
-## Indicator
+## Indicator Controls
 
-See `plugins/tradingview/rs-levels.pine`.
+- `RS Levels JSON`: JSON copied from the extension or local API. It is hidden from TradingView's status line to avoid chart-header clutter.
+- `Labels`: show or hide level labels.
+- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind has its color picker on the same row as its checkbox.
+- `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
+- `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences.
 
-The indicator is display-only. It draws levels using the public kind field and does not include alerts, strategy logic, or execution behavior.
+Level labels render a few ticks above or below their line, automatically stagger into rows/columns, and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels.
 
-The included indicator accepts both v1 single-symbol payloads and v2 all-symbol payloads. For v2, it maps ES/MES charts to the `MES` section and NQ/MNQ charts to the `MNQ` section. The all-symbol export is futures-only; SPY, QQQ, and other watchlist/ETF symbols may be open in RocketScooter without being included in the TradingView payload. It provides kind visibility toggles, same-row color pickers, separate bull-zone and bear-zone controls, zone fills with adjustable opacity, max-level display control, line style/width controls, font-size control, optional labels, and label bar/vertical offsets. Level labels are placed a few ticks above or below the line, staggered into rows/columns, and cleaned so RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` does not clutter the chart. The pasted payload input is hidden from TradingView's status line so the compact `RSLEVELS|...` text does not clutter the chart header. Matching top/bottom zone rows such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom` are filled with a translucent version of the configured bull or bear color. `Other levels` is the fallback category for parsed levels whose kind is not one of the recognized DD, HP, MHP, open/close, reference, or zone kinds.
+`Other levels` is the fallback display category for parsed levels whose kind is not one of the recognized DD, HP, MHP, open/close, reference, or zone kinds.
+
+## Safety Boundary
+
+This indicator only draws lines, labels, and zone fills. It does not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or automation.

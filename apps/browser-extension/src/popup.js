@@ -4,7 +4,6 @@ const els = {
   buildId: document.getElementById('build-id'),
   symbol: document.getElementById('symbol'),
   captureEnabled: document.getElementById('capture-enabled'),
-  copyTv: document.getElementById('copy-tv'),
   copyJson: document.getElementById('copy-json'),
   reconnect: document.getElementById('reconnect'),
   copyDiagnostics: document.getElementById('copy-diagnostics'),
@@ -26,8 +25,10 @@ const els = {
   options: document.getElementById('options')
 };
 
+const ALL_SCOPE = 'ALL';
+
 let settings = globalThis.RS_LEVELS.cleanSettings({});
-let symbols = globalThis.RS_LEVELS.defaults.symbols.slice();
+let symbols = [ALL_SCOPE, ...globalThis.RS_LEVELS.defaults.symbols];
 let latestServiceStatus = null;
 
 init();
@@ -49,13 +50,12 @@ async function init() {
 function bindEvents() {
   els.refresh.addEventListener('click', refresh);
   els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
-  els.copyTv.addEventListener('click', copyTradingView);
   els.copyJson.addEventListener('click', copyJsonExport);
   els.reconnect.addEventListener('click', reconnectActiveTab);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
   els.openPlugins.addEventListener('click', () => window.open(`${settings.serviceUrl}/plugins`, '_blank', 'noopener'));
-  els.symbol.addEventListener('change', () => renderTradingViewCopy(latestServiceStatus));
+  els.symbol.addEventListener('change', () => renderCopyState(latestServiceStatus));
   els.captureEnabled.addEventListener('change', toggleCapture);
 }
 
@@ -67,7 +67,7 @@ async function refresh() {
     latestServiceStatus = combineServiceStatus(health, status);
     const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
     const extState = extensionState && extensionState.state ? extensionState.state : {};
-    symbols = status.symbols && status.symbols.length ? status.symbols : globalThis.RS_LEVELS.defaults.symbols.slice();
+    symbols = exportScopes(latestServiceStatus);
     renderSymbols(symbols);
     const source = health.source || {};
     const sourceState = source.state || 'waiting';
@@ -79,7 +79,7 @@ async function refresh() {
     els.lastPost.textContent = formatTime(extState.lastPostAt);
     els.lastError.textContent = extState.lastError || 'none';
     renderCaptureStats(extState.captureStats);
-    renderTradingViewCopy(latestServiceStatus);
+    renderCopyState(latestServiceStatus);
     renderPill(source);
     if (extState.lastError && !health.levelCount) {
       setMessage(extState.lastError, 'error');
@@ -90,40 +90,32 @@ async function refresh() {
     }
   } catch (err) {
     latestServiceStatus = null;
-    renderTradingViewCopy({ levelCount: 0, source: { connected: false } });
+    symbols = exportScopes();
+    renderSymbols(symbols);
+    renderCopyState({ levelCount: 0, source: { connected: false } });
     els.serviceVersion.textContent = 'unknown';
     setPill('OFFLINE', 'error');
     setMessage(err && err.message ? err.message : 'Local service unavailable', 'error');
   }
 }
 
-async function copyTradingView() {
-  try {
-    latestServiceStatus = await getJson('/status');
-    renderTradingViewCopy(latestServiceStatus);
-    const issue = globalThis.RS_LEVELS.tradingViewBundleCopyIssue(latestServiceStatus);
-    if (issue) {
-      setMessage(issue, 'warning');
-      return;
-    }
-    const text = await tradingViewBundleText();
-    await navigator.clipboard.writeText(text);
-    setMessage('TradingView payload copied', 'ok');
-  } catch (err) {
-    setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
-  }
-}
-
 async function copyJsonExport() {
   try {
     latestServiceStatus = await getJson('/status');
-    renderTradingViewCopy(latestServiceStatus);
-    const issue = globalThis.RS_LEVELS.selectedSymbolIssue(latestServiceStatus, selectedSymbol());
+    symbols = exportScopes(latestServiceStatus);
+    renderSymbols(symbols);
+    renderCopyState(latestServiceStatus);
+    const scope = selectedSymbol();
+    const allSymbols = scope === ALL_SCOPE;
+    const issue = allSymbols
+      ? globalThis.RS_LEVELS.tradingViewBundleCopyIssue(latestServiceStatus)
+      : globalThis.RS_LEVELS.selectedSymbolIssue(latestServiceStatus, scope);
     if (issue) {
       setMessage(issue, 'warning');
       return;
     }
-    await copyFromEndpoint(`/tradingview/${selectedSymbol()}?format=json`, 'JSON copied', true);
+    const path = allSymbols ? '/tradingview' : `/tradingview/${scope}`;
+    await copyJsonFromEndpoint(path, 'Levels JSON copied', { allSymbols });
   } catch (err) {
     setMessage(err && err.message ? err.message : 'JSON copy failed', 'error');
   }
@@ -141,9 +133,9 @@ async function reconnectActiveTab() {
   }
 }
 
-async function copyFromEndpoint(path, success, prettyJson = false, options = {}) {
+async function copyJsonFromEndpoint(path, success, options = {}) {
   try {
-    const text = await fetchEndpointText(path, prettyJson, options);
+    const text = await fetchJsonText(path, options);
     await navigator.clipboard.writeText(text);
     setMessage(success, 'ok');
   } catch (err) {
@@ -151,72 +143,23 @@ async function copyFromEndpoint(path, success, prettyJson = false, options = {})
   }
 }
 
-async function tradingViewBundleText() {
-  const response = await fetch(`${settings.serviceUrl}/tradingview`);
-  if (response.ok) return response.text();
-
-  const detail = await responseErrorDetail(response);
-  if (response.status === 404 && /not found/i.test(detail)) {
-    return tradingViewFallbackBundleText();
-  }
-  throw new Error(copyFailureMessage(response.status, detail, { allSymbols: true }));
-}
-
-async function tradingViewFallbackBundleText() {
-  const status = latestServiceStatus || await getJson('/status');
-  const fallbackSymbols = futuresSymbols(Array.isArray(status.symbols) && status.symbols.length ? status.symbols : globalThis.RS_LEVELS.defaults.symbols);
-  const sections = [];
-  for (const symbol of fallbackSymbols) {
-    const response = await fetch(`${settings.serviceUrl}/tradingview/${encodeURIComponent(symbol)}`);
-    if (!response.ok) continue;
-    const section = v1TradingViewSection(await response.text());
-    if (section) sections.push(...section);
-  }
-  if (!sections.length) {
-    throw new Error('Restart the local service to enable all-symbol TradingView export.');
-  }
-  return ['RSLEVELS', '2', new Date().toISOString(), ...sections].join('|');
-}
-
-function futuresSymbols(input) {
-  const out = [];
-  const seen = new Set();
-  (Array.isArray(input) ? input : []).forEach((symbol) => {
-    const normalized = globalThis.RS_LEVELS.normalizeDisplaySymbol(symbol);
-    if ((normalized === 'MES' || normalized === 'MNQ') && !seen.has(normalized)) {
-      seen.add(normalized);
-      out.push(normalized);
-    }
-  });
-  return out.length ? out : globalThis.RS_LEVELS.defaults.symbols.slice();
-}
-
-function v1TradingViewSection(payload) {
-  const parts = String(payload || '').trim().split('|');
-  if (parts.length < 5 || parts[0] !== 'RSLEVELS' || parts[1] !== '1') return null;
-  return [parts[2], parts[3], parts.slice(4).join('|')];
-}
-
-async function fetchEndpointText(path, prettyJson = false, options = {}) {
+async function fetchJsonText(path, options = {}) {
   const url = `${settings.serviceUrl}${path}`;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(copyFailureMessage(response.status, await responseErrorDetail(response), options));
   }
-  return prettyJson ? JSON.stringify(await response.json(), null, 2) : response.text();
+  return JSON.stringify(await response.json());
 }
 
 function copyFailureMessage(status, detail = '', options = {}) {
   if (options.allSymbols) {
-    if (status === 404 && /not found/i.test(detail)) {
-      return 'Restart the local service to enable all-symbol TradingView export.';
-    }
     if (/no symbols|no futures|symbol not found|no captured/i.test(detail)) {
-      return 'No captured ES/MES or NQ/MNQ levels are available yet.';
+      return 'No captured ES or NQ levels are available yet.';
     }
-    return `All-symbol TradingView export unavailable (${status})${detail ? `: ${detail}` : ''}`;
+    return `All-symbol JSON export unavailable (${status})${detail ? `: ${detail}` : ''}`;
   }
-  if (status === 404) return `No data for ${selectedSymbol()}`;
+  if (status === 404) return `No data for ${scopeLabel(selectedSymbol())}`;
   return `Copy failed (${status})${detail ? `: ${detail}` : ''}`;
 }
 
@@ -276,14 +219,39 @@ function renderSymbols(nextSymbols) {
   els.symbol.replaceChildren(...nextSymbols.map((symbol) => {
     const option = document.createElement('option');
     option.value = symbol;
-    option.textContent = symbol;
+    option.textContent = scopeLabel(symbol);
     return option;
   }));
   if (nextSymbols.includes(selected)) els.symbol.value = selected;
+  else if (nextSymbols.length) els.symbol.value = nextSymbols[0];
 }
 
 function selectedSymbol() {
-  return els.symbol.value || symbols[0] || 'MES';
+  return els.symbol.value || symbols[0] || ALL_SCOPE;
+}
+
+function exportScopes(status = {}) {
+  const available = availableFamilies(status);
+  if (available.has('ES') && available.has('NQ')) return [ALL_SCOPE, 'ES', 'NQ'];
+  if (available.has('ES')) return ['ES'];
+  if (available.has('NQ')) return ['NQ'];
+  return [ALL_SCOPE, ...globalThis.RS_LEVELS.defaults.symbols];
+}
+
+function availableFamilies(status = {}) {
+  const out = new Set();
+  const summaries = Array.isArray(status.symbolSummaries) ? status.symbolSummaries : [];
+  summaries.forEach((summary) => {
+    if (Number(summary.levelCount) > 0) out.add(globalThis.RS_LEVELS.publicDisplaySymbol(summary.symbol || summary.displaySymbol));
+  });
+  if (out.size) return out;
+  (Array.isArray(status.symbols) ? status.symbols : []).forEach((symbol) => out.add(globalThis.RS_LEVELS.publicDisplaySymbol(symbol)));
+  return out;
+}
+
+function scopeLabel(scope) {
+  if (scope === ALL_SCOPE) return 'ES + NQ';
+  return globalThis.RS_LEVELS.publicDisplaySymbol(scope);
 }
 
 function combineServiceStatus(health = {}, status = {}) {
@@ -340,14 +308,13 @@ function renderCaptureStats(stats = {}) {
   els.hookReason.textContent = clean.lastReason || 'none';
 }
 
-function renderTradingViewCopy(serviceStatus = latestServiceStatus || {}) {
+function renderCopyState(serviceStatus = latestServiceStatus || {}) {
   const selected = selectedSymbol();
-  const issue = globalThis.RS_LEVELS.tradingViewBundleCopyIssue(serviceStatus);
-  const jsonIssue = globalThis.RS_LEVELS.selectedSymbolIssue(serviceStatus, selected);
-  els.copyTv.disabled = Boolean(issue);
-  els.copyTv.title = issue || 'Copy all-symbol TradingView payload';
+  const jsonIssue = selected === ALL_SCOPE
+    ? globalThis.RS_LEVELS.tradingViewBundleCopyIssue(serviceStatus)
+    : globalThis.RS_LEVELS.selectedSymbolIssue(serviceStatus, selected);
   els.copyJson.disabled = Boolean(jsonIssue);
-  els.copyJson.title = jsonIssue || 'Copy JSON export';
+  els.copyJson.title = jsonIssue || `Copy ${scopeLabel(selected)} JSON export`;
 }
 
 function formatTime(value) {
@@ -401,7 +368,8 @@ function serviceVersionText(health = {}) {
   const build = health.build || {};
   const revision = String(build.revision || '');
   const suffix = revision ? `+${revision}` : '';
-  return `${String(health.version || 'unknown')}${suffix}`;
+  const source = revision ? '' : ` ${String(build.source || 'source')}`;
+  return `${String(health.version || 'unknown')}${suffix}${source}`;
 }
 
 function extensionBuildInfo() {

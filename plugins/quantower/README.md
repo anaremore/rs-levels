@@ -10,10 +10,10 @@ Initial Quantower indicator source is included at `RSLevelsDisplayQuantower.cs`.
 
 ```text
 GET /status
-GET /levels/:symbol?format=sierra
+GET /levels/:symbol?format=rows
 ```
 
-The first indicator source uses the Sierra text feed to keep parsing simple inside Quantower. `/status` provides source freshness.
+The indicator uses the generic display row feed to keep parsing simple inside Quantower. `/status` provides source freshness.
 
 ## Indicator Settings
 

@@ -463,7 +463,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         SCString url;
         if (requestType == RS_REQUEST_STATUS)
         {
-            url.Format("%s/levels/%s?format=sierra", baseUrl.GetChars(), Symbol.GetString());
+            url.Format("%s/levels/%s?format=rows", baseUrl.GetChars(), Symbol.GetString());
             requestType = RS_REQUEST_LEVELS;
         }
         else

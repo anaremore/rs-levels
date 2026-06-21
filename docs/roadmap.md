@@ -40,12 +40,12 @@ Status: public setup foundation complete; field validation planned.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add popup capture pause/resume toggle backed by extension storage.
-- Add copy/export actions for all-symbol TradingView paste payloads, selected-symbol JSON, and scrubbed diagnostics.
-- Include the exact compact TradingView payload in JSON exports for tooling.
+- Add a single popup JSON export action for all-symbol and selected-family exports, plus scrubbed diagnostics.
+- Make the copied JSON directly pasteable into the TradingView Pine indicator.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
-- Guard TradingView and JSON copy actions when the selected symbol has no captured levels.
+- Guard JSON copy actions when the selected export has no captured levels.
 - Next: field testing against real RocketScooter endpoint shapes.
 
 ## Milestone 4: Display Plugins

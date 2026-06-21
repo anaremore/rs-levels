@@ -149,6 +149,10 @@ select {
   gap: 8px;
 }
 
+.actions .wide {
+  grid-column: 1 / -1;
+}
+
 footer {
   display: grid;
   gap: 8px;
@@ -225,6 +229,10 @@ summary {
 
 .debug-panel[open] summary {
   margin-bottom: 2px;
+}
+
+.debug-panel .wide {
+  margin-top: 8px;
 }
 
 footer button {

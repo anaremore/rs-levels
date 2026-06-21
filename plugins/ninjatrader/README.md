@@ -10,10 +10,10 @@ Initial NinjaScript source is included at `RSLevelsDisplay.cs`.
 
 ```text
 GET /status
-GET /levels/:symbol?format=sierra
+GET /levels/:symbol?format=rows
 ```
 
-The first indicator source uses the Sierra text feed to avoid adding a JSON dependency inside NinjaTrader. `/status` provides source freshness.
+The indicator uses the generic display row feed to avoid adding a JSON dependency inside NinjaTrader. `/status` provides source freshness.
 
 ## Indicator Settings
 
@@ -45,7 +45,7 @@ Documents\NinjaTrader 8\bin\Custom\Indicators\RSLevelsDisplay.cs
 - Use a background timer or NinjaTrader-safe async pattern to poll the local API.
 - Marshal results back to the chart thread before drawing.
 - Draw horizontal lines by `level.price` and text by `level.name`.
-- Use the Sierra text feed color columns and optional sixth `kind` column for display styling.
+- Use the display row feed color columns and optional sixth `kind` column for display styling.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the level line to avoid struck-through text.
 - Show stale/offline state directly on the chart.

@@ -1,32 +1,4 @@
-import { SCHEMA_VERSION, normalizeSymbolSnapshot } from '../../schemas/src/index.js';
-
-export const TRADINGVIEW_PAYLOAD_PREFIX = 'RSLEVELS';
-
-export function createTradingViewPayload(symbolSnapshot, options = {}) {
-  const row = normalizeRow(symbolSnapshot, options);
-
-  return [
-    TRADINGVIEW_PAYLOAD_PREFIX,
-    '1',
-    field(row.symbol),
-    field(row.capturedAt || options.capturedAt || ''),
-    levelsPayload(row.levels, options)
-  ].join('|');
-}
-
-export function createTradingViewBundlePayload(snapshot, options = {}) {
-  const rows = bundleRows(snapshot, options);
-  return [
-    TRADINGVIEW_PAYLOAD_PREFIX,
-    '2',
-    field(options.generatedAt || snapshot?.generatedAt || latestCapturedAt(rows) || ''),
-    ...rows.flatMap((row) => [
-      field(row.symbol),
-      field(row.capturedAt || options.capturedAt || ''),
-      levelsPayload(row.levels, options)
-    ])
-  ].join('|');
-}
+import { SCHEMA_VERSION, displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/index.js';
 
 export function createTradingViewJsonExport(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
@@ -36,19 +8,9 @@ export function createTradingViewJsonExport(symbolSnapshot, options = {}) {
     exportFormat: 'tradingview-json',
     payloadVersion: 1,
     generatedAt: options.generatedAt || new Date().toISOString(),
-    symbol: row.symbol,
+    symbol: displaySymbolFor(row.symbol),
     capturedAt: row.capturedAt,
-    compactPayload: createTradingViewPayload(row, options),
-    levels: levels.map((level) => ({
-      name: tradingViewLevelName(level),
-      price: level.price,
-      kind: level.kind,
-      color: level.color || ''
-    })),
-    notes: [
-      'TradingView Pine scripts cannot poll the local API directly.',
-      'Use the compact RSLEVELS payload for the included Pine indicator input.'
-    ]
+    levels: levels.map(jsonLevelRow)
   };
 }
 
@@ -59,25 +21,15 @@ export function createTradingViewBundleJsonExport(snapshot, options = {}) {
     exportFormat: 'tradingview-bundle-json',
     payloadVersion: 2,
     generatedAt: options.generatedAt || snapshot?.generatedAt || new Date().toISOString(),
-    compactPayload: createTradingViewBundlePayload(snapshot, options),
     symbols: rows.map((row) => {
       const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
       return {
-        symbol: row.symbol,
+        symbol: displaySymbolFor(row.symbol),
         capturedAt: row.capturedAt,
         levelCount: levels.length,
-        levels: levels.map((level) => ({
-          name: tradingViewLevelName(level),
-          price: level.price,
-          kind: level.kind,
-          color: level.color || ''
-        }))
+        levels: levels.map(jsonLevelRow)
       };
-    }),
-    notes: [
-      'TradingView Pine scripts cannot poll the local API directly.',
-      'Use the compact RSLEVELS v2 payload for the included Pine indicator input.'
-    ]
+    })
   };
 }
 
@@ -99,11 +51,12 @@ function isTradingViewBundleSymbol(symbol) {
   return symbol === 'MES' || symbol === 'MNQ';
 }
 
-function levelsPayload(levels, options) {
-  return limitLevels(levels, options.maxLevels)
-    .filter((level) => Number.isFinite(level.price))
-    .map((level) => [field(tradingViewLevelName(level)), Number(level.price).toFixed(2), field(level.kind)].join(','))
-    .join(';');
+function jsonLevelRow(level) {
+  return [
+    tradingViewLevelName(level),
+    Number(level.price),
+    field(level.kind)
+  ];
 }
 
 function tradingViewLevelName(level) {
@@ -136,13 +89,9 @@ function normalizedDisplayMatch(matchText) {
   return text;
 }
 
-function latestCapturedAt(rows) {
-  return rows.map((row) => row.capturedAt || '').filter(Boolean).sort().at(-1) || '';
-}
-
 function field(value) {
   return String(value ?? '')
-    .replace(/[|;,\r\n]+/g, ' ')
+    .replace(/[|;,"\[\]\r\n]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

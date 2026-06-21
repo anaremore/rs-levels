@@ -109,7 +109,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
         try {
             String status = httpGet(serviceUrl + "/status", 1500);
             sourceState = findSourceState(status);
-            String rows = httpGet(serviceUrl + "/levels/" + urlPart(symbol) + "?format=sierra", 1500);
+            String rows = httpGet(serviceUrl + "/levels/" + urlPart(symbol) + "?format=rows", 1500);
             horizontalLines = parseRows(rows);
             lastLevelsMs = System.currentTimeMillis();
         } catch (Exception ex) {

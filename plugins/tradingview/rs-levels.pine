@@ -1,7 +1,7 @@
 //@version=6
 indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
-payload = input.string("", "RS Levels Payload", display = display.none)
+payload = input.string("", "RS Levels JSON", display = display.none)
 showLabels = input.bool(true, "Labels")
 showDdBands = input.bool(true, "DD bands", inline = "dd")
 ddBandColorInput = input.color(color.rgb(41, 182, 246), "", inline = "dd")
@@ -125,9 +125,88 @@ displayLabelName(name, kind) =>
         cleaned := str.replace_all(cleaned, ":", " ")
         cleaned
 
-chartPayloadSymbol() =>
+chartJsonSymbol() =>
     chartText = str.upper(syminfo.root + " " + syminfo.ticker)
-    str.contains(chartText, "NQ") ? "MNQ" : str.contains(chartText, "ES") ? "MES" : ""
+    str.contains(chartText, "NQ") ? "NQ" : str.contains(chartText, "ES") ? "ES" : ""
+
+jsonCompact(payloadText) =>
+    cleaned = str.replace_all(payloadText, "\r", "")
+    cleaned := str.replace_all(cleaned, "\n", "")
+    cleaned := str.replace_all(cleaned, "\t", "")
+    for _i = 0 to 8
+        cleaned := str.replace_all(cleaned, "  ", " ")
+    cleaned := str.replace_all(cleaned, "\": \"", "\":\"")
+    cleaned := str.replace_all(cleaned, "\": [", "\":[")
+    cleaned := str.replace_all(cleaned, "\": {", "\":{")
+    cleaned := str.replace_all(cleaned, ", ", ",")
+    cleaned := str.replace_all(cleaned, ", \"", ",\"")
+    cleaned := str.replace_all(cleaned, ", [", ",[")
+    cleaned := str.replace_all(cleaned, ", {", ",{")
+    cleaned := str.replace_all(cleaned, "[ ", "[")
+    cleaned := str.replace_all(cleaned, " ]", "]")
+    cleaned := str.replace_all(cleaned, "{ ", "{")
+    cleaned := str.replace_all(cleaned, " }", "}")
+    cleaned
+
+jsonStringField(jsonPayload, fieldName) =>
+    marker = "\"" + fieldName + "\":\""
+    markerIndex = str.pos(jsonPayload, marker)
+    value = ""
+    if not na(markerIndex)
+        valueStart = markerIndex + str.length(marker)
+        remainder = str.substring(jsonPayload, valueStart, str.length(jsonPayload))
+        valueEnd = str.pos(remainder, "\"")
+        if not na(valueEnd)
+            value := str.substring(remainder, 0, valueEnd)
+    value
+
+jsonSectionForSymbol(jsonPayload, symbolText) =>
+    marker = "\"symbol\":\"" + symbolText + "\""
+    markerIndex = str.pos(jsonPayload, marker)
+    not na(markerIndex) ? str.substring(jsonPayload, markerIndex, str.length(jsonPayload)) : ""
+
+jsonLevelsBlock(jsonSection) =>
+    marker = "\"levels\":["
+    markerIndex = str.pos(jsonSection, marker)
+    blockText = ""
+    if not na(markerIndex)
+        blockStart = markerIndex + str.length(marker)
+        remainder = str.substring(jsonSection, blockStart, str.length(jsonSection))
+        blockEnd = str.pos(remainder, "]]")
+        if not na(blockEnd)
+            blockText := str.substring(remainder, 0, blockEnd + 1)
+    blockText
+
+jsonLevelsToLevelText(levelRowsText) =>
+    levelText = ""
+    if levelRowsText != ""
+        rows = str.split(levelRowsText, "],[")
+        for i = 0 to array.size(rows) - 1
+            rowText = array.get(rows, i)
+            rowText := str.replace_all(rowText, "[", "")
+            rowText := str.replace_all(rowText, "]", "")
+            rowText := str.replace_all(rowText, "\"", "")
+            fields = str.split(rowText, ",")
+            if array.size(fields) >= 3
+                name = array.get(fields, 0)
+                priceText = array.get(fields, 1)
+                kind = array.get(fields, 2)
+                if name != "" and priceText != "" and kind != ""
+                    levelText := levelText + (levelText == "" ? "" : ";") + name + "," + priceText + "," + kind
+    levelText
+
+jsonLevelTextForChart(payloadText) =>
+    jsonPayload = jsonCompact(payloadText)
+    chartSymbol = chartJsonSymbol()
+    levelText = ""
+    if chartSymbol != "" and str.contains(jsonPayload, "\"exportFormat\":\"tradingview-bundle-json\"")
+        sectionText = jsonSectionForSymbol(jsonPayload, chartSymbol)
+        levelText := jsonLevelsToLevelText(jsonLevelsBlock(sectionText))
+    else if chartSymbol != "" and str.contains(jsonPayload, "\"exportFormat\":\"tradingview-json\"")
+        payloadSymbol = jsonStringField(jsonPayload, "symbol")
+        if payloadSymbol == chartSymbol
+            levelText := jsonLevelsToLevelText(jsonLevelsBlock(jsonPayload))
+    levelText
 
 labelDirection(name, kind) =>
     upperName = str.upper(name)
@@ -244,28 +323,6 @@ drawLevelText(levelText, maxCount) =>
 
 if barstate.islast
     clearDrawings()
-    parts = str.split(payload, "|")
-    validPayload = array.size(parts) >= 5 and array.get(parts, 0) == "RSLEVELS" and (array.get(parts, 1) == "1" or array.get(parts, 1) == "2")
-    payloadVersion = validPayload ? array.get(parts, 1) : ""
-    symbolText = ""
-    levelText = ""
-    drawnCount = 0
-    totalCount = 0
-    if validPayload and payloadVersion == "1"
-        symbolText := array.get(parts, 2)
-        levelText := array.get(parts, 4)
-    if validPayload and payloadVersion == "2"
-        chartSymbol = chartPayloadSymbol()
-        sectionCount = int(math.floor((array.size(parts) - 3) / 3))
-        fallbackSymbol = sectionCount == 1 ? array.get(parts, 3) : ""
-        sectionIndex = 3
-        while sectionIndex + 2 < array.size(parts)
-            candidateSymbol = array.get(parts, sectionIndex)
-            if symbolText == "" and (candidateSymbol == chartSymbol or (chartSymbol == "" and fallbackSymbol != "" and candidateSymbol == fallbackSymbol))
-                symbolText := candidateSymbol
-                levelText := array.get(parts, sectionIndex + 2)
-            sectionIndex += 3
-    if validPayload
-        [nextDrawnCount, nextTotalCount] = drawLevelText(levelText, maxLevelsInput)
-        drawnCount := nextDrawnCount
-        totalCount := nextTotalCount
+    levelText = jsonLevelTextForChart(payload)
+    if levelText != ""
+        [drawnCount, totalCount] = drawLevelText(levelText, maxLevelsInput)

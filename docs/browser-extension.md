@@ -10,7 +10,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Captures only response URLs that match the configured allowlist.
 - Falls back to a display-only page reader for visible futures TradingView lines, study plots, and bull/bear zone shapes when API responses are not parseable as generic level JSON.
 - Posts capture payloads to the local service at `/capture/api`.
-- Provides a popup capture toggle plus TradingView, JSON, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
+- Provides a popup capture toggle plus JSON export, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
 - Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in a collapsed debug section.
 - Shows the extension version/build identity in the popup corner for support and diagnostics.
@@ -30,8 +30,8 @@ The RS Levels browser extension is the first-priority capture UX.
 3. Open RocketScooter.
 4. Check the popup status.
 5. Use the capture toggle when you need to pause or resume allowlisted capture.
-6. Use `Copy TradingView` to paste the all-symbol payload into `plugins/tradingview/rs-levels.pine`.
-7. Use `Copy JSON` when another local tool needs a selected-symbol manual export.
+6. Choose `ES + NQ`, `ES`, or `NQ` in the export dropdown. The popup narrows this list when only one family has captured levels.
+7. Use `Copy JSON` for the selected export, then paste that JSON directly into `plugins/tradingview/rs-levels.pine`.
 8. Use `Plugins` to inspect the local display-adapter manifest.
 9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
 10. Expand `Debug` when troubleshooting local API, extension, or stale-source setup.
@@ -96,7 +96,7 @@ db/nq
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.
 
-Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols. `Copy TradingView` copies an all-symbol futures payload, while the popup symbol selector controls selected-symbol JSON export. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored as `MES`, and `F.US.ENQ...` symbols are stored as `MNQ`, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform. Contract month/year suffixes are detected by pattern rather than hard-coded to a specific rollover, so `F.US.EPU`, `F.US.EPU26`, `F.US.EPZ26`, and `F.US.EPH27` stay in the ES/MES family, while `F.US.ENQU`, `F.US.ENQU26`, `F.US.ENQZ26`, and `F.US.ENQH27` stay in the NQ/MNQ family. SPY, QQQ, and other watchlist/ETF symbols can be open in RocketScooter without being included in the TradingView futures payload.
+Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols. The popup presents user-facing `ES` and `NQ` export choices, and TradingView JSON exports use those same public family labels. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored in the ES family, and `F.US.ENQ...` symbols are stored in the NQ family, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform. Contract month/year suffixes are detected by pattern rather than hard-coded to a specific rollover, so `F.US.EPU`, `F.US.EPU26`, `F.US.EPZ26`, and `F.US.EPH27` stay in the ES/MES family, while `F.US.ENQU`, `F.US.ENQU26`, `F.US.ENQZ26`, and `F.US.ENQH27` stay in the NQ/MNQ family. SPY, QQQ, and other watchlist/ETF symbols can be open in RocketScooter without being included in futures exports.
 
 When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it reads TradingView chart shapes and study plots from futures charts, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays for compatibility with RocketScooter live-chart display snapshots. It skips SPY/QQQ chart families. It does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
 

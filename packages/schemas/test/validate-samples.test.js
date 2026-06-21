@@ -6,6 +6,7 @@ import {
   inferLevelKind,
   normalizeEndpointSummary,
   normalizeLevel,
+  displaySymbolFor,
   normalizeSymbol,
   normalizeSymbolSnapshot,
   stableLevelId,
@@ -73,5 +74,12 @@ assert.equal(normalizeSymbol('SPY'), 'SPY');
 assert.equal(normalizeSymbol('QQQ'), 'QQQ');
 assert.equal(normalizeSymbol('levels'), 'LEVELS');
 assert.equal(normalizeSymbol('messages'), 'MESSAGES');
+assert.equal(displaySymbolFor('MES'), 'ES');
+assert.equal(displaySymbolFor('ES'), 'ES');
+assert.equal(displaySymbolFor('F.US.EPU26'), 'ES');
+assert.equal(displaySymbolFor('MNQ'), 'NQ');
+assert.equal(displaySymbolFor('NQ'), 'NQ');
+assert.equal(displaySymbolFor('F.US.ENQU26'), 'NQ');
+assert.equal(displaySymbolFor('SPY'), 'SPY');
 
 console.log('schema sample validation passed');

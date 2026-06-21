@@ -28,14 +28,12 @@ GET  /plugins
 GET  /snapshot
 GET  /levels
 GET  /levels/:symbol
-GET  /levels/:symbol?format=sierra
+GET  /levels/:symbol?format=rows
 GET  /ddbands
 GET  /zones
 GET  /references
 GET  /tradingview
-GET  /tradingview?format=json
 GET  /tradingview/:symbol
-GET  /tradingview/:symbol?format=json
 GET  /stream
 POST /capture/api
 ```
@@ -173,11 +171,11 @@ Returns a compact status payload for UI badges and plugin diagnostics. Display p
   "source": {},
   "symbolCount": 1,
   "levelCount": 6,
-  "symbols": ["MES"],
+  "symbols": ["ES"],
   "symbolSummaries": [
     {
-      "symbol": "MES",
-      "displaySymbol": "MES",
+      "symbol": "ES",
+      "displaySymbol": "ES",
       "levelCount": 6,
       "capturedAt": "2026-06-19T14:29:59.500Z",
       "warnings": []
@@ -186,7 +184,7 @@ Returns a compact status payload for UI badges and plugin diagnostics. Display p
 }
 ```
 
-`symbolSummaries` is scrubbed and safe for display plugins. It lets UI clients verify that a selected symbol has captured levels before requesting `/levels/:symbol` or `/tradingview/:symbol`.
+`symbolSummaries` is scrubbed and safe for display plugins. User-facing status uses `ES` and `NQ` labels to avoid exposing the internal micro-contract storage aliases. It lets UI clients verify that a selected symbol has captured levels before requesting `/levels/:symbol` or `/tradingview/:symbol`.
 
 `build.source` is `source` for local source checkouts and `package` for generated release packages. Packaged builds include a short git `build.revision`.
 
@@ -218,7 +216,7 @@ Returns all known levels as a flat array.
 
 ## GET /levels/:symbol
 
-Returns one normalized symbol snapshot. Aliases are normalized through the public schema package, so `ES` maps to `MES` and `NQ` maps to `MNQ`. Current-contract CQG-style RocketScooter symbols are normalized into the same families: `F.US.EP...` and `EP...` map to `MES`, while `F.US.ENQ...` and `ENQ...` map to `MNQ`.
+Returns one user-facing symbol snapshot. Aliases resolve through the public schema package, so `ES`, `MES`, and CQG `F.US.EP...` contracts share the ES family, while `NQ`, `MNQ`, and CQG `F.US.ENQ...` contracts share the NQ family. JSON responses present those families as `ES` and `NQ`; internal snapshots and compact TradingView payload sections still use canonical `MES` and `MNQ` family keys for backward compatibility.
 
 Unknown symbols return `404`:
 
@@ -229,67 +227,62 @@ Unknown symbols return `404`:
 }
 ```
 
-## GET /levels/:symbol?format=sierra
+## GET /levels/:symbol?format=rows
 
-Returns a simple Sierra-compatible CSV-like text feed:
+Returns a simple generic display row text feed:
 
 ```text
 OVNHP,7537.00,41,98,255,hp
 DD Upper,7579.75,41,182,246,dd-band
 ```
 
-Columns are `name,price,red,green,blue,kind`. The first five columns match the original Sierra-compatible feed, so older display clients that ignore extra columns remain compatible. Newer clients should read `kind` to distinguish `zone-bull`, `zone-bear`, and other display categories for fills and settings. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
+Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, and other display categories for fills and settings. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
 
 ## GET /tradingview
 
-Returns a compact all-symbol futures text payload for the included TradingView Pine indicator. The extension popup uses this route for `Copy TradingView` so one copied payload can contain both MES and MNQ. The Pine indicator reads the chart family and draws the matching section on ES/MES or NQ/MNQ charts. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same MES/MNQ families. SPY, QQQ, and other watchlist/ETF symbols are intentionally omitted.
-
-```text
-RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
-```
-
-Unknown or unsupported chart symbols fall back to the first symbol section. The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set.
-
-## GET /tradingview?format=json
-
-Returns a copy-friendly JSON export with the v2 all-symbol compact payload and structured symbol rows.
+Returns the all-symbol futures JSON paste export for the included TradingView Pine indicator. The extension popup copies this endpoint for `ES + NQ`. The Pine indicator reads the chart family and draws the matching `ES` or `NQ` section on ES/MES or NQ/MNQ charts. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same ES/NQ families. SPY, QQQ, and other watchlist/ETF symbols are intentionally omitted.
 
 ```json
 {
   "schemaVersion": "0.1.0",
   "exportFormat": "tradingview-bundle-json",
   "payloadVersion": 2,
-  "compactPayload": "RSLEVELS|2|...",
-  "symbols": []
+  "generatedAt": "2026-06-19T14:30:00.000Z",
+  "symbols": [
+    {
+      "symbol": "ES",
+      "capturedAt": "2026-06-19T14:29:59.500Z",
+      "levelCount": 2,
+      "levels": [["OVNHP", 7537, "hp"], ["BZT1", 7588, "zone-bull"]]
+    },
+    {
+      "symbol": "NQ",
+      "capturedAt": "2026-06-19T14:29:59.500Z",
+      "levelCount": 1,
+      "levels": [["BrZT1", 30450, "zone-bear"]]
+    }
+  ]
 }
 ```
 
+Unknown or unsupported chart symbols draw nothing. The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set.
+
 ## GET /tradingview/:symbol
 
-Returns a compact single-symbol text payload for compatibility with older workflows and external tools. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
-
-```text
-RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band
-```
-
-The payload is intentionally not JSON because Pine scripts do not include a JSON parser and cannot poll localhost directly. The local API includes every finite-price level in the export unless a caller explicitly requests a smaller set. See [TradingView](tradingview.md).
-
-## GET /tradingview/:symbol?format=json
-
-Returns a copy-friendly JSON export for tooling and inspection:
+Returns a single-symbol JSON paste export. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
 
 ```json
 {
   "schemaVersion": "0.1.0",
   "exportFormat": "tradingview-json",
   "payloadVersion": 1,
-  "symbol": "MES",
-  "compactPayload": "RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp",
-  "levels": []
+  "symbol": "ES",
+  "capturedAt": "2026-06-19T14:29:59.500Z",
+  "levels": [["OVNHP", 7537, "hp"], ["DD Upper", 7579.75, "dd-band"]]
 }
 ```
 
-Pine users should paste the compact `RSLEVELS|...` payload into the indicator input. JSON clients can read `compactPayload` when they need the exact Pine-ready string alongside structured rows.
+The included Pine indicator accepts this JSON directly. The local API includes every finite-price level in the export unless a caller explicitly requests a smaller set. See [TradingView](tradingview.md).
 
 ## GET /ddbands
 

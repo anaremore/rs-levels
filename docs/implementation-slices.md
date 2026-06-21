@@ -38,8 +38,8 @@ Deliverables:
 - `/levels/:symbol`
 - `/stream`
 - browser capture ingest
-- Sierra text output
-- TradingView compact payload and JSON export
+- generic display row output
+- TradingView JSON paste export
 
 No browser extension yet.
 

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createService, listen } from '../src/index.js';
 import { createLevelStore } from '../src/store.js';
 import { diagnostics } from '../src/http.js';
-import { levelsToSierraText } from '../src/sierra-format.js';
+import { levelsToDisplayRowsText } from '../src/display-rows.js';
 
 const cliPath = fileURLToPath(new URL('../src/cli.js', import.meta.url));
 const cliHelp = execFileSync(process.execPath, [cliPath, '--help'], { encoding: 'utf8' });
@@ -15,7 +15,7 @@ const cliVersion = execFileSync(process.execPath, [cliPath, '--version'], { enco
 assert.equal(cliVersion, '0.0.0');
 
 assert.equal(
-  levelsToSierraText([
+  levelsToDisplayRowsText([
     { name: 'text SPY Open : 7,559 Liquidity Map horizontal_line', price: 7559, kind: 'open-close' },
     { name: 'Bull Zone Top', price: 7526, kind: 'zone-bull' },
     { name: 'Bear Zone Bottom', price: 7588, kind: 'zone-bear' }
@@ -183,7 +183,7 @@ try {
   const captureDiagnostics = await getJson(`${baseUrl}/diagnostics`);
   assert.equal(captureDiagnostics.source.connected, true);
   assert.equal(captureDiagnostics.levelCount, 2);
-  assert.deepEqual(captureDiagnostics.symbolSummaries.map((row) => [row.symbol, row.levelCount]), [['MES', 2]]);
+  assert.deepEqual(captureDiagnostics.symbolSummaries.map((row) => [row.symbol, row.levelCount]), [['ES', 2]]);
   assert.equal(captureDiagnostics.source.endpointCount, 1);
   assert.equal(captureDiagnostics.source.endpoints[0].key, '/platform/api/v1/ddbands/MES');
   assert.equal(Object.hasOwn(captureDiagnostics.source.endpoints[0], 'url'), false);
@@ -196,39 +196,44 @@ try {
   assert.equal(Object.hasOwn(healthAfterCapture.source.endpoints[0], 'url'), false);
 
   const levels = await getJson(`${baseUrl}/levels/MES`);
-  assert.equal(levels.symbol, 'MES');
+  assert.equal(levels.symbol, 'ES');
+  assert.equal(levels.displaySymbol, 'ES');
+  assert.equal(levels.levels[0].symbol, 'ES');
+  assert.match(levels.levels[0].id, /^ES:/);
   assert.equal(levels.levels[1].kind, 'dd-band');
 
   const statusAfterCapture = await getJson(`${baseUrl}/status`);
   assert.equal(statusAfterCapture.symbolCount, 1);
   assert.equal(statusAfterCapture.levelCount, 2);
-  assert.deepEqual(statusAfterCapture.symbols, ['MES']);
-  assert.equal(statusAfterCapture.symbolSummaries[0].symbol, 'MES');
-  assert.equal(statusAfterCapture.symbolSummaries[0].displaySymbol, 'MES');
+  assert.deepEqual(statusAfterCapture.symbols, ['ES']);
+  assert.equal(statusAfterCapture.symbolSummaries[0].symbol, 'ES');
+  assert.equal(statusAfterCapture.symbolSummaries[0].displaySymbol, 'ES');
   assert.equal(statusAfterCapture.symbolSummaries[0].levelCount, 2);
   assert.equal(statusAfterCapture.symbolSummaries[0].capturedAt, capturedAt);
 
   const aliasLevels = await getJson(`${baseUrl}/levels/ES`);
-  assert.equal(aliasLevels.symbol, 'MES');
+  assert.equal(aliasLevels.symbol, 'ES');
 
   const cqgEsLevels = await getJson(`${baseUrl}/levels/F.US.EPU26`);
-  assert.equal(cqgEsLevels.symbol, 'MES');
+  assert.equal(cqgEsLevels.symbol, 'ES');
 
-  const text = await getText(`${baseUrl}/levels/MES?format=sierra`);
+  const text = await getText(`${baseUrl}/levels/MES?format=rows`);
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
   assert.match(text, /OVNHP,7537\.00,41,98,255,hp/);
+  const rowsText = await getText(`${baseUrl}/levels/ES?format=rows`);
+  assert.equal(rowsText, text);
 
   const tradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(tradingViewResponse.ok, true, `${baseUrl}/tradingview/ES returned ${tradingViewResponse.status}`);
   assert.equal(tradingViewResponse.headers.get('cache-control'), 'no-store');
-  const tradingViewPayload = await tradingViewResponse.text();
-  assert.equal(tradingViewPayload, `RSLEVELS|1|MES|${capturedAt}|OVNHP,7537.00,hp;DD Upper,7579.75,dd-band`);
-
-  const tradingViewJson = await getJson(`${baseUrl}/tradingview/MES?format=json`);
+  const tradingViewJson = await tradingViewResponse.json();
   assert.equal(tradingViewJson.exportFormat, 'tradingview-json');
   assert.equal(tradingViewJson.payloadVersion, 1);
-  assert.equal(tradingViewJson.compactPayload, tradingViewPayload);
+  assert.equal(tradingViewJson.symbol, 'ES');
+  assert.equal(Object.hasOwn(tradingViewJson, 'compactPayload'), false);
+  assert.equal(Object.hasOwn(tradingViewJson, 'notes'), false);
   assert.equal(tradingViewJson.levels.length, 2);
+  assert.deepEqual(tradingViewJson.levels[0], ['OVNHP', 7537, 'hp']);
   const ddbands = await getJson(`${baseUrl}/ddbands`);
   assert.equal(ddbands.levels.length, 1);
 
@@ -265,34 +270,29 @@ try {
   assert.equal(combinedCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'zone-bear'), true);
 
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
-  assert.deepEqual(multiSymbolStatus.symbols, ['MES', 'MNQ']);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'MES').levelCount, 3);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'MNQ').levelCount, 2);
+  assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 3);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 2);
 
-  const bundledTradingViewPayload = await getText(`${baseUrl}/tradingview`);
-  assert.match(bundledTradingViewPayload, /^RSLEVELS\|2\|/);
-  assert.match(bundledTradingViewPayload, /MES\|/);
-  assert.match(bundledTradingViewPayload, /MNQ\|/);
-  assert.match(bundledTradingViewPayload, /BZT1,7580\.00,zone-bull/);
-  assert.match(bundledTradingViewPayload, /BrZT1,30450\.00,zone-bear/);
-
-  const mesSierraWithKinds = await getText(`${baseUrl}/levels/MES?format=sierra`);
-  assert.match(mesSierraWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
-  assert.match(mesSierraWithKinds, /BZB1,7560\.00,76,175,80,zone-bull/);
-
-  const bundledTradingViewJson = await getJson(`${baseUrl}/tradingview?format=json`);
+  const bundledTradingViewJson = await getJson(`${baseUrl}/tradingview`);
   assert.equal(bundledTradingViewJson.exportFormat, 'tradingview-bundle-json');
   assert.equal(bundledTradingViewJson.payloadVersion, 2);
-  assert.match(bundledTradingViewJson.compactPayload, /^RSLEVELS\|2\|/);
-  assert.match(bundledTradingViewJson.compactPayload, /MES\|/);
-  assert.match(bundledTradingViewJson.compactPayload, /MNQ\|/);
-  assert.deepEqual(bundledTradingViewJson.symbols.map((row) => row.symbol), ['MES', 'MNQ']);
+  assert.equal(Object.hasOwn(bundledTradingViewJson, 'compactPayload'), false);
+  assert.equal(Object.hasOwn(bundledTradingViewJson, 'notes'), false);
+  assert.deepEqual(bundledTradingViewJson.symbols.map((row) => row.symbol), ['ES', 'NQ']);
+  assert.equal(bundledTradingViewJson.symbols.find((row) => row.symbol === 'ES').levels.some((row) => row[0] === 'BZT1' && row[2] === 'zone-bull'), true);
+  assert.equal(bundledTradingViewJson.symbols.find((row) => row.symbol === 'NQ').levels.some((row) => row[0] === 'BrZT1' && row[2] === 'zone-bear'), true);
 
-  const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
-  assert.match(mnqTradingViewPayload, /BrZT1,30450\.00,zone-bear/);
+  const mesRowsWithKinds = await getText(`${baseUrl}/levels/MES?format=rows`);
+  assert.match(mesRowsWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
+  assert.match(mesRowsWithKinds, /BZB1,7560\.00,76,175,80,zone-bull/);
+
+  const mnqTradingViewJson = await getJson(`${baseUrl}/tradingview/MNQ`);
+  assert.equal(mnqTradingViewJson.symbol, 'NQ');
+  assert.equal(mnqTradingViewJson.levels.some((row) => row[0] === 'BrZT1' && row[2] === 'zone-bear'), true);
 
   const cqgNqLevels = await getJson(`${baseUrl}/levels/F.US.ENQU26`);
-  assert.equal(cqgNqLevels.symbol, 'MNQ');
+  assert.equal(cqgNqLevels.symbol, 'NQ');
 
   const zones = await getJson(`${baseUrl}/zones`);
   assert.equal(zones.levels.length, 4);

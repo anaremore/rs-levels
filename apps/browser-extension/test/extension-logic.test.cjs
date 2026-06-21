@@ -28,6 +28,7 @@ assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('tview/indi
 assert.ok(!sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('history'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('liq-map'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('dyn-hp'));
+assert.equal(JSON.stringify(sharedContext.RS_LEVELS.defaults.symbols), JSON.stringify(['ES', 'NQ']));
 assert.deepEqual(
   sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 1, endpointPatterns: ['level'] }).endpointPatterns,
   sharedContext.RS_LEVELS.mergeEndpointPatterns(['level'], sharedContext.RS_LEVELS.defaults.endpointPatterns)
@@ -49,18 +50,22 @@ assert.equal(sharedContext.RS_LEVELS.normalizeDisplaySymbol('MNQH27'), 'MNQ');
 assert.equal(sharedContext.RS_LEVELS.normalizeDisplaySymbol('NQU'), 'MNQ');
 assert.equal(sharedContext.RS_LEVELS.normalizeDisplaySymbol('SPY'), 'SPY');
 assert.equal(sharedContext.RS_LEVELS.normalizeDisplaySymbol('QQQ'), 'QQQ');
+assert.equal(sharedContext.RS_LEVELS.publicDisplaySymbol('MES'), 'ES');
+assert.equal(sharedContext.RS_LEVELS.publicDisplaySymbol('F.US.EPU26'), 'ES');
+assert.equal(sharedContext.RS_LEVELS.publicDisplaySymbol('MNQ'), 'NQ');
+assert.equal(sharedContext.RS_LEVELS.publicDisplaySymbol('F.US.ENQU26'), 'NQ');
 assert.equal(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: true, state: 'live' } }), '');
 assert.equal(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 2, source: { connected: true, state: 'live' } }), '');
 assert.equal(sharedContext.RS_LEVELS.symbolLevelCount({
   levelCount: 3,
-  symbolSummaries: [{ symbol: 'MES', levelCount: 3 }]
+  symbolSummaries: [{ symbol: 'ES', levelCount: 3 }]
 }, 'ES'), 3);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured levels/);
 assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 0, source: { connected: false, state: 'waiting' } }), /No captured levels/);
 assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
   levelCount: 3,
-  symbolSummaries: [{ symbol: 'MNQ', levelCount: 3 }]
-}, 'MES'), /MES/);
+  symbolSummaries: [{ symbol: 'NQ', levelCount: 3 }]
+}, 'ES'), /ES/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'stale' } }), /stale/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
 assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);

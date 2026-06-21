@@ -123,10 +123,10 @@ paths:
           required: false
           schema:
             type: string
-            enum: [sierra]
+            enum: [rows]
       responses:
         '200':
-          description: Symbol snapshot or Sierra text feed
+          description: Symbol snapshot or generic display row feed
           content:
             application/json:
               schema:
@@ -134,7 +134,7 @@ paths:
             text/plain:
               schema:
                 type: string
-                description: Sierra-compatible rows as name,price,red,green,blue,kind. Older clients may ignore the sixth kind column.
+                description: Display rows as name,price,red,green,blue,kind.
         '404':
           $ref: '#/components/responses/NotFound'
   /ddbands:
@@ -169,22 +169,11 @@ paths:
                 $ref: '#/components/schemas/FlatLevels'
   /tradingview:
     get:
-      summary: TradingView all-symbol paste export
-      parameters:
-        - name: format
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [json]
+      summary: TradingView all-symbol JSON paste export
       responses:
         '200':
-          description: Compact all-symbol TradingView text payload or JSON export
+          description: All-symbol TradingView JSON export
           content:
-            text/plain:
-              schema:
-                type: string
-                example: RSLEVELS|2|2026-06-19T14:30:00.000Z|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp|MNQ|2026-06-19T14:29:59.500Z|BrZT1,30450.00,zone-bear
             application/json:
               schema:
                 $ref: '#/components/schemas/TradingViewBundleExport'
@@ -192,23 +181,13 @@ paths:
           $ref: '#/components/responses/NotFound'
   /tradingview/{symbol}:
     get:
-      summary: TradingView paste export
+      summary: TradingView single-symbol JSON paste export
       parameters:
         - $ref: '#/components/parameters/Symbol'
-        - name: format
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [json]
       responses:
         '200':
-          description: Compact TradingView text payload or JSON export
+          description: Single-symbol TradingView JSON export
           content:
-            text/plain:
-              schema:
-                type: string
-                example: RSLEVELS|1|MES|2026-06-19T14:29:59.500Z|OVNHP,7537.00,hp
             application/json:
               schema:
                 $ref: '#/components/schemas/TradingViewExport'
@@ -257,7 +236,7 @@ components:
       name: symbol
       in: path
       required: true
-      description: Symbol or alias. ES/MES and CQG EP contracts normalize to MES; NQ/MNQ and CQG ENQ contracts normalize to MNQ.
+      description: Symbol or alias. ES/MES and CQG EP contracts resolve to the ES family; NQ/MNQ and CQG ENQ contracts resolve to the NQ family. JSON display responses and TradingView exports use ES/NQ labels.
       schema:
         type: string
         examples: [MES, MNQ, ES, NQ, F.US.EPU, F.US.EPU26, F.US.ENQU, F.US.ENQU26]
@@ -478,6 +457,7 @@ components:
           type: boolean
     SymbolSnapshot:
       type: object
+      description: User-facing /levels/:symbol JSON responses use ES/NQ family labels. Full /snapshot storage may use canonical MES/MNQ family keys.
       required: [symbol, displaySymbol, price, capturedAt, levels, stats, warnings]
       properties:
         symbol:
@@ -501,6 +481,7 @@ components:
             type: string
     SymbolSummary:
       type: object
+      description: User-facing status summary with ES/NQ family labels.
       required: [symbol, displaySymbol, levelCount, capturedAt, warnings]
       properties:
         symbol:
@@ -548,7 +529,7 @@ components:
             $ref: '#/components/schemas/Level'
     TradingViewExport:
       type: object
-      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, symbol, capturedAt, compactPayload, levels, notes]
+      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, symbol, capturedAt, levels]
       properties:
         schemaVersion:
           type: string
@@ -565,29 +546,13 @@ components:
           type: string
         capturedAt:
           type: string
-        compactPayload:
-          type: string
         levels:
           type: array
           items:
-            type: object
-            required: [name, price, kind, color]
-            properties:
-              name:
-                type: string
-              price:
-                type: number
-              kind:
-                type: string
-              color:
-                type: string
-        notes:
-          type: array
-          items:
-            type: string
+            $ref: '#/components/schemas/TradingViewLevelRow'
     TradingViewBundleExport:
       type: object
-      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, compactPayload, symbols, notes]
+      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, symbols]
       properties:
         schemaVersion:
           type: string
@@ -600,8 +565,6 @@ components:
         generatedAt:
           type: string
           format: date-time
-        compactPayload:
-          type: string
         symbols:
           type: array
           items:
@@ -617,21 +580,18 @@ components:
               levels:
                 type: array
                 items:
-                  type: object
-                  required: [name, price, kind, color]
-                  properties:
-                    name:
-                      type: string
-                    price:
-                      type: number
-                    kind:
-                      type: string
-                    color:
-                      type: string
-        notes:
-          type: array
-          items:
-            type: string
+                  $ref: '#/components/schemas/TradingViewLevelRow'
+    TradingViewLevelRow:
+      type: array
+      minItems: 3
+      maxItems: 3
+      prefixItems:
+        - type: string
+          description: Display label.
+        - type: number
+          description: Level price.
+        - type: string
+          description: Display kind such as hp, mhp, dd-band, zone-bull, or zone-bear.
     CapturePayload:
       type: object
       required: [endpoint, capturedAt, body]

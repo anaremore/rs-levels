@@ -82,7 +82,7 @@ In another terminal:
 npm run demo:capture
 ```
 
-Then open the dashboard, run a client example, copy a TradingView payload from `http://127.0.0.1:8765/tradingview`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
+Then open the dashboard, run a client example, copy a TradingView JSON export from `http://127.0.0.1:8765/tradingview`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
 
 ## 3. Capture Levels
 
@@ -93,7 +93,7 @@ Then open the dashboard, run a client example, copy a TradingView payload from `
 5. If RocketScooter was already open before the extension loaded or reloaded, click `Reconnect Tab`.
 6. Confirm the service status changes from waiting/offline to live once levels are captured.
 
-You can keep the current ES and NQ futures contracts visible in RocketScooter. CQG-style symbols such as `F.US.EP...` normalize to `MES`, and `F.US.ENQ...` normalizes to `MNQ`, so the same captured levels can be used on ES/MES and NQ/MNQ charts in the destination platform.
+You can keep the current ES and NQ futures contracts visible in RocketScooter. CQG-style symbols such as `F.US.EP...` are treated as the ES family, and `F.US.ENQ...` is treated as the NQ family, so the same captured levels can be used on ES/MES and NQ/MNQ charts in the destination platform.
 
 If capture does not start, open extension options and review the endpoint allowlist.
 
@@ -102,10 +102,10 @@ If capture does not start, open extension options and review the endpoint allowl
 1. In TradingView, open Pine Editor.
 2. Paste the contents of `plugins/tradingview/rs-levels.pine`.
 3. Add the indicator to your chart.
-4. In the extension popup, click `Copy TradingView`.
-5. Paste the copied `RSLEVELS|...` payload into the indicator input. One all-symbol payload can carry MES and MNQ together; the indicator chooses the matching ES/MES or NQ/MNQ section for the current chart.
+4. In the extension popup, keep the export dropdown on `ES + NQ` and click `Copy JSON`.
+5. Paste the copied JSON into the indicator's `RS Levels JSON` input. One all-symbol payload can carry ES and NQ together; the indicator chooses the matching ES/MES or NQ/MNQ section for the current chart.
 
-`Copy JSON` is selected-symbol JSON for manual inspection and third-party tooling. `Plugins` opens the local display-plugin manifest.
+The same dropdown can copy only `ES` or only `NQ` JSON when you want a single-family export for inspection or third-party tooling. `Plugins` opens the local display-plugin manifest.
 
 ## 5. Tailscale Or Trusted Private Network
 
@@ -145,5 +145,5 @@ All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the
 
 - `OFFLINE` in the popup: start the API or check the service URL. Use `Copy Diagnostics` for a scrubbed setup bundle.
 - No symbols in the popup: open RocketScooter and wait for allowlisted level responses. If `Observed` stays at 0 after RocketScooter data is visible, click `Reconnect Tab`, then reload the RocketScooter tab or refresh chart data so startup requests run with the hook installed. If `Hook` stays `none`, reload the extension and the RocketScooter tab. If `Observed` rises but `Ignored` also rises, review the endpoint allowlist in extension options. If `Skipped` rises, check max capture bytes or whether the endpoint returns empty/non-text responses.
-- TradingView lines do not update: copy a fresh payload and paste it into the indicator input.
+- TradingView lines do not update: copy fresh JSON and paste it into the indicator input.
 - Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and `Test Service` succeeds in the extension options page.
