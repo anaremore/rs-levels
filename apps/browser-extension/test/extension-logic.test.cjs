@@ -69,37 +69,44 @@ assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'stale' } }), /stale/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
 assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
-const bundleJson = sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
-  exportFormat: 'tradingview-bundle-json',
-  symbols: [{ symbol: 'ES', levels: [['OVNHP', 7565, 'hp']] }]
-}));
-assert.equal(bundleJson.symbols[0].symbol, 'ES');
-const singleJson = sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
-  exportFormat: 'tradingview-json',
-  symbol: 'NQ',
-  levels: [['OVNMHP', 30475, 'mhp']]
-}));
-assert.equal(singleJson.symbol, 'NQ');
+const bundlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,7565,hp|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp');
+assert.match(bundlePayload, /^RSLEVELS\|2\|/);
+const singlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp');
+assert.match(singlePayload, /\|NQ\|/);
+const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
+  capturedAt: '2026-06-21T03:47:05.860Z',
+  body: JSON.stringify({
+    symbol: 'MES',
+    capturedAt: '2026-06-21T03:47:02.097Z',
+    levels: [
+      { name: 'text SPY Open : 7559 Liquidity Map', price: 7559, kind: 'open-close' },
+      { symbol: 'F.US.ENQU26', name: 'OVNMHP', price: 30475, kind: 'mhp' },
+      { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
+    ]
+  })
+});
+assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSON.stringify(['ES', 'NQ']));
+const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'ALL');
+assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
+assert.match(localPayload, /Open,7559,open-close/);
+assert.match(localPayload, /\|NQ\|2026-06-21T03:47:02\.097Z\|OVNMHP,30475,mhp/);
+assert.doesNotMatch(localPayload, /\|SPY\|/);
+assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 assert.throws(
-  () => sharedContext.RS_LEVELS.cleanTradingViewJsonExport('RS' + 'LEVELS|1|MES|2026-06-21T03:12:03.127Z|OVNHP,7565.00,hp'),
-  /legacy TradingView text/
+  () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RS' + 'LEVELS|1|MES|2026-06-21T03:12:03.127Z|OVNHP,7565.00,hp'),
+  /unsupported TradingView payload/
 );
 assert.throws(
-  () => sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
-    exportFormat: 'tradingview-json',
-    symbol: 'ES',
-    compactPayload: 'legacy',
-    levels: [{ name: 'OVNHP', price: 7565, kind: 'hp' }]
-  })),
-  /old TradingView JSON/
+  () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|SPY|2026-06-21T03:47:02.097Z|Open,7559,open-close'),
+  /unsupported symbol/
 );
 assert.throws(
-  () => sharedContext.RS_LEVELS.cleanTradingViewJsonExport(JSON.stringify({
-    exportFormat: 'tradingview-json',
-    symbol: 'ES',
-    levels: [{ name: 'OVNHP', price: 7565, kind: 'hp' }]
-  })),
-  /invalid TradingView JSON/
+  () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,not-a-price,hp'),
+  /invalid TradingView payload/
+);
+assert.throws(
+  () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP 7565 hp'),
+  /invalid TradingView payload/
 );
 
 const rulesContext = { URL };

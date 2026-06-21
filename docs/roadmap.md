@@ -40,8 +40,8 @@ Status: public setup foundation complete; field validation planned.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add popup capture pause/resume toggle backed by extension storage.
-- Add a single popup JSON export action for all-symbol and selected-family exports, plus scrubbed diagnostics.
-- Make the copied JSON directly pasteable into the TradingView Pine indicator.
+- Add a single popup TradingView payload action for all-symbol and selected-family exports, plus scrubbed diagnostics.
+- Make the copied `RSLEVELS|2` payload directly pasteable into the TradingView Pine indicator.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.

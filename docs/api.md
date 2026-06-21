@@ -216,7 +216,7 @@ Returns all known levels as a flat array.
 
 ## GET /levels/:symbol
 
-Returns one user-facing symbol snapshot. Aliases resolve through the public schema package, so `ES`, `MES`, and CQG `F.US.EP...` contracts share the ES family, while `NQ`, `MNQ`, and CQG `F.US.ENQ...` contracts share the NQ family. JSON responses present those families as `ES` and `NQ`; internal snapshots and compact TradingView payload sections still use canonical `MES` and `MNQ` family keys for backward compatibility.
+Returns one user-facing symbol snapshot. Aliases resolve through the public schema package, so `ES`, `MES`, and CQG `F.US.EP...` contracts share the ES family, while `NQ`, `MNQ`, and CQG `F.US.ENQ...` contracts share the NQ family. JSON responses and TradingView payloads present those families as `ES` and `NQ`; full internal snapshots may still use canonical `MES` and `MNQ` storage keys.
 
 Unknown symbols return `404`:
 
@@ -240,49 +240,23 @@ Columns are `name,price,red,green,blue,kind`. Display clients should read `kind`
 
 ## GET /tradingview
 
-Returns the all-symbol futures JSON paste export for the included TradingView Pine indicator. The extension popup copies this endpoint for `ES + NQ`. The Pine indicator reads the chart family and draws the matching `ES` or `NQ` section on ES/MES or NQ/MNQ charts. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same ES/NQ families. SPY, QQQ, and other watchlist/ETF symbols are intentionally omitted.
+Returns the all-symbol futures `RSLEVELS|2` paste payload for the included TradingView Pine indicator. The extension popup copies this endpoint for `ES + NQ`. In `Auto`, the Pine indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and draws the matching section. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same ES/NQ families. SPY, QQQ, and other watchlist/ETF symbols are intentionally omitted.
 
-```json
-{
-  "schemaVersion": "0.1.0",
-  "exportFormat": "tradingview-bundle-json",
-  "payloadVersion": 2,
-  "generatedAt": "2026-06-19T14:30:00.000Z",
-  "symbols": [
-    {
-      "symbol": "ES",
-      "capturedAt": "2026-06-19T14:29:59.500Z",
-      "levelCount": 2,
-      "levels": [["OVNHP", 7537, "hp"], ["BZT1", 7588, "zone-bull"]]
-    },
-    {
-      "symbol": "NQ",
-      "capturedAt": "2026-06-19T14:29:59.500Z",
-      "levelCount": 1,
-      "levels": [["BrZT1", 30450, "zone-bear"]]
-    }
-  ]
-}
+```text
+RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull|NQ|2026-06-19T14:29:59.500Z|BrZT1,30450,zone-bear
 ```
 
-Unknown or unsupported chart symbols draw nothing. The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set.
+The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set.
 
 ## GET /tradingview/:symbol
 
-Returns a single-symbol JSON paste export. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
+Returns a single-symbol `RSLEVELS|2` paste payload. Aliases normalize the same way as `/levels/:symbol`, including CQG-style RocketScooter contracts such as `F.US.EPU26` and `F.US.ENQU26`.
 
-```json
-{
-  "schemaVersion": "0.1.0",
-  "exportFormat": "tradingview-json",
-  "payloadVersion": 1,
-  "symbol": "ES",
-  "capturedAt": "2026-06-19T14:29:59.500Z",
-  "levels": [["OVNHP", 7537, "hp"], ["DD Upper", 7579.75, "dd-band"]]
-}
+```text
+RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;DD Upper,7579.75,dd-band
 ```
 
-The included Pine indicator accepts this JSON directly. The local API includes every finite-price level in the export unless a caller explicitly requests a smaller set. See [TradingView](tradingview.md).
+The included Pine indicator accepts this payload directly. The local API includes every finite-price level in the export unless a caller explicitly requests a smaller set. See [TradingView](tradingview.md).
 
 ## GET /ddbands
 

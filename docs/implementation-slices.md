@@ -39,7 +39,7 @@ Deliverables:
 - `/stream`
 - browser capture ingest
 - generic display row output
-- TradingView JSON paste export
+- TradingView short paste payload
 
 No browser extension yet.
 

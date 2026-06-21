@@ -150,6 +150,28 @@ try {
   assert.equal(compactStatus.levelCount, 0);
   assert.deepEqual(compactStatus.symbolSummaries, []);
 
+  service.store.replaceSnapshot({
+    schemaVersion: '0.1.0',
+    generatedAt: '2026-06-20T12:03:00.000Z',
+    capturedAt: '2026-06-20T12:03:00.000Z',
+    source: { state: 'waiting', connected: false, lastCaptureAt: '', ageMs: null, endpoints: [], warnings: [] },
+    symbols: {
+      MES: {
+        symbol: 'MES',
+        displaySymbol: 'MES',
+        price: null,
+        capturedAt: '2026-06-20T12:03:00.000Z',
+        levels: [],
+        stats: {},
+        warnings: []
+      }
+    },
+    warnings: []
+  });
+  const emptyTradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
+  assert.equal(emptyTradingViewResponse.status, 404);
+  assert.match(await emptyTradingViewResponse.text(), /no levels found/);
+
   const pluginManifest = await getJson(`${baseUrl}/plugins`);
   assert.equal(pluginManifest.schemaVersion, '0.1.0');
   assert.ok(pluginManifest.plugins.some((plugin) => plugin.id === 'tradingview'));
@@ -226,14 +248,11 @@ try {
   const tradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(tradingViewResponse.ok, true, `${baseUrl}/tradingview/ES returned ${tradingViewResponse.status}`);
   assert.equal(tradingViewResponse.headers.get('cache-control'), 'no-store');
-  const tradingViewJson = await tradingViewResponse.json();
-  assert.equal(tradingViewJson.exportFormat, 'tradingview-json');
-  assert.equal(tradingViewJson.payloadVersion, 1);
-  assert.equal(tradingViewJson.symbol, 'ES');
-  assert.equal(Object.hasOwn(tradingViewJson, 'compactPayload'), false);
-  assert.equal(Object.hasOwn(tradingViewJson, 'notes'), false);
-  assert.equal(tradingViewJson.levels.length, 2);
-  assert.deepEqual(tradingViewJson.levels[0], ['OVNHP', 7537, 'hp']);
+  assert.match(tradingViewResponse.headers.get('content-type') || '', /text\/plain/);
+  const tradingViewPayload = await tradingViewResponse.text();
+  assert.match(tradingViewPayload, /^RSLEVELS\|2\|[^|]+\|ES\|/);
+  assert.match(tradingViewPayload, /OVNHP,7537,hp/);
+  assert.doesNotMatch(tradingViewPayload, /tradingview-json|compactPayload|notes/);
   const ddbands = await getJson(`${baseUrl}/ddbands`);
   assert.equal(ddbands.levels.length, 1);
 
@@ -274,22 +293,20 @@ try {
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 3);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 2);
 
-  const bundledTradingViewJson = await getJson(`${baseUrl}/tradingview`);
-  assert.equal(bundledTradingViewJson.exportFormat, 'tradingview-bundle-json');
-  assert.equal(bundledTradingViewJson.payloadVersion, 2);
-  assert.equal(Object.hasOwn(bundledTradingViewJson, 'compactPayload'), false);
-  assert.equal(Object.hasOwn(bundledTradingViewJson, 'notes'), false);
-  assert.deepEqual(bundledTradingViewJson.symbols.map((row) => row.symbol), ['ES', 'NQ']);
-  assert.equal(bundledTradingViewJson.symbols.find((row) => row.symbol === 'ES').levels.some((row) => row[0] === 'BZT1' && row[2] === 'zone-bull'), true);
-  assert.equal(bundledTradingViewJson.symbols.find((row) => row.symbol === 'NQ').levels.some((row) => row[0] === 'BrZT1' && row[2] === 'zone-bear'), true);
+  const bundledTradingViewPayload = await getText(`${baseUrl}/tradingview`);
+  assert.match(bundledTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|ES\|/);
+  assert.match(bundledTradingViewPayload, /\|NQ\|/);
+  assert.match(bundledTradingViewPayload, /BZT1,7580,zone-bull/);
+  assert.match(bundledTradingViewPayload, /BrZT1,30450,zone-bear/);
+  assert.doesNotMatch(bundledTradingViewPayload, /tradingview-bundle-json|compactPayload|notes/);
 
   const mesRowsWithKinds = await getText(`${baseUrl}/levels/MES?format=rows`);
   assert.match(mesRowsWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
   assert.match(mesRowsWithKinds, /BZB1,7560\.00,76,175,80,zone-bull/);
 
-  const mnqTradingViewJson = await getJson(`${baseUrl}/tradingview/MNQ`);
-  assert.equal(mnqTradingViewJson.symbol, 'NQ');
-  assert.equal(mnqTradingViewJson.levels.some((row) => row[0] === 'BrZT1' && row[2] === 'zone-bear'), true);
+  const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
+  assert.match(mnqTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|NQ\|/);
+  assert.match(mnqTradingViewPayload, /BrZT1,30450,zone-bear/);
 
   const cqgNqLevels = await getJson(`${baseUrl}/levels/F.US.ENQU26`);
   assert.equal(cqgNqLevels.symbol, 'NQ');

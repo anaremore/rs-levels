@@ -2,8 +2,8 @@ import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import {
-  createTradingViewBundleJsonExport,
-  createTradingViewJsonExport
+  createTradingViewBundlePayloadExport,
+  createTradingViewPayloadExport
 } from '../../../packages/exporters/src/index.js';
 import { displaySymbolFor, normalizeSymbol } from '../../../packages/schemas/src/index.js';
 import { SERVICE_BUILD } from './build-info.js';
@@ -47,9 +47,9 @@ export function createHttpApp({ store, config }) {
 
       if (req.method === 'GET' && pathname === '/tradingview') {
         const snapshot = store.getSnapshot();
-        const bundle = createTradingViewBundleJsonExport(snapshot);
-        if (!bundle.symbols.length) return sendJson(res, 404, { ok: false, error: 'no futures symbols found' });
-        return sendJson(res, 200, bundle);
+        const payload = createTradingViewBundlePayloadExport(snapshot);
+        if (!hasTradingViewSections(payload)) return sendJson(res, 404, { ok: false, error: 'no futures symbols found' });
+        return sendText(res, 200, payload, 'text/plain; charset=utf-8');
       }
 
       const tradingViewMatch = pathname.match(/^\/tradingview\/([^/]+)$/);
@@ -57,7 +57,9 @@ export function createHttpApp({ store, config }) {
         const symbol = normalizeSymbol(tradingViewMatch[1]);
         const row = store.getSnapshot().symbols[symbol] || null;
         if (!row) return sendJson(res, 404, { ok: false, error: 'symbol not found' });
-        return sendJson(res, 200, createTradingViewJsonExport(row));
+        const payload = createTradingViewPayloadExport(row);
+        if (!hasTradingViewSections(payload)) return sendJson(res, 404, { ok: false, error: 'no levels found' });
+        return sendText(res, 200, payload, 'text/plain; charset=utf-8');
       }
 
       const symbolMatch = pathname.match(/^\/levels\/([^/]+)$/);
@@ -226,6 +228,10 @@ function publicLevel(level = {}, canonical, display) {
 function isDisplayRowsFormat(format) {
   const value = String(format || '').toLowerCase();
   return value === 'rows';
+}
+
+function hasTradingViewSections(payload) {
+  return String(payload || '').split('|').length >= 6;
 }
 
 function diagnosticChecks({ source, levels, symbols, network }) {

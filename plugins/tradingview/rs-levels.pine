@@ -1,7 +1,7 @@
 //@version=6
 indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
-payload = input.string("", "RS Levels JSON", display = display.none)
+payload = input.text_area("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 showLabels = input.bool(true, "Labels")
 showDdBands = input.bool(true, "DD bands", inline = "dd")
@@ -126,121 +126,48 @@ displayLabelName(name, kind) =>
         cleaned := str.replace_all(cleaned, ":", " ")
         cleaned
 
-chartJsonSymbol() =>
+chartPayloadSymbol() =>
     if chartFamilyInput != "Auto"
         chartFamilyInput
     else
-        chartText = str.upper(syminfo.root + " " + syminfo.ticker + " " + syminfo.tickerid + " " + syminfo.description)
-        str.contains(chartText, "NQ") or str.contains(chartText, "NASDAQ") ? "NQ" : str.contains(chartText, "ES") or str.contains(chartText, "S&P") or str.contains(chartText, "SP 500") or str.contains(chartText, "SP500") ? "ES" : ""
+        rootText = str.upper(syminfo.root)
+        tickerText = str.upper(syminfo.ticker)
+        tickerIdText = str.upper(syminfo.tickerid)
+        descriptionText = str.upper(syminfo.description)
+        nqChart = rootText == "NQ" or rootText == "MNQ" or str.startswith(tickerText, "NQ") or str.startswith(tickerText, "MNQ") or str.contains(tickerIdText, ":NQ") or str.contains(tickerIdText, ":MNQ") or str.contains(descriptionText, "NASDAQ")
+        esChart = rootText == "ES" or rootText == "MES" or str.startswith(tickerText, "ES") or str.startswith(tickerText, "MES") or str.contains(tickerIdText, ":ES") or str.contains(tickerIdText, ":MES") or str.contains(descriptionText, "S&P 500") or str.contains(descriptionText, "SP 500") or str.contains(descriptionText, "SP500")
+        nqChart ? "NQ" : esChart ? "ES" : ""
 
-jsonCompact(payloadText) =>
+payloadCompact(payloadText) =>
     cleaned = str.replace_all(payloadText, "\r", "")
     cleaned := str.replace_all(cleaned, "\n", "")
     cleaned := str.replace_all(cleaned, "\t", "")
-    for _i = 0 to 8
-        cleaned := str.replace_all(cleaned, "  ", " ")
-    cleaned := str.replace_all(cleaned, "\": \"", "\":\"")
-    cleaned := str.replace_all(cleaned, "\": [", "\":[")
-    cleaned := str.replace_all(cleaned, "\": {", "\":{")
-    cleaned := str.replace_all(cleaned, ", ", ",")
-    cleaned := str.replace_all(cleaned, ", \"", ",\"")
-    cleaned := str.replace_all(cleaned, ", [", ",[")
-    cleaned := str.replace_all(cleaned, ", {", ",{")
-    cleaned := str.replace_all(cleaned, "[ ", "[")
-    cleaned := str.replace_all(cleaned, " ]", "]")
-    cleaned := str.replace_all(cleaned, "{ ", "{")
-    cleaned := str.replace_all(cleaned, " }", "}")
     cleaned
 
-jsonStringField(jsonPayload, fieldName) =>
-    marker = "\"" + fieldName + "\":\""
-    markerIndex = str.pos(jsonPayload, marker)
-    value = ""
-    if not na(markerIndex)
-        valueStart = markerIndex + str.length(marker)
-        remainder = str.substring(jsonPayload, valueStart, str.length(jsonPayload))
-        valueEnd = str.pos(remainder, "\"")
-        if not na(valueEnd)
-            value := str.substring(remainder, 0, valueEnd)
-    value
-
-jsonSectionForSymbol(jsonPayload, symbolText) =>
-    marker = "\"symbol\":\"" + symbolText + "\""
-    markerIndex = str.pos(jsonPayload, marker)
-    not na(markerIndex) ? str.substring(jsonPayload, markerIndex, str.length(jsonPayload)) : ""
-
-jsonLevelsBlock(jsonSection) =>
-    marker = "\"levels\":["
-    markerIndex = str.pos(jsonSection, marker)
-    blockText = ""
-    if not na(markerIndex)
-        blockStart = markerIndex + str.length(marker)
-        remainder = str.substring(jsonSection, blockStart, str.length(jsonSection))
-        blockEnd = str.pos(remainder, "]]")
-        if not na(blockEnd)
-            blockText := str.substring(remainder, 0, blockEnd + 1)
-    blockText
-
-jsonLevelsToLevelText(levelRowsText) =>
+payloadSymbolLevelText(payloadText, symbolText) =>
     levelText = ""
-    if levelRowsText != ""
-        rows = str.split(levelRowsText, "],[")
-        for i = 0 to array.size(rows) - 1
-            rowText = array.get(rows, i)
-            rowText := str.replace_all(rowText, "[", "")
-            rowText := str.replace_all(rowText, "]", "")
-            rowText := str.replace_all(rowText, "\"", "")
-            fields = str.split(rowText, ",")
-            if array.size(fields) >= 3
-                name = array.get(fields, 0)
-                priceText = array.get(fields, 1)
-                kind = array.get(fields, 2)
-                if name != "" and priceText != "" and kind != ""
-                    levelText := levelText + (levelText == "" ? "" : ";") + name + "," + priceText + "," + kind
+    parts = str.split(payloadCompact(payloadText), "|")
+    if array.size(parts) >= 6 and array.get(parts, 0) == "RSLEVELS" and array.get(parts, 1) == "2"
+        for sectionIndex = 3 to array.size(parts) - 3 by 3
+            if array.get(parts, sectionIndex) == symbolText
+                levelText := array.get(parts, sectionIndex + 2)
     levelText
 
-bundleSymbolLevelText(jsonPayload, symbolText) =>
-    jsonLevelsToLevelText(jsonLevelsBlock(jsonSectionForSymbol(jsonPayload, symbolText)))
-
-nearestLevelDistance(levelText) =>
-    nearest = 1000000000.0
-    if levelText != ""
-        items = str.split(levelText, ";")
-        for i = 0 to array.size(items) - 1
-            fields = str.split(array.get(items, i), ",")
-            if array.size(fields) >= 3
-                price = str.tonumber(array.get(fields, 1))
-                if not na(price)
-                    nearest := math.min(nearest, math.abs(price - close))
-    nearest
-
-bestBundleLevelText(jsonPayload, chartSymbol) =>
-    esLevelText = bundleSymbolLevelText(jsonPayload, "ES")
-    nqLevelText = bundleSymbolLevelText(jsonPayload, "NQ")
+bestPayloadLevelText(payloadText, chartSymbol) =>
+    esLevelText = payloadSymbolLevelText(payloadText, "ES")
+    nqLevelText = payloadSymbolLevelText(payloadText, "NQ")
     levelText = ""
     if chartSymbol == "ES"
         levelText := esLevelText
     else if chartSymbol == "NQ"
         levelText := nqLevelText
-    else if esLevelText != "" and nqLevelText != ""
-        levelText := nearestLevelDistance(esLevelText) <= nearestLevelDistance(nqLevelText) ? esLevelText : nqLevelText
     else
-        levelText := esLevelText != "" ? esLevelText : nqLevelText
+        levelText := esLevelText != "" and nqLevelText == "" ? esLevelText : nqLevelText != "" and esLevelText == "" ? nqLevelText : ""
     levelText
 
-jsonLevelTextForChart(payloadText) =>
-    jsonPayload = jsonCompact(payloadText)
-    chartSymbol = chartJsonSymbol()
-    levelText = ""
-    if chartSymbol != "" and str.contains(jsonPayload, "\"exportFormat\":\"tradingview-bundle-json\"")
-        levelText := bestBundleLevelText(jsonPayload, chartSymbol)
-    else if str.contains(jsonPayload, "\"exportFormat\":\"tradingview-bundle-json\"")
-        levelText := bestBundleLevelText(jsonPayload, chartSymbol)
-    else if str.contains(jsonPayload, "\"exportFormat\":\"tradingview-json\"")
-        payloadSymbol = jsonStringField(jsonPayload, "symbol")
-        if payloadSymbol == chartSymbol or chartSymbol == ""
-            levelText := jsonLevelsToLevelText(jsonLevelsBlock(jsonPayload))
-    levelText
+levelTextForChart(payloadText) =>
+    chartSymbol = chartPayloadSymbol()
+    bestPayloadLevelText(payloadText, chartSymbol)
 
 labelDirection(name, kind) =>
     upperName = str.upper(name)
@@ -357,6 +284,6 @@ drawLevelText(levelText, maxCount) =>
 
 if barstate.islast
     clearDrawings()
-    levelText = jsonLevelTextForChart(payload)
+    levelText = levelTextForChart(payload)
     if levelText != ""
         [drawnCount, totalCount] = drawLevelText(levelText, maxLevelsInput)

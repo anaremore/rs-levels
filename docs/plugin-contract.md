@@ -13,7 +13,7 @@ Every direct API plugin should expose:
 - line visibility by kind
 - label visibility
 
-TradingView is the exception because Pine cannot poll localhost directly. It uses the JSON paste workflow documented in [TradingView](tradingview.md).
+TradingView is the exception because Pine cannot poll localhost directly. It uses the short `RSLEVELS|2` paste workflow documented in [TradingView](tradingview.md).
 
 ## Required API Calls
 
@@ -34,7 +34,7 @@ GET /tradingview
 GET /tradingview/:symbol
 ```
 
-Plugins should accept `ES`/`MES` and `NQ`/`MNQ` aliases the same way the API does. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the ES family, and `/levels/F.US.ENQ...` resolves to the NQ family. JSON status, `/levels/:symbol` responses, and TradingView JSON exports use user-facing `ES`/`NQ` labels.
+Plugins should accept `ES`/`MES` and `NQ`/`MNQ` aliases the same way the API does. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the ES family, and `/levels/F.US.ENQ...` resolves to the NQ family. JSON status, `/levels/:symbol` responses, and TradingView payloads use user-facing `ES`/`NQ` labels.
 
 The API sends `Cache-Control: no-store` on HTTP responses. Plugins should still poll on their own refresh interval and use `/status` freshness fields as the source of truth.
 

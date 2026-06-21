@@ -169,28 +169,28 @@ paths:
                 $ref: '#/components/schemas/FlatLevels'
   /tradingview:
     get:
-      summary: TradingView all-symbol JSON paste export
+      summary: TradingView all-symbol paste payload
       responses:
         '200':
-          description: All-symbol TradingView JSON export
+          description: All-symbol TradingView RSLEVELS payload
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/TradingViewBundleExport'
+                $ref: '#/components/schemas/TradingViewPayload'
         '404':
           $ref: '#/components/responses/NotFound'
   /tradingview/{symbol}:
     get:
-      summary: TradingView single-symbol JSON paste export
+      summary: TradingView single-symbol paste payload
       parameters:
         - $ref: '#/components/parameters/Symbol'
       responses:
         '200':
-          description: Single-symbol TradingView JSON export
+          description: Single-symbol TradingView RSLEVELS payload
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/TradingViewExport'
+                $ref: '#/components/schemas/TradingViewPayload'
         '404':
           $ref: '#/components/responses/NotFound'
   /stream:
@@ -236,7 +236,7 @@ components:
       name: symbol
       in: path
       required: true
-      description: Symbol or alias. ES/MES and CQG EP contracts resolve to the ES family; NQ/MNQ and CQG ENQ contracts resolve to the NQ family. JSON display responses and TradingView exports use ES/NQ labels.
+      description: Symbol or alias. ES/MES and CQG EP contracts resolve to the ES family; NQ/MNQ and CQG ENQ contracts resolve to the NQ family. JSON display responses and TradingView payloads use ES/NQ labels.
       schema:
         type: string
         examples: [MES, MNQ, ES, NQ, F.US.EPU, F.US.EPU26, F.US.ENQU, F.US.ENQU26]
@@ -527,71 +527,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Level'
-    TradingViewExport:
-      type: object
-      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, symbol, capturedAt, levels]
-      properties:
-        schemaVersion:
-          type: string
-        exportFormat:
-          type: string
-          enum: [tradingview-json]
-        payloadVersion:
-          type: integer
-          const: 1
-        generatedAt:
-          type: string
-          format: date-time
-        symbol:
-          type: string
-        capturedAt:
-          type: string
-        levels:
-          type: array
-          items:
-            $ref: '#/components/schemas/TradingViewLevelRow'
-    TradingViewBundleExport:
-      type: object
-      required: [schemaVersion, exportFormat, payloadVersion, generatedAt, symbols]
-      properties:
-        schemaVersion:
-          type: string
-        exportFormat:
-          type: string
-          enum: [tradingview-bundle-json]
-        payloadVersion:
-          type: integer
-          const: 2
-        generatedAt:
-          type: string
-          format: date-time
-        symbols:
-          type: array
-          items:
-            type: object
-            required: [symbol, capturedAt, levelCount, levels]
-            properties:
-              symbol:
-                type: string
-              capturedAt:
-                type: string
-              levelCount:
-                type: integer
-              levels:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TradingViewLevelRow'
-    TradingViewLevelRow:
-      type: array
-      minItems: 3
-      maxItems: 3
-      prefixItems:
-        - type: string
-          description: Display label.
-        - type: number
-          description: Level price.
-        - type: string
-          description: Display kind such as hp, mhp, dd-band, zone-bull, or zone-bear.
+    TradingViewPayload:
+      type: string
+      description: Pipe-delimited paste payload for the included Pine indicator: RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...
+      examples:
+        - RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,7565,hp;DD,7643.5715,dd-band|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp
     CapturePayload:
       type: object
       required: [endpoint, capturedAt, body]

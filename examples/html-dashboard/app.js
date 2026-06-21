@@ -3,7 +3,7 @@ const els = {
   symbol: document.getElementById('symbol'),
   refresh: document.getElementById('refresh'),
   connect: document.getElementById('connect'),
-  copyJson: document.getElementById('copy-json'),
+  copyPayload: document.getElementById('copy-payload'),
   openApi: document.getElementById('open-api'),
   connection: document.getElementById('connection'),
   freshness: document.getElementById('freshness'),
@@ -21,7 +21,7 @@ let stream = null;
 els.refresh.addEventListener('click', refresh);
 els.connect.addEventListener('click', toggleStream);
 els.symbol.addEventListener('change', render);
-els.copyJson.addEventListener('click', () => copyJson(`/tradingview/${selectedSymbol()}`));
+els.copyPayload.addEventListener('click', () => copyTradingViewPayload(`/tradingview/${selectedSymbol()}`));
 els.openApi.addEventListener('click', () => window.open(`${baseUrl()}/`, '_blank', 'noopener'));
 
 refresh();
@@ -107,13 +107,12 @@ function levelRow(level) {
   return tr;
 }
 
-async function copyJson(path) {
+async function copyTradingViewPayload(path) {
   try {
     const response = await fetch(`${baseUrl()}${path}`);
     if (!response.ok) throw new Error(`Export returned ${response.status}`);
-    const value = JSON.stringify(await response.json());
-    await navigator.clipboard.writeText(value);
-    setMessage('JSON copied', 'ok');
+    await navigator.clipboard.writeText((await response.text()).trim());
+    setMessage('TradingView payload copied', 'ok');
   } catch (err) {
     setMessage(err.message || 'Copy failed', 'error');
   }

@@ -157,49 +157,143 @@
     return '';
   }
 
-  function cleanTradingViewJsonExport(text) {
-    let payload;
+  function cleanTradingViewPayload(text) {
+    const payload = String(text || '').trim();
+    const parts = payload.split('|');
+    if (parts.length < 6 || parts[0] !== 'RSLEVELS' || parts[1] !== '2' || (parts.length - 3) % 3 !== 0) {
+      throw new Error('Local service returned an unsupported TradingView payload. Restart the local service and reload the extension.');
+    }
+    for (let index = 3; index < parts.length; index += 3) {
+      const symbol = publicDisplaySymbol(parts[index]);
+      if (symbol !== 'ES' && symbol !== 'NQ') {
+        throw new Error('Local service returned a TradingView payload for an unsupported symbol.');
+      }
+      if (!validTradingViewLevelRows(parts[index + 2])) {
+        throw new Error('Local service returned an invalid TradingView payload.');
+      }
+    }
+    return payload;
+  }
+
+  function validTradingViewLevelRows(text) {
+    const rows = String(text || '').split(';').filter(Boolean);
+    if (!rows.length) return false;
+    return rows.every((row) => {
+      const fields = row.split(',');
+      return fields.length >= 3
+        && fields[0].trim()
+        && Number.isFinite(Number(fields[1]))
+        && fields[2].trim();
+    });
+  }
+
+  function captureToTradingViewSnapshot(capture = {}) {
+    const body = captureBody(capture.body);
+    const levels = Array.isArray(body.levels) ? body.levels : [];
+    const defaultSymbol = body.symbol || body.displaySymbol || '';
+    const symbols = new Map();
+    levels.forEach((level) => {
+      const symbol = publicDisplaySymbol(level && (level.symbol || level.displaySymbol) || defaultSymbol);
+      if (symbol !== 'ES' && symbol !== 'NQ') return;
+      const price = Number(level.price);
+      const name = tradingViewField(tradingViewLevelName(level));
+      const kind = tradingViewField(level && (level.kind || inferTradingViewKind(name)));
+      if (!name || !Number.isFinite(price) || !kind) return;
+      if (!symbols.has(symbol)) {
+        symbols.set(symbol, {
+          symbol,
+          capturedAt: String(level.capturedAt || body.capturedAt || capture.capturedAt || new Date().toISOString()),
+          levels: [],
+          seen: new Set()
+        });
+      }
+      const row = `${name},${tradingViewPrice(price)},${kind}`;
+      const group = symbols.get(symbol);
+      if (group.seen.has(row)) return;
+      group.seen.add(row);
+      group.levels.push(row);
+    });
+    const rows = Array.from(symbols.values())
+      .filter((row) => row.levels.length)
+      .sort((a, b) => a.symbol.localeCompare(b.symbol))
+      .map((row) => ({
+        symbol: row.symbol,
+        capturedAt: row.capturedAt,
+        levels: row.levels
+      }));
+    return rows.length ? {
+      generatedAt: String(body.capturedAt || capture.capturedAt || new Date().toISOString()),
+      symbols: rows
+    } : null;
+  }
+
+  function tradingViewPayloadFromSnapshot(snapshot, scope = 'ALL') {
+    if (!snapshot || !Array.isArray(snapshot.symbols)) return '';
+    const selected = publicDisplaySymbol(scope);
+    const rows = snapshot.symbols
+      .filter((row) => selected === 'ALL' || selected === row.symbol)
+      .filter((row) => row && row.symbol && Array.isArray(row.levels) && row.levels.length)
+      .sort((a, b) => a.symbol.localeCompare(b.symbol));
+    if (!rows.length) return '';
+    return cleanTradingViewPayload([
+      'RSLEVELS',
+      '2',
+      tradingViewField(snapshot.generatedAt || new Date().toISOString()),
+      ...rows.flatMap((row) => [
+        tradingViewField(row.symbol),
+        tradingViewField(row.capturedAt),
+        row.levels.join(';')
+      ])
+    ].join('|'));
+  }
+
+  function captureBody(body) {
+    if (body && typeof body === 'object' && !Array.isArray(body)) return body;
+    if (typeof body !== 'string') return {};
     try {
-      payload = JSON.parse(String(text || ''));
+      const parsed = JSON.parse(body);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
     } catch (_err) {
-      throw new Error('Local service returned legacy TradingView text. Restart the local service and reload the extension.');
+      return {};
     }
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-      throw new Error('Local service returned unsupported TradingView JSON.');
-    }
-    if (Object.hasOwn(payload, 'compactPayload')) {
-      throw new Error('Local service returned old TradingView JSON. Restart the local service and reload the extension.');
-    }
-    if (payload.exportFormat === 'tradingview-bundle-json') {
-      if (!Array.isArray(payload.symbols) || !payload.symbols.every(isTradingViewJsonSymbol)) {
-        throw new Error('Local service returned invalid bundled TradingView JSON.');
-      }
-      return payload;
-    }
-    if (payload.exportFormat === 'tradingview-json') {
-      if (typeof payload.symbol !== 'string' || !Array.isArray(payload.levels) || !payload.levels.every(isTradingViewJsonLevelRow)) {
-        throw new Error('Local service returned invalid TradingView JSON.');
-      }
-      return payload;
-    }
-    throw new Error('Local service returned unsupported TradingView JSON.');
   }
 
-  function isTradingViewJsonSymbol(row) {
-    return Boolean(row)
-      && typeof row === 'object'
-      && !Array.isArray(row)
-      && typeof row.symbol === 'string'
-      && Array.isArray(row.levels)
-      && row.levels.every(isTradingViewJsonLevelRow);
+  function tradingViewLevelName(level = {}) {
+    const raw = tradingViewField(level.name || level.label || level.text || 'Level');
+    const upper = raw.toUpperCase();
+    if (upper.includes('PREVDAYCLOSE') || upper.includes('PREV DAY CLOSE')) return 'Prev Close';
+    if (upper.includes('MIDGAP') || upper.includes('HALFGAP') || upper.includes('HALF GAP')) return 'Mid Gap';
+    if (upper.includes('LASTOPEN') || (upper.includes('OPEN') && !upper.includes('CLOSE'))) return 'Open';
+    if (upper.includes('CLOSE')) return 'Close';
+    if (upper.includes('OVNMHP')) return 'OVNMHP';
+    if (upper.includes('OVNHP')) return 'OVNHP';
+    if (upper.includes('MHP')) return 'MHP';
+    if (upper.includes('HP')) return 'HP';
+    if (upper.includes('DD')) return 'DD';
+    return raw || 'Level';
   }
 
-  function isTradingViewJsonLevelRow(row) {
-    return Array.isArray(row)
-      && row.length >= 3
-      && typeof row[0] === 'string'
-      && Number.isFinite(Number(row[1]))
-      && typeof row[2] === 'string';
+  function inferTradingViewKind(name) {
+    const upper = String(name || '').toUpperCase();
+    if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
+    if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
+    if (upper.includes('MHP')) return 'mhp';
+    if (upper.includes('HP')) return 'hp';
+    if (upper.includes('DD')) return 'dd-band';
+    if (upper.includes('OPEN') || upper.includes('CLOSE') || upper.includes('GAP')) return 'open-close';
+    return 'reference';
+  }
+
+  function tradingViewField(value) {
+    return String(value ?? '')
+      .replace(/[|;,"\[\]\r\n]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function tradingViewPrice(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? String(number) : '';
   }
 
   globalThis.RS_LEVELS = {
@@ -213,7 +307,9 @@
     publicDisplaySymbol,
     selectedSymbolIssue,
     symbolLevelCount,
-    cleanTradingViewJsonExport,
+    cleanTradingViewPayload,
+    captureToTradingViewSnapshot,
+    tradingViewPayloadFromSnapshot,
     tradingViewBundleCopyIssue,
     tradingViewCopyIssue
   };

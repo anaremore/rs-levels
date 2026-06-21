@@ -4,7 +4,7 @@ const els = {
   buildId: document.getElementById('build-id'),
   symbol: document.getElementById('symbol'),
   captureEnabled: document.getElementById('capture-enabled'),
-  copyJson: document.getElementById('copy-json'),
+  copyPayload: document.getElementById('copy-payload'),
   reconnect: document.getElementById('reconnect'),
   copyDiagnostics: document.getElementById('copy-diagnostics'),
   openDocs: document.getElementById('open-docs'),
@@ -50,7 +50,7 @@ async function init() {
 function bindEvents() {
   els.refresh.addEventListener('click', refresh);
   els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
-  els.copyJson.addEventListener('click', copyJsonExport);
+  els.copyPayload.addEventListener('click', copyTradingViewPayload);
   els.reconnect.addEventListener('click', reconnectActiveTab);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
@@ -99,13 +99,25 @@ async function refresh() {
   }
 }
 
-async function copyJsonExport() {
+async function copyTradingViewPayload() {
+  const scope = selectedSymbol();
+  try {
+    const localPayload = await extensionTradingViewPayload(scope);
+    if (localPayload) {
+      await navigator.clipboard.writeText(localPayload);
+      setMessage('TradingView payload copied from extension capture', 'ok');
+      return;
+    }
+  } catch (err) {
+    setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
+    return;
+  }
+
   try {
     latestServiceStatus = await getJson('/status');
     symbols = exportScopes(latestServiceStatus);
     renderSymbols(symbols);
     renderCopyState(latestServiceStatus);
-    const scope = selectedSymbol();
     const allSymbols = scope === ALL_SCOPE;
     const issue = allSymbols
       ? globalThis.RS_LEVELS.tradingViewBundleCopyIssue(latestServiceStatus)
@@ -115,9 +127,18 @@ async function copyJsonExport() {
       return;
     }
     const path = allSymbols ? '/tradingview' : `/tradingview/${scope}`;
-    await copyJsonFromEndpoint(path, 'Levels JSON copied', { allSymbols });
+    await copyPayloadFromEndpoint(path, 'TradingView payload copied', { allSymbols });
   } catch (err) {
-    setMessage(err && err.message ? err.message : 'JSON copy failed', 'error');
+    setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
+  }
+}
+
+async function extensionTradingViewPayload(scope) {
+  try {
+    const result = await chrome.runtime.sendMessage({ type: 'rs-levels.tradingview-payload', scope });
+    return result && result.ok && result.payload ? globalThis.RS_LEVELS.cleanTradingViewPayload(result.payload) : '';
+  } catch (_err) {
+    return '';
   }
 }
 
@@ -133,9 +154,9 @@ async function reconnectActiveTab() {
   }
 }
 
-async function copyJsonFromEndpoint(path, success, options = {}) {
+async function copyPayloadFromEndpoint(path, success, options = {}) {
   try {
-    const text = await fetchJsonText(path, options);
+    const text = await fetchTradingViewText(path, options);
     await navigator.clipboard.writeText(text);
     setMessage(success, 'ok');
   } catch (err) {
@@ -143,14 +164,13 @@ async function copyJsonFromEndpoint(path, success, options = {}) {
   }
 }
 
-async function fetchJsonText(path, options = {}) {
+async function fetchTradingViewText(path, options = {}) {
   const url = `${settings.serviceUrl}${path}`;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(copyFailureMessage(response.status, await responseErrorDetail(response), options));
   }
-  const payload = globalThis.RS_LEVELS.cleanTradingViewJsonExport(await response.text());
-  return JSON.stringify(payload);
+  return globalThis.RS_LEVELS.cleanTradingViewPayload(await response.text());
 }
 
 function copyFailureMessage(status, detail = '', options = {}) {
@@ -158,7 +178,7 @@ function copyFailureMessage(status, detail = '', options = {}) {
     if (/no symbols|no futures|symbol not found|no captured/i.test(detail)) {
       return 'No captured ES or NQ levels are available yet.';
     }
-    return `All-symbol JSON export unavailable (${status})${detail ? `: ${detail}` : ''}`;
+    return `All-symbol TradingView payload unavailable (${status})${detail ? `: ${detail}` : ''}`;
   }
   if (status === 404) return `No data for ${scopeLabel(selectedSymbol())}`;
   return `Copy failed (${status})${detail ? `: ${detail}` : ''}`;
@@ -311,11 +331,11 @@ function renderCaptureStats(stats = {}) {
 
 function renderCopyState(serviceStatus = latestServiceStatus || {}) {
   const selected = selectedSymbol();
-  const jsonIssue = selected === ALL_SCOPE
+  const copyIssue = selected === ALL_SCOPE
     ? globalThis.RS_LEVELS.tradingViewBundleCopyIssue(serviceStatus)
     : globalThis.RS_LEVELS.selectedSymbolIssue(serviceStatus, selected);
-  els.copyJson.disabled = Boolean(jsonIssue);
-  els.copyJson.title = jsonIssue || `Copy ${scopeLabel(selected)} JSON export`;
+  els.copyPayload.disabled = false;
+  els.copyPayload.title = copyIssue ? `${copyIssue} Will try extension capture first.` : `Copy ${scopeLabel(selected)} TradingView payload`;
 }
 
 function formatTime(value) {

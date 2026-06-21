@@ -34,7 +34,7 @@ for (const platform of platforms) {
     assert.match(text, /GET \/levels\//, `${platform} must document levels polling`);
     assert.match(text, /stale/i, `${platform} must document stale handling`);
   } else {
-    assert.match(text, /tradingview-bundle-json/, 'tradingview must document JSON paste payload');
+    assert.match(text, /RSLEVELS\|2/, 'tradingview must document the short paste payload');
   }
 }
 

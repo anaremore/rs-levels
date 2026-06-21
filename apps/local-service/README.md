@@ -73,7 +73,7 @@ GET  /stream
 POST /capture/api
 ```
 
-/tradingview returns the all-symbol JSON paste export used by the TradingView Pine indicator. /tradingview/:symbol returns single-family JSON for ES/MES or NQ/MNQ charts.
+/tradingview returns the all-symbol `RSLEVELS|2` paste payload used by the TradingView Pine indicator. /tradingview/:symbol returns a single-family payload for ES/MES or NQ/MNQ charts.
 
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
 

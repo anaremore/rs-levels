@@ -75,7 +75,7 @@ Only use remote binding on networks you trust. The browser extension should cont
 
 ## Browser Extension
 
-Load `apps/browser-extension` as an unpacked Chromium extension. It posts allowlisted RocketScooter responses to `/capture/api`, shows local service status, and can copy TradingView or JSON exports from the local service.
+Load `apps/browser-extension` as an unpacked Chromium extension. It posts allowlisted RocketScooter responses to `/capture/api`, shows local service status, and can copy the TradingView paste payload from the local service.
 
 `npm run package` also creates `dist/rs-levels-browser-extension-0.1.1.zip`. Unzip it and load the extracted folder when installing from a focused extension artifact.
 

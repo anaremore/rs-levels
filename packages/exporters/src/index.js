@@ -1,36 +1,25 @@
-import { SCHEMA_VERSION, displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/index.js';
+import { displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/index.js';
 
-export function createTradingViewJsonExport(symbolSnapshot, options = {}) {
+export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
   const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    exportFormat: 'tradingview-json',
-    payloadVersion: 1,
-    generatedAt: options.generatedAt || new Date().toISOString(),
+  return tradingViewPayload([{
     symbol: displaySymbolFor(row.symbol),
     capturedAt: row.capturedAt,
-    levels: levels.map(jsonLevelRow)
-  };
+    levels
+  }], options);
 }
 
-export function createTradingViewBundleJsonExport(snapshot, options = {}) {
+export function createTradingViewBundlePayloadExport(snapshot, options = {}) {
   const rows = bundleRows(snapshot, options);
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    exportFormat: 'tradingview-bundle-json',
-    payloadVersion: 2,
-    generatedAt: options.generatedAt || snapshot?.generatedAt || new Date().toISOString(),
-    symbols: rows.map((row) => {
-      const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
-      return {
-        symbol: displaySymbolFor(row.symbol),
-        capturedAt: row.capturedAt,
-        levelCount: levels.length,
-        levels: levels.map(jsonLevelRow)
-      };
-    })
-  };
+  return tradingViewPayload(rows.map((row) => ({
+    symbol: displaySymbolFor(row.symbol),
+    capturedAt: row.capturedAt,
+    levels: limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price))
+  })), {
+    ...options,
+    generatedAt: options.generatedAt || snapshot?.generatedAt
+  });
 }
 
 function normalizeRow(symbolSnapshot, options) {
@@ -51,12 +40,22 @@ function isTradingViewBundleSymbol(symbol) {
   return symbol === 'MES' || symbol === 'MNQ';
 }
 
-function jsonLevelRow(level) {
-  return [
-    tradingViewLevelName(level),
-    Number(level.price),
-    field(level.kind)
-  ];
+function tradingViewPayload(rows, options = {}) {
+  const generatedAt = field(options.generatedAt || new Date().toISOString());
+  const sections = rows
+    .filter((row) => row.symbol && Array.isArray(row.levels) && row.levels.length)
+    .flatMap((row) => {
+      const levelText = row.levels.map(tradingViewLevelRow).filter(Boolean).join(';');
+      return levelText ? [field(row.symbol), field(row.capturedAt), levelText] : [];
+    });
+  return ['RSLEVELS', '2', generatedAt, ...sections].join('|');
+}
+
+function tradingViewLevelRow(level) {
+  const name = tradingViewLevelName(level);
+  const price = tradingViewPrice(level?.price);
+  const kind = field(level?.kind);
+  return name && price && kind ? `${name},${price},${kind}` : '';
 }
 
 function tradingViewLevelName(level) {
@@ -94,6 +93,11 @@ function field(value) {
     .replace(/[|;,"\[\]\r\n]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function tradingViewPrice(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? String(number) : '';
 }
 
 function limitLevels(levels, maxLevels) {

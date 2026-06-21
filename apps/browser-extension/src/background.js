@@ -5,6 +5,8 @@ const state = {
   lastCaptureAt: '',
   lastPostAt: '',
   lastError: '',
+  tradingViewSnapshot: null,
+  tradingViewPayloadAt: '',
   contentDiagnostic: {
     reason: '',
     detail: '',
@@ -39,6 +41,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     injectActiveTab().then((result) => sendResponse(result));
     return true;
   }
+  if (message.type === 'rs-levels.tradingview-payload') {
+    sendResponse(tradingViewPayloadResponse(message.scope));
+    return false;
+  }
   if (message.type === 'rs-levels.state') {
     sendResponse({ ok: true, state });
     return false;
@@ -59,6 +65,7 @@ async function postCapture(capture) {
   if (!settings.captureEnabled) return { ok: true, skipped: true };
 
   state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
+  rememberTradingViewSnapshot(capture);
 
   try {
     const response = await fetch(`${settings.serviceUrl}/capture/api`, {
@@ -82,6 +89,29 @@ async function postCapture(capture) {
     state.lastError = err && err.message ? err.message : 'Local service unavailable';
     return { ok: false, error: state.lastError };
   }
+}
+
+function rememberTradingViewSnapshot(capture) {
+  const snapshot = globalThis.RS_LEVELS.captureToTradingViewSnapshot(capture);
+  if (!snapshot) return;
+  state.tradingViewSnapshot = snapshot;
+  state.tradingViewPayloadAt = snapshot.generatedAt || new Date().toISOString();
+}
+
+function tradingViewPayloadResponse(scope) {
+  const payload = globalThis.RS_LEVELS.tradingViewPayloadFromSnapshot(state.tradingViewSnapshot, scope || 'ALL');
+  if (!payload) {
+    return {
+      ok: false,
+      error: 'No extension-captured TradingView levels are available yet.'
+    };
+  }
+  return {
+    ok: true,
+    payload,
+    generatedAt: state.tradingViewPayloadAt,
+    symbols: state.tradingViewSnapshot.symbols.map((row) => row.symbol)
+  };
 }
 
 async function injectActiveTab() {

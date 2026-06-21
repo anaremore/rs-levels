@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
-  createTradingViewBundleJsonExport,
-  createTradingViewJsonExport
+  createTradingViewBundlePayloadExport,
+  createTradingViewPayloadExport
 } from '../src/index.js';
 
 const row = {
@@ -16,18 +16,13 @@ const row = {
   ]
 };
 
-const json = createTradingViewJsonExport(row, { generatedAt: '2026-06-19T14:30:00.000Z' });
-assert.equal(json.schemaVersion, '0.1.0');
-assert.equal(json.exportFormat, 'tradingview-json');
-assert.equal(json.payloadVersion, 1);
-assert.equal(json.symbol, 'ES');
-assert.equal(json.levels.length, 5);
-assert.deepEqual(json.levels[1], ['DD Upper bad chars', 7579.75, 'dd-band']);
-assert.deepEqual(json.levels[2], ['BZT1', 7588, 'zone-bull']);
-assert.deepEqual(json.levels[3], ['BrZT1', 7612, 'zone-bear']);
-assert.equal(json.levels[4][0], 'Open');
-assert.equal(Object.hasOwn(json, 'compactPayload'), false);
-assert.equal(Object.hasOwn(json, 'notes'), false);
+const payload = createTradingViewPayloadExport(row, { generatedAt: '2026-06-19T14:30:00.000Z' });
+assert.match(payload, /^RSLEVELS\|2\|2026-06-19T14:30:00\.000Z\|ES\|2026-06-19T14:29:59\.500Z\|/);
+assert.match(payload, /DD Upper bad chars,7579\.75,dd-band/);
+assert.match(payload, /BZT1,7588,zone-bull/);
+assert.match(payload, /BrZT1,7612,zone-bear/);
+assert.match(payload, /Open,7559,open-close/);
+assert.doesNotMatch(payload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);
 
 const manyLevels = {
   symbol: 'MES',
@@ -38,8 +33,8 @@ const manyLevels = {
     kind: 'zone-bull'
   }))
 };
-assert.equal(createTradingViewJsonExport(manyLevels).levels.length, 120);
-assert.equal(createTradingViewJsonExport(manyLevels, { maxLevels: 10 }).levels.length, 10);
+assert.equal(createTradingViewPayloadExport(manyLevels).split(';').length, 120);
+assert.equal(createTradingViewPayloadExport(manyLevels, { maxLevels: 10 }).split(';').length, 10);
 
 const bundleSnapshot = {
   generatedAt: '2026-06-19T14:31:00.000Z',
@@ -62,15 +57,11 @@ const bundleSnapshot = {
     }
   }
 };
-const bundleJson = createTradingViewBundleJsonExport(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' });
-assert.equal(bundleJson.exportFormat, 'tradingview-bundle-json');
-assert.equal(bundleJson.payloadVersion, 2);
-assert.deepEqual(bundleJson.symbols.map((symbol) => symbol.symbol), ['ES', 'NQ']);
-assert.equal(bundleJson.symbols[0].levelCount, 5);
-assert.deepEqual(bundleJson.symbols[1].levels[0], ['BrZT1', 30450, 'zone-bear']);
-assert.equal(bundleJson.symbols.some((symbol) => symbol.symbol === 'SPY'), false);
-assert.equal(bundleJson.symbols.some((symbol) => symbol.symbol === 'QQQ'), false);
-assert.equal(Object.hasOwn(bundleJson, 'compactPayload'), false);
-assert.equal(Object.hasOwn(bundleJson, 'notes'), false);
+const bundlePayload = createTradingViewBundlePayloadExport(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' });
+assert.match(bundlePayload, /^RSLEVELS\|2\|2026-06-19T14:31:05\.000Z\|ES\|2026-06-19T14:29:59\.500Z\|/);
+assert.match(bundlePayload, /\|NQ\|2026-06-19T14:30:30\.000Z\|BrZT1,30450,zone-bear/);
+assert.doesNotMatch(bundlePayload, /\|SPY\|/);
+assert.doesNotMatch(bundlePayload, /\|QQQ\|/);
+assert.doesNotMatch(bundlePayload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);
 
 console.log('exporter tests passed');

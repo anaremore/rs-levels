@@ -45,7 +45,7 @@ The direct-polling adapters consume the generic display row `name,price,red,gree
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path is therefore:
 
 - a display-only Pine indicator checked into `plugins/tradingview/`
-- the implemented `/tradingview` local-service endpoint and extension button to copy all-symbol JSON
+- the implemented `/tradingview` local-service endpoint and extension button to copy an all-symbol `RSLEVELS|2` payload
 - the implemented `/tradingview/:symbol` export for selected-symbol users and tooling
 - an indicator input where the JSON can be pasted and drawn
 

@@ -1,14 +1,16 @@
 # TradingView
 
-TradingView Pine scripts cannot poll the local API directly, so RS Levels uses a copy/paste JSON workflow.
+TradingView Pine scripts cannot poll the local API directly, so RS Levels uses a small copy/paste payload built for Pine.
 
 1. Run the local service.
 2. Capture RocketScooter levels with the browser extension.
-3. Use `Copy JSON` in the extension popup.
+3. Use `Copy TradingView` in the extension popup.
 4. Add `plugins/tradingview/rs-levels.pine` to a TradingView chart.
-5. Paste the copied JSON into the hidden `RS Levels JSON` indicator input.
+5. Paste the copied payload into the `RS Levels Payload` text-area input, then click `OK`.
 
-The all-symbol export carries `ES` and `NQ` together. The indicator detects the current TradingView chart family and draws `ES` levels on ES/MES charts, or `NQ` levels on NQ/MNQ charts. If TradingView symbol metadata is ambiguous, Auto falls back to the section whose level prices are closest to the chart's current price, and the `Chart family` setting can force `ES` or `NQ`. SPY, QQQ, and other non-futures panels may be open in RocketScooter without being included in the TradingView export.
+The all-symbol export carries `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. The `Chart family` setting can force `ES` or `NQ` when needed. SPY, QQQ, and other non-futures panels may be open in RocketScooter without being included in the TradingView export.
+
+The extension can copy the TradingView payload from its latest normalized page-reader capture without the local API. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint.
 
 ## API
 
@@ -20,45 +22,24 @@ GET /tradingview/F.US.EP...
 GET /tradingview/F.US.ENQ...
 ```
 
-Bundle JSON:
+All-symbol payload:
 
-```json
-{
-  "schemaVersion": "0.1.0",
-  "exportFormat": "tradingview-bundle-json",
-  "payloadVersion": 2,
-  "generatedAt": "2026-06-19T14:30:00.000Z",
-  "symbols": [
-    {
-      "symbol": "ES",
-      "capturedAt": "2026-06-19T14:29:59.500Z",
-      "levelCount": 2,
-      "levels": [["OVNHP", 7537, "hp"], ["BZT1", 7588, "zone-bull"]]
-    }
-  ]
-}
+```text
+RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp
 ```
 
-Single-symbol JSON:
+Single-symbol payload:
 
-```json
-{
-  "schemaVersion": "0.1.0",
-  "exportFormat": "tradingview-json",
-  "payloadVersion": 1,
-  "generatedAt": "2026-06-19T14:30:00.000Z",
-  "symbol": "ES",
-  "capturedAt": "2026-06-19T14:29:59.500Z",
-  "levels": [["OVNHP", 7537, "hp"], ["DD", 7579.75, "dd-band"]]
-}
+```text
+RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;DD,7579.75,dd-band
 ```
 
-Each level row is `[name, price, kind]`. Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still displayed as a neutral zone. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. Bull and bear zones use `zone-bull` and `zone-bear` kinds when the source distinguishes them. Generic `zone` is still displayed as a neutral zone. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
 
 ## Indicator Controls
 
-- `RS Levels JSON`: JSON copied from the extension or local API. It is hidden from TradingView's status line to avoid chart-header clutter.
-- `Chart family`: leave on `Auto` for normal ES/MES and NQ/MNQ charts, or force `ES`/`NQ` if TradingView symbol metadata prevents automatic matching.
+- `RS Levels Payload`: `RSLEVELS|2` text copied from the extension or local API. It uses TradingView's larger text-area input and is hidden from the status line to avoid chart-header clutter.
+- `Chart family`: leave on `Auto` for normal ES/MES and NQ/MNQ charts, or force `ES`/`NQ` when you intentionally want a specific bundle section.
 - `Labels`: show or hide level labels.
 - Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind has its color picker on the same row as its checkbox.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
