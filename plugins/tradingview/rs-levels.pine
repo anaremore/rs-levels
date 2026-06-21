@@ -12,7 +12,16 @@ showZones = input.bool(true, "Zones")
 showBullZones = input.bool(true, "Bull zones")
 showBearZones = input.bool(true, "Bear zones")
 showZoneFills = input.bool(true, "Zone fills")
-showUnknown = input.bool(true, "Unknown")
+showOtherLevels = input.bool(true, "Other levels")
+ddBandColorInput = input.color(color.rgb(41, 182, 246), "DD band", group = "Level colors")
+hpColorInput = input.color(color.rgb(41, 98, 255), "HP", group = "Level colors")
+mhpColorInput = input.color(color.rgb(255, 152, 0), "MHP", group = "Level colors")
+openCloseColorInput = input.color(color.rgb(224, 224, 224), "Open/close", group = "Level colors")
+referenceColorInput = input.color(color.rgb(255, 235, 59), "Reference", group = "Level colors")
+bullZoneColorInput = input.color(color.rgb(76, 175, 80), "Bull zone", group = "Level colors")
+bearZoneColorInput = input.color(color.rgb(240, 98, 146), "Bear zone", group = "Level colors")
+genericZoneColorInput = input.color(color.rgb(76, 175, 80), "Generic zone", group = "Level colors")
+otherLevelColorInput = input.color(color.rgb(158, 158, 158), "Other levels", group = "Level colors")
 lineWidth = input.int(1, "Line width", minval = 1, maxval = 4, display = display.none)
 fontSizeInput = input.string("Small", "Font size", options = ["Tiny", "Small", "Normal", "Large", "Huge"], display = display.none)
 labelBarsOffset = input.int(1, "Label bar offset", minval = 0, maxval = 20, display = display.none)
@@ -20,15 +29,6 @@ labelVerticalOffset = input.int(6, "Label vertical offset (ticks)", minval = 1, 
 zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval = 50, display = display.none)
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
-ddBandColorInput = input.color(color.rgb(41, 182, 246), "DD band color", group = "Colors", display = display.none)
-hpColorInput = input.color(color.rgb(41, 98, 255), "HP color", group = "Colors", display = display.none)
-mhpColorInput = input.color(color.rgb(255, 152, 0), "MHP color", group = "Colors", display = display.none)
-openCloseColorInput = input.color(color.rgb(224, 224, 224), "Open/close color", group = "Colors", display = display.none)
-referenceColorInput = input.color(color.rgb(255, 235, 59), "Reference color", group = "Colors", display = display.none)
-bullZoneColorInput = input.color(color.rgb(76, 175, 80), "Bull zone color", group = "Colors", display = display.none)
-bearZoneColorInput = input.color(color.rgb(240, 98, 146), "Bear zone color", group = "Colors", display = display.none)
-genericZoneColorInput = input.color(color.rgb(76, 175, 80), "Generic zone color", group = "Colors", display = display.none)
-unknownColorInput = input.color(color.rgb(158, 158, 158), "Unknown color", group = "Colors", display = display.none)
 
 labelStackRows = 6
 labelStackColumnBars = 4
@@ -55,7 +55,7 @@ kindColor(kind) =>
         "zone-bull" => bullZoneColorInput
         "zone-bear" => bearZoneColorInput
         "zone" => genericZoneColorInput
-        => unknownColorInput
+        => otherLevelColorInput
 
 kindEnabled(kind) =>
     switch kind
@@ -67,7 +67,7 @@ kindEnabled(kind) =>
         "zone-bull" => showZones and showBullZones
         "zone-bear" => showZones and showBearZones
         "zone" => showZones
-        => showUnknown
+        => showOtherLevels
 
 zoneKind(kind) =>
     kind == "zone-bull" or kind == "zone-bear" or kind == "zone"

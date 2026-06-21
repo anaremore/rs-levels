@@ -27,12 +27,14 @@ This indicator only draws lines and labels. It does not contain strategy logic, 
 
 - `RS Levels Payload`: compact `RSLEVELS|...` text from the extension or local API. The current indicator accepts v1 single-symbol payloads and v2 all-symbol payloads.
 - `Labels`: show or hide level labels.
-- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and unknown levels.
+- Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
-- `Colors`: customize DD bands, HP, MHP, open/close, reference, bull zone, bear zone, generic zone, and unknown level colors. Defaults match the RS Levels palette.
+- `Level colors`: customize DD bands, HP, MHP, open/close, reference, bull zone, bear zone, generic zone, and other level colors. Defaults match the RS Levels palette.
 - `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. Level labels render a few ticks above or below their line, automatically stagger into rows/columns, and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels.
 
 The pasted payload input is hidden from TradingView's status line to avoid chart-header clutter. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limits.
+
+`Other levels` is the fallback display category for parsed levels whose kind is not one of the recognized DD, HP, MHP, open/close, reference, or zone kinds.
 
 ## Payload Format
 
