@@ -12,7 +12,7 @@ SCDLLName("RS Levels Display")
 
 namespace
 {
-constexpr const char* RS_SIERRA_BUILD = "sierra-debug-2026-06-21.1";
+constexpr const char* RS_SIERRA_BUILD = "sierra-debug-2026-06-21.2";
 constexpr int RS_MAX_LEVELS = 500;
 constexpr int RS_LINE_BASE = 730000;
 constexpr int RS_LABEL_BASE = 731000;
@@ -117,17 +117,6 @@ int ClampPercent(int value, int minimum, int maximum)
     if (value > maximum)
         return maximum;
     return value;
-}
-
-const char* RequestLabel(int requestType)
-{
-    if (requestType == RS_REQUEST_STATUS)
-        return "status";
-    if (requestType == RS_REQUEST_LEVELS)
-        return "levels";
-    if (requestType == RS_REQUEST_STATS)
-        return "stats";
-    return "none";
 }
 
 std::string ResponseShape(const SCString& body)
@@ -322,18 +311,31 @@ SCString FormatStatsText(const SCString& body, const char* symbol)
 std::string FindSourceState(const SCString& body)
 {
     const std::string text(body.GetChars());
-    const size_t sourcePos = text.find("\"source\"");
-    if (sourcePos == std::string::npos)
-        return "unknown";
-    const size_t statePos = text.find("\"state\"", sourcePos);
-    if (statePos == std::string::npos)
-        return "unknown";
-    const size_t colonPos = text.find(':', statePos);
-    const size_t firstQuote = text.find('"', colonPos);
-    const size_t secondQuote = text.find('"', firstQuote + 1);
-    if (firstQuote == std::string::npos || secondQuote == std::string::npos)
-        return "unknown";
-    return text.substr(firstQuote + 1, secondQuote - firstQuote - 1);
+    size_t sourcePos = text.find("\"source\"");
+    while (sourcePos != std::string::npos)
+    {
+        const size_t colonPos = text.find(':', sourcePos);
+        if (colonPos == std::string::npos)
+            return "unknown";
+
+        const size_t objectStart = text.find_first_not_of(" \t\r\n", colonPos + 1);
+        if (objectStart != std::string::npos && text[objectStart] == '{')
+        {
+            const size_t statePos = text.find("\"state\"", objectStart);
+            if (statePos == std::string::npos)
+                return "unknown";
+            const size_t stateColonPos = text.find(':', statePos);
+            const size_t firstQuote = text.find('"', stateColonPos);
+            const size_t secondQuote = text.find('"', firstQuote + 1);
+            if (firstQuote == std::string::npos || secondQuote == std::string::npos)
+                return "unknown";
+            return text.substr(firstQuote + 1, secondQuote - firstQuote - 1);
+        }
+
+        sourcePos = text.find("\"source\"", sourcePos + 8);
+    }
+
+    return "unknown";
 }
 
 void DrawStationaryText(SCStudyInterfaceRef sc, int lineNumber, const char* text, COLORREF color, int x, int y, int fontSize)
@@ -772,7 +774,9 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     SCString& statsText = sc.GetPersistentSCString(2);
     SCString& lastIssue = sc.GetPersistentSCString(3);
     SCString& lastRequestPath = sc.GetPersistentSCString(4);
-    SCString& debugText = sc.GetPersistentSCString(5);
+    SCString& lastStatusDebug = sc.GetPersistentSCString(5);
+    SCString& lastLevelsDebug = sc.GetPersistentSCString(6);
+    SCString& lastStatsDebug = sc.GetPersistentSCString(7);
 
     const int nowSeconds = sc.CurrentSystemDateTime.GetTimeInSeconds();
     const int refreshSeconds = AtLeast(1, RefreshMs.GetInt() / 1000);
@@ -826,14 +830,24 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         sc.MakeHTTPRequest(url);
         requestState = requestType;
         lastRequestPath = path;
-        debugText.Format("%s pending %s build=%s", RequestLabel(requestState), lastRequestPath.GetChars(), RS_SIERRA_BUILD);
+        if (requestState == RS_REQUEST_STATUS)
+            lastStatusDebug.Format("status pending %s", lastRequestPath.GetChars());
+        else if (requestState == RS_REQUEST_LEVELS)
+            lastLevelsDebug.Format("levels pending %s", lastRequestPath.GetChars());
+        else if (requestState == RS_REQUEST_STATS)
+            lastStatsDebug.Format("stats pending %s", lastRequestPath.GetChars());
         lastRequestSeconds = nowSeconds;
     }
 
     if (requestState != RS_REQUEST_NONE && sc.HTTPResponse.GetLength() == 0 && nowSeconds - lastRequestSeconds >= RS_HTTP_TIMEOUT_SEC)
     {
         lastIssue = "HTTP timeout";
-        debugText.Format("%s timeout %s build=%s", RequestLabel(requestState), lastRequestPath.GetChars(), RS_SIERRA_BUILD);
+        if (requestState == RS_REQUEST_STATUS)
+            lastStatusDebug.Format("status timeout %s", lastRequestPath.GetChars());
+        else if (requestState == RS_REQUEST_LEVELS)
+            lastLevelsDebug.Format("levels timeout %s", lastRequestPath.GetChars());
+        else if (requestState == RS_REQUEST_STATS)
+            lastStatsDebug.Format("stats timeout %s", lastRequestPath.GetChars());
         requestState = RS_REQUEST_NONE;
         requestType = RS_REQUEST_NONE;
         sc.HTTPResponse = "";
@@ -847,7 +861,7 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         if (requestState == RS_REQUEST_STATUS)
         {
             sourceState = FindSourceState(sc.HTTPResponse).c_str();
-            debugText.Format("status %s len=%d rows=%d shape=%s state=%s build=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, shape.c_str(), sourceState.GetChars(), RS_SIERRA_BUILD);
+            lastStatusDebug.Format("status %s len=%d rows=%d shape=%s state=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, shape.c_str(), sourceState.GetChars());
         }
         else if (requestState == RS_REQUEST_LEVELS)
         {
@@ -858,12 +872,12 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
             DeleteUnusedDrawings(sc, static_cast<int>(levels.size()), zoneCount);
             lastLevelsSeconds = nowSeconds;
             lastLevelCount = static_cast<int>(levels.size());
-            debugText.Format("levels %s len=%d raw=%d parsed=%d shape=%s build=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, lastLevelCount, shape.c_str(), RS_SIERRA_BUILD);
+            lastLevelsDebug.Format("levels %s len=%d raw=%d parsed=%d shape=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, lastLevelCount, shape.c_str());
         }
         else if (requestState == RS_REQUEST_STATS)
         {
             statsText = FormatStatsText(sc.HTTPResponse, Symbol.GetString());
-            debugText.Format("stats %s len=%d rows=%d shape=%s build=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, shape.c_str(), RS_SIERRA_BUILD);
+            lastStatsDebug.Format("stats %s len=%d rows=%d shape=%s", lastRequestPath.GetChars(), responseLength, rawRowCount, shape.c_str());
         }
 
         requestState = RS_REQUEST_NONE;
@@ -897,5 +911,25 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     }
     DrawStatus(sc, statusText.GetChars(), statusColor);
     DrawStats(sc, statsText.GetChars());
-    DrawDebug(sc, debugText.GetChars(), ShowDebugStatus.GetYesNo() != 0);
+
+    std::string debugLine;
+    if (lastLevelsDebug.GetLength())
+        debugLine += lastLevelsDebug.GetChars();
+    if (lastStatusDebug.GetLength())
+    {
+        if (!debugLine.empty())
+            debugLine += " | ";
+        debugLine += lastStatusDebug.GetChars();
+    }
+    if (lastStatsDebug.GetLength())
+    {
+        if (!debugLine.empty())
+            debugLine += " | ";
+        debugLine += lastStatsDebug.GetChars();
+    }
+    if (!debugLine.empty())
+        debugLine += " | ";
+    debugLine += "build=";
+    debugLine += RS_SIERRA_BUILD;
+    DrawDebug(sc, debugLine.c_str(), ShowDebugStatus.GetYesNo() != 0);
 }
