@@ -46,7 +46,35 @@ std::string Trim(const std::string& value)
 int ClampColor(const std::string& value)
 {
     const int parsed = std::atoi(value.c_str());
-    return std::max(0, std::min(255, parsed));
+    if (parsed < 0)
+        return 0;
+    if (parsed > 255)
+        return 255;
+    return parsed;
+}
+
+int AtLeast(int minimum, int value)
+{
+    return value < minimum ? minimum : value;
+}
+
+double HigherPrice(double first, double second)
+{
+    return first > second ? first : second;
+}
+
+double LowerPrice(double first, double second)
+{
+    return first < second ? first : second;
+}
+
+int ClampPercent(int value, int minimum, int maximum)
+{
+    if (value < minimum)
+        return minimum;
+    if (value > maximum)
+        return maximum;
+    return value;
 }
 
 std::string Upper(std::string value)
@@ -348,7 +376,7 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     SCString label;
     label.Format("%s %.2f", DisplayLabel(level).c_str(), level.price);
     const float tick = sc.TickSize > 0.0f ? sc.TickSize : 0.01f;
-    const float labelOffset = tick * static_cast<float>(std::max(1, labelOffsetTicks)) * static_cast<float>(LabelDirection(level));
+    const float labelOffset = tick * static_cast<float>(AtLeast(1, labelOffsetTicks)) * static_cast<float>(LabelDirection(level));
 
     s_UseTool labelTool;
     labelTool.Clear();
@@ -357,7 +385,7 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     labelTool.LineNumber = RS_LABEL_BASE + index;
     labelTool.AddMethod = UTAM_ADD_OR_ADJUST;
     labelTool.Region = sc.GraphRegion;
-    labelTool.BeginIndex = std::max(0, sc.ArraySize - 1);
+    labelTool.BeginIndex = AtLeast(0, sc.ArraySize - 1);
     labelTool.BeginValue = static_cast<float>(level.price) + labelOffset;
     labelTool.Color = color;
     labelTool.FontSize = 9;
@@ -367,8 +395,8 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
 
 void DrawZoneFill(SCStudyInterfaceRef sc, const RsLevel& first, const RsLevel& second, int index, int opacityPercent)
 {
-    const double top = std::max(first.price, second.price);
-    const double bottom = std::min(first.price, second.price);
+    const double top = HigherPrice(first.price, second.price);
+    const double bottom = LowerPrice(first.price, second.price);
     const COLORREF color = RGB(first.red, first.green, first.blue);
 
     s_UseTool tool;
@@ -378,13 +406,13 @@ void DrawZoneFill(SCStudyInterfaceRef sc, const RsLevel& first, const RsLevel& s
     tool.LineNumber = RS_ZONE_BASE + index;
     tool.AddMethod = UTAM_ADD_OR_ADJUST;
     tool.Region = sc.GraphRegion;
-    tool.BeginIndex = std::max(0, sc.ArraySize - 2);
-    tool.EndIndex = std::max(0, sc.ArraySize - 1);
+    tool.BeginIndex = AtLeast(0, sc.ArraySize - 2);
+    tool.EndIndex = AtLeast(0, sc.ArraySize - 1);
     tool.BeginValue = static_cast<float>(top);
     tool.EndValue = static_cast<float>(bottom);
     tool.Color = color;
     tool.SecondaryColor = color;
-    tool.TransparencyLevel = 100 - std::max(0, std::min(50, opacityPercent));
+    tool.TransparencyLevel = 100 - ClampPercent(opacityPercent, 0, 50);
     sc.UseTool(tool);
 }
 
@@ -563,8 +591,8 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     SCString& statsText = sc.GetPersistentSCString(2);
 
     const int nowSeconds = sc.CurrentSystemDateTime.GetTimeInSeconds();
-    const int refreshSeconds = std::max(1, RefreshMs.GetInt() / 1000);
-    const int staleSeconds = std::max(1, StaleSeconds.GetInt());
+    const int refreshSeconds = AtLeast(1, RefreshMs.GetInt() / 1000);
+    const int staleSeconds = AtLeast(1, StaleSeconds.GetInt());
 
     if (requestState == RS_REQUEST_NONE && (lastRequestSeconds == 0 || nowSeconds - lastRequestSeconds >= refreshSeconds))
     {

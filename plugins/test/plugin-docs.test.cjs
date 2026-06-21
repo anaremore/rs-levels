@@ -63,6 +63,7 @@ assert.match(sierraSource, /fields\.size\(\) >= 6/);
 assert.match(sierraSource, /Label offset ticks/);
 assert.match(sierraSource, /zone-bull/);
 assert.match(sierraSource, /zone-bear/);
+assert.doesNotMatch(sierraSource, /std::(?:min|max)\s*\(/, 'Sierra headers define min/max macros, so avoid std::min/std::max call syntax');
 assertManualKinds(sierraSource);
 assertNoPlatformApiTerms(sierraSource);
 
