@@ -9,7 +9,7 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels workf
 3. Use `Copy JSON` in the extension popup, or copy JSON from `http://127.0.0.1:8765/tradingview`.
 4. Add `rs-levels.pine` to a TradingView chart and paste the JSON into the indicator input.
 
-The all-symbol JSON export can carry `ES` and `NQ` together. The indicator chooses the matching section for ES/MES or NQ/MNQ charts.
+The all-symbol JSON export can carry `ES` and `NQ` together. The indicator chooses the matching section for ES/MES or NQ/MNQ charts. If automatic chart-family detection is ambiguous, it falls back to the section closest to the chart's current price and also exposes a `Chart family` override.
 
 ## Payload Format
 
@@ -39,6 +39,7 @@ This indicator only draws lines, labels, and zone fills. It does not contain str
 ## Indicator Controls
 
 - `RS Levels JSON`: JSON from the extension or local API.
+- `Chart family`: `Auto`, `ES`, or `NQ`.
 - `Labels`: show or hide level labels.
 - Kind toggles: DD bands, HP, MHP, open/close, references, zones, bull zones, bear zones, and other levels. Each colored kind has its color picker on the same row as its checkbox.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.

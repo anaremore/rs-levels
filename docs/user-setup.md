@@ -103,7 +103,7 @@ If capture does not start, open extension options and review the endpoint allowl
 2. Paste the contents of `plugins/tradingview/rs-levels.pine`.
 3. Add the indicator to your chart.
 4. In the extension popup, keep the export dropdown on `ES + NQ` and click `Copy JSON`.
-5. Paste the copied JSON into the indicator's `RS Levels JSON` input. One all-symbol payload can carry ES and NQ together; the indicator chooses the matching ES/MES or NQ/MNQ section for the current chart.
+5. Paste the copied JSON into the indicator's `RS Levels JSON` input. One all-symbol payload can carry ES and NQ together; the indicator chooses the matching ES/MES or NQ/MNQ section for the current chart. If a chart does not auto-match, set the indicator's `Chart family` input to `ES` or `NQ`.
 
 The same dropdown can copy only `ES` or only `NQ` JSON when you want a single-family export for inspection or third-party tooling. `Plugins` opens the local display-plugin manifest.
 

@@ -2,6 +2,7 @@
 indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels JSON", display = display.none)
+chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 showLabels = input.bool(true, "Labels")
 showDdBands = input.bool(true, "DD bands", inline = "dd")
 ddBandColorInput = input.color(color.rgb(41, 182, 246), "", inline = "dd")
@@ -126,8 +127,11 @@ displayLabelName(name, kind) =>
         cleaned
 
 chartJsonSymbol() =>
-    chartText = str.upper(syminfo.root + " " + syminfo.ticker)
-    str.contains(chartText, "NQ") ? "NQ" : str.contains(chartText, "ES") ? "ES" : ""
+    if chartFamilyInput != "Auto"
+        chartFamilyInput
+    else
+        chartText = str.upper(syminfo.root + " " + syminfo.ticker + " " + syminfo.tickerid + " " + syminfo.description)
+        str.contains(chartText, "NQ") or str.contains(chartText, "NASDAQ") ? "NQ" : str.contains(chartText, "ES") or str.contains(chartText, "S&P") or str.contains(chartText, "SP 500") or str.contains(chartText, "SP500") ? "ES" : ""
 
 jsonCompact(payloadText) =>
     cleaned = str.replace_all(payloadText, "\r", "")
@@ -195,16 +199,46 @@ jsonLevelsToLevelText(levelRowsText) =>
                     levelText := levelText + (levelText == "" ? "" : ";") + name + "," + priceText + "," + kind
     levelText
 
+bundleSymbolLevelText(jsonPayload, symbolText) =>
+    jsonLevelsToLevelText(jsonLevelsBlock(jsonSectionForSymbol(jsonPayload, symbolText)))
+
+nearestLevelDistance(levelText) =>
+    nearest = 1000000000.0
+    if levelText != ""
+        items = str.split(levelText, ";")
+        for i = 0 to array.size(items) - 1
+            fields = str.split(array.get(items, i), ",")
+            if array.size(fields) >= 3
+                price = str.tonumber(array.get(fields, 1))
+                if not na(price)
+                    nearest := math.min(nearest, math.abs(price - close))
+    nearest
+
+bestBundleLevelText(jsonPayload, chartSymbol) =>
+    esLevelText = bundleSymbolLevelText(jsonPayload, "ES")
+    nqLevelText = bundleSymbolLevelText(jsonPayload, "NQ")
+    levelText = ""
+    if chartSymbol == "ES"
+        levelText := esLevelText
+    else if chartSymbol == "NQ"
+        levelText := nqLevelText
+    else if esLevelText != "" and nqLevelText != ""
+        levelText := nearestLevelDistance(esLevelText) <= nearestLevelDistance(nqLevelText) ? esLevelText : nqLevelText
+    else
+        levelText := esLevelText != "" ? esLevelText : nqLevelText
+    levelText
+
 jsonLevelTextForChart(payloadText) =>
     jsonPayload = jsonCompact(payloadText)
     chartSymbol = chartJsonSymbol()
     levelText = ""
     if chartSymbol != "" and str.contains(jsonPayload, "\"exportFormat\":\"tradingview-bundle-json\"")
-        sectionText = jsonSectionForSymbol(jsonPayload, chartSymbol)
-        levelText := jsonLevelsToLevelText(jsonLevelsBlock(sectionText))
-    else if chartSymbol != "" and str.contains(jsonPayload, "\"exportFormat\":\"tradingview-json\"")
+        levelText := bestBundleLevelText(jsonPayload, chartSymbol)
+    else if str.contains(jsonPayload, "\"exportFormat\":\"tradingview-bundle-json\"")
+        levelText := bestBundleLevelText(jsonPayload, chartSymbol)
+    else if str.contains(jsonPayload, "\"exportFormat\":\"tradingview-json\"")
         payloadSymbol = jsonStringField(jsonPayload, "symbol")
-        if payloadSymbol == chartSymbol
+        if payloadSymbol == chartSymbol or chartSymbol == ""
             levelText := jsonLevelsToLevelText(jsonLevelsBlock(jsonPayload))
     levelText
 
