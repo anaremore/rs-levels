@@ -9,6 +9,9 @@ export type LevelKind =
   | 'dd-band'
   | 'reference'
   | 'open-close'
+  | 'yellow-line'
+  | 'red-line'
+  | 'cat'
   | 'stat'
   | 'unknown';
 

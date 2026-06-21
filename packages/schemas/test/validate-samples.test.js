@@ -26,6 +26,9 @@ assert.equal(inferLevelKind('DD Upper'), 'dd-band');
 assert.equal(inferLevelKind('QQQ Open'), 'open-close');
 assert.equal(inferLevelKind('BZT2'), 'zone-bull');
 assert.equal(inferLevelKind('BrZT2'), 'zone-bear');
+assert.equal(inferLevelKind('YL'), 'yellow-line');
+assert.equal(inferLevelKind('Red Line'), 'red-line');
+assert.equal(inferLevelKind('CAT'), 'cat');
 
 const normalized = normalizeLevel('NQ', {
   name: 'RL',
@@ -34,7 +37,7 @@ const normalized = normalizeLevel('NQ', {
 });
 assert.equal(normalized.symbol, 'MNQ');
 assert.equal(normalized.price, 30272.75);
-assert.equal(normalized.kind, 'reference');
+assert.equal(normalized.kind, 'red-line');
 assert.equal(normalized.color, '#F23645');
 
 const endpoint = normalizeEndpointSummary({

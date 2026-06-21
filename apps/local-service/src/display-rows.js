@@ -33,6 +33,12 @@ function kindColor(kind) {
       return '#E0E0E0';
     case 'reference':
       return '#FFEB3B';
+    case 'yellow-line':
+      return '#FFEB3B';
+    case 'red-line':
+      return '#F23645';
+    case 'cat':
+      return '#7E57C2';
     case 'zone':
     case 'zone-bull':
       return '#4CAF50';

@@ -26,8 +26,8 @@ stable, and easy for chart-plugin runtimes to consume.
 
 Rows are `name,price,red,green,blue,kind`. The add-on remains compatible with
 the original first five columns and uses the optional `kind` column when present
-so bull zones, bear zones, HP, MHP, DD bands, references, and open/close levels
-land in distinct Bookmap color slots.
+so bull zones, bear zones, HP, MHP, DD bands, references, open/close levels,
+yellow lines, red lines, and CAT lines land in distinct Bookmap color slots.
 
 ## Add-On Settings
 
@@ -41,7 +41,7 @@ land in distinct Bookmap color slots.
 - Polls `GET /status` and `GET /levels/:symbol?format=rows`.
 - Draws up to 500 horizontal level markers through Bookmap indicator value lines.
 - Uses the optional `kind` column for category-aware colors, including separate
-  bull and bear zone colors.
+  bull zone, bear zone, yellow-line, red-line, and CAT colors.
 - Clears displayed lines after stale/offline data exceeds the configured threshold.
 - Logs feed availability warnings through Bookmap's logging API.
 

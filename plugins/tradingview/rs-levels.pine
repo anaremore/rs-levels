@@ -14,6 +14,12 @@ showOpenClose = input.bool(true, "Open/close", inline = "openClose")
 openCloseColorInput = input.color(color.rgb(224, 224, 224), "", inline = "openClose")
 showReference = input.bool(true, "References", inline = "reference")
 referenceColorInput = input.color(color.rgb(255, 235, 59), "", inline = "reference")
+showYellowLines = input.bool(true, "Yellow lines", inline = "yellowLine")
+yellowLineColorInput = input.color(color.rgb(255, 235, 59), "", inline = "yellowLine")
+showRedLines = input.bool(true, "Red lines", inline = "redLine")
+redLineColorInput = input.color(color.rgb(242, 54, 69), "", inline = "redLine")
+showCatLines = input.bool(true, "CAT lines", inline = "catLine")
+catLineColorInput = input.color(color.rgb(126, 87, 194), "", inline = "catLine")
 showBullZones = input.bool(true, "Bull zones", inline = "bullZone")
 bullZoneColorInput = input.color(color.rgb(76, 175, 80), "", inline = "bullZone")
 showBearZones = input.bool(true, "Bear zones", inline = "bearZone")
@@ -51,6 +57,9 @@ kindColor(kind) =>
         "mhp" => mhpColorInput
         "open-close" => openCloseColorInput
         "reference" => referenceColorInput
+        "yellow-line" => yellowLineColorInput
+        "red-line" => redLineColorInput
+        "cat" => catLineColorInput
         "zone-bull" => bullZoneColorInput
         "zone-bear" => bearZoneColorInput
         => otherLevelColorInput
@@ -62,6 +71,9 @@ kindEnabled(kind) =>
         "mhp" => showMhp
         "open-close" => showOpenClose
         "reference" => showReference
+        "yellow-line" => showYellowLines
+        "red-line" => showRedLines
+        "cat" => showCatLines
         "zone-bull" => showBullZones
         "zone-bear" => showBearZones
         => showOtherLevels
@@ -112,6 +124,12 @@ displayLabelName(name, kind) =>
         "HP"
     else if kind == "dd-band" or str.contains(upperName, "DD")
         "DD"
+    else if kind == "cat" or str.contains(upperName, "CAT")
+        "CAT"
+    else if kind == "yellow-line" or str.contains(upperName, "YELLOW LINE") or upperName == "YL"
+        "Yellow Line"
+    else if kind == "red-line" or str.contains(upperName, "RED LINE") or upperName == "RL"
+        "Red Line"
     else
         cleaned = str.replace_all(name, "horizontal_line", "")
         cleaned := str.replace_all(cleaned, "horizontal_ray", "")

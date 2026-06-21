@@ -43,6 +43,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
     private static final String COLOR_GREEN = "RS_GREEN";
     private static final String COLOR_ORANGE = "RS_ORANGE";
     private static final String COLOR_PINK = "RS_PINK";
+    private static final String COLOR_PURPLE = "RS_PURPLE";
     private static final String COLOR_RED = "RS_RED";
     private static final String COLOR_YELLOW = "RS_YELLOW";
     private static final String COLOR_WHITE = "RS_WHITE";
@@ -164,6 +165,12 @@ public class RSLevelsDisplayBookmap implements CustomModule {
             return COLOR_WHITE;
         if ("reference".equals(normalizedKind))
             return COLOR_YELLOW;
+        if ("yellow-line".equals(normalizedKind))
+            return COLOR_YELLOW;
+        if ("red-line".equals(normalizedKind))
+            return COLOR_RED;
+        if ("cat".equals(normalizedKind))
+            return COLOR_PURPLE;
         if ("zone-bull".equals(normalizedKind) || "zone".equals(normalizedKind))
             return COLOR_GREEN;
         if ("zone-bear".equals(normalizedKind))
@@ -199,6 +206,12 @@ public class RSLevelsDisplayBookmap implements CustomModule {
             return "zone-bull";
         if (text.contains("ZONE"))
             return "zone";
+        if (text.contains("CAT"))
+            return "cat";
+        if (text.contains("YELLOW LINE") || "YL".equals(text))
+            return "yellow-line";
+        if (text.contains("RED LINE") || "RL".equals(text))
+            return "red-line";
         if (text.contains("OPEN") || text.contains("CLOSE") || text.contains("GAP"))
             return "open-close";
         return "unknown";
@@ -302,6 +315,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_GREEN, new Color(76, 175, 80), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_ORANGE, new Color(255, 152, 0), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_PINK, new Color(240, 98, 146), true),
+            new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_PURPLE, new Color(126, 87, 194), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_RED, new Color(242, 54, 69), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_YELLOW, new Color(255, 235, 59), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_WHITE, new Color(220, 220, 220), true)

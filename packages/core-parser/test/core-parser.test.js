@@ -297,7 +297,10 @@ const pageReaderSnapshotArrays = normalizeCapture({
     capturedAt: '2026-06-19T14:31:58.000Z',
     chartLines: [
       { index: 'ES', chart: 'F.US.EPU26', text: 'OVNHP', price: 7565, color: '#2962ff' },
+      { index: 'ES', chart: 'F.US.EPU26', price: 7598, color: '#ffeb3b' },
+      { index: 'ES', chart: 'F.US.EPU26', text: 'RL', price: 7520, linecolor: 'rgb(242, 54, 69)' },
       { index: 'NQ', chart: 'F.US.ENQU26', text: 'OVNMHP', price: 30667.5, color: '#ff9800' },
+      { index: 'NQ', chart: 'F.US.ENQU26', text: 'CAT', price: 31232.74, color: '#7e57c2' },
       { index: 'SPY', chart: 'SPY', text: 'PrevDayClose', price: 722.51 }
     ],
     referenceLines: [
@@ -310,9 +313,12 @@ const pageReaderSnapshotArrays = normalizeCapture({
     ]
   }
 });
-assert.equal(pageReaderSnapshotArrays.symbols.MES.length, 4);
-assert.equal(pageReaderSnapshotArrays.symbols.MNQ.length, 4);
+assert.equal(pageReaderSnapshotArrays.symbols.MES.length, 6);
+assert.equal(pageReaderSnapshotArrays.symbols.MNQ.length, 5);
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'OVNHP').kind, 'hp');
+assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'Yellow Line').kind, 'yellow-line');
+assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'RL').kind, 'red-line');
+assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name === 'CAT').kind, 'cat');
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'LastOpen').kind, 'open-close');
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'BZT1').kind, 'zone-bull');
 assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name.startsWith('BrZT')).kind, 'zone-bear');

@@ -390,6 +390,12 @@ namespace RSLevelsQuantower
                 return "HP";
             if (level.Kind == "dd-band" || upper.Contains("DD"))
                 return "DD";
+            if (level.Kind == "cat" || upper.Contains("CAT"))
+                return "CAT";
+            if (level.Kind == "yellow-line" || upper.Contains("YELLOW LINE") || upper == "YL")
+                return "Yellow Line";
+            if (level.Kind == "red-line" || upper.Contains("RED LINE") || upper == "RL")
+                return "Red Line";
             return name.Replace("horizontal_line", "").Replace("horizontal_ray", "").Replace("horizontal", "").Replace("Liquidity Map", "").Replace("text", "").Trim();
         }
 
@@ -425,6 +431,9 @@ namespace RSLevelsQuantower
             if (text.Contains("BRZ") || text.Contains("BEAR")) return "zone-bear";
             if (text.Contains("BZ") || text.Contains("BULL")) return "zone-bull";
             if (text.Contains("ZONE")) return "zone";
+            if (text.Contains("CAT")) return "cat";
+            if (text.Contains("YELLOW LINE") || text == "YL") return "yellow-line";
+            if (text.Contains("RED LINE") || text == "RL") return "red-line";
             if (text.Contains("OPEN") || text.Contains("CLOSE") || text.Contains("GAP")) return "open-close";
             return "unknown";
         }

@@ -55,9 +55,12 @@ const charts = [
   makeChart('F.US.EPU26', [
     makeShape('es-hp', 'horizontal_line', [{ price: 7565 }], { text: 'OVNHP', linecolor: '#2962ff' }),
     makeShape('es-open', 'horizontal_line', [{ price: 7559 }], { text: 'SPY Open : 7,559 Liquidity Map', linecolor: '#e0e0e0' }),
+    makeShape('es-yellow', 'horizontal_line', [{ price: 7598 }], { linecolor: '#ffeb3b' }),
+    makeShape('es-red', 'horizontal_line', [{ price: 7520 }], { linecolor: 'rgb(242, 54, 69)' }),
     makeShape('es-bull-zone', 'rectangle', [{ price: 7580 }, { price: 7560 }], { text: 'Bull Zone', backgroundColor: '#4caf50' })
   ]),
   makeChart('F.US.ENQU26', [
+    makeShape('nq-cat', 'horizontal_line', [{ price: 31232.74 }], { text: 'CAT', linecolor: '#7e57c2' }),
     makeShape('nq-bear-zone', 'rectangle', [{ price: 30710 }, { price: 30680 }], { text: 'Bear Zone', backgroundColor: '#f06292' })
   ], [
     makeStudy('nq-liquidity', 'Liquidity Map', 'MidGap', 30625.75)
@@ -120,11 +123,14 @@ const body = JSON.parse(captureMessage.capture.body);
 assert.equal(body.type, 'rs_snapshot');
 assert.equal(body.source, 'page-reader');
 assert.equal(body.reader.chartCount, 3);
-assert.equal(body.chartLines.length, 2);
+assert.equal(body.chartLines.length, 5);
 assert.equal(body.referenceLines.length, 2);
 assert.equal(body.zoneRectangles.length, 2);
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNHP' && level.price === 7565));
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'Open' && level.price === 7559));
+assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'Yellow Line' && level.kind === 'yellow-line' && level.price === 7598));
+assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'Red Line' && level.kind === 'red-line' && level.price === 7520));
+assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'CAT' && level.kind === 'cat' && level.price === 31232.74));
 assert.equal(body.levels.some((level) => /Liquidity Map|horizontal|text/i.test(level.name)), false);
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.kind === 'zone-bear'));
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'MidGap'));

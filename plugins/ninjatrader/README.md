@@ -25,7 +25,6 @@ The indicator uses the generic display row feed to avoid adding a JSON dependenc
 - show zone fills
 - zone fill opacity
 - label offset ticks
-- line width
 
 ## Install
 
@@ -45,7 +44,7 @@ Documents\NinjaTrader 8\bin\Custom\Indicators\RSLevelsDisplay.cs
 - Use a background timer or NinjaTrader-safe async pattern to poll the local API.
 - Marshal results back to the chart thread before drawing.
 - Draw horizontal lines by `level.price` and text by `level.name`.
-- Use the display row feed color columns and optional sixth `kind` column for display styling.
+- Use the display row feed color columns and optional sixth `kind` column for display styling, including yellow-line, red-line, and CAT manual-line kinds.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the level line to avoid struck-through text.
 - Show stale/offline state directly on the chart.

@@ -9,6 +9,9 @@ export const LEVEL_KINDS = Object.freeze([
   'dd-band',
   'reference',
   'open-close',
+  'yellow-line',
+  'red-line',
+  'cat',
   'stat',
   'unknown'
 ]);
@@ -201,9 +204,11 @@ export function inferLevelKind(name) {
   if (text.includes('BRZ') || text.includes('BEAR')) return 'zone-bear';
   if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
   if (text.includes('ZONE')) return 'zone';
+  if (text.includes('CAT')) return 'cat';
+  if (/\bYL\b/.test(text) || text.includes('YELLOW LINE')) return 'yellow-line';
+  if (/\bRL\b/.test(text) || text.includes('RED LINE')) return 'red-line';
   if (text.includes('OPEN') || text.includes('CLOSE') || text.includes('HIGH') || text.includes('GAP')) return 'open-close';
   if (text === 'DD' || text.includes('RES')) return 'stat';
-  if (text.includes('YL') || text.includes('RL')) return 'reference';
   return 'unknown';
 }
 

@@ -17,10 +17,13 @@ assert.equal(cliVersion, '0.0.0');
 assert.equal(
   levelsToDisplayRowsText([
     { name: 'text SPY Open : 7,559 Liquidity Map horizontal_line', price: 7559, kind: 'open-close' },
+    { name: 'Yellow Line', price: 7598, kind: 'yellow-line' },
+    { name: 'Red Line', price: 7520, kind: 'red-line' },
+    { name: 'CAT', price: 31232.74, kind: 'cat' },
     { name: 'Bull Zone Top', price: 7526, kind: 'zone-bull' },
     { name: 'Bear Zone Bottom', price: 7588, kind: 'zone-bear' }
   ]),
-  'Open,7559.00,224,224,224,open-close\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
+  'Open,7559.00,224,224,224,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
 );
 
 let nowMs = Date.parse('2026-06-20T12:00:00.000Z');
@@ -288,21 +291,43 @@ try {
   assert.equal(combinedCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'zone-bull'), true);
   assert.equal(combinedCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'zone-bear'), true);
 
+  const manualLineCapture = await postJson(`${baseUrl}/capture/api`, {
+    endpoint: '/page-reader/display',
+    status: 200,
+    capturedAt,
+    body: {
+      source: 'page-reader',
+      levels: [
+        { symbol: 'F.US.EPU26', name: 'Yellow Line', price: 7598, kind: 'yellow-line', color: '#ffeb3b' },
+        { symbol: 'F.US.EPU26', name: 'Red Line', price: 7520, kind: 'red-line', color: '#f23645' },
+        { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat', color: '#7e57c2' }
+      ]
+    }
+  });
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'yellow-line'), true);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'red-line'), true);
+  assert.equal(manualLineCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'cat'), true);
+
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
   assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 3);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 2);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 5);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 3);
 
   const bundledTradingViewPayload = await getText(`${baseUrl}/tradingview`);
   assert.match(bundledTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|ES\|/);
   assert.match(bundledTradingViewPayload, /\|NQ\|/);
   assert.match(bundledTradingViewPayload, /BZT1,7580,zone-bull/);
   assert.match(bundledTradingViewPayload, /BrZT1,30450,zone-bear/);
+  assert.match(bundledTradingViewPayload, /Yellow Line,7598,yellow-line/);
+  assert.match(bundledTradingViewPayload, /Red Line,7520,red-line/);
+  assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
   assert.doesNotMatch(bundledTradingViewPayload, /tradingview-bundle-json|compactPayload|notes/);
 
   const mesRowsWithKinds = await getText(`${baseUrl}/levels/MES?format=rows`);
   assert.match(mesRowsWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
   assert.match(mesRowsWithKinds, /BZB1,7560\.00,76,175,80,zone-bull/);
+  assert.match(mesRowsWithKinds, /Yellow Line,7598\.00,255,235,59,yellow-line/);
+  assert.match(mesRowsWithKinds, /Red Line,7520\.00,242,54,69,red-line/);
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|NQ\|/);
@@ -315,6 +340,12 @@ try {
   assert.equal(zones.levels.length, 4);
   assert.equal(zones.levels.some((level) => level.kind === 'zone-bull'), true);
   assert.equal(zones.levels.some((level) => level.kind === 'zone-bear'), true);
+
+  const references = await getJson(`${baseUrl}/references`);
+  assert.equal(references.levels.length, 3);
+  assert.equal(references.levels.some((level) => level.kind === 'yellow-line'), true);
+  assert.equal(references.levels.some((level) => level.kind === 'red-line'), true);
+  assert.equal(references.levels.some((level) => level.kind === 'cat'), true);
 
   const remoteService = createService({
     config: { host: '0.0.0.0', port: 0, allowRemote: false }

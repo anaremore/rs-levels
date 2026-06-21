@@ -75,6 +75,8 @@ POST /capture/api
 
 /tradingview returns the all-symbol `RSLEVELS|2` paste payload used by the TradingView Pine indicator. /tradingview/:symbol returns a single-family payload for ES/MES or NQ/MNQ charts.
 
+Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
+
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
 
 /plugins returns the public display-plugin manifest from `plugins/manifest.json`.

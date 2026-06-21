@@ -44,6 +44,7 @@ assert.match(contract, /Freshness Rules/);
 assert.match(contract, /Safety Tests/);
 assert.match(contract, /name,price,red,green,blue,kind/);
 assert.match(contract, /Other levels/);
+assertManualKinds(contract);
 
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
@@ -56,6 +57,7 @@ assert.match(sierraSource, /fields\.size\(\) >= 6/);
 assert.match(sierraSource, /Label offset ticks/);
 assert.match(sierraSource, /zone-bull/);
 assert.match(sierraSource, /zone-bear/);
+assertManualKinds(sierraSource);
 assertNoPlatformApiTerms(sierraSource);
 
 const ninjaSource = readFileSync(join(root, 'ninjatrader', 'RSLevelsDisplay.cs'), 'utf8');
@@ -72,6 +74,8 @@ assert.match(ninjaSource, /string kind = parts\.Length >= 6/);
 assert.match(ninjaSource, /Kind = kind/);
 assert.match(ninjaSource, /zone-bull/);
 assert.match(ninjaSource, /zone-bear/);
+assert.doesNotMatch(ninjaSource, /DashStyleHelper/);
+assertManualKinds(ninjaSource);
 assertNoPlatformApiTerms(ninjaSource);
 
 const quantowerSource = readFileSync(join(root, 'quantower', 'RSLevelsDisplayQuantower.cs'), 'utf8');
@@ -89,6 +93,7 @@ assert.match(quantowerSource, /string kind = parts\.Length >= 6/);
 assert.match(quantowerSource, /Kind = kind/);
 assert.match(quantowerSource, /zone-bull/);
 assert.match(quantowerSource, /zone-bear/);
+assertManualKinds(quantowerSource);
 assertNoPlatformApiTerms(quantowerSource);
 
 const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'RSLevelsDisplayBookmap.java'), 'utf8');
@@ -101,15 +106,23 @@ assert.match(bookmapSource, /parts\.length >= 6/);
 assert.match(bookmapSource, /COLOR_PINK/);
 assert.match(bookmapSource, /zone-bull/);
 assert.match(bookmapSource, /zone-bear/);
+assertManualKinds(bookmapSource);
 assertNoPlatformApiTerms(bookmapSource);
 
 const tradingViewSource = readFileSync(join(root, 'tradingview', 'rs-levels.pine'), 'utf8');
 assert.match(tradingViewSource, /^indicator\(/m);
+assertManualKinds(tradingViewSource);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\s*\(/i);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\./i);
 assert.doesNotMatch(tradingViewSource, /\balertcondition\s*\(/i);
 
 console.log('plugin documentation tests passed');
+
+function assertManualKinds(source) {
+  assert.match(source, /yellow-line/);
+  assert.match(source, /red-line/);
+  assert.match(source, /cat/);
+}
 
 function assertNoPlatformApiTerms(source) {
   for (const term of [

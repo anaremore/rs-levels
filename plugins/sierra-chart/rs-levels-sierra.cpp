@@ -74,6 +74,9 @@ std::string InferKind(const std::string& name)
     if (upper.find("BRZ") != std::string::npos || upper.find("BEAR") != std::string::npos) return "zone-bear";
     if (upper.find("BZ") != std::string::npos || upper.find("BULL") != std::string::npos) return "zone-bull";
     if (upper.find("ZONE") != std::string::npos) return "zone";
+    if (upper.find("CAT") != std::string::npos) return "cat";
+    if (upper.find("YELLOW LINE") != std::string::npos || upper == "YL") return "yellow-line";
+    if (upper.find("RED LINE") != std::string::npos || upper == "RL") return "red-line";
     if (upper.find("OPEN") != std::string::npos || upper.find("CLOSE") != std::string::npos || upper.find("GAP") != std::string::npos) return "open-close";
     return "unknown";
 }
@@ -201,6 +204,12 @@ std::string DisplayLabel(const RsLevel& level)
         return "HP";
     if (level.kind == "dd-band" || upper.find("DD") != std::string::npos)
         return "DD";
+    if (level.kind == "cat" || upper.find("CAT") != std::string::npos)
+        return "CAT";
+    if (level.kind == "yellow-line" || upper.find("YELLOW LINE") != std::string::npos || upper == "YL")
+        return "Yellow Line";
+    if (level.kind == "red-line" || upper.find("RED LINE") != std::string::npos || upper == "RL")
+        return "Red Line";
 
     std::string cleaned = level.name;
     cleaned = ReplaceAll(cleaned, "horizontal_line", "");

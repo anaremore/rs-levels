@@ -80,7 +80,10 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
     capturedAt: '2026-06-21T03:47:02.097Z',
     levels: [
       { name: 'text SPY Open : 7559 Liquidity Map', price: 7559, kind: 'open-close' },
+      { name: 'Yellow Line', price: 7598, kind: 'yellow-line' },
+      { name: 'Red Line', price: 7520, kind: 'red-line' },
       { symbol: 'F.US.ENQU26', name: 'OVNMHP', price: 30475, kind: 'mhp' },
+      { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat' },
       { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
     ]
   })
@@ -89,7 +92,10 @@ assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSO
 const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'ALL');
 assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
+assert.match(localPayload, /Yellow Line,7598,yellow-line/);
+assert.match(localPayload, /Red Line,7520,red-line/);
 assert.match(localPayload, /\|NQ\|2026-06-21T03:47:02\.097Z\|OVNMHP,30475,mhp/);
+assert.match(localPayload, /CAT,31232\.74,cat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 assert.throws(

@@ -267,6 +267,9 @@
     if (upper.includes('CLOSE')) return 'Close';
     if (upper.includes('OVNMHP')) return 'OVNMHP';
     if (upper.includes('OVNHP')) return 'OVNHP';
+    if (upper.includes('CAT')) return 'CAT';
+    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE')) return 'Yellow Line';
+    if (/\bRL\b/.test(upper) || upper.includes('RED LINE')) return 'Red Line';
     if (upper.includes('MHP')) return 'MHP';
     if (upper.includes('HP')) return 'HP';
     if (upper.includes('DD')) return 'DD';
@@ -277,6 +280,9 @@
     const upper = String(name || '').toUpperCase();
     if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
     if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
+    if (upper.includes('CAT')) return 'cat';
+    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE')) return 'yellow-line';
+    if (/\bRL\b/.test(upper) || upper.includes('RED LINE')) return 'red-line';
     if (upper.includes('MHP')) return 'mhp';
     if (upper.includes('HP')) return 'hp';
     if (upper.includes('DD')) return 'dd-band';

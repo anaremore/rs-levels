@@ -236,7 +236,7 @@ OVNHP,7537.00,41,98,255,hp
 DD Upper,7579.75,41,182,246,dd-band
 ```
 
-Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, and other display categories for fills and settings. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
+Columns are `name,price,red,green,blue,kind`. Display clients should read `kind` to distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories for fills and settings. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
 
 ## GET /tradingview
 
@@ -246,7 +246,7 @@ Returns the all-symbol futures `RSLEVELS|2` paste payload for the included Tradi
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull|NQ|2026-06-19T14:29:59.500Z|BrZT1,30450,zone-bear
 ```
 
-The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set.
+The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set. User-added RocketScooter yellow, red, and purple CAT chart lines are exported as `yellow-line`, `red-line`, and `cat` kinds when they are captured.
 
 ## GET /tradingview/:symbol
 
@@ -268,7 +268,7 @@ Returns all flat levels whose kind is `zone`, `zone-bull`, or `zone-bear`.
 
 ## GET /references
 
-Returns flat reference levels, including `reference`, `open-close`, `hp`, and `mhp` kinds.
+Returns flat reference levels, including `reference`, `open-close`, `hp`, `mhp`, `yellow-line`, `red-line`, and `cat` kinds.
 
 ## GET /stream
 
@@ -303,7 +303,7 @@ Accepted payload shape:
 
 `body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both ES/MES and NQ/MNQ sections, including CQG-style keys such as `F.US.EP...` and `F.US.ENQ...`, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
 
-The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, and `zoneRectangles` arrays. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line.
+The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, and `zoneRectangles` arrays. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. User-added yellow, red, and purple CAT chart lines are captured from visible futures chart objects when they expose a finite price. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line.
 
 ## CORS
 

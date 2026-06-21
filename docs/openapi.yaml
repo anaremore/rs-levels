@@ -510,7 +510,7 @@ components:
           type: number
         kind:
           type: string
-          enum: [hp, mhp, zone, zone-bull, zone-bear, dd-band, reference, open-close, stat, unknown]
+          enum: [hp, mhp, zone, zone-bull, zone-bear, dd-band, reference, open-close, yellow-line, red-line, cat, stat, unknown]
         color:
           type: string
         source:

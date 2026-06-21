@@ -379,22 +379,22 @@
   }
 
   function shapeColor(props) {
-    return safeString(props && (props.linecolor || props.color || props.textcolor || props.backgroundColor));
+    return normalizeColor(props && (props.linecolor || props.color || props.textcolor || props.backgroundColor));
   }
 
   function levelNameFromLabel(label, color) {
     const text = compact(label);
-    const direct = text.match(/\b(OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bear\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*)\b/i);
+    const direct = text.match(/\b(OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bear\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*|CAT|YL|RL|Yellow\s*Line|Red\s*Line)\b/i);
     if (direct) return normalizeName(direct[1]);
     if (/\bOpen\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/\bClose\b/i.test(text)) return 'Open';
     if (/\bClose\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/Prev\s*Close|PrevDayClose/i.test(text)) return 'Close';
-    const priced = text.match(/\b(Bull\s*Zone|Bear\s*Zone|MHP|HP|DD|Open|Close|Half\s*Gap|HG)\s*:?\s*-?[\d,]+(?:\.\d+)?/i);
+    const priced = text.match(/\b(Bull\s*Zone|Bear\s*Zone|MHP|HP|DD|Open|Close|Half\s*Gap|HG|CAT|YL|RL|Yellow\s*Line|Red\s*Line)\s*:?\s*-?[\d,]+(?:\.\d+)?/i);
     if (priced) return normalizeName(priced[1]);
     if (/Liquidity|liq-map-history/i.test(text)) {
       const byColor = hpMhpFromColor(color);
       if (byColor) return byColor;
     }
-    return '';
+    return manualLevelNameFromColor(color);
   }
 
   function normalizeName(value) {
@@ -406,6 +406,9 @@
     if (/^hg$/i.test(text) || /half\s*gap/i.test(text)) return 'MidGap';
     if (/bull\s*zone/i.test(text)) return 'Bull Zone';
     if (/bear\s*zone/i.test(text)) return 'Bear Zone';
+    if (/^cat$/i.test(text)) return 'CAT';
+    if (/^yl$/i.test(text) || /yellow\s*line/i.test(text)) return 'Yellow Line';
+    if (/^rl$/i.test(text) || /red\s*line/i.test(text)) return 'Red Line';
     if (/^dd/i.test(text)) return text.replace(/\s+/g, ' ').trim();
     return text;
   }
@@ -414,6 +417,9 @@
     const text = safeString(name).toUpperCase();
     if (text.includes('BRZ') || text.includes('BEAR')) return 'zone-bear';
     if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
+    if (text.includes('CAT')) return 'cat';
+    if (/\bYL\b/.test(text) || text.includes('YELLOW LINE')) return 'yellow-line';
+    if (/\bRL\b/.test(text) || text.includes('RED LINE')) return 'red-line';
     if (text.includes('MHP')) return 'mhp';
     if (text.includes('HP')) return 'hp';
     if (text.includes('DD')) return 'dd-band';
@@ -433,6 +439,68 @@
     if (/aqua|cyan|0\s*,\s*255\s*,\s*255|#?00ffff/i.test(text)) return 'HP';
     if (/orange|255\s*,\s*152\s*,\s*0|#?ff9800/i.test(text)) return 'MHP';
     return '';
+  }
+
+  function manualLevelNameFromColor(color) {
+    const rgb = colorRgb(color);
+    if (!rgb) return '';
+    if (isPurple(rgb)) return 'CAT';
+    if (isYellow(rgb)) return 'Yellow Line';
+    if (isRed(rgb)) return 'Red Line';
+    return '';
+  }
+
+  function normalizeColor(value) {
+    const rgb = colorRgb(value);
+    if (!rgb) return safeString(value);
+    return `#${hexByte(rgb.r)}${hexByte(rgb.g)}${hexByte(rgb.b)}`;
+  }
+
+  function colorRgb(value) {
+    const raw = safeString(value).trim();
+    const hex = raw.match(/^#?([0-9a-f]{6})$/i);
+    if (hex) {
+      const clean = hex[1];
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+    const rgb = raw.match(/rgba?\s*\(\s*([.\d]+)\s*,\s*([.\d]+)\s*,\s*([.\d]+)/i);
+    if (rgb) {
+      return {
+        r: colorByte(rgb[1]),
+        g: colorByte(rgb[2]),
+        b: colorByte(rgb[3])
+      };
+    }
+    const named = raw.toLowerCase();
+    if (named === 'yellow') return { r: 255, g: 235, b: 59 };
+    if (named === 'red') return { r: 242, g: 54, b: 69 };
+    if (named === 'purple') return { r: 126, g: 87, b: 194 };
+    return null;
+  }
+
+  function colorByte(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.max(0, Math.min(255, Math.round(number))) : 0;
+  }
+
+  function hexByte(value) {
+    return colorByte(value).toString(16).padStart(2, '0');
+  }
+
+  function isYellow({ r, g, b }) {
+    return r >= 220 && g >= 190 && b <= 140;
+  }
+
+  function isRed({ r, g, b }) {
+    return r >= 200 && g <= 110 && b <= 130;
+  }
+
+  function isPurple({ r, g, b }) {
+    return b >= 140 && r >= 80 && r > g && b > r;
   }
 
   function studyPlotNames(studyObject) {

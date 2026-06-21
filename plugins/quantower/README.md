@@ -40,7 +40,7 @@ The indicator uses the generic display row feed to keep parsing simple inside Qu
 
 - Poll the local API from a timer that does not block chart rendering.
 - Cache the latest symbol snapshot in memory.
-- Draw horizontal overlays in the chart paint routine.
+- Draw horizontal overlays in the chart paint routine, including yellow-line, red-line, and CAT manual-line kinds from the row feed.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the line to avoid struck-through text.
 - Render a small freshness marker for waiting, stale, and offline states.

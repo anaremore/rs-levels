@@ -42,7 +42,7 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && pathname === '/levels') return sendJson(res, 200, { levels: store.flatLevels() });
       if (req.method === 'GET' && pathname === '/ddbands') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => level.kind === 'dd-band') });
       if (req.method === 'GET' && pathname === '/zones') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['zone', 'zone-bull', 'zone-bear'].includes(level.kind)) });
-      if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp'].includes(level.kind)) });
+      if (req.method === 'GET' && pathname === '/references') return sendJson(res, 200, { levels: store.flatLevels().filter((level) => ['reference', 'open-close', 'hp', 'mhp', 'yellow-line', 'red-line', 'cat'].includes(level.kind)) });
       if (req.method === 'GET' && pathname === '/stream') return streamSnapshots(req, res, clients, store);
 
       if (req.method === 'GET' && pathname === '/tradingview') {

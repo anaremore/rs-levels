@@ -75,10 +75,15 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 - `dd-band`
 - `reference`
 - `open-close`
+- `yellow-line`
+- `red-line`
+- `cat`
 - `stat`
 - `unknown`
 
 `zone-bull` and `zone-bear` identify bullish/demand/support zones and bearish/supply/resistance zones. New extractors should classify zones into one of those two kinds. `zone` remains schema-compatible for older or ambiguous captures, but display plugins should avoid a separate generic Zones setting and label fallback/ambiguous kinds as `Other levels` in user-facing settings.
+
+`yellow-line`, `red-line`, and `cat` identify user-added RocketScooter chart lines when those visible manual lines are present. Extractors may classify them by explicit labels such as `Yellow Line`, `Red Line`, `YL`, `RL`, or `CAT`, or by the visible line color when a chart object has symbol context and a finite price.
 
 ## Diagnostics
 

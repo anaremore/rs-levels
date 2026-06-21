@@ -21,7 +21,7 @@ Text rows are:
 name,price,red,green,blue,kind
 ```
 
-The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, and other display categories without a JSON parser. `/status` provides source freshness. The row feed provides simple rows that avoid requiring a JSON parser inside ACSIL.
+The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories without a JSON parser. `/status` provides source freshness. The row feed provides simple rows that avoid requiring a JSON parser inside ACSIL.
 
 ## Study Inputs
 

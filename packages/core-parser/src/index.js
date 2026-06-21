@@ -25,6 +25,7 @@ const SYMBOL_KEYS = [
   'chart',
   'index'
 ];
+const COLOR_KEYS = ['color', 'colour', 'rgb', 'linecolor', 'lineColor', 'textcolor', 'textColor', 'backgroundColor'];
 const ZONE_TOP_KEYS = ['top', 'upper', 'high', 'zoneTop', 'topPrice', 'upperPrice', 'highPrice'];
 const ZONE_BOTTOM_KEYS = ['bottom', 'lower', 'low', 'zoneBottom', 'bottomPrice', 'lowerPrice', 'lowPrice'];
 
@@ -122,7 +123,7 @@ function candidateFromObject(node, options) {
     name,
     price,
     kind: levelKind(name, node.kind, displayMetadata(node), options),
-    color: normalizeInputColor(node.color || node.colour || node.rgb),
+    color: inputColor(node),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
     metadata: withEndpointMetadata(displayMetadata(node), options.endpointKey)
@@ -184,7 +185,7 @@ function candidatesFromZoneBounds(node, options) {
   const suffix = zoneSuffix(node, options);
   const prefix = side === 'bear' ? 'BrZ' : 'BZ';
   const kind = side === 'bear' ? 'zone-bear' : 'zone-bull';
-  const color = normalizeInputColor(node.color || node.colour || node.rgb);
+  const color = inputColor(node);
 
   return [
     normalizeLevel(symbol, {
@@ -222,7 +223,7 @@ function candidateFromNamedValue(name, value, options) {
 
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     price = firstNumber(value, PRICE_KEYS);
-    color = normalizeInputColor(value.color || value.colour || value.rgb);
+    color = inputColor(value);
     kind = levelKind(name, value.kind || kind, metadata, options);
     id = stringValue(value.id || value.key);
     symbol = candidateSymbolFromNode(value, options);
@@ -295,6 +296,15 @@ function firstDisplayLevelName(node) {
     if (!value || isBareQuoteFieldName(value)) continue;
     if (looksLikeDisplayLevelName(value)) return value;
   }
+  return manualLevelNameFromColor(inputColor(node));
+}
+
+function manualLevelNameFromColor(color) {
+  const rgb = hexToRgb(color);
+  if (!rgb) return '';
+  if (isPurple(rgb)) return 'CAT';
+  if (isYellow(rgb)) return 'Yellow Line';
+  if (isRed(rgb)) return 'Red Line';
   return '';
 }
 
@@ -322,17 +332,36 @@ function firstArrayNumber(row, skipIndex) {
 function looksLikeDisplayLevelName(name) {
   const text = stringValue(name).toUpperCase();
   if (!text) return false;
-  return /(HP|MHP|DD|BZ|BRZ|YL|RL|OPEN|CLOSE|HIGH|GAP|LOW|ZONE)/.test(text);
+  return /(HP|MHP|DD|BZ|BRZ|CAT|YL|RL|YELLOW\s*LINE|RED\s*LINE|OPEN|CLOSE|HIGH|GAP|LOW|ZONE)/.test(text);
 }
 
 function normalizeInputColor(value) {
-  if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value.trim())) return value.trim().toUpperCase();
+  if (typeof value === 'string') {
+    const text = value.trim();
+    if (/^#[0-9a-f]{6}$/i.test(text)) return text.toUpperCase();
+    const hex = text.match(/^#?([0-9a-f]{6})$/i);
+    if (hex) return `#${hex[1]}`.toUpperCase();
+    const rgb = text.match(/rgba?\s*\(\s*([.\d]+)\s*,\s*([.\d]+)\s*,\s*([.\d]+)/i);
+    if (rgb) return rgbToHex(rgb[1], rgb[2], rgb[3]);
+    const named = text.toLowerCase();
+    if (named === 'yellow') return '#FFEB3B';
+    if (named === 'red') return '#F23645';
+    if (named === 'purple') return '#7E57C2';
+  }
   if (Array.isArray(value) && value.length >= 3) return rgbToHex(value[0], value[1], value[2]);
   if (value && typeof value === 'object') {
     const r = value.r ?? value.red;
     const g = value.g ?? value.green;
     const b = value.b ?? value.blue;
     if ([r, g, b].every((part) => numberValue(part) != null)) return rgbToHex(r, g, b);
+  }
+  return '';
+}
+
+function inputColor(node = {}) {
+  for (const key of COLOR_KEYS) {
+    const color = normalizeInputColor(node[key]);
+    if (color) return color;
   }
   return '';
 }
@@ -349,7 +378,7 @@ function colorFromArray(row, nameIndex, priceIndex) {
 }
 
 function explicitKind(row) {
-  const allowed = new Set(['dd-band', 'hp', 'mhp', 'open-close', 'reference', 'zone', 'zone-bull', 'zone-bear', 'unknown']);
+  const allowed = new Set(['dd-band', 'hp', 'mhp', 'open-close', 'reference', 'yellow-line', 'red-line', 'cat', 'zone', 'zone-bull', 'zone-bear', 'unknown']);
   return row.map(stringValue).find((value) => allowed.has(value.toLowerCase())) || '';
 }
 
@@ -371,6 +400,28 @@ function rgbToHex(r, g, b) {
     return n.toString(16).padStart(2, '0');
   });
   return `#${parts.join('')}`.toUpperCase();
+}
+
+function hexToRgb(hex) {
+  const clean = stringValue(hex).replace(/^#/, '');
+  if (!/^[0-9a-f]{6}$/i.test(clean)) return null;
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16)
+  };
+}
+
+function isYellow({ r, g, b }) {
+  return r >= 220 && g >= 190 && b <= 140;
+}
+
+function isRed({ r, g, b }) {
+  return r >= 200 && g <= 110 && b <= 130;
+}
+
+function isPurple({ r, g, b }) {
+  return b >= 140 && r >= 80 && r > g && b > r;
 }
 
 function displayMetadata(node) {
