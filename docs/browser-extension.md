@@ -8,7 +8,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Loads only on RocketScooter app host patterns: `rocket.place` and `rocketscooter.com`.
 - Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
 - Captures only response URLs that match the configured allowlist.
-- Falls back to a display-only page reader for visible futures TradingView lines, user-added yellow/red/CAT chart lines, study plots, and bull/bear zone shapes when API responses are not parseable as generic level JSON.
+- Falls back to a frame-aware display-only page reader for visible futures TradingView lines, user-added yellow/red/CAT chart lines, study plots, and bull/bear zone shapes when API responses are not parseable as generic level JSON.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides a popup capture toggle plus TradingView payload copy, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
@@ -39,9 +39,9 @@ The RS Levels browser extension is the first-priority capture UX.
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 
-Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.1.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
+Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.2.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
-The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.1+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.2+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 The collapsed `Debug` section includes aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
@@ -98,7 +98,7 @@ Users can change these in the options page. The popup capture toggle updates the
 
 Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols. The extension also keeps the latest normalized display capture in memory so `Copy TradingView` can produce a payload without the local API when page-reader levels are available. The popup presents user-facing `ES` and `NQ` export choices, and TradingView payloads use those same public family labels. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored in the ES family, and `F.US.ENQ...` symbols are stored in the NQ family, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform. Contract month/year suffixes are detected by pattern rather than hard-coded to a specific rollover, so `F.US.EPU`, `F.US.EPU26`, `F.US.EPZ26`, and `F.US.EPH27` stay in the ES/MES family, while `F.US.ENQU`, `F.US.ENQU26`, `F.US.ENQZ26`, and `F.US.ENQH27` stay in the NQ/MNQ family. SPY, QQQ, and other watchlist/ETF symbols can be open in RocketScooter without being included in futures exports.
 
-When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it reads TradingView chart shapes and study plots from futures charts, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays for compatibility with RocketScooter live-chart display snapshots. It also recognizes user-added yellow lines, red lines, and purple CAT lines from visible futures chart objects, including color-only lines when RocketScooter does not expose a useful label. It skips SPY/QQQ chart families. It does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
+When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots from futures charts, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays for compatibility with RocketScooter live-chart display snapshots. It also recognizes user-added yellow lines, red lines, and purple CAT lines from visible futures chart objects, including color-only lines when RocketScooter does not expose a useful label. It skips SPY/QQQ chart families. It does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
 
 ## Tailscale And Private Networks
 

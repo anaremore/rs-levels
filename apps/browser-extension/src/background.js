@@ -123,11 +123,11 @@ async function injectActiveTab() {
       throw new Error('Open a RocketScooter tab before reconnecting capture');
     }
     await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
+      target: { tabId: tab.id, allFrames: true },
       files: ['src/shared.js', 'src/content-script.js']
     });
     await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
+      target: { tabId: tab.id, allFrames: true },
       files: ['src/capture-rules.js', 'src/page-hook.js', 'src/page-reader.js'],
       world: 'MAIN'
     });

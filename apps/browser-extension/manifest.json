@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "RS Levels Capture",
   "description": "Capture RocketScooter display levels into the local RS Levels API.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "permissions": [
     "storage",
     "clipboardWrite",
@@ -40,7 +40,9 @@
         "src/shared.js",
         "src/content-script.js"
       ],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
     },
     {
       "matches": [
@@ -55,7 +57,9 @@
         "src/page-reader.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN"
+      "world": "MAIN",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "web_accessible_resources": [

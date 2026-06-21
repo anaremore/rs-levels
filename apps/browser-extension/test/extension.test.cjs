@@ -23,6 +23,8 @@ assert.ok(manifest.content_scripts[0].matches.includes('https://*.rocket.place/*
 assert.ok(manifest.content_scripts[0].matches.includes('https://rocketscooter.com/*'));
 assert.ok(manifest.content_scripts[0].matches.includes('https://*.rocketscooter.com/*'));
 assert.equal(manifest.content_scripts[0].run_at, 'document_start');
+assert.equal(manifest.content_scripts[0].all_frames, true);
+assert.equal(manifest.content_scripts[0].match_about_blank, true);
 assert.deepEqual(manifest.content_scripts[0].js, ['src/shared.js', 'src/content-script.js']);
 assert.ok(manifest.content_scripts[1].matches.includes('https://rocket.place/*'));
 assert.ok(manifest.content_scripts[1].matches.includes('https://*.rocket.place/*'));
@@ -31,6 +33,8 @@ assert.ok(manifest.content_scripts[1].matches.includes('https://*.rocketscooter.
 assert.deepEqual(manifest.content_scripts[1].js, ['src/capture-rules.js', 'src/page-hook.js', 'src/page-reader.js']);
 assert.equal(manifest.content_scripts[1].run_at, 'document_start');
 assert.equal(manifest.content_scripts[1].world, 'MAIN');
+assert.equal(manifest.content_scripts[1].all_frames, true);
+assert.equal(manifest.content_scripts[1].match_about_blank, true);
 assert.match(JSON.stringify(manifest.web_accessible_resources), /https:\/\/rocket\.place\/\*/);
 assert.match(JSON.stringify(manifest.web_accessible_resources), /src\/capture-rules\.js/);
 assert.match(JSON.stringify(manifest.web_accessible_resources), /src\/page-hook\.js/);
@@ -85,6 +89,7 @@ assert.match(background, /content-diagnostic/);
 assert.match(background, /migrateSettings/);
 assert.match(background, /injectActiveTab/);
 assert.match(background, /chrome\.scripting\.executeScript/);
+assert.match(background, /allFrames: true/);
 assert.match(background, /world: 'MAIN'/);
 assert.match(background, /isRocketScooterUrl/);
 assert.match(background, /rocket\.place/);

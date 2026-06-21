@@ -4,7 +4,7 @@ For the full user workflow, see docs/user-setup.md.
 
 Manifest V3 extension for allowlisted RocketScooter response capture and display-only chart-level reading.
 
-The extension runs only on RocketScooter app host patterns (`rocket.place` and `rocketscooter.com`), injects a page hook at `document_start`, observes fetch/XHR responses, and forwards only URL-allowlisted response bodies to the local RS Levels service. It also injects a display-only page reader that polls TradingView chart objects for visible futures lines, user-added yellow/red/CAT lines, study plots, and bull/bear zone shapes when API response bodies are not parseable as generic level JSON.
+The extension runs only on RocketScooter app host patterns (`rocket.place` and `rocketscooter.com`), injects a page hook at `document_start`, observes fetch/XHR responses, and forwards only URL-allowlisted response bodies to the local RS Levels service. It also injects a frame-aware display-only page reader that polls TradingView chart objects for visible futures lines, user-added yellow/red/CAT lines, study plots, and bull/bear zone shapes when API response bodies are not parseable as generic level JSON.
 
 The page hook skips clearly non-text response content types before reading a body. Empty content types are allowed because some browser API responses omit the header.
 
@@ -16,7 +16,7 @@ The page hook skips clearly non-text response content types before reading a bod
 4. Start the local service with `npm start`.
 5. Open RocketScooter and use the extension popup to check status.
 
-Packaged releases also include `dist/rs-levels-browser-extension-0.1.1.zip`. Unzip it and load the extracted folder as the unpacked extension. The standalone zip contains only the extension manifest, README, and runtime `src/` files.
+Packaged releases also include `dist/rs-levels-browser-extension-0.1.2.zip`. Unzip it and load the extracted folder as the unpacked extension. The standalone zip contains only the extension manifest, README, and runtime `src/` files.
 
 ## Popup
 
@@ -38,7 +38,7 @@ If the local service is offline, `Copy TradingView` can still work from the exte
 
 Capture is not limited by the selected popup export. The extension posts every allowlisted response it observes, and the local parser can store both ES/MES and NQ/MNQ from one combined response. User-facing popup choices and TradingView payloads use `ES` and `NQ`.
 
-The page-reader fallback posts a synthetic `/page-reader/display` capture through the same local ingest endpoint. It emits generic display levels plus compatibility arrays named `chartLines`, `referenceLines`, and `zoneRectangles` so the local parser can consume RocketScooter live-chart drawings and study plots from both visible futures charts at once. It recognizes manual RocketScooter yellow lines, red lines, and purple CAT lines from labels or visible line colors. It emits only display names, prices, public kind labels, futures chart-family symbols, colors, and small metadata needed for diagnostics. It skips SPY/QQQ chart families and does not forward account, broker, execution, order-entry, raw DOM text, cookies, headers, or credentials.
+The page-reader fallback posts a synthetic `/page-reader/display` capture through the same local ingest endpoint. It emits generic display levels plus compatibility arrays named `chartLines`, `referenceLines`, and `zoneRectangles` so the local parser can consume RocketScooter live-chart drawings and study plots from both visible futures charts at once. It runs in RocketScooter child frames as well as the top page so embedded chart objects are visible to the reader. It recognizes manual RocketScooter yellow lines, red lines, and purple CAT lines from labels or visible line colors. It emits only display names, prices, public kind labels, futures chart-family symbols, colors, and small metadata needed for diagnostics. It skips SPY/QQQ chart families and does not forward account, broker, execution, order-entry, raw DOM text, cookies, headers, or credentials.
 
 If the popup remains waiting, `Hook: hook-installed` or `Hook: settings-synced` means the page hook is alive and waiting for RocketScooter traffic. `Observed: 0` means the hook has not seen fetch/XHR responses yet; use `Reconnect Tab`, then reload RocketScooter data or the tab so startup requests run with the hook installed.
 
