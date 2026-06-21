@@ -1,13 +1,13 @@
 # RS Levels
 
-Local-first RocketScooter level capture and display feeds.
+Local-first RocketScooter level and display-context capture feeds.
 
-RS Levels lets a user capture level data from their own RocketScooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
+RS Levels lets a user capture level and display-context data from their own RocketScooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
 
 ## What This Is
 
 - A browser extension for allowlisted RocketScooter response capture.
-- A cross-platform local API service that stores the latest level snapshot.
+- A cross-platform local API service that stores the latest level snapshot and display stats.
 - Stable JSON, text, and streaming APIs for display integrations.
 - Display-only plugins for charting platforms.
 
