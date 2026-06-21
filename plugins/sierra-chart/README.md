@@ -38,6 +38,7 @@ Blank row feeds return a newline so Sierra Chart can observe that the HTTP reque
 - label offset ticks
 - line width
 - per-kind colors for DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT, bull zones, bear zones, and other levels
+- show debug status, default yes while the Sierra adapter is stabilizing
 
 ## Install
 
@@ -54,6 +55,7 @@ Blank row feeds return a newline so Sierra Chart can observe that the HTTP reque
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
+- When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
 
 ## Safety Boundary
 
