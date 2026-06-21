@@ -76,17 +76,17 @@ Do not copy strategy, execution, account, or automation code.
 
 ## Slice 6: Platform Display Plugins
 
-Status: initial source artifacts complete.
+Status: public source artifacts complete; platform compile/install validation planned.
 
 Goal: add display integrations one platform at a time.
 
 Recommended order:
 
 1. TradingView paste-based Pine indicator. Implemented first because TradingView is a priority and Pine cannot poll localhost directly.
-2. Sierra Chart. Initial ACSIL source included.
-3. NinjaTrader. Initial NinjaScript source included.
-4. Quantower. Initial indicator source included.
-5. Bookmap. Initial Java add-on source included.
+2. Sierra Chart. ACSIL source included with kind-aware labels and zone fills.
+3. NinjaTrader. NinjaScript source included with kind-aware labels and zone fills.
+4. Quantower. Indicator source included with kind-aware labels and zone fills.
+5. Bookmap. Java add-on source included with kind-aware value-line colors.
 
 Each plugin must include a safety test or review note confirming it does not call platform order APIs.
 

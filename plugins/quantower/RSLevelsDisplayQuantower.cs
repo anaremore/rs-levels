@@ -54,7 +54,16 @@ namespace RSLevelsQuantower
         [InputParameter("Show labels", 4)]
         public bool ShowLabels = true;
 
-        [InputParameter("Line width", 5, 1, 6, 1, 0)]
+        [InputParameter("Show zone fills", 5)]
+        public bool ShowZoneFills = true;
+
+        [InputParameter("Zone fill opacity %", 6, 0, 50, 1, 0)]
+        public int ZoneFillOpacity = 12;
+
+        [InputParameter("Label vertical offset pixels", 7, 0, 80, 1, 0)]
+        public int LabelVerticalOffsetPixels = 10;
+
+        [InputParameter("Line width", 8, 1, 6, 1, 0)]
         public int LineWidth = 2;
 
         protected override void OnInit()
@@ -99,6 +108,7 @@ namespace RSLevelsQuantower
             }
 
             Rectangle rect = args.Rectangle;
+            DrawZoneFills(args.Graphics, mainWindow, rect, copy);
             DrawLevels(args.Graphics, mainWindow, rect, copy);
             DrawStatus(args.Graphics, rect, symbol, state, issue, lastLevels);
         }
@@ -155,10 +165,10 @@ namespace RSLevelsQuantower
                     if (!ShowLabels)
                         continue;
 
-                    string label = level.Name + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture);
+                    string label = DisplayLabel(level) + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture);
                     SizeF size = graphics.MeasureString(label, font);
                     float x = Math.Max(rect.Left + 6, rect.Right - size.Width - 6);
-                    float labelY = y - size.Height / 2f;
+                    float labelY = y - LabelDirection(level) * Math.Max(0, LabelVerticalOffsetPixels) - size.Height / 2f;
                     using (Brush back = new SolidBrush(Color.FromArgb(150, 16, 20, 24)))
                     using (Brush brush = new SolidBrush(color))
                     {
@@ -167,6 +177,86 @@ namespace RSLevelsQuantower
                     }
                 }
             }
+        }
+
+        private void DrawZoneFills(Graphics graphics, IChartWindow window, Rectangle rect, List<LevelRow> rows)
+        {
+            if (!ShowZoneFills)
+                return;
+
+            LevelRow bullTop = null;
+            LevelRow bullBottom = null;
+            LevelRow bearTop = null;
+            LevelRow bearBottom = null;
+            LevelRow zoneTop = null;
+            LevelRow zoneBottom = null;
+
+            foreach (LevelRow level in rows)
+            {
+                if (!IsZone(level.Kind))
+                    continue;
+
+                int side = ZoneBoundarySide(level.Name);
+                if (side == 0)
+                    continue;
+
+                if (level.Kind == "zone-bull")
+                {
+                    if (side > 0)
+                        bullTop = level;
+                    else
+                        bullBottom = level;
+                    if (bullTop != null && bullBottom != null)
+                    {
+                        DrawZoneFill(graphics, window, rect, bullTop, bullBottom);
+                        bullTop = null;
+                        bullBottom = null;
+                    }
+                }
+                else if (level.Kind == "zone-bear")
+                {
+                    if (side > 0)
+                        bearTop = level;
+                    else
+                        bearBottom = level;
+                    if (bearTop != null && bearBottom != null)
+                    {
+                        DrawZoneFill(graphics, window, rect, bearTop, bearBottom);
+                        bearTop = null;
+                        bearBottom = null;
+                    }
+                }
+                else
+                {
+                    if (side > 0)
+                        zoneTop = level;
+                    else
+                        zoneBottom = level;
+                    if (zoneTop != null && zoneBottom != null)
+                    {
+                        DrawZoneFill(graphics, window, rect, zoneTop, zoneBottom);
+                        zoneTop = null;
+                        zoneBottom = null;
+                    }
+                }
+            }
+        }
+
+        private void DrawZoneFill(Graphics graphics, IChartWindow window, Rectangle rect, LevelRow first, LevelRow second)
+        {
+            float y1 = (float)window.CoordinatesConverter.GetChartY(first.Price);
+            float y2 = (float)window.CoordinatesConverter.GetChartY(second.Price);
+            float top = Math.Min(y1, y2);
+            float bottom = Math.Max(y1, y2);
+            if (bottom < rect.Top || top > rect.Bottom)
+                return;
+
+            float clippedTop = Math.Max(rect.Top, top);
+            float clippedBottom = Math.Min(rect.Bottom, bottom);
+            int alpha = Math.Max(0, Math.Min(128, (int)Math.Round(255 * Math.Max(0, Math.Min(50, ZoneFillOpacity)) / 100.0)));
+            Color color = Color.FromArgb(alpha, first.Red, first.Green, first.Blue);
+            using (Brush brush = new SolidBrush(color))
+                graphics.FillRectangle(brush, rect.Left, clippedTop, rect.Width, Math.Max(1f, clippedBottom - clippedTop));
         }
 
         private void DrawStatus(Graphics graphics, Rectangle rect, string symbol, string state, string issue, DateTime lastLevels)
@@ -259,13 +349,18 @@ namespace RSLevelsQuantower
                 double price;
                 if (!double.TryParse(parts[1].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out price))
                     continue;
+                string kind = parts.Length >= 6 ? parts[5].Trim() : "";
+                if (string.IsNullOrEmpty(kind))
+                    kind = InferKind(parts[0]);
+
                 result.Add(new LevelRow
                 {
                     Name = parts[0].Trim(),
                     Price = price,
                     Red = ParseColor(parts[2]),
                     Green = ParseColor(parts[3]),
-                    Blue = ParseColor(parts[4])
+                    Blue = ParseColor(parts[4]),
+                    Kind = kind
                 });
             }
             return result;
@@ -279,6 +374,61 @@ namespace RSLevelsQuantower
             return Math.Max(0, Math.Min(255, parsed));
         }
 
+        private static string DisplayLabel(LevelRow level)
+        {
+            string name = level.Name ?? "Level";
+            string upper = name.ToUpperInvariant();
+            if (upper.Contains("PREVDAYCLOSE") || upper.Contains("PREV DAY CLOSE"))
+                return "Prev Close";
+            if (upper.Contains("LASTOPEN") || (upper.Contains("OPEN") && !upper.Contains("CLOSE")))
+                return "Open";
+            if (upper.Contains("CLOSE"))
+                return "Close";
+            if (level.Kind == "mhp" || upper.Contains("MHP"))
+                return "MHP";
+            if (level.Kind == "hp" || upper.Contains("HP"))
+                return "HP";
+            if (level.Kind == "dd-band" || upper.Contains("DD"))
+                return "DD";
+            return name.Replace("horizontal_line", "").Replace("horizontal_ray", "").Replace("horizontal", "").Replace("Liquidity Map", "").Replace("text", "").Trim();
+        }
+
+        private static int LabelDirection(LevelRow level)
+        {
+            string text = (level.Name ?? "").ToUpperInvariant();
+            if (text.Contains("LOWER") || text.Contains("BZB") || text.Contains("BRZB") || level.Kind == "mhp" || level.Kind == "zone-bull")
+                return -1;
+            return 1;
+        }
+
+        private static bool IsZone(string kind)
+        {
+            return kind == "zone" || kind == "zone-bull" || kind == "zone-bear";
+        }
+
+        private static int ZoneBoundarySide(string name)
+        {
+            string text = (name ?? "").ToUpperInvariant();
+            if (text.Contains("TOP") || text.Contains("UPPER") || text.Contains("BZT") || text.Contains("BRZT"))
+                return 1;
+            if (text.Contains("BOTTOM") || text.Contains("LOWER") || text.Contains("BZB") || text.Contains("BRZB"))
+                return -1;
+            return 0;
+        }
+
+        private static string InferKind(string name)
+        {
+            string text = (name ?? "").ToUpperInvariant();
+            if (text.Contains("MHP")) return "mhp";
+            if (text.Contains("HP")) return "hp";
+            if (text.Contains("DD")) return "dd-band";
+            if (text.Contains("BRZ") || text.Contains("BEAR")) return "zone-bear";
+            if (text.Contains("BZ") || text.Contains("BULL")) return "zone-bull";
+            if (text.Contains("ZONE")) return "zone";
+            if (text.Contains("OPEN") || text.Contains("CLOSE") || text.Contains("GAP")) return "open-close";
+            return "unknown";
+        }
+
         private sealed class LevelRow
         {
             public string Name;
@@ -286,6 +436,7 @@ namespace RSLevelsQuantower
             public int Red;
             public int Green;
             public int Blue;
+            public string Kind;
         }
     }
 }

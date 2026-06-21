@@ -18,10 +18,10 @@ GET /levels/:symbol?format=sierra
 Text rows are:
 
 ```text
-name,price,red,green,blue
+name,price,red,green,blue,kind
 ```
 
-`/status` provides source freshness. The Sierra text feed provides simple rows that avoid requiring a JSON parser inside ACSIL.
+The first five columns are stable for older studies. The optional sixth `kind` column lets direct display adapters distinguish `zone-bull`, `zone-bear`, and other display categories without a JSON parser. `/status` provides source freshness. The Sierra text feed provides simple rows that avoid requiring a JSON parser inside ACSIL.
 
 ## Study Inputs
 
@@ -30,6 +30,9 @@ name,price,red,green,blue
 - refresh interval, default 1000 ms
 - stale threshold, default 23 hours
 - draw labels
+- show zone fills
+- zone fill opacity
+- label offset ticks
 - line width
 
 ## Install
@@ -43,8 +46,9 @@ name,price,red,green,blue
 ## Rendering Plan
 
 - Poll `/status` for source state and `/levels/:symbol?format=sierra` for display rows.
-- Draw horizontal lines in the chart region at each price.
-- Draw labels near the right edge of the chart.
+- Draw horizontal lines in the chart region at each price, up to 500 rows.
+- Draw cleaned labels near the right edge of the chart, offset above or below the line.
+- Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, or stale state as a small chart text marker.
 
 ## Safety Boundary

@@ -24,6 +24,11 @@ GET /levels/MNQ?format=sierra
 The add-on parses the Sierra-compatible rows because that export is compact,
 stable, and easy for chart-plugin runtimes to consume.
 
+Rows are `name,price,red,green,blue,kind`. The add-on remains compatible with
+the original first five columns and uses the optional `kind` column when present
+so bull zones, bear zones, HP, MHP, DD bands, references, and open/close levels
+land in distinct Bookmap color slots.
+
 ## Add-On Settings
 
 - service URL: JVM system property `rslevels.serviceUrl`, default `http://127.0.0.1:8765`
@@ -34,7 +39,9 @@ stable, and easy for chart-plugin runtimes to consume.
 ## Rendering
 
 - Polls `GET /status` and `GET /levels/:symbol?format=sierra`.
-- Draws horizontal level markers through Bookmap indicator value lines.
+- Draws up to 500 horizontal level markers through Bookmap indicator value lines.
+- Uses the optional `kind` column for category-aware colors, including separate
+  bull and bear zone colors.
 - Clears displayed lines after stale/offline data exceeds the configured threshold.
 - Logs feed availability warnings through Bookmap's logging API.
 

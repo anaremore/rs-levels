@@ -42,12 +42,20 @@ const contract = readFileSync(join(root, '..', 'docs', 'plugin-contract.md'), 'u
 assert.match(contract, /GET \/levels\/:symbol/);
 assert.match(contract, /Freshness Rules/);
 assert.match(contract, /Safety Tests/);
+assert.match(contract, /name,price,red,green,blue,kind/);
+assert.match(contract, /Other levels/);
 
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);
 assert.match(sierraSource, /\/status/);
 assert.match(sierraSource, /format=sierra/);
 assert.match(sierraSource, /DRAWING_HORIZONTALLINE/);
+assert.match(sierraSource, /DRAWING_RECTANGLE_EXT_HIGHLIGHT/);
+assert.match(sierraSource, /RS_MAX_LEVELS = 500/);
+assert.match(sierraSource, /fields\.size\(\) >= 6/);
+assert.match(sierraSource, /Label offset ticks/);
+assert.match(sierraSource, /zone-bull/);
+assert.match(sierraSource, /zone-bear/);
 assertNoPlatformApiTerms(sierraSource);
 
 const ninjaSource = readFileSync(join(root, 'ninjatrader', 'RSLevelsDisplay.cs'), 'utf8');
@@ -55,7 +63,15 @@ assert.match(ninjaSource, /class RSLevelsDisplay : Indicator/);
 assert.match(ninjaSource, /\/status/);
 assert.match(ninjaSource, /format=sierra/);
 assert.match(ninjaSource, /Draw\.HorizontalLine/);
+assert.match(ninjaSource, /Draw\.Rectangle/);
 assert.match(ninjaSource, /Draw\.TextFixed/);
+assert.match(ninjaSource, /ShowZoneFills/);
+assert.match(ninjaSource, /ZoneFillOpacity/);
+assert.match(ninjaSource, /LabelOffsetTicks/);
+assert.match(ninjaSource, /string kind = parts\.Length >= 6/);
+assert.match(ninjaSource, /Kind = kind/);
+assert.match(ninjaSource, /zone-bull/);
+assert.match(ninjaSource, /zone-bear/);
 assertNoPlatformApiTerms(ninjaSource);
 
 const quantowerSource = readFileSync(join(root, 'quantower', 'RSLevelsDisplayQuantower.cs'), 'utf8');
@@ -64,6 +80,15 @@ assert.match(quantowerSource, /\/status/);
 assert.match(quantowerSource, /format=sierra/);
 assert.match(quantowerSource, /OnPaintChart/);
 assert.match(quantowerSource, /DrawLine/);
+assert.match(quantowerSource, /DrawZoneFills/);
+assert.match(quantowerSource, /FillRectangle/);
+assert.match(quantowerSource, /ShowZoneFills/);
+assert.match(quantowerSource, /ZoneFillOpacity/);
+assert.match(quantowerSource, /LabelVerticalOffsetPixels/);
+assert.match(quantowerSource, /string kind = parts\.Length >= 6/);
+assert.match(quantowerSource, /Kind = kind/);
+assert.match(quantowerSource, /zone-bull/);
+assert.match(quantowerSource, /zone-bear/);
 assertNoPlatformApiTerms(quantowerSource);
 
 const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'RSLevelsDisplayBookmap.java'), 'utf8');
@@ -71,6 +96,11 @@ assert.match(bookmapSource, /class RSLevelsDisplayBookmap implements CustomModul
 assert.match(bookmapSource, /\/status/);
 assert.match(bookmapSource, /format=sierra/);
 assert.match(bookmapSource, /setHorizontalValueLinesInfo/);
+assert.match(bookmapSource, /MAX_LEVELS = 500/);
+assert.match(bookmapSource, /parts\.length >= 6/);
+assert.match(bookmapSource, /COLOR_PINK/);
+assert.match(bookmapSource, /zone-bull/);
+assert.match(bookmapSource, /zone-bear/);
 assertNoPlatformApiTerms(bookmapSource);
 
 const tradingViewSource = readFileSync(join(root, 'tradingview', 'rs-levels.pine'), 'utf8');

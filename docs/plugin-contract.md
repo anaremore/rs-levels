@@ -76,7 +76,17 @@ zone-bear   #F06292
 unknown     #9E9E9E
 ```
 
-`zone-bull` and `zone-bear` are preferred when the source distinguishes bullish/demand/support zones from bearish/supply/resistance zones. Generic `zone` remains valid for sources that do not expose side.
+Display settings should call the fallback category `Other levels` even though the machine-readable schema kind remains `unknown`.
+
+`zone-bull` and `zone-bear` are preferred when the source distinguishes bullish/demand/support zones from bearish/supply/resistance zones. Generic `zone` remains valid for sources that do not expose side. When a platform can draw filled regions, matching top/bottom zone rows such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom` should be filled with a low-opacity version of the same zone color.
+
+The Sierra-compatible text feed is:
+
+```text
+name,price,red,green,blue,kind
+```
+
+The first five columns are stable for older clients. Newer clients should read the sixth `kind` column when present and fall back to inferring the kind from the display name when it is absent.
 
 ## Safety Tests
 

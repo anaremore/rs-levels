@@ -22,6 +22,9 @@ The first indicator source uses the Sierra text feed to keep parsing simple insi
 - refresh interval, default 1000 ms
 - stale threshold, default 23 hours
 - label visibility
+- zone fill visibility
+- zone fill opacity
+- label vertical offset
 - line width
 
 ## Install
@@ -38,6 +41,8 @@ The first indicator source uses the Sierra text feed to keep parsing simple insi
 - Poll the local API from a timer that does not block chart rendering.
 - Cache the latest symbol snapshot in memory.
 - Draw horizontal overlays in the chart paint routine.
+- Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
+- Offset labels above or below the line to avoid struck-through text.
 - Render a small freshness marker for waiting, stale, and offline states.
 
 ## Safety Boundary

@@ -22,6 +22,9 @@ The first indicator source uses the Sierra text feed to avoid adding a JSON depe
 - refresh interval, default 1000 ms
 - stale threshold, default 23 hours
 - show labels
+- show zone fills
+- zone fill opacity
+- label offset ticks
 - line width
 
 ## Install
@@ -42,7 +45,9 @@ Documents\NinjaTrader 8\bin\Custom\Indicators\RSLevelsDisplay.cs
 - Use a background timer or NinjaTrader-safe async pattern to poll the local API.
 - Marshal results back to the chart thread before drawing.
 - Draw horizontal lines by `level.price` and text by `level.name`.
-- Use `level.kind` for styling and `level.color` when present.
+- Use the Sierra text feed color columns and optional sixth `kind` column for display styling.
+- Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
+- Offset labels above or below the level line to avoid struck-through text.
 - Show stale/offline state directly on the chart.
 
 ## Safety Boundary

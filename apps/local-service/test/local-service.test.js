@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createService, listen } from '../src/index.js';
 import { createLevelStore } from '../src/store.js';
 import { diagnostics } from '../src/http.js';
+import { levelsToSierraText } from '../src/sierra-format.js';
 
 const cliPath = fileURLToPath(new URL('../src/cli.js', import.meta.url));
 const cliHelp = execFileSync(process.execPath, [cliPath, '--help'], { encoding: 'utf8' });
@@ -12,6 +13,15 @@ assert.match(cliHelp, /RS_LEVELS_HOST/);
 assert.match(cliHelp, /trusted private networks/);
 const cliVersion = execFileSync(process.execPath, [cliPath, '--version'], { encoding: 'utf8' }).trim();
 assert.equal(cliVersion, '0.0.0');
+
+assert.equal(
+  levelsToSierraText([
+    { name: 'text SPY Open : 7,559 Liquidity Map horizontal_line', price: 7559, kind: 'open-close' },
+    { name: 'Bull Zone Top', price: 7526, kind: 'zone-bull' },
+    { name: 'Bear Zone Bottom', price: 7588, kind: 'zone-bear' }
+  ]),
+  'Open,7559.00,224,224,224,open-close\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
+);
 
 let nowMs = Date.parse('2026-06-20T12:00:00.000Z');
 const freshnessStore = createLevelStore({
@@ -206,6 +216,7 @@ try {
 
   const text = await getText(`${baseUrl}/levels/MES?format=sierra`);
   assert.match(text, /OVNHP,7537\.00,41,98,255/);
+  assert.match(text, /OVNHP,7537\.00,41,98,255,hp/);
 
   const tradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(tradingViewResponse.ok, true, `${baseUrl}/tradingview/ES returned ${tradingViewResponse.status}`);
@@ -264,6 +275,10 @@ try {
   assert.match(bundledTradingViewPayload, /MNQ\|/);
   assert.match(bundledTradingViewPayload, /BZT1,7580\.00,zone-bull/);
   assert.match(bundledTradingViewPayload, /BrZT1,30450\.00,zone-bear/);
+
+  const mesSierraWithKinds = await getText(`${baseUrl}/levels/MES?format=sierra`);
+  assert.match(mesSierraWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
+  assert.match(mesSierraWithKinds, /BZB1,7560\.00,76,175,80,zone-bull/);
 
   const bundledTradingViewJson = await getJson(`${baseUrl}/tradingview?format=json`);
   assert.equal(bundledTradingViewJson.exportFormat, 'tradingview-bundle-json');

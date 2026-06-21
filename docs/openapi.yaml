@@ -134,6 +134,7 @@ paths:
             text/plain:
               schema:
                 type: string
+                description: Sierra-compatible rows as name,price,red,green,blue,kind. Older clients may ignore the sixth kind column.
         '404':
           $ref: '#/components/responses/NotFound'
   /ddbands:

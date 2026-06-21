@@ -234,11 +234,11 @@ Unknown symbols return `404`:
 Returns a simple Sierra-compatible CSV-like text feed:
 
 ```text
-OVNHP,7537.00,41,98,255
-DD Upper,7579.75,41,182,246
+OVNHP,7537.00,41,98,255,hp
+DD Upper,7579.75,41,182,246,dd-band
 ```
 
-Columns are `name,price,red,green,blue`. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
+Columns are `name,price,red,green,blue,kind`. The first five columns match the original Sierra-compatible feed, so older display clients that ignore extra columns remain compatible. Newer clients should read `kind` to distinguish `zone-bull`, `zone-bear`, and other display categories for fills and settings. Missing symbols return an empty text body with status `200` so chart studies can poll safely before capture begins.
 
 ## GET /tradingview
 

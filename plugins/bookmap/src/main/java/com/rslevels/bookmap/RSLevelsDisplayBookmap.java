@@ -37,11 +37,12 @@ import velox.api.layer1.simplified.CustomModule;
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
 public class RSLevelsDisplayBookmap implements CustomModule {
     private static final String INDICATOR_NAME = "RS Levels Display";
-    private static final int MAX_LEVELS = 100;
+    private static final int MAX_LEVELS = 500;
     private static final String COLOR_BLUE = "RS_BLUE";
     private static final String COLOR_CYAN = "RS_CYAN";
     private static final String COLOR_GREEN = "RS_GREEN";
     private static final String COLOR_ORANGE = "RS_ORANGE";
+    private static final String COLOR_PINK = "RS_PINK";
     private static final String COLOR_RED = "RS_RED";
     private static final String COLOR_YELLOW = "RS_YELLOW";
     private static final String COLOR_WHITE = "RS_WHITE";
@@ -134,7 +135,10 @@ public class RSLevelsDisplayBookmap implements CustomModule {
                 continue;
             try {
                 double price = Double.parseDouble(parts[1].trim());
-                out.put(uniquePrice(out, price), colorName(parts[2], parts[3], parts[4]));
+                String kind = parts.length >= 6 ? parts[5].trim() : "";
+                if (kind.isEmpty())
+                    kind = inferKind(parts[0]);
+                out.put(uniquePrice(out, price), colorName(parts[2], parts[3], parts[4], kind));
             } catch (NumberFormatException ignored) {
             }
         }
@@ -148,7 +152,23 @@ public class RSLevelsDisplayBookmap implements CustomModule {
         return value;
     }
 
-    private static String colorName(String red, String green, String blue) {
+    private static String colorName(String red, String green, String blue, String kind) {
+        String normalizedKind = kind == null ? "unknown" : kind.trim().toLowerCase(Locale.ROOT);
+        if ("dd-band".equals(normalizedKind))
+            return COLOR_CYAN;
+        if ("hp".equals(normalizedKind))
+            return COLOR_BLUE;
+        if ("mhp".equals(normalizedKind))
+            return COLOR_ORANGE;
+        if ("open-close".equals(normalizedKind))
+            return COLOR_WHITE;
+        if ("reference".equals(normalizedKind))
+            return COLOR_YELLOW;
+        if ("zone-bull".equals(normalizedKind) || "zone".equals(normalizedKind))
+            return COLOR_GREEN;
+        if ("zone-bear".equals(normalizedKind))
+            return COLOR_PINK;
+
         int r = parseColor(red);
         int g = parseColor(green);
         int b = parseColor(blue);
@@ -163,6 +183,25 @@ public class RSLevelsDisplayBookmap implements CustomModule {
         if (r >= g && r >= b)
             return COLOR_RED;
         return COLOR_WHITE;
+    }
+
+    private static String inferKind(String name) {
+        String text = name == null ? "" : name.toUpperCase(Locale.ROOT);
+        if (text.contains("MHP"))
+            return "mhp";
+        if (text.contains("HP"))
+            return "hp";
+        if (text.contains("DD"))
+            return "dd-band";
+        if (text.contains("BRZ") || text.contains("BEAR"))
+            return "zone-bear";
+        if (text.contains("BZ") || text.contains("BULL"))
+            return "zone-bull";
+        if (text.contains("ZONE"))
+            return "zone";
+        if (text.contains("OPEN") || text.contains("CLOSE") || text.contains("GAP"))
+            return "open-close";
+        return "unknown";
     }
 
     private static int parseColor(String value) {
@@ -262,6 +301,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_CYAN, new Color(41, 182, 246), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_GREEN, new Color(76, 175, 80), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_ORANGE, new Color(255, 152, 0), true),
+            new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_PINK, new Color(240, 98, 146), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_RED, new Color(242, 54, 69), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_YELLOW, new Color(255, 235, 59), true),
             new IndicatorColorScheme.ColorDescription(RSLevelsDisplayBookmap.class, COLOR_WHITE, new Color(220, 220, 220), true)

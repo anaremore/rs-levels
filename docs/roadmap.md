@@ -50,13 +50,13 @@ Status: public setup foundation complete; field validation planned.
 
 ## Milestone 4: Display Plugins
 
-Status: initial source artifacts complete; platform compile/install validation planned.
+Status: public source artifacts complete; platform compile/install validation planned.
 
-- Sierra Chart display study. Initial ACSIL source included.
-- NinjaTrader display indicator. Initial NinjaScript source included.
-- Quantower display indicator. Initial indicator source included.
-- Bookmap display add-on. Initial Java source included.
-- TradingView Pine indicator with paste-based level input, kind toggles, line controls, status label, and max-level display control.
+- Sierra Chart display study with local polling, kind-aware labels, and zone fills.
+- NinjaTrader display indicator with local polling, kind-aware labels, and zone fills.
+- Quantower display indicator with local polling, kind-aware labels, and zone fills.
+- Bookmap display add-on with local polling and kind-aware value-line colors.
+- TradingView Pine indicator with paste-based level input, kind toggles, color controls, line controls, zone fills, label controls, and max-level display control.
 - Public `plugins/manifest.json` inventory with static display-only validation.
 
 ## Milestone 5: Packaging

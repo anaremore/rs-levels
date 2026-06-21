@@ -1,6 +1,7 @@
 #include "sierrachart.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <sstream>
 #include <string>
@@ -10,10 +11,11 @@ SCDLLName("RS Levels Display")
 
 namespace
 {
-constexpr int RS_MAX_LEVELS = 64;
+constexpr int RS_MAX_LEVELS = 500;
 constexpr int RS_LINE_BASE = 730000;
 constexpr int RS_LABEL_BASE = 731000;
 constexpr int RS_STATUS_LINE = 732000;
+constexpr int RS_ZONE_BASE = 733000;
 constexpr int RS_REQUEST_NONE = 0;
 constexpr int RS_REQUEST_STATUS = 1;
 constexpr int RS_REQUEST_LEVELS = 2;
@@ -25,6 +27,7 @@ struct RsLevel
     int red = 158;
     int green = 158;
     int blue = 158;
+    std::string kind = "unknown";
 };
 
 std::string Trim(const std::string& value)
@@ -41,6 +44,38 @@ int ClampColor(const std::string& value)
 {
     const int parsed = std::atoi(value.c_str());
     return std::max(0, std::min(255, parsed));
+}
+
+std::string Upper(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::toupper(ch));
+    });
+    return value;
+}
+
+std::string ReplaceAll(std::string value, const std::string& needle, const std::string& replacement)
+{
+    size_t position = 0;
+    while ((position = value.find(needle, position)) != std::string::npos)
+    {
+        value.replace(position, needle.size(), replacement);
+        position += replacement.size();
+    }
+    return value;
+}
+
+std::string InferKind(const std::string& name)
+{
+    const std::string upper = Upper(name);
+    if (upper.find("MHP") != std::string::npos) return "mhp";
+    if (upper.find("HP") != std::string::npos) return "hp";
+    if (upper.find("DD") != std::string::npos) return "dd-band";
+    if (upper.find("BRZ") != std::string::npos || upper.find("BEAR") != std::string::npos) return "zone-bear";
+    if (upper.find("BZ") != std::string::npos || upper.find("BULL") != std::string::npos) return "zone-bull";
+    if (upper.find("ZONE") != std::string::npos) return "zone";
+    if (upper.find("OPEN") != std::string::npos || upper.find("CLOSE") != std::string::npos || upper.find("GAP") != std::string::npos) return "open-close";
+    return "unknown";
 }
 
 bool ParseLevelRow(const std::string& row, RsLevel& out)
@@ -64,6 +99,9 @@ bool ParseLevelRow(const std::string& row, RsLevel& out)
     out.red = ClampColor(fields[2]);
     out.green = ClampColor(fields[3]);
     out.blue = ClampColor(fields[4]);
+    out.kind = fields.size() >= 6 ? fields[5] : "";
+    if (out.kind.empty())
+        out.kind = InferKind(fields[0]);
     return true;
 }
 
@@ -115,7 +153,68 @@ void DrawStatus(SCStudyInterfaceRef sc, const char* text, COLORREF color)
     sc.UseTool(tool);
 }
 
-void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int lineWidth, bool showLabels)
+bool IsZone(const std::string& kind)
+{
+    return kind == "zone" || kind == "zone-bull" || kind == "zone-bear";
+}
+
+int ZoneBoundarySide(const std::string& name)
+{
+    const std::string upper = Upper(name);
+    if (upper.find("TOP") != std::string::npos || upper.find("UPPER") != std::string::npos || upper.find("BZT") != std::string::npos || upper.find("BRZT") != std::string::npos)
+        return 1;
+    if (upper.find("BOTTOM") != std::string::npos || upper.find("LOWER") != std::string::npos || upper.find("BZB") != std::string::npos || upper.find("BRZB") != std::string::npos)
+        return -1;
+    return 0;
+}
+
+int LabelDirection(const RsLevel& level)
+{
+    const std::string upper = Upper(level.name);
+    if (upper.find("LOWER") != std::string::npos || upper.find("BZB") != std::string::npos || upper.find("BRZB") != std::string::npos)
+        return -1;
+    if (upper.find("UPPER") != std::string::npos || upper.find("BZT") != std::string::npos || upper.find("BRZT") != std::string::npos)
+        return 1;
+    if (level.kind == "mhp" || level.kind == "zone-bull" || level.kind == "dd-band")
+        return -1;
+    return 1;
+}
+
+std::string DisplayLabel(const RsLevel& level)
+{
+    const std::string upper = Upper(level.name);
+    if (upper.find("PREVDAYCLOSE") != std::string::npos || upper.find("PREV DAY CLOSE") != std::string::npos)
+        return "Prev Close";
+    if (upper.find("MIDGAP") != std::string::npos || upper.find("HALFGAP") != std::string::npos || upper.find("HALF GAP") != std::string::npos)
+        return "Mid Gap";
+    if (upper.find("LASTOPEN") != std::string::npos || (upper.find("OPEN") != std::string::npos && upper.find("CLOSE") == std::string::npos))
+        return "Open";
+    if (upper.find("CLOSE") != std::string::npos)
+        return "Close";
+    if (upper.find("OVNMHP") != std::string::npos)
+        return "OVNMHP";
+    if (upper.find("OVNHP") != std::string::npos)
+        return "OVNHP";
+    if (level.kind == "mhp" || upper.find("MAN_MHP") != std::string::npos || upper.find(" MHP") != std::string::npos)
+        return "MHP";
+    if (level.kind == "hp" || upper.find("MAN_HP") != std::string::npos || upper.find(" HP") != std::string::npos)
+        return "HP";
+    if (level.kind == "dd-band" || upper.find("DD") != std::string::npos)
+        return "DD";
+
+    std::string cleaned = level.name;
+    cleaned = ReplaceAll(cleaned, "horizontal_line", "");
+    cleaned = ReplaceAll(cleaned, "horizontal_ray", "");
+    cleaned = ReplaceAll(cleaned, "horizontal", "");
+    cleaned = ReplaceAll(cleaned, "Liquidity Map", "");
+    cleaned = ReplaceAll(cleaned, "liq-map-history", "");
+    cleaned = ReplaceAll(cleaned, "text", "");
+    cleaned = ReplaceAll(cleaned, ":", " ");
+    cleaned = Trim(cleaned);
+    return cleaned.empty() ? "Level" : cleaned;
+}
+
+void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int lineWidth, bool showLabels, int labelOffsetTicks)
 {
     const int lineNumber = RS_LINE_BASE + index;
     const COLORREF color = RGB(level.red, level.green, level.blue);
@@ -139,7 +238,9 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     }
 
     SCString label;
-    label.Format("%s %.2f", level.name.c_str(), level.price);
+    label.Format("%s %.2f", DisplayLabel(level).c_str(), level.price);
+    const float tick = sc.TickSize > 0.0f ? sc.TickSize : 0.01f;
+    const float labelOffset = tick * static_cast<float>(std::max(1, labelOffsetTicks)) * static_cast<float>(LabelDirection(level));
 
     s_UseTool labelTool;
     labelTool.Clear();
@@ -149,20 +250,135 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     labelTool.AddMethod = UTAM_ADD_OR_ADJUST;
     labelTool.Region = sc.GraphRegion;
     labelTool.BeginIndex = std::max(0, sc.ArraySize - 1);
-    labelTool.BeginValue = static_cast<float>(level.price);
+    labelTool.BeginValue = static_cast<float>(level.price) + labelOffset;
     labelTool.Color = color;
     labelTool.FontSize = 9;
     labelTool.Text = label;
     sc.UseTool(labelTool);
 }
 
-void DeleteUnusedDrawings(SCStudyInterfaceRef sc, int usedCount)
+void DrawZoneFill(SCStudyInterfaceRef sc, const RsLevel& first, const RsLevel& second, int index, int opacityPercent)
+{
+    const double top = std::max(first.price, second.price);
+    const double bottom = std::min(first.price, second.price);
+    const COLORREF color = RGB(first.red, first.green, first.blue);
+
+    s_UseTool tool;
+    tool.Clear();
+    tool.ChartNumber = sc.ChartNumber;
+    tool.DrawingType = DRAWING_RECTANGLE_EXT_HIGHLIGHT;
+    tool.LineNumber = RS_ZONE_BASE + index;
+    tool.AddMethod = UTAM_ADD_OR_ADJUST;
+    tool.Region = sc.GraphRegion;
+    tool.BeginIndex = std::max(0, sc.ArraySize - 2);
+    tool.EndIndex = std::max(0, sc.ArraySize - 1);
+    tool.BeginValue = static_cast<float>(top);
+    tool.EndValue = static_cast<float>(bottom);
+    tool.Color = color;
+    tool.SecondaryColor = color;
+    tool.TransparencyLevel = 100 - std::max(0, std::min(50, opacityPercent));
+    sc.UseTool(tool);
+}
+
+int DrawZoneFills(SCStudyInterfaceRef sc, const std::vector<RsLevel>& levels, bool showZoneFills, int opacityPercent)
+{
+    if (!showZoneFills)
+        return 0;
+
+    int nextIndex = 0;
+    RsLevel bullTop;
+    RsLevel bullBottom;
+    RsLevel bearTop;
+    RsLevel bearBottom;
+    RsLevel zoneTop;
+    RsLevel zoneBottom;
+    bool hasBullTop = false;
+    bool hasBullBottom = false;
+    bool hasBearTop = false;
+    bool hasBearBottom = false;
+    bool hasZoneTop = false;
+    bool hasZoneBottom = false;
+
+    for (const RsLevel& level : levels)
+    {
+        if (!IsZone(level.kind))
+            continue;
+
+        const int side = ZoneBoundarySide(level.name);
+        if (side == 0)
+            continue;
+
+        if (level.kind == "zone-bull")
+        {
+            if (side > 0)
+            {
+                bullTop = level;
+                hasBullTop = true;
+            }
+            else
+            {
+                bullBottom = level;
+                hasBullBottom = true;
+            }
+            if (hasBullTop && hasBullBottom && nextIndex < RS_MAX_LEVELS)
+            {
+                DrawZoneFill(sc, bullTop, bullBottom, nextIndex++, opacityPercent);
+                hasBullTop = false;
+                hasBullBottom = false;
+            }
+        }
+        else if (level.kind == "zone-bear")
+        {
+            if (side > 0)
+            {
+                bearTop = level;
+                hasBearTop = true;
+            }
+            else
+            {
+                bearBottom = level;
+                hasBearBottom = true;
+            }
+            if (hasBearTop && hasBearBottom && nextIndex < RS_MAX_LEVELS)
+            {
+                DrawZoneFill(sc, bearTop, bearBottom, nextIndex++, opacityPercent);
+                hasBearTop = false;
+                hasBearBottom = false;
+            }
+        }
+        else
+        {
+            if (side > 0)
+            {
+                zoneTop = level;
+                hasZoneTop = true;
+            }
+            else
+            {
+                zoneBottom = level;
+                hasZoneBottom = true;
+            }
+            if (hasZoneTop && hasZoneBottom && nextIndex < RS_MAX_LEVELS)
+            {
+                DrawZoneFill(sc, zoneTop, zoneBottom, nextIndex++, opacityPercent);
+                hasZoneTop = false;
+                hasZoneBottom = false;
+            }
+        }
+    }
+
+    return nextIndex;
+}
+
+void DeleteUnusedDrawings(SCStudyInterfaceRef sc, int usedCount, int usedZoneCount)
 {
     for (int i = usedCount; i < RS_MAX_LEVELS; ++i)
     {
         sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, RS_LINE_BASE + i);
         sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, RS_LABEL_BASE + i);
     }
+    for (int i = usedZoneCount; i < RS_MAX_LEVELS; ++i)
+        sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, RS_ZONE_BASE + i);
 }
 
 SCString CleanBaseUrl(const char* input)
@@ -181,7 +397,10 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
     SCInputRef RefreshMs = sc.Input[2];
     SCInputRef StaleSeconds = sc.Input[3];
     SCInputRef ShowLabels = sc.Input[4];
-    SCInputRef LineWidth = sc.Input[5];
+    SCInputRef ShowZoneFills = sc.Input[5];
+    SCInputRef ZoneFillOpacity = sc.Input[6];
+    SCInputRef LabelOffsetTicks = sc.Input[7];
+    SCInputRef LineWidth = sc.Input[8];
 
     if (sc.SetDefaults)
     {
@@ -209,6 +428,17 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
 
         ShowLabels.Name = "Show labels";
         ShowLabels.SetYesNo(1);
+
+        ShowZoneFills.Name = "Show zone fills";
+        ShowZoneFills.SetYesNo(1);
+
+        ZoneFillOpacity.Name = "Zone fill opacity percent";
+        ZoneFillOpacity.SetInt(12);
+        ZoneFillOpacity.SetIntLimits(0, 50);
+
+        LabelOffsetTicks.Name = "Label offset ticks";
+        LabelOffsetTicks.SetInt(2);
+        LabelOffsetTicks.SetIntLimits(1, 100);
 
         LineWidth.Name = "Line width";
         LineWidth.SetInt(1);
@@ -257,9 +487,10 @@ SCSFExport scsf_RSLevelsDisplay(SCStudyInterfaceRef sc)
         else if (requestState == RS_REQUEST_LEVELS)
         {
             const std::vector<RsLevel> levels = ParseLevelsText(sc.HTTPResponse);
+            const int zoneCount = DrawZoneFills(sc, levels, ShowZoneFills.GetYesNo() != 0, ZoneFillOpacity.GetInt());
             for (int i = 0; i < static_cast<int>(levels.size()); ++i)
-                DrawLevel(sc, levels[i], i, LineWidth.GetInt(), ShowLabels.GetYesNo() != 0);
-            DeleteUnusedDrawings(sc, static_cast<int>(levels.size()));
+                DrawLevel(sc, levels[i], i, LineWidth.GetInt(), ShowLabels.GetYesNo() != 0, LabelOffsetTicks.GetInt());
+            DeleteUnusedDrawings(sc, static_cast<int>(levels.size()), zoneCount);
             lastLevelsSeconds = nowSeconds;
         }
 
