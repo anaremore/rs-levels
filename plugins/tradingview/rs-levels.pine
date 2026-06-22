@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.06.22.3", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.06.22.4", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -57,6 +57,7 @@ statsPanelSpacerHeight() =>
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
 var box[] rsBoxes = array.new_box()
+var string[] rsLabelKeys = array.new_string()
 var table rsStatsTable = table.new(statsPanelPosition(), 1, 3)
 var float visibleHigh = na
 var float visibleLow = na
@@ -78,6 +79,7 @@ clearDrawings() =>
         line.delete(array.pop(rsLines))
     while array.size(rsLabels) > 0
         label.delete(array.pop(rsLabels))
+    array.clear(rsLabelKeys)
 
 cleanKind(kind) =>
     compactKind = str.lower(str.replace_all(kind, " ", ""))
@@ -107,6 +109,10 @@ levelKind(name, kind) =>
         "yellow-line"
     else if str.contains(upperName, "RED LINE") or str.contains(compactName, "REDLINE") or str.startswith(upperName, "RL")
         "red-line"
+    else if str.contains(compactName, "BRZT") or str.contains(compactName, "BRZB") or str.contains(upperName, "BEAR ZONE")
+        "zone-bear"
+    else if str.contains(compactName, "BZT") or str.contains(compactName, "BZB") or str.contains(upperName, "BULL ZONE")
+        "zone-bull"
     else
         normalizedKind
 
@@ -372,6 +378,14 @@ labelOffset(labelIndex, priceRange) =>
 labelPrice(name, kind, price, labelIndex, priceRange, zoneSide) =>
     price + labelOffset(labelIndex, priceRange) * labelDirectionForSide(name, kind, zoneSide)
 
+labelAlreadyDrawn(labelKey) =>
+    seen = false
+    if array.size(rsLabelKeys) > 0
+        for i = 0 to array.size(rsLabelKeys) - 1
+            if array.get(rsLabelKeys, i) == labelKey
+                seen := true
+    seen
+
 drawLevel(name, priceText, kind, labelIndex, priceRange, zoneSide) =>
     price = str.tonumber(priceText)
     effectiveKind = levelKind(name, kind)
@@ -381,10 +395,14 @@ drawLevel(name, priceText, kind, labelIndex, priceRange, zoneSide) =>
         newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth, style = lineStyleForLevel(name, effectiveKind))
         array.push(rsLines, newLine)
         if showLabels and array.size(rsLabels) < 499
-            labelText = displayLabelNameForSide(name, effectiveKind, zoneSide) + " " + str.tostring(price, format.mintick)
-            labelY = labelPrice(name, effectiveKind, price, labelIndex, priceRange, zoneSide)
-            newLabel = label.new(labelX(labelIndex), labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 80), size = labelSize())
-            array.push(rsLabels, newLabel)
+            labelName = displayLabelNameForSide(name, effectiveKind, zoneSide)
+            labelText = labelName + " " + str.tostring(price, format.mintick)
+            labelKey = cleanKind(effectiveKind) + "|" + labelName + "|" + str.tostring(price, format.mintick)
+            if not labelAlreadyDrawn(labelKey)
+                labelY = labelPrice(name, effectiveKind, price, labelIndex, priceRange, zoneSide)
+                newLabel = label.new(labelX(labelIndex), labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 80), size = labelSize())
+                array.push(rsLabels, newLabel)
+                array.push(rsLabelKeys, labelKey)
         drawn := true
     drawn
 
