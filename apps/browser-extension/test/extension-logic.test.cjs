@@ -121,6 +121,33 @@ assert.match(localPayload, /CAT,31232\.74,cat/);
 assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
+
+const chartLineOnlySnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
+  capturedAt: '2026-06-21T03:48:05.860Z',
+  body: JSON.stringify({
+    type: 'rs_snapshot',
+    source: 'page-reader',
+    capturedAt: '2026-06-21T03:48:02.097Z',
+    chartLines: [
+      { index: 'ES', chart: 'F.US.EPU26', price: 7598, color: '#ffeb3b' },
+      { index: 'ES', chart: 'F.US.EPU26', price: 7632, color: '#ffeb3b' },
+      { index: 'ES', chart: 'F.US.EPU26', text: 'RL', price: 7520, linecolor: 'rgb(242, 54, 69)' },
+      { index: 'NQ', chart: 'F.US.ENQU26', text: 'CAT', price: 31232.74, color: '#7e57c2' },
+      { index: 'SPY', chart: 'SPY', text: 'PrevDayClose', price: 722.51 }
+    ],
+    referenceLines: [
+      { index: 'ES', name: 'Red Line', price: 7496, color: '#f23645' }
+    ]
+  })
+});
+const chartLineOnlyPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(chartLineOnlySnapshot, 'ALL');
+assert.match(chartLineOnlyPayload, /Yellow Line,7598,yellow-line/);
+assert.match(chartLineOnlyPayload, /Yellow Line,7632,yellow-line/);
+assert.match(chartLineOnlyPayload, /Red Line,7520,red-line/);
+assert.match(chartLineOnlyPayload, /Red Line,7496,red-line/);
+assert.match(chartLineOnlyPayload, /CAT,31232\.74,cat/);
+assert.doesNotMatch(chartLineOnlyPayload, /\|SPY\|/);
+
 assert.throws(
   () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RS' + 'LEVELS|1|MES|2026-06-21T03:12:03.127Z|OVNHP,7565.00,hp'),
   /unsupported TradingView payload/

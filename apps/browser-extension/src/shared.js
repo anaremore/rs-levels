@@ -208,7 +208,6 @@
 
   function captureToTradingViewSnapshot(capture = {}) {
     const body = captureBody(capture.body);
-    const levels = Array.isArray(body.levels) ? body.levels : [];
     const defaultSymbol = body.symbol || body.displaySymbol || '';
     const symbols = new Map();
     const ensureSymbol = (symbolInput, capturedAtInput) => {
@@ -230,12 +229,12 @@
       group.seen.add(row);
       group.levels.push(row);
     };
-    levels.forEach((level) => {
+    captureDisplayLevels(body, defaultSymbol).forEach((level) => {
       const symbol = publicDisplaySymbol(level && (level.symbol || level.displaySymbol) || defaultSymbol);
       if (symbol !== 'ES' && symbol !== 'NQ') return;
       const price = Number(level.price);
       const name = tradingViewField(tradingViewLevelName(level));
-      const kind = tradingViewField(level && (level.kind || inferTradingViewKind(name)));
+      const kind = tradingViewField(tradingViewLevelKind(level, name));
       if (!name || !Number.isFinite(price) || !kind) return;
       addPayloadRow(symbol, level.capturedAt, `${name},${tradingViewPrice(price)},${kind}`);
     });
@@ -256,6 +255,50 @@
       generatedAt: String(body.capturedAt || capture.capturedAt || new Date().toISOString()),
       symbols: rows
     } : null;
+  }
+
+  function captureDisplayLevels(body = {}, defaultSymbol = '') {
+    const out = [];
+    const add = (level) => {
+      if (!level || typeof level !== 'object' || Array.isArray(level)) return;
+      out.push(level);
+    };
+
+    if (Array.isArray(body.levels)) {
+      body.levels.forEach(add);
+    }
+
+    if (Array.isArray(body.chartLines)) {
+      body.chartLines.forEach((line) => {
+        const name = displayLineName(line);
+        if (!name) return;
+        add({
+          symbol: line.symbol || line.displaySymbol || line.index || line.chart || defaultSymbol,
+          name,
+          price: line.price,
+          kind: line.kind || manualLineKindFromColor(levelColor(line)),
+          color: levelColor(line),
+          capturedAt: line.capturedAt || body.capturedAt
+        });
+      });
+    }
+
+    if (Array.isArray(body.referenceLines)) {
+      body.referenceLines.forEach((line) => {
+        const name = displayLineName(line);
+        if (!name) return;
+        add({
+          symbol: line.symbol || line.displaySymbol || line.index || line.chart || defaultSymbol,
+          name,
+          price: line.price,
+          kind: line.kind || manualLineKindFromColor(levelColor(line)),
+          color: levelColor(line),
+          capturedAt: line.capturedAt || body.capturedAt
+        });
+      });
+    }
+
+    return out;
   }
 
   function captureStatsGroups(body = {}) {
@@ -374,7 +417,7 @@
   }
 
   function tradingViewLevelName(level = {}) {
-    const raw = tradingViewField(level.name || level.label || level.text || 'Level');
+    const raw = tradingViewField(level.name || level.label || level.text || level.title || manualLineNameFromColor(levelColor(level)) || 'Level');
     const upper = raw.toUpperCase();
     if (upper.includes('PREVDAYCLOSE') || upper.includes('PREV DAY CLOSE')) return 'Prev Close';
     if (upper.includes('MIDGAP') || upper.includes('HALFGAP') || upper.includes('HALF GAP')) return 'Mid Gap';
@@ -391,6 +434,19 @@
     return raw || 'Level';
   }
 
+  function tradingViewLevelKind(level = {}, name = '') {
+    const explicit = tradingViewField(level.kind).toLowerCase();
+    if (validTradingViewKind(explicit)) return explicit;
+    const byColor = manualLineKindFromColor(levelColor(level));
+    const inferred = inferTradingViewKind(name);
+    if (byColor && inferred === 'reference') return byColor;
+    return inferred || byColor || 'reference';
+  }
+
+  function displayLineName(line = {}) {
+    return tradingViewField(line.name || line.label || line.text || line.title || manualLineNameFromColor(levelColor(line)));
+  }
+
   function inferTradingViewKind(name) {
     const upper = String(name || '').toUpperCase();
     if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
@@ -403,6 +459,84 @@
     if (upper.includes('DD')) return 'dd-band';
     if (upper.includes('OPEN') || upper.includes('CLOSE') || upper.includes('GAP')) return 'open-close';
     return 'reference';
+  }
+
+  function validTradingViewKind(kind) {
+    return [
+      'dd-band',
+      'hp',
+      'mhp',
+      'open-close',
+      'reference',
+      'yellow-line',
+      'red-line',
+      'cat',
+      'zone-bull',
+      'zone-bear',
+      'stat',
+      'unknown'
+    ].includes(kind);
+  }
+
+  function levelColor(level = {}) {
+    return level.color || level.linecolor || level.lineColor || level.textcolor || level.textColor || level.backgroundColor || '';
+  }
+
+  function manualLineNameFromColor(color) {
+    const rgb = colorRgb(color);
+    if (!rgb) return '';
+    if (isPurple(rgb)) return 'CAT';
+    if (isYellow(rgb)) return 'Yellow Line';
+    if (isRed(rgb)) return 'Red Line';
+    return '';
+  }
+
+  function manualLineKindFromColor(color) {
+    const name = manualLineNameFromColor(color);
+    return name ? inferTradingViewKind(name) : '';
+  }
+
+  function colorRgb(value) {
+    const raw = String(value || '').trim();
+    const hex = raw.match(/^#?([0-9a-f]{6})$/i);
+    if (hex) {
+      const clean = hex[1];
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+    const rgb = raw.match(/rgba?\s*\(\s*([.\d]+)\s*,\s*([.\d]+)\s*,\s*([.\d]+)/i);
+    if (rgb) {
+      return {
+        r: colorByte(rgb[1]),
+        g: colorByte(rgb[2]),
+        b: colorByte(rgb[3])
+      };
+    }
+    const named = raw.toLowerCase();
+    if (named === 'yellow') return { r: 255, g: 235, b: 59 };
+    if (named === 'red') return { r: 242, g: 54, b: 69 };
+    if (named === 'purple') return { r: 126, g: 87, b: 194 };
+    return null;
+  }
+
+  function colorByte(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.max(0, Math.min(255, Math.round(number))) : 0;
+  }
+
+  function isYellow({ r, g, b }) {
+    return r >= 220 && g >= 190 && b <= 140;
+  }
+
+  function isRed({ r, g, b }) {
+    return r >= 200 && g <= 110 && b <= 130;
+  }
+
+  function isPurple({ r, g, b }) {
+    return b >= 140 && r >= 80 && r > g && b > r;
   }
 
   function tradingViewField(value) {
