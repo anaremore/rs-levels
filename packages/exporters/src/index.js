@@ -58,7 +58,7 @@ function tradingViewPayload(rows, options = {}) {
 function tradingViewLevelRow(level) {
   const name = tradingViewLevelName(level);
   const price = tradingViewPrice(level?.price);
-  const kind = field(level?.kind);
+  const kind = tradingViewLevelKind(level, name);
   return name && price && kind ? `${name},${price},${kind}` : '';
 }
 
@@ -87,12 +87,10 @@ function tradingViewStatsRows(stats = {}) {
 function tradingViewLevelName(level) {
   const raw = field(level?.name);
   if (!raw) return 'Level';
-  const kind = field(level?.kind).toLowerCase();
-  if (isDrawingObjectName(raw)) {
-    if (kind === 'red-line') return 'Red Line';
-    if (kind === 'yellow-line') return 'Yellow Line';
-    if (kind === 'cat') return 'CAT';
-  }
+  const kind = canonicalTradingViewKind(level?.kind);
+  if (kind === 'red-line') return 'Red Line';
+  if (kind === 'yellow-line') return 'Yellow Line';
+  if (kind === 'cat') return 'CAT';
   if (!/horizontal|liquidity\s*map|\btext\b|liq-map-history/i.test(raw)) return raw;
   const upper = raw.toUpperCase();
   const displayMatch = raw.match(/\b(BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);
@@ -103,15 +101,62 @@ function tradingViewLevelName(level) {
   if (/\bHP\b/.test(upper)) return 'HP';
   if (/\bDD\b/.test(upper)) return 'DD';
   return field(raw
-    .replace(/horizontal[_\s-]*(line|ray)?/ig, ' ')
+    .replace(/horizontal(?:[_\s-]*(?:line|ray)|line|ray)?/ig, ' ')
     .replace(/\btext\b/ig, ' ')
     .replace(/\bLiquidity\s*Map\b/ig, ' ')
     .replace(/\bliq-map-history\b/ig, ' ')
     .replace(/\s*:\s*/g, ' ')) || 'Level';
 }
 
-function isDrawingObjectName(name) {
-  return /^horizontal[_\s-]*(line|ray)?$/i.test(field(name));
+function tradingViewLevelKind(level, name) {
+  const explicit = canonicalTradingViewKind(level?.kind);
+  if (explicit && explicit !== 'unknown') return explicit;
+  const inferred = inferManualKind(name || level?.name);
+  const byColor = manualKindFromColor(level?.color);
+  return inferred || byColor || explicit || 'reference';
+}
+
+function canonicalTradingViewKind(value) {
+  const raw = field(value).toLowerCase();
+  const compact = raw.replace(/[\s_-]+/g, '');
+  switch (compact) {
+    case 'ddband':
+      return 'dd-band';
+    case 'openclose':
+      return 'open-close';
+    case 'yellowline':
+      return 'yellow-line';
+    case 'redline':
+      return 'red-line';
+    case 'catline':
+      return 'cat';
+    case 'zonebull':
+    case 'bullzone':
+      return 'zone-bull';
+    case 'zonebear':
+    case 'bearzone':
+      return 'zone-bear';
+    default:
+      return raw;
+  }
+}
+
+function inferManualKind(name) {
+  const upper = field(name).toUpperCase();
+  const compact = upper.replace(/[^A-Z0-9]+/g, '');
+  if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
+  if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
+  if (/\bRL\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
+  return '';
+}
+
+function manualKindFromColor(color) {
+  const rgb = colorRgb(color);
+  if (!rgb) return '';
+  if (isPurple(rgb)) return 'cat';
+  if (isYellow(rgb)) return 'yellow-line';
+  if (isRed(rgb)) return 'red-line';
+  return '';
 }
 
 function normalizedDisplayMatch(matchText) {
@@ -140,6 +185,32 @@ function finiteNumber(value) {
   if (value == null || value === '') return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function colorRgb(value) {
+  const raw = field(value);
+  const hex = raw.match(/^#?([0-9a-f]{6})$/i);
+  if (hex) {
+    const clean = hex[1];
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16)
+    };
+  }
+  return null;
+}
+
+function isYellow({ r, g, b }) {
+  return r >= 220 && g >= 190 && b <= 140;
+}
+
+function isRed({ r, g, b }) {
+  return r >= 200 && g <= 110 && b <= 130;
+}
+
+function isPurple({ r, g, b }) {
+  return b >= 140 && r >= 80 && r > g && b > r;
 }
 
 function limitLevels(levels, maxLevels) {

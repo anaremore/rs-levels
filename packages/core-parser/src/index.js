@@ -557,21 +557,44 @@ function colorFromArray(row, nameIndex, priceIndex) {
 
 function explicitKind(row) {
   const allowed = new Set(['dd-band', 'hp', 'mhp', 'open-close', 'reference', 'yellow-line', 'red-line', 'cat', 'zone', 'zone-bull', 'zone-bear', 'unknown']);
-  return row.map(stringValue).find((value) => allowed.has(value.toLowerCase())) || '';
+  return row.map((value) => canonicalLevelKind(value)).find((value) => allowed.has(value)) || '';
 }
 
 function levelKind(name, explicit, metadata = {}, options = {}) {
-  const clean = stringValue(explicit).toLowerCase();
+  const clean = canonicalLevelKind(explicit);
   const inferred = inferLevelKind(name);
   if (shouldUseInferredKind(clean, inferred)) return inferred;
-  if (clean === 'bull-zone') return 'zone-bull';
-  if (clean === 'bear-zone') return 'zone-bear';
   if (clean === 'zone-bull' || clean === 'zone-bear') return clean;
   if (clean && clean !== 'zone') return clean;
   const side = zoneSideFromText([metadata.side, metadata.type, metadata.group, options.zoneSide, name].map(stringValue).join(' '));
   if (side === 'bull') return 'zone-bull';
   if (side === 'bear') return 'zone-bear';
   return clean || inferred;
+}
+
+function canonicalLevelKind(value) {
+  const raw = stringValue(value).toLowerCase();
+  const compact = raw.replace(/[\s_-]+/g, '');
+  switch (compact) {
+    case 'ddband':
+      return 'dd-band';
+    case 'openclose':
+      return 'open-close';
+    case 'yellowline':
+      return 'yellow-line';
+    case 'redline':
+      return 'red-line';
+    case 'catline':
+      return 'cat';
+    case 'zonebull':
+    case 'bullzone':
+      return 'zone-bull';
+    case 'zonebear':
+    case 'bearzone':
+      return 'zone-bear';
+    default:
+      return raw;
+  }
 }
 
 function shouldUseInferredKind(explicitKind, inferredKind) {

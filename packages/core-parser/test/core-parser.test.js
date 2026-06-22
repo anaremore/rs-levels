@@ -307,6 +307,23 @@ assert.equal(manyManualLines.symbols.MES.filter((level) => level.kind === 'yello
 assert.equal(manyManualLines.symbols.MES.filter((level) => level.kind === 'red-line').length, 2);
 assert.equal(new Set(manyManualLines.symbols.MES.map((level) => level.id)).size, 4);
 
+const manualLineAliases = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-06-19T14:31:57.750Z',
+  body: {
+    source: 'page-reader',
+    capturedAt: '2026-06-19T14:31:57.750Z',
+    levels: [
+      { symbol: 'F.US.ENQU26', name: 'horizontalLine', price: 30380, kind: 'redline', color: '#F23645', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'horizontal_line RedLine', price: 30182, kind: 'unknown', color: '#F23645', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'horizontal_line YellowLine', price: 30979, kind: 'yellow_line', color: '#FFEB3B', source: 'rocketscooter-page' }
+    ]
+  }
+});
+assert.equal(manualLineAliases.symbols.MNQ.filter((level) => level.kind === 'red-line').length, 2);
+assert.equal(manualLineAliases.symbols.MNQ.filter((level) => level.kind === 'yellow-line').length, 1);
+
 const pageReaderSnapshotArrays = normalizeCapture({
   endpoint: '/page-reader/display',
   status: 200,

@@ -23,6 +23,8 @@ const row = {
     { name: 'Yellow Line', price: 7598, kind: 'yellow-line', color: '#FFEB3B' },
     { name: 'Red Line', price: 7520, kind: 'red-line', color: '#F23645' },
     { name: 'horizontal_line', price: 7496, kind: 'red-line', color: '#F23645' },
+    { name: 'horizontalLine', price: 7488, kind: 'redline', color: '#F23645' },
+    { name: 'horizontal_line RedLine', price: 7480, kind: 'unknown', color: '#F23645' },
     { name: 'CAT', price: 7820, kind: 'cat', color: '#7E57C2' },
     { name: 'text SPY Open : 7,559 Liquidity Map', price: 7559, kind: 'open-close', color: '#E0E0E0' }
   ]
@@ -36,6 +38,8 @@ assert.match(payload, /BrZT1,7612,zone-bear/);
 assert.match(payload, /Yellow Line,7598,yellow-line/);
 assert.match(payload, /Red Line,7520,red-line/);
 assert.match(payload, /Red Line,7496,red-line/);
+assert.match(payload, /Red Line,7488,red-line/);
+assert.match(payload, /Red Line,7480,red-line/);
 assert.match(payload, /CAT,7820,cat/);
 assert.match(payload, /Open,7559,open-close/);
 assert.match(payload, /DD,0\.66,stat/);
@@ -46,6 +50,7 @@ assert.match(payload, /WRes,-29\.29,stat/);
 assert.match(payload, /Map BLD,0,stat/);
 assert.doesNotMatch(payload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);
 assert.doesNotMatch(payload, /horizontal_line/);
+assert.doesNotMatch(payload, /horizontalLine/);
 
 const genericManualLinePayload = createTradingViewPayloadExport({
   symbol: 'NQ',

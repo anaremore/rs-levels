@@ -72,7 +72,7 @@ export function normalizeSymbolSnapshot(symbol, input = {}) {
 }
 
 export function normalizeLevel(symbol, level = {}) {
-  const explicitKind = stringValue(level.kind).toLowerCase();
+  const explicitKind = normalizeLevelKind(level.kind);
   const cleanKind = LEVEL_KINDS.includes(explicitKind) ? explicitKind : '';
   const inferredKind = inferLevelKind(level.name);
   const kind = shouldUseInferredKind(cleanKind, inferredKind) ? inferredKind : cleanKind || inferredKind;
@@ -202,6 +202,7 @@ function symbolParts(text) {
 
 export function inferLevelKind(name) {
   const text = stringValue(name).toUpperCase();
+  const compactText = text.replace(/[^A-Z0-9]+/g, '');
   if (text.includes('MHP')) return 'mhp';
   if (text.includes('HP')) return 'hp';
   if (text.includes('DD')) return 'dd-band';
@@ -209,11 +210,35 @@ export function inferLevelKind(name) {
   if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
   if (text.includes('ZONE')) return 'zone';
   if (text.includes('CAT')) return 'cat';
-  if (/\bYL\b/.test(text) || text.includes('YELLOW LINE')) return 'yellow-line';
-  if (/\bRL\b/.test(text) || text.includes('RED LINE')) return 'red-line';
+  if (/\bYL\b/.test(text) || text.includes('YELLOW LINE') || compactText.includes('YELLOWLINE')) return 'yellow-line';
+  if (/\bRL\b/.test(text) || text.includes('RED LINE') || compactText.includes('REDLINE')) return 'red-line';
   if (text.includes('OPEN') || text.includes('CLOSE') || text.includes('HIGH') || text.includes('GAP')) return 'open-close';
   if (text === 'DD' || text.includes('RES')) return 'stat';
   return 'unknown';
+}
+
+function normalizeLevelKind(value) {
+  const compact = stringValue(value).toLowerCase().replace(/[\s_-]+/g, '');
+  switch (compact) {
+    case 'ddband':
+      return 'dd-band';
+    case 'openclose':
+      return 'open-close';
+    case 'yellowline':
+      return 'yellow-line';
+    case 'redline':
+      return 'red-line';
+    case 'catline':
+      return 'cat';
+    case 'zonebull':
+    case 'bullzone':
+      return 'zone-bull';
+    case 'zonebear':
+    case 'bearzone':
+      return 'zone-bear';
+    default:
+      return stringValue(value).toLowerCase();
+  }
 }
 
 function shouldUseInferredKind(explicitKind, inferredKind) {

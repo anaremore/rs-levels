@@ -423,8 +423,13 @@
     const colorName = manualLineNameFromColor(levelColor(level));
     const raw = tradingViewField(level.name || level.label || level.text || level.title || colorName || 'Level');
     const cleanedName = cleanTradingViewLevelName(raw);
+    const explicitKind = canonicalTradingViewKind(level.kind);
+    if (explicitKind === 'red-line') return 'Red Line';
+    if (explicitKind === 'yellow-line') return 'Yellow Line';
+    if (explicitKind === 'cat') return 'CAT';
     if (isDrawingObjectName(raw) && colorName) return colorName;
     const upper = raw.toUpperCase();
+    const compactUpper = upper.replace(/[^A-Z0-9]+/g, '');
     if (upper.includes('PREVDAYCLOSE') || upper.includes('PREV DAY CLOSE')) return 'Prev Close';
     if (upper.includes('MIDGAP') || upper.includes('HALFGAP') || upper.includes('HALF GAP')) return 'Mid Gap';
     if (upper.includes('LASTOPEN') || (upper.includes('OPEN') && !upper.includes('CLOSE'))) return 'Open';
@@ -432,8 +437,8 @@
     if (upper.includes('OVNMHP')) return 'OVNMHP';
     if (upper.includes('OVNHP')) return 'OVNHP';
     if (upper.includes('CAT')) return 'CAT';
-    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE')) return 'Yellow Line';
-    if (/\bRL\b/.test(upper) || upper.includes('RED LINE')) return 'Red Line';
+    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE') || compactUpper.includes('YELLOWLINE')) return 'Yellow Line';
+    if (/\bRL\b/.test(upper) || upper.includes('RED LINE') || compactUpper.includes('REDLINE')) return 'Red Line';
     if (upper.includes('MHP')) return 'MHP';
     if (upper.includes('HP')) return 'HP';
     if (upper.includes('DD')) return 'DD';
@@ -441,12 +446,12 @@
   }
 
   function tradingViewLevelKind(level = {}, name = '') {
-    const explicit = tradingViewField(level.kind).toLowerCase();
-    if (validTradingViewKind(explicit)) return explicit;
+    const explicit = canonicalTradingViewKind(level.kind);
+    if (validTradingViewKind(explicit) && explicit !== 'unknown') return explicit;
     const byColor = manualLineKindFromColor(levelColor(level));
     const inferred = inferTradingViewKind(name);
     if (byColor && inferred === 'reference') return byColor;
-    return inferred || byColor || 'reference';
+    return inferred || byColor || explicit || 'reference';
   }
 
   function displayLineName(line = {}) {
@@ -459,7 +464,7 @@
 
   function cleanTradingViewLevelName(name) {
     return tradingViewField(String(name || '')
-      .replace(/horizontal[_\s-]*(line|ray)?/ig, ' ')
+      .replace(/horizontal(?:[_\s-]*(?:line|ray)|line|ray)?/ig, ' ')
       .replace(/\btext\b/ig, ' ')
       .replace(/\bLiquidity\s*Map\b/ig, ' ')
       .replace(/\bliq-map-history\b/ig, ' ')
@@ -467,21 +472,47 @@
   }
 
   function isDrawingObjectName(name) {
-    return /^horizontal[_\s-]*(line|ray)?$/i.test(tradingViewField(name));
+    return /^horizontal(?:[_\s-]*(?:line|ray)|line|ray)?$/i.test(tradingViewField(name));
   }
 
   function inferTradingViewKind(name) {
     const upper = String(name || '').toUpperCase();
+    const compact = upper.replace(/[^A-Z0-9]+/g, '');
     if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
     if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
-    if (upper.includes('CAT')) return 'cat';
-    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE')) return 'yellow-line';
-    if (/\bRL\b/.test(upper) || upper.includes('RED LINE')) return 'red-line';
+    if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
+    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
+    if (/\bRL\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
     if (upper.includes('MHP')) return 'mhp';
     if (upper.includes('HP')) return 'hp';
     if (upper.includes('DD')) return 'dd-band';
     if (upper.includes('OPEN') || upper.includes('CLOSE') || upper.includes('GAP')) return 'open-close';
     return 'reference';
+  }
+
+  function canonicalTradingViewKind(value) {
+    const raw = tradingViewField(value).toLowerCase();
+    const compact = raw.replace(/[\s_-]+/g, '');
+    switch (compact) {
+      case 'ddband':
+        return 'dd-band';
+      case 'openclose':
+        return 'open-close';
+      case 'yellowline':
+        return 'yellow-line';
+      case 'redline':
+        return 'red-line';
+      case 'catline':
+        return 'cat';
+      case 'zonebull':
+      case 'bullzone':
+        return 'zone-bull';
+      case 'zonebear':
+      case 'bearzone':
+        return 'zone-bear';
+      default:
+        return raw;
+    }
   }
 
   function validTradingViewKind(kind) {

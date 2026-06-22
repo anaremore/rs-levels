@@ -98,6 +98,8 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
       { name: 'Red Line', price: 7520, kind: 'red-line' },
       { symbol: 'F.US.ENQU26', name: 'OVNMHP', price: 30475, kind: 'mhp' },
       { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat' },
+      { symbol: 'F.US.ENQU26', name: 'horizontalLine', price: 30380, kind: 'redline', color: '#F23645' },
+      { symbol: 'F.US.ENQU26', name: 'horizontal_line RedLine', price: 30182, kind: 'unknown', color: '#F23645' },
       { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
     ],
     stats: {
@@ -119,6 +121,8 @@ assert.match(localPayload, /MRes,19\.87,stat/);
 assert.match(localPayload, /Map BLD,0,stat/);
 assert.match(localPayload, /\|NQ\|2026-06-21T03:47:02\.097Z\|OVNMHP,30475,mhp/);
 assert.match(localPayload, /CAT,31232\.74,cat/);
+assert.match(localPayload, /Red Line,30380,red-line/);
+assert.match(localPayload, /Red Line,30182,red-line/);
 assert.match(localPayload, /RI,266\.25,stat/);
 assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
@@ -151,6 +155,7 @@ assert.match(chartLineOnlyPayload, /Red Line,7496,red-line/);
 assert.match(chartLineOnlyPayload, /Red Line,30380,red-line/);
 assert.match(chartLineOnlyPayload, /CAT,31232\.74,cat/);
 assert.doesNotMatch(chartLineOnlyPayload, /horizontal_line/);
+assert.doesNotMatch(chartLineOnlyPayload, /horizontalLine/);
 assert.doesNotMatch(chartLineOnlyPayload, /\|SPY\|/);
 
 assert.throws(

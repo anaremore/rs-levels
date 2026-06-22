@@ -65,16 +65,32 @@ clearDrawings() =>
         label.delete(array.pop(rsLabels))
 
 cleanKind(kind) =>
-    str.lower(str.replace_all(kind, " ", ""))
+    compactKind = str.lower(str.replace_all(kind, " ", ""))
+    compactKind := str.replace_all(compactKind, "_", "")
+    compactKind := str.replace_all(compactKind, "-", "")
+    switch compactKind
+        "ddband" => "dd-band"
+        "openclose" => "open-close"
+        "yellowline" => "yellow-line"
+        "redline" => "red-line"
+        "catline" => "cat"
+        "zonebull" => "zone-bull"
+        "bullzone" => "zone-bull"
+        "zonebear" => "zone-bear"
+        "bearzone" => "zone-bear"
+        => compactKind
 
 levelKind(name, kind) =>
     upperName = str.upper(name)
+    compactName = str.replace_all(upperName, " ", "")
+    compactName := str.replace_all(compactName, "_", "")
+    compactName := str.replace_all(compactName, "-", "")
     normalizedKind = cleanKind(kind)
-    if str.contains(upperName, "CAT")
+    if str.contains(upperName, "CAT") or str.contains(compactName, "CAT")
         "cat"
-    else if str.contains(upperName, "YELLOW LINE") or str.startswith(upperName, "YL")
+    else if str.contains(upperName, "YELLOW LINE") or str.contains(compactName, "YELLOWLINE") or str.startswith(upperName, "YL")
         "yellow-line"
-    else if str.contains(upperName, "RED LINE") or str.startswith(upperName, "RL")
+    else if str.contains(upperName, "RED LINE") or str.contains(compactName, "REDLINE") or str.startswith(upperName, "RL")
         "red-line"
     else
         normalizedKind
@@ -139,6 +155,9 @@ labelSize() =>
 
 displayLabelName(name, kind) =>
     upperName = str.upper(name)
+    compactName = str.replace_all(upperName, " ", "")
+    compactName := str.replace_all(compactName, "_", "")
+    compactName := str.replace_all(compactName, "-", "")
     normalizedKind = cleanKind(kind)
     if str.contains(upperName, "PREVDAYCLOSE") or str.contains(upperName, "PREV DAY CLOSE")
         "Prev Close"
@@ -158,14 +177,17 @@ displayLabelName(name, kind) =>
         "HP"
     else if normalizedKind == "dd-band" or str.contains(upperName, "DD")
         "DD"
-    else if normalizedKind == "cat" or str.contains(upperName, "CAT")
+    else if normalizedKind == "cat" or str.contains(upperName, "CAT") or str.contains(compactName, "CAT")
         "CAT"
-    else if normalizedKind == "yellow-line" or str.contains(upperName, "YELLOW LINE") or upperName == "YL"
+    else if normalizedKind == "yellow-line" or str.contains(upperName, "YELLOW LINE") or str.contains(compactName, "YELLOWLINE") or upperName == "YL"
         "Yellow Line"
-    else if normalizedKind == "red-line" or str.contains(upperName, "RED LINE") or upperName == "RL"
+    else if normalizedKind == "red-line" or str.contains(upperName, "RED LINE") or str.contains(compactName, "REDLINE") or upperName == "RL"
         "Red Line"
     else
         cleaned = str.replace_all(name, "horizontal_line", "")
+        cleaned := str.replace_all(cleaned, "horizontalLine", "")
+        cleaned := str.replace_all(cleaned, "HorizontalLine", "")
+        cleaned := str.replace_all(cleaned, "HORIZONTALLINE", "")
         cleaned := str.replace_all(cleaned, "Horizontal_Line", "")
         cleaned := str.replace_all(cleaned, "Horizontal_line", "")
         cleaned := str.replace_all(cleaned, "HORIZONTAL_LINE", "")
@@ -173,6 +195,9 @@ displayLabelName(name, kind) =>
         cleaned := str.replace_all(cleaned, "Horizontal Line", "")
         cleaned := str.replace_all(cleaned, "HORIZONTAL LINE", "")
         cleaned := str.replace_all(cleaned, "horizontal_ray", "")
+        cleaned := str.replace_all(cleaned, "horizontalRay", "")
+        cleaned := str.replace_all(cleaned, "HorizontalRay", "")
+        cleaned := str.replace_all(cleaned, "HORIZONTALRAY", "")
         cleaned := str.replace_all(cleaned, "Horizontal_Ray", "")
         cleaned := str.replace_all(cleaned, "Horizontal_ray", "")
         cleaned := str.replace_all(cleaned, "HORIZONTAL_RAY", "")
