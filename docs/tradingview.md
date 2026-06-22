@@ -36,7 +36,7 @@ Single-symbol payload:
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;DD,7579.75,dd-band
 ```
 
-The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. Bull and bear zones use `zone-bull` and `zone-bear` kinds. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders those in its stats panel and does not draw them as price lines. VARIS-style Pine indicators can use the same pasted payload to read `RI` as their risk interval. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. Bull and bear zones use `zone-bull` and `zone-bear` kinds. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders those in its stats panel and does not draw them as price lines. VARIS-style Pine indicators can use the same pasted payload to read `RI` as their risk interval. Explicit captured `RI` wins; if RocketScooter exposes DD bands but no explicit RI, the TradingView exporter derives a display fallback from the outer DD-band pair. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
 
 ## Indicator Controls
 

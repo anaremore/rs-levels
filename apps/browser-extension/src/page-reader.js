@@ -150,6 +150,7 @@
       readHeaderStats(state);
       readMapCodeStats(state);
       readRiskIntervalStats(state);
+      readRiskIntervalDomStats(state);
     } catch (_err) {
       stats.readErrorCount += 1;
     }
@@ -215,6 +216,100 @@
     } catch (_err) {
       stats.readErrorCount += 1;
     }
+  }
+
+  function readRiskIntervalDomStats(state) {
+    try {
+      const doc = globalThis.document;
+      if (!doc || typeof doc.querySelectorAll !== 'function') return;
+      readRiskIntervalTableRows(state, doc);
+      readRiskIntervalRoleRows(state, doc);
+    } catch (_err) {
+      stats.readErrorCount += 1;
+    }
+  }
+
+  function readRiskIntervalTableRows(state, doc) {
+    domArray(doc.querySelectorAll('table')).forEach((table) => {
+      let headers = [];
+      domArray(table.querySelectorAll && table.querySelectorAll('tr')).forEach((row) => {
+        const cells = cellTexts(row, 'th,td');
+        if (!cells.length) return;
+        if (riskIntervalHeaderRow(cells)) {
+          headers = cells;
+          return;
+        }
+        addRiskIntervalFromCells(state, cells, headers);
+      });
+    });
+  }
+
+  function readRiskIntervalRoleRows(state, doc) {
+    let headers = [];
+    domArray(doc.querySelectorAll('[role="row"]')).forEach((row) => {
+      const cells = cellTexts(row, '[role="columnheader"],[role="cell"],[role="gridcell"]');
+      if (!cells.length) return;
+      if (riskIntervalHeaderRow(cells)) {
+        headers = cells;
+        return;
+      }
+      addRiskIntervalFromCells(state, cells, headers);
+    });
+  }
+
+  function addRiskIntervalFromCells(state, cells, headers) {
+    const symbol = symbolFromRiskIntervalCells(cells, headers);
+    if (!symbol) return;
+    const riskInterval = riskIntervalFromCells(cells, headers);
+    if (riskInterval == null) return;
+    addStats(state, symbol, { riskInterval });
+  }
+
+  function symbolFromRiskIntervalCells(cells, headers) {
+    const preferredHeaders = ['CONTRACT', 'TICKER', 'SYMBOL', 'PRODUCTNAME'];
+    for (const key of preferredHeaders) {
+      const index = headerIndex(headers, key);
+      if (index >= 0) {
+        const symbol = futuresSymbol(cells[index]);
+        if (symbol) return symbol;
+      }
+    }
+    for (const cell of cells) {
+      const symbol = futuresSymbol(cell);
+      if (symbol) return symbol;
+    }
+    return '';
+  }
+
+  function riskIntervalFromCells(cells, headers) {
+    const index = headerIndex(headers, 'RI', 'RISKINTERVAL');
+    if (index >= 0) return numberValue(cells[index]);
+    const labelled = compact(cells.join(' ')).match(/\b(?:RI|Risk\s*Interval)\b\s*:?\s*(-?[\d,]+(?:\.\d+)?)/i);
+    if (labelled) return numberValue(labelled[1]);
+    if (cells.length >= 6 && (futuresSymbol(cells[0]) || futuresSymbol(cells[2]))) {
+      return numberValue(cells[5]);
+    }
+    return null;
+  }
+
+  function riskIntervalHeaderRow(cells) {
+    return headerIndex(cells, 'RI', 'RISKINTERVAL') >= 0 &&
+      ['CONTRACT', 'TICKER', 'SYMBOL', 'PRODUCTNAME'].some((key) => headerIndex(cells, key) >= 0);
+  }
+
+  function headerIndex(headers, ...keys) {
+    const wanted = new Set(keys);
+    return headers.findIndex((header) => wanted.has(headerKey(header)));
+  }
+
+  function headerKey(value) {
+    return compact(value).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  function cellTexts(row, selector) {
+    if (!row || typeof row.querySelectorAll !== 'function') return [];
+    const cells = domArray(row.querySelectorAll(selector)).map((cell) => compact(cell && cell.textContent));
+    return cells.some(Boolean) ? cells : [];
   }
 
   function readStudyStats(chart, symbol, state) {
@@ -730,9 +825,17 @@
     return Array.isArray(value) ? value : [];
   }
 
+  function domArray(value) {
+    try {
+      return value ? Array.prototype.slice.call(value) : [];
+    } catch (_err) {
+      return [];
+    }
+  }
+
   function numberValue(value) {
     if (value == null || value === '') return null;
-    const number = Number(value);
+    const number = Number(typeof value === 'string' ? value.replace(/,/g, '') : value);
     return Number.isFinite(number) ? number : null;
   }
 

@@ -128,6 +128,23 @@ assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 
+const derivedRiSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
+  capturedAt: '2026-06-21T03:48:01.000Z',
+  body: JSON.stringify({
+    symbol: 'MES',
+    capturedAt: '2026-06-21T03:48:00.000Z',
+    levels: [
+      { name: 'DD', price: 7643.5, kind: 'dd-band' },
+      { name: 'DD', price: 7506, kind: 'dd-band' }
+    ],
+    stats: {
+      ES: { dd: 0.66 }
+    }
+  })
+});
+const derivedRiPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(derivedRiSnapshot, 'ES');
+assert.match(derivedRiPayload, /RI,68\.75,stat/);
+
 const chartLineOnlySnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-06-21T03:48:05.860Z',
   body: JSON.stringify({

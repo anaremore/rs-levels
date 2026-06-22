@@ -14,7 +14,7 @@ TradingView Pine cannot poll localhost directly, so the VARIS TradingView workfl
 4. Paste the copied `RSLEVELS|2` text into `RS Levels Payload`.
 5. Leave `Chart family` on `Auto`, or force `ES`/`NQ` if TradingView does not expose enough chart symbol context.
 
-The script reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. If no pasted `RI` is available, it uses `Manual Risk Interval (Points)`.
+The script reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. RS Levels prefers explicit `RI` captured from RocketScooter display data. If explicit `RI` is missing but DD bands are available, the TradingView exporter can include a derived display fallback from the outer DD-band pair. If no pasted `RI` is available, the script uses `Manual Risk Interval (Points)`.
 
 ## Bands
 

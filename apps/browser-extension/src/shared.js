@@ -132,7 +132,7 @@
   function summaryHasStats(summary = {}) {
     const stats = summary.stats || {};
     return Boolean(stats.mapCode) ||
-      [stats.dd, stats.resilience, stats.monthlyResilience, stats.weeklyResilience]
+      [stats.dd, stats.riskInterval, stats.resilience, stats.monthlyResilience, stats.weeklyResilience]
         .some((value) => value != null && value !== '' && Number.isFinite(Number(value)));
   }
 
@@ -218,6 +218,7 @@
           symbol,
           capturedAt: String(capturedAtInput || body.capturedAt || capture.capturedAt || new Date().toISOString()),
           levels: [],
+          ddBandPrices: [],
           seen: new Set()
         });
       }
@@ -236,9 +237,15 @@
       const name = tradingViewField(tradingViewLevelName(level));
       const kind = tradingViewField(tradingViewLevelKind(level, name));
       if (!name || !Number.isFinite(price) || !kind) return;
+      const group = ensureSymbol(symbol, level.capturedAt);
+      if (group && kind === 'dd-band' && !group.ddBandPrices.includes(price)) group.ddBandPrices.push(price);
       addPayloadRow(symbol, level.capturedAt, `${name},${tradingViewPrice(price)},${kind}`);
     });
-    for (const [symbol, stats] of captureStatsGroups(body)) {
+    const statsGroups = captureStatsGroups(body);
+    const statSymbols = new Set([...statsGroups.keys(), ...symbols.keys()]);
+    for (const symbol of statSymbols) {
+      const group = symbols.get(symbol);
+      const stats = statsWithDerivedRiskInterval(statsGroups.get(symbol), group && group.ddBandPrices);
       for (const row of tradingViewStatsRows(stats)) {
         addPayloadRow(symbol, body.capturedAt || capture.capturedAt, row);
       }
@@ -350,6 +357,24 @@
       weeklyResilience: next.weeklyResilience == null ? existing.weeklyResilience : next.weeklyResilience,
       mapCode: next.mapCode || existing.mapCode || ''
     };
+  }
+
+  function statsWithDerivedRiskInterval(stats = {}, ddBandPrices = []) {
+    const clean = stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : {};
+    if (clean.riskInterval != null) return clean;
+    const derived = riskIntervalFromDdBandPrices(ddBandPrices);
+    return derived == null ? clean : { ...clean, riskInterval: derived };
+  }
+
+  function riskIntervalFromDdBandPrices(prices = []) {
+    const unique = Array.from(new Set((Array.isArray(prices) ? prices : [])
+      .map((price) => firstFinite(price))
+      .filter((price) => price != null)
+      .map((price) => Number(price.toFixed(6)))))
+      .sort((a, b) => a - b);
+    if (unique.length < 2) return null;
+    const derived = (unique[unique.length - 1] - unique[0]) / 2;
+    return derived > 0 ? Number(derived.toFixed(6)) : null;
   }
 
   function tradingViewStatsRows(stats = {}) {

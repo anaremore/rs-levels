@@ -55,6 +55,24 @@ function makeStudyValues(id, name, plotTitles, values) {
   };
 }
 
+function makeCell(text) {
+  return { textContent: text };
+}
+
+function makeRow(cells) {
+  return {
+    querySelectorAll: (selector) => selector === 'th,td' || selector.includes('[role=')
+      ? cells.map(makeCell)
+      : []
+  };
+}
+
+function makeTable(rows) {
+  return {
+    querySelectorAll: (selector) => selector === 'tr' ? rows : []
+  };
+}
+
 const charts = [
   makeChart('F.US.EPU26', [
     makeShape('es-hp', 'horizontal_line', [{ price: 7565 }], { text: 'OVNHP', linecolor: '#2962ff' }),
@@ -80,6 +98,12 @@ const charts = [
   ])
 ];
 
+const riskIntervalTable = makeTable([
+  makeRow(['Contract', 'Month', 'Ticker', 'Product Name', 'Prev Session Close', 'RI', 'YL', 'DD-Band-U', 'DD-Band-L', 'Action']),
+  makeRow(['MES', 'U26', 'F.US.MESU26', 'MICRO E-MINI S&P500 FUTURES', '7574.75', '68.75', '545.00', '7643.50', '7506.00', '']),
+  makeRow(['MNQ', 'U26', 'F.US.MNQU26', 'MICRO E-MINI NASDAQ 100 FUTURE', '30726.5', '266.25', '2109.00', '30992.75', '30460.25', ''])
+]);
+
 const context = {
   Array,
   Date,
@@ -100,7 +124,8 @@ const context = {
   document: {
     querySelector: (selector) => selector === 'nav.navbar'
       ? { textContent: 'SP500: DD: 0.66 Res: 14.47 | 19.87 HP: 00.00 MHP: 00.00 NQ100: Res 73.82 | 49.87 HP: 00.00 MHP: 00.00' }
-      : null
+      : null,
+    querySelectorAll: (selector) => selector === 'table' ? [riskIntervalTable] : []
   },
   RS_SOCK: {
     scanner: {
@@ -108,9 +133,9 @@ const context = {
         data: {
           SPY: { BBrMr: 'B', LS: 'L', UD: 'D' },
           QQQ: { mapCode: 'BLD' },
-          MES: { Contract: 'MES', RI: 68.75 },
-          MNQ: { Contract: 'MNQ', RI: 266.25 },
-          NQ: { Ticker: 'F.US.ENQU26', RI: 266.25 }
+          MES: { Contract: 'MES', RI: 1 },
+          MNQ: { Contract: 'MNQ', RI: 2 },
+          NQ: { Ticker: 'F.US.ENQU26', RI: 3 }
         }
       }
     }

@@ -65,6 +65,17 @@ assert.match(genericManualLinePayload, /Red Line,30182,red-line/);
 assert.match(genericManualLinePayload, /Yellow Line,30979,yellow-line/);
 assert.match(genericManualLinePayload, /CAT,31232\.74,cat/);
 
+const derivedRiskIntervalPayload = createTradingViewPayloadExport({
+  symbol: 'MES',
+  capturedAt: '2026-06-21T18:05:00.000Z',
+  stats: { dd: 0.66 },
+  levels: [
+    { name: 'DD', price: 7643.5, kind: 'dd-band' },
+    { name: 'DD', price: 7506, kind: 'dd-band' }
+  ]
+}, { generatedAt: '2026-06-21T18:05:01.000Z' });
+assert.match(derivedRiskIntervalPayload, /RI,68\.75,stat/);
+
 const manyLevels = {
   symbol: 'MES',
   capturedAt: '2026-06-19T14:29:59.500Z',

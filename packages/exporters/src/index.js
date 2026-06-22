@@ -3,7 +3,7 @@ import { displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/ind
 export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
   const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
-  const statRows = tradingViewStatsRows(row.stats);
+  const statRows = tradingViewStatsRows(statsWithDerivedRiskInterval(row.stats, levels));
   return tradingViewPayload([{
     symbol: displaySymbolFor(row.symbol),
     capturedAt: row.capturedAt,
@@ -13,14 +13,17 @@ export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
 
 export function createTradingViewBundlePayloadExport(snapshot, options = {}) {
   const rows = bundleRows(snapshot, options);
-  return tradingViewPayload(rows.map((row) => ({
-    symbol: displaySymbolFor(row.symbol),
-    capturedAt: row.capturedAt,
-    levels: [
-      ...limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price)),
-      ...tradingViewStatsRows(row.stats)
-    ]
-  })), {
+  return tradingViewPayload(rows.map((row) => {
+    const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
+    return {
+      symbol: displaySymbolFor(row.symbol),
+      capturedAt: row.capturedAt,
+      levels: [
+        ...levels,
+        ...tradingViewStatsRows(statsWithDerivedRiskInterval(row.stats, levels))
+      ]
+    };
+  }), {
     ...options,
     generatedAt: options.generatedAt || snapshot?.generatedAt
   });
@@ -65,6 +68,26 @@ function tradingViewLevelRow(level) {
 function hasTradingViewRows(row) {
   return (Array.isArray(row.levels) && row.levels.some((level) => Number.isFinite(level.price))) ||
     tradingViewStatsRows(row.stats).length > 0;
+}
+
+function statsWithDerivedRiskInterval(stats = {}, levels = []) {
+  const riskInterval = finiteNumber(stats.riskInterval);
+  if (riskInterval != null) return stats;
+  const derived = riskIntervalFromDdBands(levels);
+  return derived == null ? stats : { ...stats, riskInterval: derived };
+}
+
+function riskIntervalFromDdBands(levels = []) {
+  if (!Array.isArray(levels)) return null;
+  const prices = Array.from(new Set(levels
+    .filter((level) => canonicalTradingViewKind(level?.kind) === 'dd-band' || /\bDD\b/i.test(field(level?.name)))
+    .map((level) => finiteNumber(level?.price))
+    .filter((price) => price != null)
+    .map((price) => Number(price.toFixed(6)))))
+    .sort((a, b) => a - b);
+  if (prices.length < 2) return null;
+  const derived = (prices[prices.length - 1] - prices[0]) / 2;
+  return derived > 0 ? Number(derived.toFixed(6)) : null;
 }
 
 function tradingViewStatsRows(stats = {}) {
