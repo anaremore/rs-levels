@@ -83,4 +83,4 @@ scripts/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service shell, TradingView paste workflow, browser extension shell, and initial display plugin sources are implemented with tests.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service, browser extension, TradingView paste workflow, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes, persisted service settings, and native app packaging.

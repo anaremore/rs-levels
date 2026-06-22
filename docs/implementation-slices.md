@@ -104,3 +104,4 @@ Deliverables:
 - cross-platform local service launch scripts
 - package tests and release checklist updates
 - CI coverage across Windows, macOS, and Linux
+- CI release artifact uploads for source package, source zip, browser-extension zip, and checksum sidecars

@@ -78,6 +78,9 @@ assert.match(extensionChecksum, new RegExp(`^[a-f0-9]{64}  rs-levels-browser-ext
 
 assert.match(packagingDoc, /rs-levels-browser-extension-<extension-version>\.zip/);
 assert.doesNotMatch(packagingDoc, /rs-levels-browser-extension-0\.1\.[0-9]+\.zip/);
+const installDoc = readFileSync(join(root, 'docs', 'install.md'), 'utf8');
+assert.match(installDoc, /rs-levels-browser-extension-<extension-version>\.zip/);
+assert.doesNotMatch(installDoc, /rs-levels-browser-extension-0\.1\.[0-9]+\.zip/);
 assert.match(ciDoc, /release archive sidecars/);
 assert.match(ciWorkflow, /Upload release archives/);
 assert.match(ciWorkflow, /dist\/rs-levels-browser-extension-\*\.zip/);
