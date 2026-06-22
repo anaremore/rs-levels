@@ -218,6 +218,7 @@
           symbol,
           capturedAt: String(capturedAtInput || body.capturedAt || capture.capturedAt || new Date().toISOString()),
           levels: [],
+          pendingLevels: [],
           ddBandPrices: [],
           seen: new Set()
         });
@@ -239,8 +240,20 @@
       if (!name || !Number.isFinite(price) || !kind) return;
       const group = ensureSymbol(symbol, level.capturedAt);
       if (group && kind === 'dd-band' && !group.ddBandPrices.includes(price)) group.ddBandPrices.push(price);
-      addPayloadRow(symbol, level.capturedAt, `${name},${tradingViewPrice(price)},${kind}`);
+      if (group) {
+        group.pendingLevels.push({
+          name,
+          price,
+          kind,
+          capturedAt: level.capturedAt
+        });
+      }
     });
+    for (const group of symbols.values()) {
+      normalizeTradingViewPayloadRows(group.pendingLevels).forEach((level) => {
+        addPayloadRow(group.symbol, level.capturedAt || group.capturedAt, `${tradingViewField(level.name)},${tradingViewPrice(level.price)},${tradingViewField(level.kind)}`);
+      });
+    }
     const statsGroups = captureStatsGroups(body);
     const statSymbols = new Set([...statsGroups.keys(), ...symbols.keys()]);
     for (const symbol of statSymbols) {
@@ -456,7 +469,7 @@
     const upper = raw.toUpperCase();
     const compactUpper = upper.replace(/[^A-Z0-9]+/g, '');
     if (upper.includes('PREVDAYCLOSE') || upper.includes('PREV DAY CLOSE')) return 'Prev Close';
-    if (upper.includes('MIDGAP') || upper.includes('HALFGAP') || upper.includes('HALF GAP')) return 'Mid Gap';
+    if (isHalfGapName(raw)) return 'Half Gap';
     if (upper.includes('LASTOPEN') || (upper.includes('OPEN') && !upper.includes('CLOSE'))) return 'Open';
     if (upper.includes('CLOSE')) return 'Close';
     if (upper.includes('OVNMHP')) return 'OVNMHP';
@@ -468,6 +481,40 @@
     if (upper.includes('HP')) return 'HP';
     if (upper.includes('DD')) return 'DD';
     return cleanedName || colorName || 'Level';
+  }
+
+  function normalizeTradingViewPayloadRows(levels = []) {
+    const prepared = (Array.isArray(levels) ? levels : []).map((level) => ({ ...level }));
+    const bullIndexes = [];
+    const bearIndexes = [];
+    prepared.forEach((level, index) => {
+      const kind = canonicalTradingViewKind(level.kind);
+      if (!isGenericZonePayloadRow(level, kind)) return;
+      if (kind === 'zone-bull') bullIndexes.push(index);
+      if (kind === 'zone-bear') bearIndexes.push(index);
+    });
+    const pairCount = Math.min(bullIndexes.length, bearIndexes.length);
+    for (let index = 0; index < pairCount; index += 1) {
+      const bull = prepared[bullIndexes[index]];
+      const bear = prepared[bearIndexes[index]];
+      const bullPrice = firstFinite(bull.price);
+      const bearPrice = firstFinite(bear.price);
+      if (bullPrice == null || bearPrice == null) continue;
+      bull.name = bullPrice >= bearPrice ? 'Bull Zone Top' : 'Bull Zone Bottom';
+      bear.name = bearPrice >= bullPrice ? 'Bear Zone Top' : 'Bear Zone Bottom';
+    }
+    return prepared;
+  }
+
+  function isGenericZonePayloadRow(level = {}, kind = canonicalTradingViewKind(level.kind)) {
+    if (kind !== 'zone-bull' && kind !== 'zone-bear') return false;
+    const compact = tradingViewField(level.name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+    return compact === 'BULLZONE' || compact === 'BEARZONE';
+  }
+
+  function isHalfGapName(value) {
+    const compact = tradingViewField(value).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+    return compact === 'MIDGAP' || compact === 'HALFGAP' || compact === 'HG';
   }
 
   function tradingViewLevelKind(level = {}, name = '') {

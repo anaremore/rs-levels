@@ -2,7 +2,7 @@ import { displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/ind
 
 export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
-  const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
+  const levels = limitLevels(prepareTradingViewLevels(row.levels), options.maxLevels).filter((level) => Number.isFinite(level.price));
   const statRows = tradingViewStatsRows(statsWithDerivedRiskInterval(row.stats, levels));
   return tradingViewPayload([{
     symbol: displaySymbolFor(row.symbol),
@@ -14,7 +14,7 @@ export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
 export function createTradingViewBundlePayloadExport(snapshot, options = {}) {
   const rows = bundleRows(snapshot, options);
   return tradingViewPayload(rows.map((row) => {
-    const levels = limitLevels(row.levels, options.maxLevels).filter((level) => Number.isFinite(level.price));
+    const levels = limitLevels(prepareTradingViewLevels(row.levels), options.maxLevels).filter((level) => Number.isFinite(level.price));
     return {
       symbol: displaySymbolFor(row.symbol),
       capturedAt: row.capturedAt,
@@ -63,6 +63,43 @@ function tradingViewLevelRow(level) {
   const price = tradingViewPrice(level?.price);
   const kind = tradingViewLevelKind(level, name);
   return name && price && kind ? `${name},${price},${kind}` : '';
+}
+
+function prepareTradingViewLevels(levels = []) {
+  if (!Array.isArray(levels)) return [];
+  const prepared = levels.map((level) => ({ ...level }));
+  const bullIndexes = [];
+  const bearIndexes = [];
+  prepared.forEach((level, index) => {
+    const kind = canonicalTradingViewKind(level?.kind);
+    if (!isGenericZoneLevel(level, kind)) return;
+    if (kind === 'zone-bull') bullIndexes.push(index);
+    if (kind === 'zone-bear') bearIndexes.push(index);
+  });
+  const pairCount = Math.min(bullIndexes.length, bearIndexes.length);
+  for (let index = 0; index < pairCount; index += 1) {
+    const bull = prepared[bullIndexes[index]];
+    const bear = prepared[bearIndexes[index]];
+    const bullPrice = finiteNumber(bull?.price);
+    const bearPrice = finiteNumber(bear?.price);
+    if (bullPrice == null || bearPrice == null) continue;
+    bull.name = bullPrice >= bearPrice ? 'Bull Zone Top' : 'Bull Zone Bottom';
+    bear.name = bearPrice >= bullPrice ? 'Bear Zone Top' : 'Bear Zone Bottom';
+  }
+  return prepared;
+}
+
+function isGenericZoneLevel(level, kind = canonicalTradingViewKind(level?.kind)) {
+  if (kind !== 'zone-bull' && kind !== 'zone-bear') return false;
+  const compact = field(level?.name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  return (compact === 'BULLZONE' || compact === 'BEARZONE') && !zoneBoundarySide(compact);
+}
+
+function zoneBoundarySide(text) {
+  const compact = field(text).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  if (compact.includes('TOP') || compact.includes('UPPER') || compact.includes('BZT') || compact.includes('BRZT')) return 1;
+  if (compact.includes('BOTTOM') || compact.includes('LOWER') || compact.includes('BZB') || compact.includes('BRZB')) return -1;
+  return 0;
 }
 
 function hasTradingViewRows(row) {
@@ -114,6 +151,7 @@ function tradingViewLevelName(level) {
   if (kind === 'red-line') return 'Red Line';
   if (kind === 'yellow-line') return 'Yellow Line';
   if (kind === 'cat') return 'CAT';
+  if (isHalfGapName(raw)) return 'Half Gap';
   const compact = raw.toUpperCase().replace(/[^A-Z0-9]+/g, '');
   if (/^RL\d*$/.test(compact) || compact.includes('REDLINE')) return 'Red Line';
   if (/^YL\d*$/.test(compact) || compact.includes('YELLOWLINE')) return 'Yellow Line';
@@ -193,10 +231,15 @@ function normalizedDisplayMatch(matchText) {
   const text = field(matchText);
   if (/^man_mhp$/i.test(text)) return 'MHP';
   if (/^man_hp$/i.test(text)) return 'HP';
-  if (/^midgap$/i.test(text) || /^halfgap$/i.test(text) || /^hg$/i.test(text)) return 'Mid Gap';
+  if (isHalfGapName(text)) return 'Half Gap';
   if (/^lastopen$/i.test(text)) return 'Open';
   if (/^prevdayclose$/i.test(text)) return 'Prev Close';
   return text;
+}
+
+function isHalfGapName(value) {
+  const compact = field(value).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  return compact === 'MIDGAP' || compact === 'HALFGAP' || compact === 'HG';
 }
 
 function field(value) {

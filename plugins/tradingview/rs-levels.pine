@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.06.22.2", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -157,6 +157,10 @@ zoneBoundarySide(name) =>
 genericZoneBoundary(name, kind) =>
     zoneKind(kind) and zoneBoundarySide(name) == 0
 
+pairedZoneBoundary(name, kind) =>
+    upperName = str.upper(name)
+    genericZoneBoundary(name, kind) or (zoneKind(kind) and (str.contains(upperName, "BULL ZONE") or str.contains(upperName, "BEAR ZONE")))
+
 zoneBoundaryLabel(kind, side) =>
     normalizedKind = cleanKind(kind)
     if normalizedKind == "zone-bull"
@@ -168,7 +172,7 @@ zoneBoundaryLabel(kind, side) =>
 
 halfGapLevel(name) =>
     upperName = str.upper(name)
-    str.contains(upperName, "MIDGAP") or str.contains(upperName, "HALFGAP") or str.contains(upperName, "HALF GAP") or str.contains(upperName, " HG")
+    str.contains(upperName, "MIDGAP") or str.contains(upperName, "MID GAP") or str.contains(upperName, "HALFGAP") or str.contains(upperName, "HALF GAP") or str.contains(upperName, " HG")
 
 lineStyle() =>
     switch lineStyleInput
@@ -396,7 +400,7 @@ zonePriceByOccurrence(items, count, kind, occurrence) =>
             itemName = array.get(fields, 0)
             itemKind = levelKind(itemName, array.get(fields, 2))
             itemPrice = str.tonumber(array.get(fields, 1))
-            if itemKind == kind and genericZoneBoundary(itemName, itemKind) and not na(itemPrice)
+            if itemKind == kind and pairedZoneBoundary(itemName, itemKind) and not na(itemPrice)
                 seen += 1
                 if seen == occurrence
                     result := itemPrice
@@ -410,7 +414,7 @@ genericZoneCount(items, count, kind) =>
             itemName = array.get(fields, 0)
             itemKind = levelKind(itemName, array.get(fields, 2))
             itemPrice = str.tonumber(array.get(fields, 1))
-            if itemKind == kind and genericZoneBoundary(itemName, itemKind) and not na(itemPrice)
+            if itemKind == kind and pairedZoneBoundary(itemName, itemKind) and not na(itemPrice)
                 total += 1
     total
 

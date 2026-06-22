@@ -84,7 +84,7 @@ function normalizedDisplayMatch(matchText) {
   const text = csvCell(matchText);
   if (/^man_mhp$/i.test(text)) return 'MHP';
   if (/^man_hp$/i.test(text)) return 'HP';
-  if (/^midgap$/i.test(text) || /^halfgap$/i.test(text) || /^hg$/i.test(text)) return 'Mid Gap';
+  if (/^midgap$/i.test(text) || /^halfgap$/i.test(text) || /^hg$/i.test(text)) return 'Half Gap';
   if (/^lastopen$/i.test(text)) return 'Open';
   if (/^prevdayclose$/i.test(text)) return 'Prev Close';
   return text;

@@ -94,6 +94,9 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
     capturedAt: '2026-06-21T03:47:02.097Z',
     levels: [
       { name: 'text SPY Open : 7559 Liquidity Map', price: 7559, kind: 'open-close' },
+      { name: 'MidGap', price: 7569, kind: 'open-close' },
+      { name: 'Bull Zone', price: 7566.4, kind: 'zone-bull' },
+      { name: 'Bear Zone', price: 7556.2, kind: 'zone-bear' },
       { name: 'Yellow Line', price: 7598, kind: 'yellow-line' },
       { name: 'Red Line', price: 7520, kind: 'red-line' },
       { symbol: 'F.US.ENQU26', name: 'OVNMHP', price: 30475, kind: 'mhp' },
@@ -114,6 +117,9 @@ assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSO
 const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'ALL');
 assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
+assert.match(localPayload, /Half Gap,7569,open-close/);
+assert.match(localPayload, /Bull Zone Top,7566\.4,zone-bull/);
+assert.match(localPayload, /Bear Zone Bottom,7556\.2,zone-bear/);
 assert.match(localPayload, /Yellow Line,7598,yellow-line/);
 assert.match(localPayload, /Red Line,7520,red-line/);
 assert.match(localPayload, /DD,0\.66,stat/);
@@ -129,6 +135,7 @@ assert.match(localPayload, /Red Line,30090,red-line/);
 assert.match(localPayload, /Yellow Line,30979,yellow-line/);
 assert.match(localPayload, /RI,266\.25,stat/);
 assert.match(localPayload, /WRes,-29\.29,stat/);
+assert.doesNotMatch(localPayload, /MidGap|Mid Gap/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 
