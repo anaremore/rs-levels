@@ -59,9 +59,9 @@ function tradingViewPayload(rows, options = {}) {
 }
 
 function tradingViewLevelRow(level) {
-  const name = tradingViewLevelName(level);
+  const kind = tradingViewLevelKind(level, level?.name);
+  const name = tradingViewLevelName({ ...level, kind });
   const price = tradingViewPrice(level?.price);
-  const kind = tradingViewLevelKind(level, name);
   return name && price && kind ? `${name},${price},${kind}` : '';
 }
 
@@ -136,7 +136,7 @@ function zoneBoundaryLevel(level, name, price, kind) {
 function highestZoneOrdinal(levels, kind) {
   let highest = 0;
   for (const level of levels) {
-    if (canonicalTradingViewKind(level?.kind) !== kind) continue;
+    if (tradingViewLevelKind(level, level?.name) !== kind) continue;
     const ordinal = zoneOrdinal(level?.name, kind);
     highest = Math.max(highest, ordinal);
   }
@@ -148,7 +148,7 @@ function zoneOrdinal(name, kind) {
   const prefix = kind === 'zone-bear' ? 'BRZ' : 'BZ';
   const match = compact.match(new RegExp(`^${prefix}[TB](\\d*)$`));
   if (match) return match[1] ? Number(match[1]) : 1;
-  const friendlyPrefix = kind === 'zone-bear' ? 'BEARZONE' : 'BULLZONE';
+  const friendlyPrefix = kind === 'zone-bear' ? '(?:BEARZONE|BEAZONE)' : 'BULLZONE';
   const friendlyMatch = compact.match(new RegExp(`^${friendlyPrefix}(?:TOP|BOTTOM)(\\d*)$`));
   if (friendlyMatch) return friendlyMatch[1] ? Number(friendlyMatch[1]) : 1;
   return 0;
@@ -157,7 +157,7 @@ function zoneOrdinal(name, kind) {
 function isGenericZoneLevel(level, kind = canonicalTradingViewKind(level?.kind)) {
   if (kind !== 'zone-bull' && kind !== 'zone-bear') return false;
   const compact = field(level?.name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
-  return compact === 'BULLZONE' || compact === 'BEARZONE';
+  return compact === 'BULLZONE' || compact === 'BEARZONE' || compact === 'BEAZONE';
 }
 
 function hasTradingViewRows(row) {
@@ -262,6 +262,7 @@ function canonicalTradingViewKind(value) {
       return 'zone-bull';
     case 'zonebear':
     case 'bearzone':
+    case 'beazone':
       return 'zone-bear';
     default:
       if (/^yl\d+$/.test(compact)) return 'yellow-line';
@@ -273,7 +274,7 @@ function canonicalTradingViewKind(value) {
 function inferManualKind(name) {
   const upper = field(name).toUpperCase();
   const compact = upper.replace(/[^A-Z0-9]+/g, '');
-  if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
+  if (upper.includes('BRZ') || upper.includes('BEAR') || upper.includes('BEA ZONE') || compact.includes('BEAZONE')) return 'zone-bear';
   if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
   if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
   if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';

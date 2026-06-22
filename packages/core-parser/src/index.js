@@ -752,8 +752,9 @@ function isBareQuoteFieldName(name) {
 
 function zoneSideFromText(value) {
   const text = stringValue(value).toUpperCase();
+  const compact = text.replace(/[^A-Z0-9]+/g, '');
   if (!text) return '';
-  if (text.includes('BEAR') || text.includes('SUPPLY') || text.includes('SELL') || text.includes('RESISTANCE') || text.includes('BRZ')) return 'bear';
+  if (text.includes('BEAR') || text.includes('BEA ZONE') || compact.includes('BEAZONE') || text.includes('SUPPLY') || text.includes('SELL') || text.includes('RESISTANCE') || text.includes('BRZ')) return 'bear';
   if (text.includes('BULL') || text.includes('DEMAND') || text.includes('BUY') || text.includes('SUPPORT') || /\bBZ/.test(text)) return 'bull';
   return '';
 }

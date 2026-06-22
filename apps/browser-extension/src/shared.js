@@ -235,8 +235,8 @@
       const symbol = publicDisplaySymbol(level && (level.symbol || level.displaySymbol) || defaultSymbol);
       if (symbol !== 'ES' && symbol !== 'NQ') return;
       const price = Number(level.price);
-      const name = tradingViewField(tradingViewLevelName(level));
-      const kind = tradingViewField(tradingViewLevelKind(level, name));
+      const kind = tradingViewField(tradingViewLevelKind(level, level && level.name));
+      const name = tradingViewField(tradingViewLevelName({ ...level, kind }));
       if (!name || !Number.isFinite(price) || !kind) return;
       const group = ensureSymbol(symbol, level.capturedAt);
       if (group && kind === 'dd-band' && !group.ddBandPrices.includes(price)) group.ddBandPrices.push(price);
@@ -554,7 +554,7 @@
   function highestZoneOrdinal(levels, kind) {
     let highest = 0;
     for (const level of levels) {
-      if (canonicalTradingViewKind(level.kind) !== kind) continue;
+      if (tradingViewLevelKind(level, level.name) !== kind) continue;
       highest = Math.max(highest, zoneOrdinal(level.name, kind));
     }
     return highest;
@@ -565,7 +565,7 @@
     const prefix = kind === 'zone-bear' ? 'BRZ' : 'BZ';
     const match = compact.match(new RegExp(`^${prefix}[TB](\\d*)$`));
     if (match) return match[1] ? Number(match[1]) : 1;
-    const friendlyPrefix = kind === 'zone-bear' ? 'BEARZONE' : 'BULLZONE';
+    const friendlyPrefix = kind === 'zone-bear' ? '(?:BEARZONE|BEAZONE)' : 'BULLZONE';
     const friendlyMatch = compact.match(new RegExp(`^${friendlyPrefix}(?:TOP|BOTTOM)(\\d*)$`));
     if (friendlyMatch) return friendlyMatch[1] ? Number(friendlyMatch[1]) : 1;
     return 0;
@@ -574,7 +574,7 @@
   function isGenericZonePayloadRow(level = {}, kind = canonicalTradingViewKind(level.kind)) {
     if (kind !== 'zone-bull' && kind !== 'zone-bear') return false;
     const compact = tradingViewField(level.name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
-    return compact === 'BULLZONE' || compact === 'BEARZONE';
+    return compact === 'BULLZONE' || compact === 'BEARZONE' || compact === 'BEAZONE';
   }
 
   function isHalfGapName(value) {
@@ -618,7 +618,7 @@
   function inferTradingViewKind(name) {
     const upper = String(name || '').toUpperCase();
     const compact = upper.replace(/[^A-Z0-9]+/g, '');
-    if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
+    if (upper.includes('BRZ') || upper.includes('BEAR') || upper.includes('BEA ZONE') || compact.includes('BEAZONE')) return 'zone-bear';
     if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
     if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
     if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
@@ -649,6 +649,7 @@
         return 'zone-bull';
       case 'zonebear':
       case 'bearzone':
+      case 'beazone':
         return 'zone-bear';
       default:
         if (/^yl\d+$/.test(compact)) return 'yellow-line';

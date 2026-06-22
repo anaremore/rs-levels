@@ -87,7 +87,7 @@ const charts = [
   ]),
   makeChart('F.US.ENQU26', [
     makeShape('nq-cat', 'horizontal_line', [{ price: 31232.74 }], { text: 'CAT', linecolor: '#7e57c2' }),
-    makeShape('nq-bear-zone', 'rectangle', [{ price: 30710 }, { price: 30680 }], { text: 'Bear Zone', backgroundColor: '#f06292' })
+    makeShape('nq-bear-zone', 'rectangle', [{ price: 30710 }, { price: 30680 }], { text: 'Bea Zone', backgroundColor: '#f06292' })
   ], [
     makeStudy('nq-liquidity', 'Liquidity Map', 'MidGap', 30625.75),
     makeStudyValues('nq-resilience', 'NQ100 Resilience', ['Res', 'MRes', 'WRes'], [
@@ -195,6 +195,7 @@ assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === '
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'CAT' && level.kind === 'cat' && level.price === 31232.74));
 assert.equal(body.levels.some((level) => /Liquidity Map|horizontal|text/i.test(level.name)), false);
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.kind === 'zone-bear'));
+assert.equal(body.levels.some((level) => /Bea Zone/i.test(level.name)), false);
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'MidGap'));
 assert.equal(body.levels.some((level) => level.symbol === 'SPY' || level.price === 722.51), false);
 assert.equal(body.stats.MES.dd, 0.66);

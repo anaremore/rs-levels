@@ -90,6 +90,19 @@ assert.match(mismatchedZoneSidePayload, /Bull Zone Top 4,30992\.75,zone-bull/);
 assert.doesNotMatch(mismatchedZoneSidePayload, /Bear Zone,|Bull Zone,/);
 assert.doesNotMatch(mismatchedZoneSidePayload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 
+const malformedBearZonePayload = createTradingViewPayloadExport({
+  symbol: 'ES',
+  capturedAt: '2026-06-22T18:47:08.322Z',
+  levels: [
+    { name: 'DD', price: 7643.5715, kind: 'dd-band' },
+    { name: 'DD', price: 7505.9285, kind: 'dd-band' },
+    { name: 'Bea Zone Top 1', price: 7556.2, kind: 'zone-bull' }
+  ]
+}, { generatedAt: '2026-06-22T18:47:09.000Z' });
+assert.match(malformedBearZonePayload, /Bear Zone Top 1,7556\.2,zone-bear/);
+assert.doesNotMatch(malformedBearZonePayload, /Bull Zone Top 1,7556\.2,zone-bull/);
+assert.doesNotMatch(malformedBearZonePayload, /Bea Zone/);
+
 const genericManualLinePayload = createTradingViewPayloadExport({
   symbol: 'NQ',
   capturedAt: '2026-06-21T18:00:00.000Z',

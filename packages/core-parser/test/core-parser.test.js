@@ -296,6 +296,7 @@ const zoneSideOverrides = normalizeCapture({
     capturedAt: '2026-06-19T14:31:57.250Z',
     levels: [
       { symbol: 'F.US.ENQU26', name: 'Bear Zone', price: 30655.75, kind: 'zone-bull', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'Bea Zone Top 1', price: 30654.25, kind: 'zone-bull', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'BrZT3', price: 30380, kind: 'zone-bull', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'Bull Zone', price: 30697.25, kind: 'zone-bear', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'BZT3', price: 30992.75, kind: 'zone-bear', source: 'rocketscooter-page' }
@@ -303,6 +304,7 @@ const zoneSideOverrides = normalizeCapture({
   }
 });
 assert.equal(zoneSideOverrides.symbols.MNQ.find((level) => level.name === 'Bear Zone').kind, 'zone-bear');
+assert.equal(zoneSideOverrides.symbols.MNQ.find((level) => level.name === 'Bea Zone Top 1').kind, 'zone-bear');
 assert.equal(zoneSideOverrides.symbols.MNQ.find((level) => level.name === 'BrZT3').kind, 'zone-bear');
 assert.equal(zoneSideOverrides.symbols.MNQ.find((level) => level.name === 'Bull Zone').kind, 'zone-bull');
 assert.equal(zoneSideOverrides.symbols.MNQ.find((level) => level.name === 'BZT3').kind, 'zone-bull');

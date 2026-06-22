@@ -604,11 +604,11 @@
 
   function levelNameFromLabel(label, color) {
     const text = compact(label);
-    const direct = text.match(/\b(OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bear\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*|CAT|YL\d*|RL\d*|Yellow\s*Line|Red\s*Line)\b/i);
+    const direct = text.match(/\b(OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bea(?:r)?\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*|CAT|YL\d*|RL\d*|Yellow\s*Line|Red\s*Line)\b/i);
     if (direct) return normalizeName(direct[1]);
     if (/\bOpen\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/\bClose\b/i.test(text)) return 'Open';
     if (/\bClose\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/Prev\s*Close|PrevDayClose/i.test(text)) return 'Close';
-    const priced = text.match(/\b(Bull\s*Zone|Bear\s*Zone|MHP|HP|DD|Open|Close|Half\s*Gap|HG|CAT|YL\d*|RL\d*|Yellow\s*Line|Red\s*Line)\s*:?\s*-?[\d,]+(?:\.\d+)?/i);
+    const priced = text.match(/\b(Bull\s*Zone|Bea(?:r)?\s*Zone|MHP|HP|DD|Open|Close|Half\s*Gap|HG|CAT|YL\d*|RL\d*|Yellow\s*Line|Red\s*Line)\s*:?\s*-?[\d,]+(?:\.\d+)?/i);
     if (priced) return normalizeName(priced[1]);
     if (/Liquidity|liq-map-history/i.test(text)) {
       const byColor = hpMhpFromColor(color);
@@ -625,7 +625,7 @@
     if (/^hp$/i.test(text)) return 'HP';
     if (/^hg$/i.test(text) || /half\s*gap/i.test(text)) return 'MidGap';
     if (/bull\s*zone/i.test(text)) return 'Bull Zone';
-    if (/bear\s*zone/i.test(text)) return 'Bear Zone';
+    if (/bea(?:r)?\s*zone/i.test(text)) return 'Bear Zone';
     if (/^cat$/i.test(text)) return 'CAT';
     if (/^yl\d*$/i.test(text) || /yellow\s*line/i.test(text)) return 'Yellow Line';
     if (/^rl\d*$/i.test(text) || /red\s*line/i.test(text)) return 'Red Line';
@@ -635,7 +635,8 @@
 
   function kindFromName(name) {
     const text = safeString(name).toUpperCase();
-    if (text.includes('BRZ') || text.includes('BEAR')) return 'zone-bear';
+    const compact = text.replace(/[^A-Z0-9]+/g, '');
+    if (text.includes('BRZ') || text.includes('BEAR') || text.includes('BEA ZONE') || compact.includes('BEAZONE')) return 'zone-bear';
     if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
     if (text.includes('CAT')) return 'cat';
     if (/\bYL\d*\b/.test(text) || text.includes('YELLOW LINE')) return 'yellow-line';
@@ -649,7 +650,8 @@
 
   function zoneSide(label) {
     const text = safeString(label).toUpperCase();
-    if (text.includes('BEAR') || text.includes('BRZ') || text.includes('SUPPLY') || text.includes('SELL')) return 'bear';
+    const compact = text.replace(/[^A-Z0-9]+/g, '');
+    if (text.includes('BEAR') || text.includes('BEA ZONE') || compact.includes('BEAZONE') || text.includes('BRZ') || text.includes('SUPPLY') || text.includes('SELL')) return 'bear';
     if (text.includes('BULL') || /\bBZ/.test(text) || text.includes('DEMAND') || text.includes('BUY')) return 'bull';
     return '';
   }

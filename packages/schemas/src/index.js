@@ -206,7 +206,7 @@ export function inferLevelKind(name) {
   if (text.includes('MHP')) return 'mhp';
   if (text.includes('HP')) return 'hp';
   if (text.includes('DD')) return 'dd-band';
-  if (text.includes('BRZ') || text.includes('BEAR')) return 'zone-bear';
+  if (text.includes('BRZ') || text.includes('BEAR') || text.includes('BEA ZONE') || compactText.includes('BEAZONE')) return 'zone-bear';
   if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
   if (text.includes('ZONE')) return 'zone';
   if (text.includes('CAT')) return 'cat';
@@ -235,6 +235,7 @@ function normalizeLevelKind(value) {
       return 'zone-bull';
     case 'zonebear':
     case 'bearzone':
+    case 'beazone':
       return 'zone-bear';
     default:
       if (/^yl\d+$/.test(compact)) return 'yellow-line';

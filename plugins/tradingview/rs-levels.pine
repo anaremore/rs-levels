@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.06.22.7", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.06.22.8", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -107,10 +107,20 @@ compactText(sourceText) =>
 zoneKindFromName(name) =>
     upperName = str.upper(name)
     compactName = compactText(name)
-    if str.contains(compactName, "BRZT") or str.contains(compactName, "BRZB") or str.contains(compactName, "BEARZONE") or str.contains(upperName, "BEAR ZONE")
+    if str.contains(compactName, "BRZT") or str.contains(compactName, "BRZB") or str.contains(compactName, "BEARZONE") or str.contains(compactName, "BEAZONE") or str.contains(upperName, "BEAR ZONE") or str.contains(upperName, "BEA ZONE")
         "zone-bear"
     else if str.contains(compactName, "BZT") or str.contains(compactName, "BZB") or str.contains(compactName, "BULLZONE") or str.contains(upperName, "BULL ZONE")
         "zone-bull"
+    else
+        ""
+
+zoneSideKind(name, kind) =>
+    namedZoneKind = zoneKindFromName(name)
+    normalizedKind = cleanKind(kind)
+    if namedZoneKind != ""
+        namedZoneKind
+    else if normalizedKind == "zone-bull" or normalizedKind == "zone-bear"
+        normalizedKind
     else
         ""
 
@@ -118,15 +128,15 @@ levelKind(name, kind) =>
     upperName = str.upper(name)
     compactName = compactText(name)
     normalizedKind = cleanKind(kind)
-    namedZoneKind = zoneKindFromName(name)
+    sideKind = zoneSideKind(name, kind)
     if str.contains(upperName, "CAT") or str.contains(compactName, "CAT")
         "cat"
     else if str.contains(upperName, "YELLOW LINE") or str.contains(compactName, "YELLOWLINE") or str.startswith(upperName, "YL")
         "yellow-line"
     else if str.contains(upperName, "RED LINE") or str.contains(compactName, "REDLINE") or str.startswith(upperName, "RL")
         "red-line"
-    else if namedZoneKind != ""
-        namedZoneKind
+    else if sideKind != ""
+        sideKind
     else
         normalizedKind
 
@@ -208,8 +218,8 @@ displayLabelNameForSide(name, kind, zoneSide) =>
     upperName = str.upper(name)
     compactName = compactText(name)
     normalizedKind = cleanKind(kind)
-    namedZoneKind = zoneKindFromName(name)
-    effectiveZoneKind = namedZoneKind != "" ? namedZoneKind : normalizedKind
+    effectiveZoneKind = zoneSideKind(name, kind)
+    effectiveZoneKind := effectiveZoneKind != "" ? effectiveZoneKind : normalizedKind
     effectiveZoneSide = zoneSide != 0 ? zoneSide : zoneBoundarySide(name)
     if zoneKind(effectiveZoneKind)
         zoneBoundaryLabel(effectiveZoneKind, effectiveZoneSide)
