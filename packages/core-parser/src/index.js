@@ -531,6 +531,8 @@ function explicitKind(row) {
 
 function levelKind(name, explicit, metadata = {}, options = {}) {
   const clean = stringValue(explicit).toLowerCase();
+  const inferred = inferLevelKind(name);
+  if (shouldUseInferredKind(clean, inferred)) return inferred;
   if (clean === 'bull-zone') return 'zone-bull';
   if (clean === 'bear-zone') return 'zone-bear';
   if (clean === 'zone-bull' || clean === 'zone-bear') return clean;
@@ -538,7 +540,14 @@ function levelKind(name, explicit, metadata = {}, options = {}) {
   const side = zoneSideFromText([metadata.side, metadata.type, metadata.group, options.zoneSide, name].map(stringValue).join(' '));
   if (side === 'bull') return 'zone-bull';
   if (side === 'bear') return 'zone-bear';
-  return clean || inferLevelKind(name);
+  return clean || inferred;
+}
+
+function shouldUseInferredKind(explicitKind, inferredKind) {
+  if (!inferredKind || inferredKind === 'unknown') return false;
+  if (!explicitKind) return true;
+  return ['yellow-line', 'red-line', 'cat'].includes(inferredKind) &&
+    ['reference', 'unknown', 'open-close'].includes(explicitKind);
 }
 
 function rgbToHex(r, g, b) {

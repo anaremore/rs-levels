@@ -42,6 +42,19 @@ assert.match(payload, /WRes,-29\.29,stat/);
 assert.match(payload, /Map BLD,0,stat/);
 assert.doesNotMatch(payload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);
 
+const genericManualLinePayload = createTradingViewPayloadExport({
+  symbol: 'NQ',
+  capturedAt: '2026-06-21T18:00:00.000Z',
+  levels: [
+    { name: 'Red Line', price: 30182, kind: 'unknown' },
+    { name: 'Yellow Line', price: 30979, kind: 'reference' },
+    { name: 'CAT', price: 31232.74, kind: 'open-close' }
+  ]
+}, { generatedAt: '2026-06-21T18:00:01.000Z' });
+assert.match(genericManualLinePayload, /Red Line,30182,red-line/);
+assert.match(genericManualLinePayload, /Yellow Line,30979,yellow-line/);
+assert.match(genericManualLinePayload, /CAT,31232\.74,cat/);
+
 const manyLevels = {
   symbol: 'MES',
   capturedAt: '2026-06-19T14:29:59.500Z',

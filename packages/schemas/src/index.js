@@ -72,7 +72,10 @@ export function normalizeSymbolSnapshot(symbol, input = {}) {
 }
 
 export function normalizeLevel(symbol, level = {}) {
-  const kind = LEVEL_KINDS.includes(level.kind) ? level.kind : inferLevelKind(level.name);
+  const explicitKind = stringValue(level.kind).toLowerCase();
+  const cleanKind = LEVEL_KINDS.includes(explicitKind) ? explicitKind : '';
+  const inferredKind = inferLevelKind(level.name);
+  const kind = shouldUseInferredKind(cleanKind, inferredKind) ? inferredKind : cleanKind || inferredKind;
   return {
     id: stringValue(level.id || level.key || stableLevelId(symbol, level)),
     symbol: normalizeSymbol(level.symbol || symbol),
@@ -210,6 +213,13 @@ export function inferLevelKind(name) {
   if (text.includes('OPEN') || text.includes('CLOSE') || text.includes('HIGH') || text.includes('GAP')) return 'open-close';
   if (text === 'DD' || text.includes('RES')) return 'stat';
   return 'unknown';
+}
+
+function shouldUseInferredKind(explicitKind, inferredKind) {
+  if (!inferredKind || inferredKind === 'unknown') return false;
+  if (!explicitKind) return true;
+  return ['yellow-line', 'red-line', 'cat'].includes(inferredKind) &&
+    ['reference', 'unknown', 'open-close'].includes(explicitKind);
 }
 
 export function stableLevelId(symbol, level = {}) {

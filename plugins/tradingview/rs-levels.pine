@@ -55,6 +55,18 @@ clearDrawings() =>
 cleanKind(kind) =>
     str.lower(str.replace_all(kind, " ", ""))
 
+levelKind(name, kind) =>
+    upperName = str.upper(name)
+    normalizedKind = cleanKind(kind)
+    if str.contains(upperName, "CAT")
+        "cat"
+    else if str.contains(upperName, "YELLOW LINE") or str.startswith(upperName, "YL")
+        "yellow-line"
+    else if str.contains(upperName, "RED LINE") or str.startswith(upperName, "RL")
+        "red-line"
+    else
+        normalizedKind
+
 kindColor(kind) =>
     normalizedKind = cleanKind(kind)
     switch normalizedKind
@@ -269,14 +281,15 @@ labelPrice(name, kind, price, labelIndex) =>
 
 drawLevel(name, priceText, kind, labelIndex) =>
     price = str.tonumber(priceText)
+    effectiveKind = levelKind(name, kind)
     drawn = false
-    if not na(price) and kindEnabled(kind)
-        levelColor = kindColor(kind)
+    if not na(price) and kindEnabled(effectiveKind)
+        levelColor = kindColor(effectiveKind)
         newLine = line.new(bar_index - 1, price, bar_index, price, extend = extend.both, color = levelColor, width = lineWidth, style = lineStyle())
         array.push(rsLines, newLine)
         if showLabels and array.size(rsLabels) < 499
-            labelText = displayLabelName(name, kind) + " " + str.tostring(price, format.mintick)
-            labelY = labelPrice(name, kind, price, labelIndex)
+            labelText = displayLabelName(name, effectiveKind) + " " + str.tostring(price, format.mintick)
+            labelY = labelPrice(name, effectiveKind, price, labelIndex)
             newLabel = label.new(labelX(labelIndex), labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 80), size = labelSize())
             array.push(rsLabels, newLabel)
         drawn := true
@@ -304,7 +317,7 @@ drawZoneFills(levelText, maxCount) =>
             if array.size(fields) >= 3
                 name = array.get(fields, 0)
                 price = str.tonumber(array.get(fields, 1))
-                kind = cleanKind(array.get(fields, 2))
+                kind = levelKind(name, array.get(fields, 2))
                 side = zoneBoundarySide(name)
                 if not na(price) and zoneKind(kind) and kindEnabled(kind) and side != 0
                     if kind == "zone-bull"
@@ -337,7 +350,7 @@ drawLevelText(levelText, maxCount) =>
         for i = 0 to count - 1
             fields = str.split(array.get(items, i), ",")
             if array.size(fields) >= 3
-                if drawLevel(array.get(fields, 0), array.get(fields, 1), cleanKind(array.get(fields, 2)), drawnCount)
+                if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2), drawnCount)
                     drawnCount := drawnCount + 1
     [drawnCount, totalCount]
 

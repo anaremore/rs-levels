@@ -40,6 +40,10 @@ assert.equal(normalized.price, 30272.75);
 assert.equal(normalized.kind, 'red-line');
 assert.equal(normalized.color, '#F23645');
 
+assert.equal(normalizeLevel('NQ', { name: 'Red Line', price: 30182, kind: 'unknown' }).kind, 'red-line');
+assert.equal(normalizeLevel('NQ', { name: 'Yellow Line', price: 30979, kind: 'reference' }).kind, 'yellow-line');
+assert.equal(normalizeLevel('NQ', { name: 'CAT', price: 31232.74, kind: 'open-close' }).kind, 'cat');
+
 const endpoint = normalizeEndpointSummary({
   key: '/platform/api/v1/ddbands/MES',
   url: 'https://example.test/platform/api/v1/ddbands/MES?private=value',
