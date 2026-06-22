@@ -149,6 +149,7 @@
       }
       readHeaderStats(state);
       readMapCodeStats(state);
+      readRiskIntervalStats(state);
     } catch (_err) {
       stats.readErrorCount += 1;
     }
@@ -199,6 +200,23 @@
     }
   }
 
+  function readRiskIntervalStats(state) {
+    try {
+      const table = globalThis.RS_SOCK && RS_SOCK.scanner && RS_SOCK.scanner.MASTER_TABLE && RS_SOCK.scanner.MASTER_TABLE.data;
+      if (!plainObject(table)) return;
+      Object.entries(table).forEach(([key, row]) => {
+        if (!plainObject(row)) return;
+        const symbol = futuresSymbol(row.contract || row.Contract || row.symbol || row.Symbol || row.ticker || row.Ticker || key);
+        if (!symbol) return;
+        addStats(state, symbol, {
+          riskInterval: firstFinite(row.riskInterval, row.ri, row.RI, row.risk, row.riskInt, row['Risk Interval'])
+        });
+      });
+    } catch (_err) {
+      stats.readErrorCount += 1;
+    }
+  }
+
   function readStudyStats(chart, symbol, state) {
     const studies = safeArray(call(chart, 'getAllStudies'));
     for (const study of studies) {
@@ -229,6 +247,7 @@
     if (!symbol || !plainObject(statsInput)) return;
     const clean = {
       dd: firstFinite(statsInput.dd, statsInput.ddRatio),
+      riskInterval: firstFinite(statsInput.riskInterval, statsInput.ri, statsInput.RI, statsInput.risk, statsInput.riskInt, statsInput['Risk Interval']),
       resilience: firstFinite(statsInput.resilience, statsInput.res, statsInput.dailyResilience),
       monthlyResilience: firstFinite(statsInput.monthlyResilience, statsInput.mres, statsInput.resilience2),
       weeklyResilience: firstFinite(statsInput.weeklyResilience, statsInput.wres, statsInput.resilience3),
@@ -238,6 +257,7 @@
     const existing = state.stats[symbol] || {};
     state.stats[symbol] = {
       dd: clean.dd == null ? existing.dd : clean.dd,
+      riskInterval: clean.riskInterval == null ? existing.riskInterval : clean.riskInterval,
       resilience: clean.resilience == null ? existing.resilience : clean.resilience,
       monthlyResilience: clean.monthlyResilience == null ? existing.monthlyResilience : clean.monthlyResilience,
       weeklyResilience: clean.weeklyResilience == null ? existing.weeklyResilience : clean.weeklyResilience,
@@ -670,6 +690,7 @@
       .map(([symbol, values]) => [
         symbol,
         values.dd,
+        values.riskInterval,
         values.resilience,
         values.monthlyResilience,
         values.weeklyResilience,
@@ -686,7 +707,7 @@
 
   function hasStats(values = {}) {
     return Boolean(values.mapCode) ||
-      [values.dd, values.resilience, values.monthlyResilience, values.weeklyResilience].some((value) => value != null);
+      [values.dd, values.riskInterval, values.resilience, values.monthlyResilience, values.weeklyResilience].some((value) => value != null);
   }
 
   function firstFinite(...values) {

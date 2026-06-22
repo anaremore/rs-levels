@@ -6,6 +6,7 @@ import {
   inferLevelKind,
   normalizeEndpointSummary,
   normalizeLevel,
+  normalizeStats,
   displaySymbolFor,
   normalizeSymbol,
   normalizeSymbolSnapshot,
@@ -43,6 +44,8 @@ assert.equal(normalized.color, '#F23645');
 assert.equal(normalizeLevel('NQ', { name: 'Red Line', price: 30182, kind: 'unknown' }).kind, 'red-line');
 assert.equal(normalizeLevel('NQ', { name: 'Yellow Line', price: 30979, kind: 'reference' }).kind, 'yellow-line');
 assert.equal(normalizeLevel('NQ', { name: 'CAT', price: 31232.74, kind: 'open-close' }).kind, 'cat');
+assert.equal(normalizeStats({ RI: '68.75' }).riskInterval, 68.75);
+assert.equal(normalizeStats({ 'Risk Interval': 266.25 }).riskInterval, 266.25);
 
 const endpoint = normalizeEndpointSummary({
   key: '/platform/api/v1/ddbands/MES',

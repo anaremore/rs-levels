@@ -353,7 +353,7 @@ const displayStats = normalizeCapture({
   body: {
     type: 'rs_snapshot',
     headerBar: {
-      sp500: { ddRatio: 0.66, resilience: 14.47, resilience2: 19.87 },
+      sp500: { ddRatio: 0.66, riskInterval: 68.75, resilience: 14.47, resilience2: 19.87 },
       nq100: { resilience: 73.82, resilience2: 49.87 }
     },
     mapCodes: {
@@ -361,16 +361,18 @@ const displayStats = normalizeCapture({
       QQQ: { mapCode: 'BLD' }
     },
     stats: {
-      NQ: { resilience3: -29.29 }
+      NQ: { RI: 266.25, resilience3: -29.29 }
     }
   }
 });
 assert.deepEqual(Object.keys(displayStats.symbols), []);
 assert.equal(displayStats.stats.MES.dd, 0.66);
+assert.equal(displayStats.stats.MES.riskInterval, 68.75);
 assert.equal(displayStats.stats.MES.resilience, 14.47);
 assert.equal(displayStats.stats.MES.monthlyResilience, 19.87);
 assert.equal(displayStats.stats.MES.mapCode, 'BLD');
 assert.equal(displayStats.stats.MNQ.dd, 0.66);
+assert.equal(displayStats.stats.MNQ.riskInterval, 266.25);
 assert.equal(displayStats.stats.MNQ.resilience, 73.82);
 assert.equal(displayStats.stats.MNQ.monthlyResilience, 49.87);
 assert.equal(displayStats.stats.MNQ.weeklyResilience, -29.29);
@@ -381,11 +383,22 @@ const collectedStats = collectStats({
   stats: [
     { symbol: 'ES', dd: 0, mapCode: 'bld' },
     { symbol: 'F.US.ENQU26', wres: 0 }
+  ],
+  scanner: {
+    rows: [
+      { Contract: 'MES', RI: 68.75 },
+      { Ticker: 'F.US.ENQU26', 'Risk Interval': 266.25 }
+    ]
+  },
+  nestedStats: [
+    { symbol: 'MNQ', riskInterval: 266.25 }
   ]
 });
 assert.equal(collectedStats.MES.dd, 0);
+assert.equal(collectedStats.MES.riskInterval, 68.75);
 assert.equal(collectedStats.MES.mapCode, 'BLD');
 assert.equal(collectedStats.MNQ.weeklyResilience, 0);
+assert.equal(collectedStats.MNQ.riskInterval, 266.25);
 
 const manyZones = collectLevels({
   MES: {

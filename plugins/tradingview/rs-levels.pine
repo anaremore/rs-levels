@@ -166,13 +166,27 @@ displayLabelName(name, kind) =>
         "Red Line"
     else
         cleaned = str.replace_all(name, "horizontal_line", "")
+        cleaned := str.replace_all(cleaned, "Horizontal_Line", "")
+        cleaned := str.replace_all(cleaned, "Horizontal_line", "")
+        cleaned := str.replace_all(cleaned, "HORIZONTAL_LINE", "")
+        cleaned := str.replace_all(cleaned, "horizontal line", "")
+        cleaned := str.replace_all(cleaned, "Horizontal Line", "")
+        cleaned := str.replace_all(cleaned, "HORIZONTAL LINE", "")
         cleaned := str.replace_all(cleaned, "horizontal_ray", "")
+        cleaned := str.replace_all(cleaned, "Horizontal_Ray", "")
+        cleaned := str.replace_all(cleaned, "Horizontal_ray", "")
+        cleaned := str.replace_all(cleaned, "HORIZONTAL_RAY", "")
         cleaned := str.replace_all(cleaned, "horizontal", "")
+        cleaned := str.replace_all(cleaned, "Horizontal", "")
+        cleaned := str.replace_all(cleaned, "HORIZONTAL", "")
         cleaned := str.replace_all(cleaned, "Liquidity Map", "")
         cleaned := str.replace_all(cleaned, "liq-map-history", "")
         cleaned := str.replace_all(cleaned, "text", "")
         cleaned := str.replace_all(cleaned, ":", " ")
-        cleaned
+        compactCleaned = str.replace_all(cleaned, " ", "")
+        compactCleaned := str.replace_all(compactCleaned, "_", "")
+        compactUpper = str.upper(compactCleaned)
+        compactCleaned == "" or compactUpper == "LINE" or compactUpper == "RAY" ? "Level" : cleaned
 
 chartPayloadSymbol() =>
     if chartFamilyInput != "Auto"
@@ -244,6 +258,7 @@ appendStatText(existingText, label, value) =>
 statsPanelBody(levelText) =>
     lineText = ""
     lineText := appendStatText(lineText, "DD", statValue(levelText, "DD"))
+    lineText := appendStatText(lineText, "RI", statValue(levelText, "RI"))
     lineText := appendStatText(lineText, "Res", statValue(levelText, "RES"))
     lineText := appendStatText(lineText, "MRes", statValue(levelText, "MRES"))
     lineText := appendStatText(lineText, "WRes", statValue(levelText, "WRES"))

@@ -56,6 +56,7 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 ```json
 {
   "dd": 0.66,
+  "riskInterval": 68.75,
   "resilience": 73.82,
   "weeklyResilience": -29.29,
   "monthlyResilience": 49.87,
@@ -63,7 +64,7 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 }
 ```
 
-`mapCode` is the RocketScooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload and displays them in the stats panel instead of drawing price lines.
+`riskInterval` is RocketScooter's RI value for the futures family. `mapCode` is the RocketScooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload and displays them in the stats panel instead of drawing price lines. VARIS-style indicators can use `riskInterval`/`RI` to size VWAP bands without treating it as a price level.
 
 ## Level
 

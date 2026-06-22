@@ -92,6 +92,7 @@ export function normalizeLevel(symbol, level = {}) {
 export function normalizeStats(stats = {}) {
   return {
     dd: firstFiniteNumber(stats.dd, stats.ddRatio),
+    riskInterval: firstFiniteNumber(stats.riskInterval, stats.ri, stats.RI, stats.risk, stats.riskInt, stats['Risk Interval']),
     resilience: firstFiniteNumber(stats.resilience, stats.res, stats.dailyResilience),
     weeklyResilience: firstFiniteNumber(stats.weeklyResilience, stats.wres, stats.resilience3),
     monthlyResilience: firstFiniteNumber(stats.monthlyResilience, stats.mres, stats.resilience2),

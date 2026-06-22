@@ -63,6 +63,7 @@
       ],
       "stats": {
         "dd": 0.59,
+        "riskInterval": 68.75,
         "resilience": -30.42,
         "weeklyResilience": -51.48,
         "monthlyResilience": -34.89,

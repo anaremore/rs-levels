@@ -366,7 +366,7 @@ try {
     capturedAt,
     body: {
       headerBar: {
-        sp500: { ddRatio: 0.66, resilience: 14.47, resilience2: 19.87 },
+        sp500: { ddRatio: 0.66, riskInterval: 68.75, resilience: 14.47, resilience2: 19.87 },
         nq100: { resilience: 73.82, resilience2: 49.87 }
       },
       mapCodes: {
@@ -374,13 +374,15 @@ try {
         QQQ: { mapCode: 'BLD' }
       },
       stats: {
-        NQ: { resilience3: -29.29 }
+        NQ: { RI: 266.25, resilience3: -29.29 }
       }
     }
   });
   assert.equal(statsCapture.snapshot.symbols.MES.stats.dd, 0.66);
+  assert.equal(statsCapture.snapshot.symbols.MES.stats.riskInterval, 68.75);
   assert.equal(statsCapture.snapshot.symbols.MES.stats.mapCode, 'BLD');
   assert.equal(statsCapture.snapshot.symbols.MNQ.stats.dd, 0.66);
+  assert.equal(statsCapture.snapshot.symbols.MNQ.stats.riskInterval, 266.25);
   assert.equal(statsCapture.snapshot.symbols.MNQ.stats.weeklyResilience, -29.29);
   assert.equal(statsCapture.snapshot.symbols.MES.levels.some((level) => level.kind === 'yellow-line'), true);
 
@@ -389,6 +391,7 @@ try {
   const esStats = await getJson(`${baseUrl}/stats/ES`);
   assert.equal(esStats.symbol, 'ES');
   assert.equal(esStats.stats.dd, 0.66);
+  assert.equal(esStats.stats.riskInterval, 68.75);
   assert.equal(esStats.stats.resilience, 14.47);
   assert.equal(esStats.stats.monthlyResilience, 19.87);
   assert.equal(esStats.stats.mapCode, 'BLD');
@@ -396,6 +399,7 @@ try {
   const nqStatsPathRows = await getText(`${baseUrl}/stats/NQ/rows`);
   assert.equal(nqStatsPathRows, nqStatsRows);
   assert.match(nqStatsRows, /DD,0\.66/);
+  assert.match(nqStatsRows, /RI,266\.25/);
   assert.match(nqStatsRows, /Res,73\.82/);
   assert.match(nqStatsRows, /MRes,49\.87/);
   assert.match(nqStatsRows, /WRes,-29\.29/);
@@ -404,6 +408,7 @@ try {
   assert.match(sierraStatsFeed, /^STATE,capturing/m);
   assert.match(sierraStatsFeed, /BrZT1,30450\.00,240,98,146,zone-bear/);
   assert.match(sierraStatsFeed, /DD,0\.66/);
+  assert.match(sierraStatsFeed, /RI,266\.25/);
   assert.match(sierraStatsFeed, /Res,73\.82/);
   assert.match(sierraStatsFeed, /MRes,49\.87/);
   assert.match(sierraStatsFeed, /WRes,-29\.29/);
@@ -431,6 +436,7 @@ try {
   assert.match(bundledTradingViewPayload, /Red Line,7496,red-line/);
   assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
   assert.match(bundledTradingViewPayload, /DD,0\.66,stat/);
+  assert.match(bundledTradingViewPayload, /RI,266\.25,stat/);
   assert.match(bundledTradingViewPayload, /Res,73\.82,stat/);
   assert.match(bundledTradingViewPayload, /MRes,49\.87,stat/);
   assert.match(bundledTradingViewPayload, /WRes,-29\.29,stat/);

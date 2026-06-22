@@ -368,6 +368,8 @@ namespace NinjaTrader.NinjaScript.Indicators
                     continue;
                 if (name.Equals("DD", StringComparison.OrdinalIgnoreCase))
                     result.Dd = number;
+                else if (name.Equals("RI", StringComparison.OrdinalIgnoreCase) || name.Equals("RiskInterval", StringComparison.OrdinalIgnoreCase) || name.Equals("Risk Interval", StringComparison.OrdinalIgnoreCase))
+                    result.RiskInterval = number;
                 else if (name.Equals("Res", StringComparison.OrdinalIgnoreCase))
                     result.Res = number;
                 else if (name.Equals("MRes", StringComparison.OrdinalIgnoreCase))
@@ -388,6 +390,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 text.Append("  Map ").Append(row.MapCode);
             string values = "";
             values = AppendStat(values, "DD", row.Dd);
+            values = AppendStat(values, "RI", row.RiskInterval);
             values = AppendStat(values, "Res", row.Res);
             values = AppendStat(values, "MRes", row.MRes);
             values = AppendStat(values, "WRes", row.WRes);
@@ -552,6 +555,7 @@ namespace NinjaTrader.NinjaScript.Indicators
         private sealed class StatsRow
         {
             public double? Dd { get; set; }
+            public double? RiskInterval { get; set; }
             public double? Res { get; set; }
             public double? MRes { get; set; }
             public double? WRes { get; set; }
@@ -561,7 +565,7 @@ namespace NinjaTrader.NinjaScript.Indicators
             {
                 get
                 {
-                    return Dd.HasValue || Res.HasValue || MRes.HasValue || WRes.HasValue || !string.IsNullOrWhiteSpace(MapCode);
+                    return Dd.HasValue || RiskInterval.HasValue || Res.HasValue || MRes.HasValue || WRes.HasValue || !string.IsNullOrWhiteSpace(MapCode);
                 }
             }
 
@@ -570,6 +574,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 return new StatsRow
                 {
                     Dd = Dd,
+                    RiskInterval = RiskInterval,
                     Res = Res,
                     MRes = MRes,
                     WRes = WRes,

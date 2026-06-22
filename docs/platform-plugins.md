@@ -23,7 +23,7 @@ Plugins may:
 - draw horizontal level lines
 - draw labels and zone fills
 - show feed freshness
-- show display-only stats such as DD, Res, MRes, WRes, and liquidity-map code
+- show display-only stats such as DD, RI, Res, MRes, WRes, and liquidity-map code
 
 ## Plugin Paths
 
@@ -43,7 +43,7 @@ Sierra Chart, NinjaTrader, Quantower, and Bookmap can consume the local API dire
 
 The direct-polling adapters consume read-only symbol level feeds. Sierra Chart uses `GET /sierra/:symbol`, a compact text feed that combines source state, levels, and stats in one response because ACSIL studies are more reliable with a single plain-text poll. NinjaTrader, Quantower, and Bookmap consume the generic display row `name,price,red,green,blue,kind` text feed at `GET /levels/:symbol?format=rows`. Adapters use the level `kind` for category-aware colors, including user-added yellow, red, and CAT manual lines. Sierra Chart, NinjaTrader, and Quantower also offset labels away from the level line and fill matched zone top/bottom pairs when their chart drawing APIs support it. Bookmap maps kinds into distinct value-line color slots.
 
-Direct adapters also consume display context such as `DD`, `Res`, `MRes`, `WRes`, and `Map BLD`. Sierra receives those values inside `/sierra/:symbol`; other direct adapters use `GET /stats/:symbol` or `GET /stats/:symbol?format=rows`. These values are display-only context from RocketScooter and are not interpreted as trading signals by this repository.
+Direct adapters also consume display context such as `DD`, `RI`, `Res`, `MRes`, `WRes`, and `Map BLD`. Sierra receives those values inside `/sierra/:symbol`; other direct adapters use `GET /stats/:symbol` or `GET /stats/:symbol?format=rows`. These values are display-only context from RocketScooter and are not interpreted as trading signals by this repository. Separate VARIS-style adapters use `RI` as a band-distance input while keeping it separate from the horizontal level overlay.
 
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path is therefore:
 

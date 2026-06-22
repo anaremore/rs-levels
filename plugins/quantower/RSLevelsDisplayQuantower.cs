@@ -413,6 +413,8 @@ namespace RSLevelsQuantower
                     continue;
                 if (name.Equals("DD", StringComparison.OrdinalIgnoreCase))
                     result.Dd = number;
+                else if (name.Equals("RI", StringComparison.OrdinalIgnoreCase) || name.Equals("RiskInterval", StringComparison.OrdinalIgnoreCase) || name.Equals("Risk Interval", StringComparison.OrdinalIgnoreCase))
+                    result.RiskInterval = number;
                 else if (name.Equals("Res", StringComparison.OrdinalIgnoreCase))
                     result.Res = number;
                 else if (name.Equals("MRes", StringComparison.OrdinalIgnoreCase))
@@ -433,6 +435,7 @@ namespace RSLevelsQuantower
                 text.Append("  Map ").Append(row.MapCode);
             string values = "";
             values = AppendStat(values, "DD", row.Dd);
+            values = AppendStat(values, "RI", row.RiskInterval);
             values = AppendStat(values, "Res", row.Res);
             values = AppendStat(values, "MRes", row.MRes);
             values = AppendStat(values, "WRes", row.WRes);
@@ -540,6 +543,7 @@ namespace RSLevelsQuantower
         private sealed class StatsRow
         {
             public double? Dd;
+            public double? RiskInterval;
             public double? Res;
             public double? MRes;
             public double? WRes;
@@ -549,7 +553,7 @@ namespace RSLevelsQuantower
             {
                 get
                 {
-                    return Dd.HasValue || Res.HasValue || MRes.HasValue || WRes.HasValue || !string.IsNullOrWhiteSpace(MapCode);
+                    return Dd.HasValue || RiskInterval.HasValue || Res.HasValue || MRes.HasValue || WRes.HasValue || !string.IsNullOrWhiteSpace(MapCode);
                 }
             }
 
@@ -558,6 +562,7 @@ namespace RSLevelsQuantower
                 return new StatsRow
                 {
                     Dd = Dd,
+                    RiskInterval = RiskInterval,
                     Res = Res,
                     MRes = MRes,
                     WRes = WRes,

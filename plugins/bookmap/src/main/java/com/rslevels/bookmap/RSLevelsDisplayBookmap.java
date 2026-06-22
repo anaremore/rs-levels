@@ -162,6 +162,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
 
     private static String formatStatsSummary(String rows) {
         String dd = "";
+        String ri = "";
         String res = "";
         String mres = "";
         String wres = "";
@@ -177,6 +178,8 @@ public class RSLevelsDisplayBookmap implements CustomModule {
                 map = value;
             else if ("DD".equals(name))
                 dd = formatMetric(value);
+            else if ("RI".equals(name) || "RISKINTERVAL".equals(name) || "RISK INTERVAL".equals(name))
+                ri = formatMetric(value);
             else if ("RES".equals(name))
                 res = formatMetric(value);
             else if ("MRES".equals(name))
@@ -189,6 +192,7 @@ public class RSLevelsDisplayBookmap implements CustomModule {
         if (!map.isEmpty())
             text = appendPart(text, "Map " + map);
         text = appendPart(text, metricPart("DD", dd));
+        text = appendPart(text, metricPart("RI", ri));
         text = appendPart(text, metricPart("Res", res));
         text = appendPart(text, metricPart("MRes", mres));
         text = appendPart(text, metricPart("WRes", wres));

@@ -127,7 +127,15 @@ export function endpointKey(capture = {}) {
 }
 
 function visitStats(value, keyHint, merge, options) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    value.forEach((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      if (looksLikeStatsNode(entry)) merge(candidateSymbolFromStatsNode(entry, keyHint || options.symbolHint), entry);
+      visitStats(entry, keyHint, merge, options);
+    });
+    return;
+  }
 
   const nodeSymbol = candidateSymbolFromStatsNode(value, options.symbolHint || keyHint);
   if (value.stats && typeof value.stats === 'object') {
@@ -144,12 +152,17 @@ function visitStats(value, keyHint, merge, options) {
   }
 
   for (const [key, child] of Object.entries(value)) {
-    if (!child || typeof child !== 'object' || Array.isArray(child)) continue;
+    if (!child || typeof child !== 'object') continue;
+    if (['levels', 'chartLines', 'referenceLines', 'zoneRectangles'].includes(key)) continue;
+    if (Array.isArray(child)) {
+      visitStats(child, keyHint, merge, options);
+      continue;
+    }
     const symbol = symbolFromStatsKey(key);
     if (symbol) {
       if (looksLikeStatsNode(child)) merge(symbol, child);
       visitStats(child, symbol, merge, options);
-    } else if (key !== 'levels' && key !== 'chartLines' && key !== 'referenceLines' && key !== 'zoneRectangles') {
+    } else {
       visitStats(child, keyHint, merge, options);
     }
   }
@@ -219,6 +232,12 @@ function looksLikeStatsNode(node) {
   return [
     node.dd,
     node.ddRatio,
+    node.riskInterval,
+    node.ri,
+    node.RI,
+    node.risk,
+    node.riskInt,
+    node['Risk Interval'],
     node.resilience,
     node.res,
     node.dailyResilience,
@@ -233,13 +252,13 @@ function looksLikeStatsNode(node) {
 
 function hasMeaningfulStats(stats = {}) {
   return Boolean(stats.mapCode) ||
-    [stats.dd, stats.resilience, stats.weeklyResilience, stats.monthlyResilience]
+    [stats.dd, stats.riskInterval, stats.resilience, stats.weeklyResilience, stats.monthlyResilience]
       .some((value) => value != null && Number.isFinite(Number(value)));
 }
 
 function mergeStatsValues(existing = {}, next = {}) {
   const merged = normalizeStats(existing);
-  ['dd', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
+  ['dd', 'riskInterval', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
     if (next[key] != null && Number.isFinite(Number(next[key]))) merged[key] = Number(next[key]);
   });
   if (next.mapCode) merged.mapCode = next.mapCode;
@@ -431,10 +450,22 @@ function walk(value, depth, context, visit) {
 }
 
 function firstString(node, keys) {
+  return valuesForKeys(node, keys)[0] || '';
+}
+
+function valuesForKeys(node, keys) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) return [];
+  const values = [];
   for (const key of keys) {
-    if (node[key] != null && String(node[key]).trim()) return String(node[key]).trim();
+    if (node[key] != null && String(node[key]).trim()) values.push(String(node[key]).trim());
   }
-  return '';
+  const seenKeys = new Set(keys);
+  const lowerKeys = new Set(keys.map((key) => key.toLowerCase()));
+  for (const [key, value] of Object.entries(node)) {
+    if (seenKeys.has(key) || !lowerKeys.has(key.toLowerCase())) continue;
+    if (value != null && String(value).trim()) values.push(String(value).trim());
+  }
+  return values;
 }
 
 function firstDisplayLevelName(node) {
@@ -658,9 +689,7 @@ function candidateSymbol(value) {
 
 function candidateSymbolFromNode(node, options = {}) {
   let sawUnsupportedSymbol = false;
-  for (const key of SYMBOL_KEYS) {
-    const raw = stringValue(node[key]);
-    if (!raw) continue;
+  for (const raw of valuesForKeys(node, SYMBOL_KEYS)) {
     const symbol = candidateSymbol(raw);
     if (symbol) return symbol;
     if (isUnsupportedSymbolContext(raw)) sawUnsupportedSymbol = true;

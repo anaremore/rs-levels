@@ -107,7 +107,10 @@ const context = {
       MASTER_TABLE: {
         data: {
           SPY: { BBrMr: 'B', LS: 'L', UD: 'D' },
-          QQQ: { mapCode: 'BLD' }
+          QQQ: { mapCode: 'BLD' },
+          MES: { Contract: 'MES', RI: 68.75 },
+          MNQ: { Contract: 'MNQ', RI: 266.25 },
+          NQ: { Ticker: 'F.US.ENQU26', RI: 266.25 }
         }
       }
     }
@@ -166,10 +169,12 @@ assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.kind === '
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'MidGap'));
 assert.equal(body.levels.some((level) => level.symbol === 'SPY' || level.price === 722.51), false);
 assert.equal(body.stats.MES.dd, 0.66);
+assert.equal(body.stats.MES.riskInterval, 68.75);
 assert.equal(body.stats.MES.resilience, 14.47);
 assert.equal(body.stats.MES.monthlyResilience, 19.87);
 assert.equal(body.stats.MES.mapCode, 'BLD');
 assert.equal(body.stats.MNQ.dd, 0.66);
+assert.equal(body.stats.MNQ.riskInterval, 266.25);
 assert.equal(body.stats.MNQ.resilience, 73.82);
 assert.equal(body.stats.MNQ.monthlyResilience, 49.87);
 assert.equal(body.stats.MNQ.weeklyResilience, -29.29);

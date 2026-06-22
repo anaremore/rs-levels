@@ -70,11 +70,13 @@ function hasTradingViewRows(row) {
 function tradingViewStatsRows(stats = {}) {
   const rows = [];
   const dd = finiteNumber(stats.dd);
+  const riskInterval = finiteNumber(stats.riskInterval);
   const resilience = finiteNumber(stats.resilience);
   const monthlyResilience = finiteNumber(stats.monthlyResilience);
   const weeklyResilience = finiteNumber(stats.weeklyResilience);
   const mapCode = field(stats.mapCode);
   if (dd != null) rows.push({ name: 'DD', price: dd, kind: 'stat' });
+  if (riskInterval != null) rows.push({ name: 'RI', price: riskInterval, kind: 'stat' });
   if (resilience != null) rows.push({ name: 'Res', price: resilience, kind: 'stat' });
   if (monthlyResilience != null) rows.push({ name: 'MRes', price: monthlyResilience, kind: 'stat' });
   if (weeklyResilience != null) rows.push({ name: 'WRes', price: weeklyResilience, kind: 'stat' });
@@ -85,6 +87,12 @@ function tradingViewStatsRows(stats = {}) {
 function tradingViewLevelName(level) {
   const raw = field(level?.name);
   if (!raw) return 'Level';
+  const kind = field(level?.kind).toLowerCase();
+  if (isDrawingObjectName(raw)) {
+    if (kind === 'red-line') return 'Red Line';
+    if (kind === 'yellow-line') return 'Yellow Line';
+    if (kind === 'cat') return 'CAT';
+  }
   if (!/horizontal|liquidity\s*map|\btext\b|liq-map-history/i.test(raw)) return raw;
   const upper = raw.toUpperCase();
   const displayMatch = raw.match(/\b(BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);
@@ -100,6 +108,10 @@ function tradingViewLevelName(level) {
     .replace(/\bLiquidity\s*Map\b/ig, ' ')
     .replace(/\bliq-map-history\b/ig, ' ')
     .replace(/\s*:\s*/g, ' ')) || 'Level';
+}
+
+function isDrawingObjectName(name) {
+  return /^horizontal[_\s-]*(line|ray)?$/i.test(field(name));
 }
 
 function normalizedDisplayMatch(matchText) {

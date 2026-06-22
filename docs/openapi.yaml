@@ -155,7 +155,7 @@ paths:
       summary: Display context stats
       responses:
         '200':
-          description: Display-only DD, resilience, and liquidity-map context for all known symbols
+          description: Display-only DD, risk interval, resilience, and liquidity-map context for all known symbols
           content:
             application/json:
               schema:
@@ -593,10 +593,13 @@ components:
           $ref: '#/components/schemas/Stats'
     Stats:
       type: object
-      description: Display-only context such as DD ratio, resilience, and RocketScooter liquidity-map code.
-      required: [dd, resilience, weeklyResilience, monthlyResilience, mapCode]
+      description: Display-only context such as DD ratio, risk interval, resilience, and RocketScooter liquidity-map code.
+      required: [dd, riskInterval, resilience, weeklyResilience, monthlyResilience, mapCode]
       properties:
         dd:
+          type: number
+          nullable: true
+        riskInterval:
           type: number
           nullable: true
         resilience:

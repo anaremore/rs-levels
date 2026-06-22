@@ -12,6 +12,7 @@ const els = {
   levelCount: document.getElementById('level-count'),
   capturedAt: document.getElementById('captured-at'),
   statDd: document.getElementById('stat-dd'),
+  statRi: document.getElementById('stat-ri'),
   statRes: document.getElementById('stat-res'),
   statMres: document.getElementById('stat-mres'),
   statWres: document.getElementById('stat-wres'),
@@ -116,6 +117,7 @@ function levelRow(level) {
 
 function renderStats(stats = {}) {
   els.statDd.textContent = formatMetric(stats.dd);
+  els.statRi.textContent = formatMetric(stats.riskInterval);
   els.statRes.textContent = formatMetric(stats.resilience);
   els.statMres.textContent = formatMetric(stats.monthlyResilience);
   els.statWres.textContent = formatMetric(stats.weeklyResilience);

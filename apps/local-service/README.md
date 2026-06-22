@@ -82,7 +82,7 @@ POST /capture/api
 
 Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/levels/:symbol/rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
 
-/stats returns display-only context such as DD ratio, Res, MRes, WRes, and liquidity-map codes like `Map BLD`. /stats/:symbol?format=rows and /stats/:symbol/rows provide simple row feeds for direct platform plugins.
+/stats returns display-only context such as DD ratio, RI, Res, MRes, WRes, and liquidity-map codes like `Map BLD`. /stats/:symbol?format=rows and /stats/:symbol/rows provide simple row feeds for direct platform plugins and VARIS-style band indicators.
 
 /status includes scrubbed per-symbol summaries so clients can confirm a selected symbol has captured levels before requesting an export.
 

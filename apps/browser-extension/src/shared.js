@@ -333,6 +333,7 @@
   function normalizeStatsAliases(stats = {}) {
     return {
       dd: firstFinite(stats.dd, stats.ddRatio),
+      riskInterval: firstFinite(stats.riskInterval, stats.ri, stats.RI, stats.risk, stats.riskInt, stats['Risk Interval']),
       resilience: firstFinite(stats.resilience, stats.res, stats.dailyResilience),
       monthlyResilience: firstFinite(stats.monthlyResilience, stats.mres, stats.resilience2),
       weeklyResilience: firstFinite(stats.weeklyResilience, stats.wres, stats.resilience3),
@@ -343,6 +344,7 @@
   function mergeStats(existing = {}, next = {}) {
     return {
       dd: next.dd == null ? existing.dd : next.dd,
+      riskInterval: next.riskInterval == null ? existing.riskInterval : next.riskInterval,
       resilience: next.resilience == null ? existing.resilience : next.resilience,
       monthlyResilience: next.monthlyResilience == null ? existing.monthlyResilience : next.monthlyResilience,
       weeklyResilience: next.weeklyResilience == null ? existing.weeklyResilience : next.weeklyResilience,
@@ -353,6 +355,7 @@
   function tradingViewStatsRows(stats = {}) {
     const rows = [];
     if (stats.dd != null) rows.push(`DD,${tradingViewPrice(stats.dd)},stat`);
+    if (stats.riskInterval != null) rows.push(`RI,${tradingViewPrice(stats.riskInterval)},stat`);
     if (stats.resilience != null) rows.push(`Res,${tradingViewPrice(stats.resilience)},stat`);
     if (stats.monthlyResilience != null) rows.push(`MRes,${tradingViewPrice(stats.monthlyResilience)},stat`);
     if (stats.weeklyResilience != null) rows.push(`WRes,${tradingViewPrice(stats.weeklyResilience)},stat`);
@@ -362,7 +365,7 @@
 
   function hasStats(stats = {}) {
     return Boolean(stats.mapCode) ||
-      [stats.dd, stats.resilience, stats.monthlyResilience, stats.weeklyResilience].some((value) => value != null);
+      [stats.dd, stats.riskInterval, stats.resilience, stats.monthlyResilience, stats.weeklyResilience].some((value) => value != null);
   }
 
   function firstFinite(...values) {
@@ -417,7 +420,10 @@
   }
 
   function tradingViewLevelName(level = {}) {
-    const raw = tradingViewField(level.name || level.label || level.text || level.title || manualLineNameFromColor(levelColor(level)) || 'Level');
+    const colorName = manualLineNameFromColor(levelColor(level));
+    const raw = tradingViewField(level.name || level.label || level.text || level.title || colorName || 'Level');
+    const cleanedName = cleanTradingViewLevelName(raw);
+    if (isDrawingObjectName(raw) && colorName) return colorName;
     const upper = raw.toUpperCase();
     if (upper.includes('PREVDAYCLOSE') || upper.includes('PREV DAY CLOSE')) return 'Prev Close';
     if (upper.includes('MIDGAP') || upper.includes('HALFGAP') || upper.includes('HALF GAP')) return 'Mid Gap';
@@ -431,7 +437,7 @@
     if (upper.includes('MHP')) return 'MHP';
     if (upper.includes('HP')) return 'HP';
     if (upper.includes('DD')) return 'DD';
-    return raw || 'Level';
+    return cleanedName || colorName || 'Level';
   }
 
   function tradingViewLevelKind(level = {}, name = '') {
@@ -444,7 +450,24 @@
   }
 
   function displayLineName(line = {}) {
-    return tradingViewField(line.name || line.label || line.text || line.title || manualLineNameFromColor(levelColor(line)));
+    const rawName = tradingViewField(line.name);
+    const explicitText = tradingViewField(line.label || line.text || line.title);
+    const colorName = manualLineNameFromColor(levelColor(line));
+    if (isDrawingObjectName(rawName)) return colorName || cleanTradingViewLevelName(explicitText || rawName);
+    return cleanTradingViewLevelName(rawName || explicitText || colorName);
+  }
+
+  function cleanTradingViewLevelName(name) {
+    return tradingViewField(String(name || '')
+      .replace(/horizontal[_\s-]*(line|ray)?/ig, ' ')
+      .replace(/\btext\b/ig, ' ')
+      .replace(/\bLiquidity\s*Map\b/ig, ' ')
+      .replace(/\bliq-map-history\b/ig, ' ')
+      .replace(/\s*:\s*/g, ' '));
+  }
+
+  function isDrawingObjectName(name) {
+    return /^horizontal[_\s-]*(line|ray)?$/i.test(tradingViewField(name));
   }
 
   function inferTradingViewKind(name) {

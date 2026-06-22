@@ -271,6 +271,7 @@ function publicStatsRow(row = {}) {
 function publicStats(stats = {}) {
   return {
     dd: finiteNumberOrNull(stats.dd),
+    riskInterval: finiteNumberOrNull(stats.riskInterval),
     resilience: finiteNumberOrNull(stats.resilience),
     weeklyResilience: finiteNumberOrNull(stats.weeklyResilience),
     monthlyResilience: finiteNumberOrNull(stats.monthlyResilience),
@@ -282,6 +283,7 @@ function statsToRowsText(stats = {}) {
   const clean = publicStats(stats);
   const rows = [];
   if (clean.dd != null) rows.push(`DD,${formatMetric(clean.dd)}`);
+  if (clean.riskInterval != null) rows.push(`RI,${formatMetric(clean.riskInterval)}`);
   if (clean.resilience != null) rows.push(`Res,${formatMetric(clean.resilience)}`);
   if (clean.monthlyResilience != null) rows.push(`MRes,${formatMetric(clean.monthlyResilience)}`);
   if (clean.weeklyResilience != null) rows.push(`WRes,${formatMetric(clean.weeklyResilience)}`);
@@ -304,7 +306,7 @@ function rowCell(value) {
 
 function hasPublicStats(stats = {}) {
   return Boolean(stats.mapCode) ||
-    [stats.dd, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
+    [stats.dd, stats.riskInterval, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
 }
 
 function publicLevel(level = {}, canonical, display) {

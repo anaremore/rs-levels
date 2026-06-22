@@ -163,7 +163,7 @@ export function createLevelStore(options = {}) {
 function mergeStats(existing = {}, next = {}) {
   const merged = normalizeStats(existing);
   const incoming = normalizeStats(next);
-  ['dd', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
+  ['dd', 'riskInterval', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
     if (incoming[key] != null && Number.isFinite(Number(incoming[key]))) merged[key] = Number(incoming[key]);
   });
   if (incoming.mapCode) merged.mapCode = incoming.mapCode;

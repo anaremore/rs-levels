@@ -242,13 +242,15 @@ std::string FormatMetric(const std::string& value)
     return text;
 }
 
-void AssignStat(const std::string& name, const std::string& value, std::string& dd, std::string& res, std::string& mres, std::string& wres, std::string& map)
+void AssignStat(const std::string& name, const std::string& value, std::string& dd, std::string& ri, std::string& res, std::string& mres, std::string& wres, std::string& map)
 {
     const std::string upper = Upper(name);
     if (upper == "MAP" || upper == "MAPCODE")
         map = value;
     else if (upper == "DD")
         dd = FormatMetric(value);
+    else if (upper == "RI" || upper == "RISKINTERVAL" || upper == "RISK INTERVAL")
+        ri = FormatMetric(value);
     else if (upper == "RES")
         res = FormatMetric(value);
     else if (upper == "MRES")
@@ -273,6 +275,7 @@ std::string DisplaySymbol(const char* input)
 SCString FormatStatsText(const SCString& body, const char* symbol)
 {
     std::string dd;
+    std::string ri;
     std::string res;
     std::string mres;
     std::string wres;
@@ -287,11 +290,12 @@ SCString FormatStatsText(const SCString& body, const char* symbol)
         while (std::getline(rowStream, field, ','))
             fields.push_back(Trim(field));
         if (fields.size() >= 2)
-            AssignStat(fields[0], fields[1], dd, res, mres, wres, map);
+            AssignStat(fields[0], fields[1], dd, ri, res, mres, wres, map);
     }
 
     std::string values;
     values = AppendStatText(values, "DD", dd);
+    values = AppendStatText(values, "RI", ri);
     values = AppendStatText(values, "Res", res);
     values = AppendStatText(values, "MRes", mres);
     values = AppendStatText(values, "WRes", wres);

@@ -14,10 +14,10 @@ The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicato
 ## Payload Format
 
 ```text
-RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp
+RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull;RI,68.75,stat|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp;RI,266.25,stat
 ```
 
-The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. DD/Res/MRes/WRes/Map context uses `stat` rows; the indicator renders those values in its stats panel and does not draw them as price lines.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders those values in its stats panel and does not draw them as price lines. VARIS-style Pine indicators can read `RI` from the same pasted payload.
 
 ## Safety Boundary
 
@@ -28,7 +28,7 @@ This indicator only draws lines, labels, and zone fills. It does not contain str
 - `RS Levels Payload`: `RSLEVELS|2` text from the extension or local API, pasted into TradingView's single-row text input.
 - `Chart family`: `Auto`, `ES`, or `NQ`.
 - `Labels`: show or hide level labels.
-- `Stats panel`: show or hide DD/Res/MRes/WRes/Map context from `stat` rows.
+- `Stats panel`: show or hide DD/RI/Res/MRes/WRes/Map context from `stat` rows.
 - Kind toggles: DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other levels. Each colored kind keeps its checkbox and color picker on one row.
 - Yellow lines default to yellow, red lines default to red, and CAT lines default to purple. The indicator normalizes captured name/kind text before applying these colors.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.

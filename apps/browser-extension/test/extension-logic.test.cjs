@@ -101,8 +101,8 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
       { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
     ],
     stats: {
-      ES: { dd: 0.66, resilience: 14.47, monthlyResilience: 19.87, mapCode: 'BLD' },
-      NQ: { dd: 0.66, resilience: 73.82, monthlyResilience: 49.87, weeklyResilience: -29.29, mapCode: 'BLD' }
+      ES: { dd: 0.66, riskInterval: 68.75, resilience: 14.47, monthlyResilience: 19.87, mapCode: 'BLD' },
+      NQ: { dd: 0.66, riskInterval: 266.25, resilience: 73.82, monthlyResilience: 49.87, weeklyResilience: -29.29, mapCode: 'BLD' }
     }
   })
 });
@@ -113,11 +113,13 @@ assert.match(localPayload, /Open,7559,open-close/);
 assert.match(localPayload, /Yellow Line,7598,yellow-line/);
 assert.match(localPayload, /Red Line,7520,red-line/);
 assert.match(localPayload, /DD,0\.66,stat/);
+assert.match(localPayload, /RI,68\.75,stat/);
 assert.match(localPayload, /Res,14\.47,stat/);
 assert.match(localPayload, /MRes,19\.87,stat/);
 assert.match(localPayload, /Map BLD,0,stat/);
 assert.match(localPayload, /\|NQ\|2026-06-21T03:47:02\.097Z\|OVNMHP,30475,mhp/);
 assert.match(localPayload, /CAT,31232\.74,cat/);
+assert.match(localPayload, /RI,266\.25,stat/);
 assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
@@ -132,6 +134,7 @@ const chartLineOnlySnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapsh
       { index: 'ES', chart: 'F.US.EPU26', price: 7598, color: '#ffeb3b' },
       { index: 'ES', chart: 'F.US.EPU26', price: 7632, color: '#ffeb3b' },
       { index: 'ES', chart: 'F.US.EPU26', text: 'RL', price: 7520, linecolor: 'rgb(242, 54, 69)' },
+      { index: 'NQ', chart: 'F.US.ENQU26', name: 'horizontal_line', price: 30380, color: '#f23645' },
       { index: 'NQ', chart: 'F.US.ENQU26', text: 'CAT', price: 31232.74, color: '#7e57c2' },
       { index: 'SPY', chart: 'SPY', text: 'PrevDayClose', price: 722.51 }
     ],
@@ -145,7 +148,9 @@ assert.match(chartLineOnlyPayload, /Yellow Line,7598,yellow-line/);
 assert.match(chartLineOnlyPayload, /Yellow Line,7632,yellow-line/);
 assert.match(chartLineOnlyPayload, /Red Line,7520,red-line/);
 assert.match(chartLineOnlyPayload, /Red Line,7496,red-line/);
+assert.match(chartLineOnlyPayload, /Red Line,30380,red-line/);
 assert.match(chartLineOnlyPayload, /CAT,31232\.74,cat/);
+assert.doesNotMatch(chartLineOnlyPayload, /horizontal_line/);
 assert.doesNotMatch(chartLineOnlyPayload, /\|SPY\|/);
 
 assert.throws(
