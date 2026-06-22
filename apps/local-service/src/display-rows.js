@@ -57,6 +57,12 @@ function csvCell(value) {
 function displayLevelName(level) {
   const raw = csvCell(level?.name || 'Level');
   if (!raw) return 'Level';
+  if (level?.kind === 'red-line') return 'Red Line';
+  if (level?.kind === 'yellow-line') return 'Yellow Line';
+  if (level?.kind === 'cat') return 'CAT';
+  const compact = raw.toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  if (/^RL\d*$/.test(compact) || compact.includes('REDLINE')) return 'Red Line';
+  if (/^YL\d*$/.test(compact) || compact.includes('YELLOWLINE')) return 'Yellow Line';
   if (!/horizontal|liquidity\s*map|\btext\b|liq-map-history/i.test(raw)) return raw;
   const upper = raw.toUpperCase();
   const displayMatch = raw.match(/\b(BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);

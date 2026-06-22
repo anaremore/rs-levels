@@ -12,7 +12,7 @@ SCDLLName("RS Levels Display")
 
 namespace
 {
-constexpr const char* RS_SIERRA_BUILD = "sierra-feed-2026-06-21.1";
+constexpr const char* RS_SIERRA_BUILD = "sierra-feed-2026-06-22.1";
 constexpr int RS_MAX_LEVELS = 500;
 constexpr int RS_LINE_BASE = 730000;
 constexpr int RS_LABEL_BASE = 731000;
@@ -158,6 +158,33 @@ std::string Upper(std::string value)
     return value;
 }
 
+std::string CompactUpper(const std::string& value)
+{
+    std::string result;
+    for (char ch : value)
+    {
+        const unsigned char unsignedCh = static_cast<unsigned char>(ch);
+        if (std::isalnum(unsignedCh))
+            result.push_back(static_cast<char>(std::toupper(unsignedCh)));
+    }
+    return result;
+}
+
+bool IsNumberedAlias(const std::string& compact, const char* prefix)
+{
+    const std::string textPrefix(prefix);
+    if (compact == textPrefix)
+        return true;
+    if (compact.find(textPrefix) != 0 || compact.size() == textPrefix.size())
+        return false;
+    for (size_t index = textPrefix.size(); index < compact.size(); ++index)
+    {
+        if (!std::isdigit(static_cast<unsigned char>(compact[index])))
+            return false;
+    }
+    return true;
+}
+
 std::string ReplaceAll(std::string value, const std::string& needle, const std::string& replacement)
 {
     size_t position = 0;
@@ -172,6 +199,7 @@ std::string ReplaceAll(std::string value, const std::string& needle, const std::
 std::string InferKind(const std::string& name)
 {
     const std::string upper = Upper(name);
+    const std::string compact = CompactUpper(name);
     if (upper.find("MHP") != std::string::npos) return "mhp";
     if (upper.find("HP") != std::string::npos) return "hp";
     if (upper.find("DD") != std::string::npos) return "dd-band";
@@ -179,10 +207,77 @@ std::string InferKind(const std::string& name)
     if (upper.find("BZ") != std::string::npos || upper.find("BULL") != std::string::npos) return "zone-bull";
     if (upper.find("ZONE") != std::string::npos) return "zone";
     if (upper.find("CAT") != std::string::npos) return "cat";
-    if (upper.find("YELLOW LINE") != std::string::npos || upper == "YL") return "yellow-line";
-    if (upper.find("RED LINE") != std::string::npos || upper == "RL") return "red-line";
+    if (upper.find("YELLOW LINE") != std::string::npos || compact.find("YELLOWLINE") != std::string::npos || IsNumberedAlias(compact, "YL")) return "yellow-line";
+    if (upper.find("RED LINE") != std::string::npos || compact.find("REDLINE") != std::string::npos || IsNumberedAlias(compact, "RL")) return "red-line";
     if (upper.find("OPEN") != std::string::npos || upper.find("CLOSE") != std::string::npos || upper.find("GAP") != std::string::npos) return "open-close";
     return "unknown";
+}
+
+std::string CanonicalKind(const std::string& kind)
+{
+    const std::string compact = CompactUpper(kind);
+    if (compact == "DDBAND")
+        return "dd-band";
+    if (compact == "OPENCLOSE")
+        return "open-close";
+    if (compact == "YELLOWLINE")
+        return "yellow-line";
+    if (compact == "REDLINE")
+        return "red-line";
+    if (compact == "CATLINE")
+        return "cat";
+    if (compact == "ZONEBULL" || compact == "BULLZONE")
+        return "zone-bull";
+    if (compact == "ZONEBEAR" || compact == "BEARZONE")
+        return "zone-bear";
+    std::string lowered = Trim(kind);
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return lowered;
+}
+
+bool ShouldUseInferredKind(const std::string& explicitKind, const std::string& inferredKind)
+{
+    if (inferredKind.empty() || inferredKind == "unknown")
+        return false;
+    if (explicitKind.empty())
+        return true;
+    if (inferredKind == "yellow-line" || inferredKind == "red-line" || inferredKind == "cat")
+        return explicitKind == "reference" || explicitKind == "unknown" || explicitKind == "open-close";
+    return false;
+}
+
+std::string NormalizedKind(const std::string& name, const std::string& explicitKind)
+{
+    const std::string clean = CanonicalKind(explicitKind);
+    const std::string inferred = InferKind(name);
+    if (ShouldUseInferredKind(clean, inferred))
+        return inferred;
+    if (!clean.empty() && clean != "zone")
+        return clean;
+    return clean.empty() ? inferred : clean;
+}
+
+std::string OpenCloseDedupeKey(const RsLevel& level)
+{
+    if (level.kind != "open-close")
+        return "";
+    const std::string upper = Upper(level.name);
+    if (upper.find("PREVDAYCLOSE") != std::string::npos || upper.find("PREV DAY CLOSE") != std::string::npos)
+        return "PREV-CLOSE";
+    if (upper.find("MIDGAP") != std::string::npos || upper.find("HALFGAP") != std::string::npos || upper.find("HALF GAP") != std::string::npos)
+        return "MID-GAP";
+    if (upper.find("LASTOPEN") != std::string::npos || (upper.find("OPEN") != std::string::npos && upper.find("CLOSE") == std::string::npos))
+        return "OPEN";
+    if (upper.find("CLOSE") != std::string::npos)
+        return "CLOSE";
+    return "";
+}
+
+bool ContainsText(const std::vector<std::string>& values, const std::string& value)
+{
+    return std::find(values.begin(), values.end(), value) != values.end();
 }
 
 bool ParseLevelRow(const std::string& row, RsLevel& out)
@@ -206,22 +301,30 @@ bool ParseLevelRow(const std::string& row, RsLevel& out)
     out.red = ClampColor(fields[2]);
     out.green = ClampColor(fields[3]);
     out.blue = ClampColor(fields[4]);
-    out.kind = fields.size() >= 6 ? fields[5] : "";
-    if (out.kind.empty())
-        out.kind = InferKind(fields[0]);
+    out.kind = NormalizedKind(fields[0], fields.size() >= 6 ? fields[5] : "");
     return true;
 }
 
 std::vector<RsLevel> ParseLevelsText(const SCString& body)
 {
     std::vector<RsLevel> levels;
+    std::vector<std::string> openCloseKeys;
     std::stringstream stream(body.GetChars());
     std::string row;
     while (std::getline(stream, row) && static_cast<int>(levels.size()) < RS_MAX_LEVELS)
     {
         RsLevel level;
         if (ParseLevelRow(row, level))
+        {
+            const std::string openCloseKey = OpenCloseDedupeKey(level);
+            if (!openCloseKey.empty())
+            {
+                if (ContainsText(openCloseKeys, openCloseKey))
+                    continue;
+                openCloseKeys.push_back(openCloseKey);
+            }
             levels.push_back(level);
+        }
     }
     return levels;
 }

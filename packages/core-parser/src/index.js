@@ -510,7 +510,7 @@ function firstArrayNumber(row, skipIndex) {
 function looksLikeDisplayLevelName(name) {
   const text = stringValue(name).toUpperCase();
   if (!text) return false;
-  return /(HP|MHP|DD|BZ|BRZ|CAT|YL|RL|YELLOW\s*LINE|RED\s*LINE|OPEN|CLOSE|HIGH|GAP|LOW|ZONE)/.test(text);
+  return /(HP|MHP|DD|BZ|BRZ|CAT|YL\d*|RL\d*|YELLOW\s*LINE|RED\s*LINE|OPEN|CLOSE|HIGH|GAP|LOW|ZONE)/.test(text);
 }
 
 function normalizeInputColor(value) {
@@ -593,6 +593,8 @@ function canonicalLevelKind(value) {
     case 'bearzone':
       return 'zone-bear';
     default:
+      if (/^yl\d+$/.test(compact)) return 'yellow-line';
+      if (/^rl\d+$/.test(compact)) return 'red-line';
       return raw;
   }
 }

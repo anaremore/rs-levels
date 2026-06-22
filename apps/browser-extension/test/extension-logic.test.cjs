@@ -100,6 +100,8 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
       { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat' },
       { symbol: 'F.US.ENQU26', name: 'horizontalLine', price: 30380, kind: 'redline', color: '#F23645' },
       { symbol: 'F.US.ENQU26', name: 'horizontal_line RedLine', price: 30182, kind: 'unknown', color: '#F23645' },
+      { symbol: 'F.US.ENQU26', name: 'RL2', price: 30090, kind: 'reference', color: '#F23645' },
+      { symbol: 'F.US.ENQU26', name: 'YL2', price: 30979, kind: 'unknown', color: '#FFEB3B' },
       { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
     ],
     stats: {
@@ -123,6 +125,8 @@ assert.match(localPayload, /\|NQ\|2026-06-21T03:47:02\.097Z\|OVNMHP,30475,mhp/);
 assert.match(localPayload, /CAT,31232\.74,cat/);
 assert.match(localPayload, /Red Line,30380,red-line/);
 assert.match(localPayload, /Red Line,30182,red-line/);
+assert.match(localPayload, /Red Line,30090,red-line/);
+assert.match(localPayload, /Yellow Line,30979,yellow-line/);
 assert.match(localPayload, /RI,266\.25,stat/);
 assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
@@ -155,6 +159,8 @@ const chartLineOnlySnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapsh
       { index: 'ES', chart: 'F.US.EPU26', price: 7598, color: '#ffeb3b' },
       { index: 'ES', chart: 'F.US.EPU26', price: 7632, color: '#ffeb3b' },
       { index: 'ES', chart: 'F.US.EPU26', text: 'RL', price: 7520, linecolor: 'rgb(242, 54, 69)' },
+      { index: 'ES', chart: 'F.US.EPU26', text: 'RL2', price: 7516, linecolor: 'rgb(242, 54, 69)' },
+      { index: 'ES', chart: 'F.US.EPU26', text: 'YL2', price: 7608, linecolor: '#ffeb3b' },
       { index: 'NQ', chart: 'F.US.ENQU26', name: 'horizontal_line', price: 30380, color: '#f23645' },
       { index: 'NQ', chart: 'F.US.ENQU26', text: 'CAT', price: 31232.74, color: '#7e57c2' },
       { index: 'SPY', chart: 'SPY', text: 'PrevDayClose', price: 722.51 }
@@ -168,6 +174,8 @@ const chartLineOnlyPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnaps
 assert.match(chartLineOnlyPayload, /Yellow Line,7598,yellow-line/);
 assert.match(chartLineOnlyPayload, /Yellow Line,7632,yellow-line/);
 assert.match(chartLineOnlyPayload, /Red Line,7520,red-line/);
+assert.match(chartLineOnlyPayload, /Red Line,7516,red-line/);
+assert.match(chartLineOnlyPayload, /Yellow Line,7608,yellow-line/);
 assert.match(chartLineOnlyPayload, /Red Line,7496,red-line/);
 assert.match(chartLineOnlyPayload, /Red Line,30380,red-line/);
 assert.match(chartLineOnlyPayload, /CAT,31232\.74,cat/);

@@ -28,7 +28,9 @@ assert.equal(inferLevelKind('QQQ Open'), 'open-close');
 assert.equal(inferLevelKind('BZT2'), 'zone-bull');
 assert.equal(inferLevelKind('BrZT2'), 'zone-bear');
 assert.equal(inferLevelKind('YL'), 'yellow-line');
+assert.equal(inferLevelKind('YL2'), 'yellow-line');
 assert.equal(inferLevelKind('Red Line'), 'red-line');
+assert.equal(inferLevelKind('RL2'), 'red-line');
 assert.equal(inferLevelKind('CAT'), 'cat');
 
 const normalized = normalizeLevel('NQ', {
@@ -43,6 +45,7 @@ assert.equal(normalized.color, '#F23645');
 
 assert.equal(normalizeLevel('NQ', { name: 'Red Line', price: 30182, kind: 'unknown' }).kind, 'red-line');
 assert.equal(normalizeLevel('NQ', { name: 'Yellow Line', price: 30979, kind: 'reference' }).kind, 'yellow-line');
+assert.equal(normalizeLevel('NQ', { name: 'RL2', price: 30090, kind: 'reference' }).kind, 'red-line');
 assert.equal(normalizeLevel('NQ', { name: 'CAT', price: 31232.74, kind: 'open-close' }).kind, 'cat');
 assert.equal(normalizeStats({ RI: '68.75' }).riskInterval, 68.75);
 assert.equal(normalizeStats({ 'Risk Interval': 266.25 }).riskInterval, 266.25);

@@ -68,8 +68,9 @@ For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add *
 ## Rendering Plan
 
 - Poll `/sierra/:symbol` for source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
-- Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently.
+- Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently, including numbered RocketScooter aliases such as `YL2` and `RL3`.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
+- Suppress duplicate same-name open/close rows from noisy feeds, so only one `Close` label is drawn while independent manual lines still remain separate by price.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
 - When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.

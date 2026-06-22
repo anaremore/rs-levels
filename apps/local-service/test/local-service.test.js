@@ -21,11 +21,12 @@ assert.equal(
     { name: 'Yellow Line', price: 7632, kind: 'yellow-line' },
     { name: 'Red Line', price: 7520, kind: 'red-line' },
     { name: 'Red Line', price: 7496, kind: 'red-line' },
+    { name: 'RL2', price: 7516, kind: 'red-line' },
     { name: 'CAT', price: 31232.74, kind: 'cat' },
     { name: 'Bull Zone Top', price: 7526, kind: 'zone-bull' },
     { name: 'Bear Zone Bottom', price: 7588, kind: 'zone-bear' }
   ]),
-  'Open,7559.00,255,255,255,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nYellow Line,7632.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nRed Line,7496.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
+  'Open,7559.00,255,255,255,open-close\nYellow Line,7598.00,255,235,59,yellow-line\nYellow Line,7632.00,255,235,59,yellow-line\nRed Line,7520.00,242,54,69,red-line\nRed Line,7496.00,242,54,69,red-line\nRed Line,7516.00,242,54,69,red-line\nCAT,31232.74,126,87,194,cat\nBull Zone Top,7526.00,76,175,80,zone-bull\nBear Zone Bottom,7588.00,240,98,146,zone-bear\n'
 );
 assert.equal(levelsToDisplayRowsText([]), '\n');
 

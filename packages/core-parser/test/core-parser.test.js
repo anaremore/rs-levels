@@ -317,12 +317,14 @@ const manualLineAliases = normalizeCapture({
     levels: [
       { symbol: 'F.US.ENQU26', name: 'horizontalLine', price: 30380, kind: 'redline', color: '#F23645', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'horizontal_line RedLine', price: 30182, kind: 'unknown', color: '#F23645', source: 'rocketscooter-page' },
-      { symbol: 'F.US.ENQU26', name: 'horizontal_line YellowLine', price: 30979, kind: 'yellow_line', color: '#FFEB3B', source: 'rocketscooter-page' }
+      { symbol: 'F.US.ENQU26', name: 'RL2', price: 30090, kind: 'reference', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'horizontal_line YellowLine', price: 30979, kind: 'yellow_line', color: '#FFEB3B', source: 'rocketscooter-page' },
+      { symbol: 'F.US.ENQU26', name: 'YL2', price: 31100, kind: 'unknown', source: 'rocketscooter-page' }
     ]
   }
 });
-assert.equal(manualLineAliases.symbols.MNQ.filter((level) => level.kind === 'red-line').length, 2);
-assert.equal(manualLineAliases.symbols.MNQ.filter((level) => level.kind === 'yellow-line').length, 1);
+assert.equal(manualLineAliases.symbols.MNQ.filter((level) => level.kind === 'red-line').length, 3);
+assert.equal(manualLineAliases.symbols.MNQ.filter((level) => level.kind === 'yellow-line').length, 2);
 
 const pageReaderSnapshotArrays = normalizeCapture({
   endpoint: '/page-reader/display',

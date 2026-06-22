@@ -114,6 +114,9 @@ function tradingViewLevelName(level) {
   if (kind === 'red-line') return 'Red Line';
   if (kind === 'yellow-line') return 'Yellow Line';
   if (kind === 'cat') return 'CAT';
+  const compact = raw.toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  if (/^RL\d*$/.test(compact) || compact.includes('REDLINE')) return 'Red Line';
+  if (/^YL\d*$/.test(compact) || compact.includes('YELLOWLINE')) return 'Yellow Line';
   if (!/horizontal|liquidity\s*map|\btext\b|liq-map-history/i.test(raw)) return raw;
   const upper = raw.toUpperCase();
   const displayMatch = raw.match(/\b(BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);
@@ -133,9 +136,11 @@ function tradingViewLevelName(level) {
 
 function tradingViewLevelKind(level, name) {
   const explicit = canonicalTradingViewKind(level?.kind);
-  if (explicit && explicit !== 'unknown') return explicit;
   const inferred = inferManualKind(name || level?.name);
   const byColor = manualKindFromColor(level?.color);
+  if (['yellow-line', 'red-line', 'cat'].includes(inferred) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return inferred;
+  if (['yellow-line', 'red-line', 'cat'].includes(byColor) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return byColor;
+  if (explicit && explicit !== 'unknown') return explicit;
   return inferred || byColor || explicit || 'reference';
 }
 
@@ -160,6 +165,8 @@ function canonicalTradingViewKind(value) {
     case 'bearzone':
       return 'zone-bear';
     default:
+      if (/^yl\d+$/.test(compact)) return 'yellow-line';
+      if (/^rl\d+$/.test(compact)) return 'red-line';
       return raw;
   }
 }
@@ -168,8 +175,8 @@ function inferManualKind(name) {
   const upper = field(name).toUpperCase();
   const compact = upper.replace(/[^A-Z0-9]+/g, '');
   if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
-  if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
-  if (/\bRL\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
+  if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
+  if (/\bRL\d*\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
   return '';
 }
 

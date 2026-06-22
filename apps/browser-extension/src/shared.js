@@ -462,8 +462,8 @@
     if (upper.includes('OVNMHP')) return 'OVNMHP';
     if (upper.includes('OVNHP')) return 'OVNHP';
     if (upper.includes('CAT')) return 'CAT';
-    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE') || compactUpper.includes('YELLOWLINE')) return 'Yellow Line';
-    if (/\bRL\b/.test(upper) || upper.includes('RED LINE') || compactUpper.includes('REDLINE')) return 'Red Line';
+    if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compactUpper.includes('YELLOWLINE')) return 'Yellow Line';
+    if (/\bRL\d*\b/.test(upper) || upper.includes('RED LINE') || compactUpper.includes('REDLINE')) return 'Red Line';
     if (upper.includes('MHP')) return 'MHP';
     if (upper.includes('HP')) return 'HP';
     if (upper.includes('DD')) return 'DD';
@@ -472,9 +472,11 @@
 
   function tradingViewLevelKind(level = {}, name = '') {
     const explicit = canonicalTradingViewKind(level.kind);
-    if (validTradingViewKind(explicit) && explicit !== 'unknown') return explicit;
     const byColor = manualLineKindFromColor(levelColor(level));
     const inferred = inferTradingViewKind(name);
+    if (['yellow-line', 'red-line', 'cat'].includes(inferred) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return inferred;
+    if (['yellow-line', 'red-line', 'cat'].includes(byColor) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return byColor;
+    if (validTradingViewKind(explicit) && explicit !== 'unknown') return explicit;
     if (byColor && inferred === 'reference') return byColor;
     return inferred || byColor || explicit || 'reference';
   }
@@ -506,8 +508,8 @@
     if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
     if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
     if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
-    if (/\bYL\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
-    if (/\bRL\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
+    if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
+    if (/\bRL\d*\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
     if (upper.includes('MHP')) return 'mhp';
     if (upper.includes('HP')) return 'hp';
     if (upper.includes('DD')) return 'dd-band';
@@ -536,6 +538,8 @@
       case 'bearzone':
         return 'zone-bear';
       default:
+        if (/^yl\d+$/.test(compact)) return 'yellow-line';
+        if (/^rl\d+$/.test(compact)) return 'red-line';
         return raw;
     }
   }

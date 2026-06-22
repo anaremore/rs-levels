@@ -210,8 +210,8 @@ export function inferLevelKind(name) {
   if (text.includes('BZ') || text.includes('BULL')) return 'zone-bull';
   if (text.includes('ZONE')) return 'zone';
   if (text.includes('CAT')) return 'cat';
-  if (/\bYL\b/.test(text) || text.includes('YELLOW LINE') || compactText.includes('YELLOWLINE')) return 'yellow-line';
-  if (/\bRL\b/.test(text) || text.includes('RED LINE') || compactText.includes('REDLINE')) return 'red-line';
+  if (/\bYL\d*\b/.test(text) || text.includes('YELLOW LINE') || compactText.includes('YELLOWLINE')) return 'yellow-line';
+  if (/\bRL\d*\b/.test(text) || text.includes('RED LINE') || compactText.includes('REDLINE')) return 'red-line';
   if (text.includes('OPEN') || text.includes('CLOSE') || text.includes('HIGH') || text.includes('GAP')) return 'open-close';
   if (text === 'DD' || text.includes('RES')) return 'stat';
   return 'unknown';
@@ -237,6 +237,8 @@ function normalizeLevelKind(value) {
     case 'bearzone':
       return 'zone-bear';
     default:
+      if (/^yl\d+$/.test(compact)) return 'yellow-line';
+      if (/^rl\d+$/.test(compact)) return 'red-line';
       return stringValue(value).toLowerCase();
   }
 }
