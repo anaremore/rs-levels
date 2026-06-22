@@ -49,7 +49,7 @@ The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;.
 - `Zone fills` and `Zone fill opacity %`: fill matched explicit top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label bar offset`, `Min label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences.
 
-Level labels render above or below their line using dynamic spacing from the visible chart range and the drawn level range, with the tick input acting as a minimum. They automatically stagger into rows/columns and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are dashed even when the default line style is solid.
+Level labels render above or below their own line using dynamic spacing from the visible chart range and the drawn level range, with the tick input acting as a minimum. Nearby labels stagger into rows/columns only when their prices cluster, so unrelated levels do not push zone labels away from their boundaries. Labels trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are dashed even when the default line style is solid.
 
 `Other levels` is the fallback display category for parsed levels whose kind is not one of the recognized DD, HP, MHP, open/close, reference, manual line, bull zone, or bear zone kinds.
 
