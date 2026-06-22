@@ -53,6 +53,7 @@ const requiredReleaseEntries = [
   'README.md',
   'docs/openapi.yaml',
   'docs/user-setup.md',
+  'docs/platform-validation.md',
   'apps/local-service/src/build-info.js',
   'apps/local-service/src/cli.js',
   'apps/browser-extension/manifest.json',

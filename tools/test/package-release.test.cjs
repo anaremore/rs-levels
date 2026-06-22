@@ -12,7 +12,7 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /22 critical entries/);
+assert.match(checkOutput, /23 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /extension zip enabled/);
 
@@ -46,6 +46,7 @@ const zip = readFileSync(zipPath);
 const zipText = zip.toString('utf8');
 assert.equal(zip.readUInt32LE(0), 0x04034b50);
 assert.match(zipText, /rs-levels-0\.0\.0\/README\.md/);
+assert.match(zipText, /rs-levels-0\.0\.0\/docs\/platform-validation\.md/);
 assert.match(zipText, /rs-levels-0\.0\.0\/apps\/local-service\/src\/build-info\.js/);
 assert.match(zipText, /rs-levels-0\.0\.0\/plugins\/manifest\.json/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);

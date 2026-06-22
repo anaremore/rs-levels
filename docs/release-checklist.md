@@ -13,4 +13,5 @@ Before any public release:
 - Test extension install instructions from the source package and standalone browser-extension zip from scratch.
 - Verify the service binds to `127.0.0.1` by default.
 - Verify plugins do not reference platform order APIs.
+- Complete the platform validation checklist in [Platform validation](platform-validation.md) for any changed plugin source.
 - Publish checksums for packaged artifacts.

@@ -12,6 +12,7 @@
 - [Schemas overview](schemas.md)
 - [Schema reference](schema-reference.md)
 - [Platform plugins](platform-plugins.md)
+- [Platform validation](platform-validation.md)
 - [Display plugin contract](plugin-contract.md)
 - [TradingView](tradingview.md)
 - [VARIS Zones](varis-zones.md)

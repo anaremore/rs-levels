@@ -59,6 +59,7 @@ Status: public source artifacts complete; platform compile/install validation pl
 - Direct platform adapters display DD/RI/Res/MRes/WRes/liquidity-map context from `/stats/:symbol?format=rows` where the platform supports chart text overlays.
 - Separate VARIS Zones indicators consume the same RI context for VWAP band spacing across TradingView, Sierra Chart, NinjaTrader, Quantower, and Bookmap.
 - Public `plugins/manifest.json` inventory with static display-only validation.
+- Public platform validation checklist for compile/install and live RocketScooter field checks.
 
 ## Milestone 5: Packaging
 

@@ -17,6 +17,7 @@ const pluginIds = [
   'tradingview-varis-zones'
 ];
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
+const validationDoc = readFileSync(join(root, '..', 'docs', 'platform-validation.md'), 'utf8');
 
 assert.equal(manifest.schemaVersion, '0.1.0');
 assert.deepEqual(manifest.plugins.map((plugin) => plugin.id).sort(), [...pluginIds].sort());
@@ -25,6 +26,7 @@ for (const plugin of manifest.plugins) {
   assert.equal(plugin.displayOnly, true, `${plugin.id} must be display-only`);
   assert.ok(existsSync(join(root, '..', plugin.entry)), `${plugin.id} entry file must exist`);
   assert.ok(existsSync(join(root, '..', plugin.readme)), `${plugin.id} readme must exist`);
+  assert.ok(validationDoc.includes(plugin.entry), `${plugin.id} must appear in platform validation`);
   assert.ok(Array.isArray(plugin.api.endpoints) && plugin.api.endpoints.length > 0, `${plugin.id} must list API endpoints`);
   if (plugin.platform === 'TradingView') {
     assert.equal(plugin.api.mode, 'manual-paste');
@@ -42,6 +44,12 @@ for (const plugin of manifest.plugins) {
     }
   }
 }
+
+assert.match(validationDoc, /npm run scan:private/);
+assert.match(validationDoc, /npm run scan:secrets/);
+assert.match(validationDoc, /IAmTheLiquidity2/);
+assert.match(validationDoc, /Copy TradingView/);
+assert.match(validationDoc, /\/stats\/ES\?format=rows/);
 
 for (const platform of platforms) {
   const text = readFileSync(join(root, platform, 'README.md'), 'utf8');
