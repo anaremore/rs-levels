@@ -5,7 +5,8 @@ payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 showLabels = input.bool(true, "Labels")
 showStatsPanel = input.bool(true, "Stats panel")
-statsPanelPositionInput = input.string("Top left", "Stats panel position", options = ["Top left", "Top right", "Middle left", "Middle right", "Bottom center", "Bottom right", "Bottom left"], display = display.none)
+statsPanelPositionInput = input.string("Bottom left", "Stats panel position", options = ["Bottom left", "Bottom center", "Bottom right", "Middle left", "Middle right", "Top left", "Top right"], display = display.none)
+statsPanelBottomPaddingInput = input.int(4, "Stats panel bottom padding", minval = 0, maxval = 20, display = display.none)
 showDdBands = input.bool(true, "DD bands", inline = "dd")
 ddBandColorInput = input.color(color.rgb(0, 188, 212), "", inline = "dd")
 showHp = input.bool(true, "HP", inline = "hp")
@@ -42,18 +43,21 @@ labelStackColumnBars = 4
 
 statsPanelPosition() =>
     switch statsPanelPositionInput
-        "Top right" => position.top_right
-        "Middle left" => position.middle_left
-        "Middle right" => position.middle_right
         "Bottom center" => position.bottom_center
         "Bottom right" => position.bottom_right
-        "Bottom left" => position.bottom_left
-        => position.top_left
+        "Top right" => position.top_right
+        "Top left" => position.top_left
+        "Middle left" => position.middle_left
+        "Middle right" => position.middle_right
+        => position.bottom_left
+
+statsPanelSpacerHeight() =>
+    statsPanelPositionInput == "Bottom left" ? statsPanelBottomPaddingInput : 0
 
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
 var box[] rsBoxes = array.new_box()
-var table rsStatsTable = table.new(statsPanelPosition(), 1, 2)
+var table rsStatsTable = table.new(statsPanelPosition(), 1, 3)
 var float visibleHigh = na
 var float visibleLow = na
 
@@ -309,9 +313,11 @@ drawStatsPanel(levelText) =>
         headerText = (symbolText == "" ? "RS Levels" : symbolText) + (mapText == "" ? "" : "  Map " + mapText)
         table.cell(rsStatsTable, 0, 0, headerText, text_color = color.white, bgcolor = color.new(color.black, 15), text_size = labelSize())
         table.cell(rsStatsTable, 0, 1, bodyText, text_color = color.white, bgcolor = color.new(color.black, 15), text_size = labelSize())
+        table.cell(rsStatsTable, 0, 2, "", bgcolor = color.new(color.black, 100), height = statsPanelSpacerHeight())
     else
         table.cell(rsStatsTable, 0, 0, "", bgcolor = color.new(color.black, 100))
         table.cell(rsStatsTable, 0, 1, "", bgcolor = color.new(color.black, 100))
+        table.cell(rsStatsTable, 0, 2, "", bgcolor = color.new(color.black, 100), height = statsPanelSpacerHeight())
 
 labelDirection(name, kind) =>
     upperName = str.upper(name)
