@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.06.22.6", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.06.22.7", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -97,22 +97,36 @@ cleanKind(kind) =>
         "bearzone" => "zone-bear"
         => compactKind
 
+compactText(sourceText) =>
+    compact = str.upper(sourceText)
+    compact := str.replace_all(compact, " ", "")
+    compact := str.replace_all(compact, "_", "")
+    compact := str.replace_all(compact, "-", "")
+    compact
+
+zoneKindFromName(name) =>
+    upperName = str.upper(name)
+    compactName = compactText(name)
+    if str.contains(compactName, "BRZT") or str.contains(compactName, "BRZB") or str.contains(compactName, "BEARZONE") or str.contains(upperName, "BEAR ZONE")
+        "zone-bear"
+    else if str.contains(compactName, "BZT") or str.contains(compactName, "BZB") or str.contains(compactName, "BULLZONE") or str.contains(upperName, "BULL ZONE")
+        "zone-bull"
+    else
+        ""
+
 levelKind(name, kind) =>
     upperName = str.upper(name)
-    compactName = str.replace_all(upperName, " ", "")
-    compactName := str.replace_all(compactName, "_", "")
-    compactName := str.replace_all(compactName, "-", "")
+    compactName = compactText(name)
     normalizedKind = cleanKind(kind)
+    namedZoneKind = zoneKindFromName(name)
     if str.contains(upperName, "CAT") or str.contains(compactName, "CAT")
         "cat"
     else if str.contains(upperName, "YELLOW LINE") or str.contains(compactName, "YELLOWLINE") or str.startswith(upperName, "YL")
         "yellow-line"
     else if str.contains(upperName, "RED LINE") or str.contains(compactName, "REDLINE") or str.startswith(upperName, "RL")
         "red-line"
-    else if str.contains(compactName, "BRZT") or str.contains(compactName, "BRZB") or str.contains(upperName, "BEAR ZONE")
-        "zone-bear"
-    else if str.contains(compactName, "BZT") or str.contains(compactName, "BZB") or str.contains(upperName, "BULL ZONE")
-        "zone-bull"
+    else if namedZoneKind != ""
+        namedZoneKind
     else
         normalizedKind
 
@@ -152,10 +166,10 @@ zoneKind(kind) =>
     normalizedKind == "zone-bull" or normalizedKind == "zone-bear"
 
 zoneBoundarySide(name) =>
-    upperName = str.upper(name)
-    if str.contains(upperName, "TOP") or str.contains(upperName, "UPPER") or str.contains(upperName, "BZT") or str.contains(upperName, "BRZT")
+    compactName = compactText(name)
+    if str.contains(compactName, "TOP") or str.contains(compactName, "UPPER") or str.contains(compactName, "BZT") or str.contains(compactName, "BRZT")
         1
-    else if str.contains(upperName, "BOTTOM") or str.contains(upperName, "LOWER") or str.contains(upperName, "BZB") or str.contains(upperName, "BRZB")
+    else if str.contains(compactName, "BOTTOM") or str.contains(compactName, "LOWER") or str.contains(compactName, "BZB") or str.contains(compactName, "BRZB")
         -1
     else
         0
@@ -192,12 +206,13 @@ labelSize() =>
 
 displayLabelNameForSide(name, kind, zoneSide) =>
     upperName = str.upper(name)
-    compactName = str.replace_all(upperName, " ", "")
-    compactName := str.replace_all(compactName, "_", "")
-    compactName := str.replace_all(compactName, "-", "")
+    compactName = compactText(name)
     normalizedKind = cleanKind(kind)
-    if zoneKind(normalizedKind)
-        zoneBoundaryLabel(normalizedKind, zoneSide)
+    namedZoneKind = zoneKindFromName(name)
+    effectiveZoneKind = namedZoneKind != "" ? namedZoneKind : normalizedKind
+    effectiveZoneSide = zoneSide != 0 ? zoneSide : zoneBoundarySide(name)
+    if zoneKind(effectiveZoneKind)
+        zoneBoundaryLabel(effectiveZoneKind, effectiveZoneSide)
     else if str.contains(upperName, "PREVDAYCLOSE") or str.contains(upperName, "PREV DAY CLOSE")
         "Prev Close"
     else if halfGapLevel(name)
