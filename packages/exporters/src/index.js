@@ -91,7 +91,7 @@ function deriveDdBoundedZones(levels, consumedIndexes) {
   let bullOrdinal = highestZoneOrdinal(levels, 'zone-bull') + 1;
   let bearOrdinal = highestZoneOrdinal(levels, 'zone-bear') + 1;
   levels.forEach((level, index) => {
-    const kind = canonicalTradingViewKind(level?.kind);
+    const kind = tradingViewLevelKind(level, level?.name);
     if (!isGenericZoneLevel(level, kind)) return;
     consumedIndexes.add(index);
     const price = finiteNumber(level?.price);
@@ -231,6 +231,7 @@ function tradingViewLevelKind(level, name) {
   const explicit = canonicalTradingViewKind(level?.kind);
   const inferred = inferManualKind(name || level?.name);
   const byColor = manualKindFromColor(level?.color);
+  if (isZoneSideKind(inferred) && (explicit === '' || explicit === 'reference' || explicit === 'unknown' || explicit === 'zone' || isZoneSideKind(explicit))) return inferred;
   if (['yellow-line', 'red-line', 'cat'].includes(inferred) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return inferred;
   if (['yellow-line', 'red-line', 'cat'].includes(byColor) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return byColor;
   if (explicit && explicit !== 'unknown') return explicit;
@@ -267,10 +268,16 @@ function canonicalTradingViewKind(value) {
 function inferManualKind(name) {
   const upper = field(name).toUpperCase();
   const compact = upper.replace(/[^A-Z0-9]+/g, '');
+  if (upper.includes('BRZ') || upper.includes('BEAR')) return 'zone-bear';
+  if (upper.includes('BZ') || upper.includes('BULL')) return 'zone-bull';
   if (upper.includes('CAT') || compact.includes('CAT')) return 'cat';
   if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compact.includes('YELLOWLINE')) return 'yellow-line';
   if (/\bRL\d*\b/.test(upper) || upper.includes('RED LINE') || compact.includes('REDLINE')) return 'red-line';
   return '';
+}
+
+function isZoneSideKind(kind) {
+  return kind === 'zone-bull' || kind === 'zone-bear';
 }
 
 function manualKindFromColor(color) {

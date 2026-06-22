@@ -508,7 +508,7 @@
     let bullOrdinal = highestZoneOrdinal(levels, 'zone-bull') + 1;
     let bearOrdinal = highestZoneOrdinal(levels, 'zone-bear') + 1;
     levels.forEach((level, index) => {
-      const kind = canonicalTradingViewKind(level.kind);
+      const kind = tradingViewLevelKind(level, level.name);
       if (!isGenericZonePayloadRow(level, kind)) return;
       consumedIndexes.add(index);
       const price = firstFinite(level.price);
@@ -581,6 +581,7 @@
     const explicit = canonicalTradingViewKind(level.kind);
     const byColor = manualLineKindFromColor(levelColor(level));
     const inferred = inferTradingViewKind(name);
+    if (isZoneSideKind(inferred) && (explicit === '' || explicit === 'reference' || explicit === 'unknown' || explicit === 'zone' || isZoneSideKind(explicit))) return inferred;
     if (['yellow-line', 'red-line', 'cat'].includes(inferred) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return inferred;
     if (['yellow-line', 'red-line', 'cat'].includes(byColor) && ['', 'reference', 'unknown', 'open-close'].includes(explicit)) return byColor;
     if (validTradingViewKind(explicit) && explicit !== 'unknown') return explicit;
@@ -666,6 +667,10 @@
       'stat',
       'unknown'
     ].includes(kind);
+  }
+
+  function isZoneSideKind(kind) {
+    return kind === 'zone-bull' || kind === 'zone-bear';
   }
 
   function levelColor(level = {}) {

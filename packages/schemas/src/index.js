@@ -246,8 +246,13 @@ function normalizeLevelKind(value) {
 function shouldUseInferredKind(explicitKind, inferredKind) {
   if (!inferredKind || inferredKind === 'unknown') return false;
   if (!explicitKind) return true;
+  if (isZoneSideKind(inferredKind) && (explicitKind === 'zone' || explicitKind === 'unknown' || isZoneSideKind(explicitKind))) return inferredKind !== explicitKind;
   return ['yellow-line', 'red-line', 'cat'].includes(inferredKind) &&
     ['reference', 'unknown', 'open-close'].includes(explicitKind);
+}
+
+function isZoneSideKind(kind) {
+  return kind === 'zone-bull' || kind === 'zone-bear';
 }
 
 export function stableLevelId(symbol, level = {}) {

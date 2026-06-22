@@ -144,6 +144,30 @@ assert.doesNotMatch(localPayload, /MidGap|Mid Gap/);
 assert.doesNotMatch(localPayload, /\|SPY\|/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 
+const mismatchedZoneSideSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
+  capturedAt: '2026-06-22T14:35:00.000Z',
+  body: JSON.stringify({
+    symbol: 'F.US.ENQU26',
+    capturedAt: '2026-06-22T14:35:00.000Z',
+    levels: [
+      { name: 'DD', price: 30992.75, kind: 'dd-band' },
+      { name: 'DD', price: 30460.25, kind: 'dd-band' },
+      { name: 'Bear Zone', price: 30655.75, kind: 'zone-bull' },
+      { name: 'Bull Zone', price: 30697.25, kind: 'zone-bear' },
+      { name: 'BrZT4', price: 30380, kind: 'zone-bull' },
+      { name: 'BZT4', price: 30992.75, kind: 'zone-bear' }
+    ]
+  })
+});
+const mismatchedZoneSidePayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(mismatchedZoneSideSnapshot, 'NQ');
+assert.match(mismatchedZoneSidePayload, /BrZT\d+,30655\.75,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /BrZB\d+,30460\.25,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /BZT\d+,30992\.75,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /BZB\d+,30697\.25,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /BrZT4,30380,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /BZT4,30992\.75,zone-bull/);
+assert.doesNotMatch(mismatchedZoneSidePayload, /Bear Zone,|Bull Zone,/);
+
 const derivedRiSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-06-21T03:48:01.000Z',
   body: JSON.stringify({

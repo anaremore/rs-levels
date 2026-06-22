@@ -47,6 +47,9 @@ assert.equal(normalizeLevel('NQ', { name: 'Red Line', price: 30182, kind: 'unkno
 assert.equal(normalizeLevel('NQ', { name: 'Yellow Line', price: 30979, kind: 'reference' }).kind, 'yellow-line');
 assert.equal(normalizeLevel('NQ', { name: 'RL2', price: 30090, kind: 'reference' }).kind, 'red-line');
 assert.equal(normalizeLevel('NQ', { name: 'CAT', price: 31232.74, kind: 'open-close' }).kind, 'cat');
+assert.equal(normalizeLevel('NQ', { name: 'Bear Zone', price: 30655.75, kind: 'zone-bull' }).kind, 'zone-bear');
+assert.equal(normalizeLevel('NQ', { name: 'BrZT1', price: 30655.75, kind: 'zone-bull' }).kind, 'zone-bear');
+assert.equal(normalizeLevel('NQ', { name: 'BZT1', price: 30697.25, kind: 'zone-bear' }).kind, 'zone-bull');
 assert.equal(normalizeStats({ RI: '68.75' }).riskInterval, 68.75);
 assert.equal(normalizeStats({ 'Risk Interval': 266.25 }).riskInterval, 266.25);
 
