@@ -84,7 +84,7 @@ npm run demo:capture
 
 Then open the dashboard, run a client example, copy a TradingView paste payload from `http://127.0.0.1:8765/tradingview`, or inspect diagnostics at `http://127.0.0.1:8765/diagnostics`.
 
-The demo fixture includes sample DD/Res/MRes/WRes and `Map BLD` context, so it is enough to verify both level rows and display stats before RocketScooter capture is available.
+The demo fixture includes sample DD/RI/Res/MRes/WRes and `Map BLD` context, so it is enough to verify both level rows, display stats, and VARIS-style RI consumers before RocketScooter capture is available.
 
 ## 3. Capture Levels
 
@@ -97,7 +97,7 @@ The demo fixture includes sample DD/Res/MRes/WRes and `Map BLD` context, so it i
 
 You can keep the current ES and NQ futures contracts visible in RocketScooter. CQG-style symbols such as `F.US.EP...` are treated as the ES family, and `F.US.ENQ...` is treated as the NQ family, so the same captured levels can be used on ES/MES and NQ/MNQ charts in the destination platform.
 
-When RocketScooter exposes DD ratio, Res, MRes, WRes, or liquidity-map context such as `Map BLD`, RS Levels carries those values as display stats. TradingView shows them in its stats panel, and direct platform plugins read them from `/stats/:symbol`.
+When RocketScooter exposes DD ratio, RI, Res, MRes, WRes, or liquidity-map context such as `Map BLD`, RS Levels carries those values as display stats. TradingView shows them in its stats panel, VARIS Zones can use RI for band spacing, and direct platform plugins read them from `/stats/:symbol`.
 
 If capture does not start, open extension options and review the endpoint allowlist.
 
@@ -112,6 +112,8 @@ If capture does not start, open extension options and review the endpoint allowl
 `Copy TradingView` first uses the extension's latest normalized display capture, so it can work without the local API when the RocketScooter page-reader has captured visible ES/NQ chart levels. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
 
 The same dropdown can copy only `ES` or only `NQ` payloads when you want a single-family export for inspection or third-party tooling. `Plugins` opens the local display-plugin manifest.
+
+The same copied payload can also feed `plugins/tradingview/varis-zones.pine`. That indicator reads the `RI` stat row for the matching chart family and falls back to a manual risk interval input when no pasted RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`; see [VARIS Zones](varis-zones.md).
 
 ## 5. Tailscale Or Trusted Private Network
 

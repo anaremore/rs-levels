@@ -4,17 +4,18 @@ const { join } = require('node:path');
 
 const root = join(__dirname, '..');
 const platforms = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'tradingview'];
+const pluginIds = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'tradingview', 'tradingview-varis-zones'];
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 
 assert.equal(manifest.schemaVersion, '0.1.0');
-assert.deepEqual(manifest.plugins.map((plugin) => plugin.id).sort(), [...platforms].sort());
+assert.deepEqual(manifest.plugins.map((plugin) => plugin.id).sort(), [...pluginIds].sort());
 
 for (const plugin of manifest.plugins) {
   assert.equal(plugin.displayOnly, true, `${plugin.id} must be display-only`);
   assert.ok(existsSync(join(root, '..', plugin.entry)), `${plugin.id} entry file must exist`);
   assert.ok(existsSync(join(root, '..', plugin.readme)), `${plugin.id} readme must exist`);
   assert.ok(Array.isArray(plugin.api.endpoints) && plugin.api.endpoints.length > 0, `${plugin.id} must list API endpoints`);
-  if (plugin.id === 'tradingview') {
+  if (plugin.platform === 'TradingView') {
     assert.equal(plugin.api.mode, 'manual-paste');
     assert.ok(plugin.api.endpoints.includes('GET /tradingview'));
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
@@ -159,6 +160,16 @@ assertManualKinds(tradingViewSource);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\s*\(/i);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\./i);
 assert.doesNotMatch(tradingViewSource, /\balertcondition\s*\(/i);
+
+const varisTradingViewSource = readFileSync(join(root, 'tradingview', 'varis-zones.pine'), 'utf8');
+assert.match(varisTradingViewSource, /indicator\("VARIS Zones"/);
+assert.match(varisTradingViewSource, /IAmTheLiquidity2/);
+assert.match(varisTradingViewSource, /RSLEVELS/);
+assert.match(varisTradingViewSource, /statValue\(levelText, "RI"\)/);
+assert.doesNotMatch(varisTradingViewSource, /\bstrategy\s*\(/i);
+assert.doesNotMatch(varisTradingViewSource, /\bstrategy\./i);
+assert.doesNotMatch(varisTradingViewSource, /\balertcondition\s*\(/i);
+assert.doesNotMatch(varisTradingViewSource, /\brequest\./i);
 
 console.log('plugin documentation tests passed');
 

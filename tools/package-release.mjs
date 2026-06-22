@@ -62,6 +62,7 @@ const requiredReleaseEntries = [
   'scripts/start-local-service.sh',
   'plugins/manifest.json',
   'plugins/tradingview/rs-levels.pine',
+  'plugins/tradingview/varis-zones.pine',
   'plugins/sierra-chart/rs-levels-sierra.cpp',
   'plugins/ninjatrader/RSLevelsDisplay.cs',
   'plugins/quantower/RSLevelsDisplayQuantower.cs',

@@ -52,6 +52,7 @@ TradingView Pine scripts run inside TradingView's Pine environment. The official
 - the implemented `/tradingview/:symbol` export for selected-symbol users and tooling
 - an indicator input where the short payload can be pasted and drawn
 - a stats panel fed by `stat` rows inside the same short payload
+- a separate VARIS Zones Pine indicator that reads `RI` from the same payload; the VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`
 
 References:
 

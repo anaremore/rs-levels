@@ -14,6 +14,7 @@
 - [Platform plugins](platform-plugins.md)
 - [Display plugin contract](plugin-contract.md)
 - [TradingView](tradingview.md)
+- [VARIS Zones](varis-zones.md)
 - [Install](install.md)
 - [Packaging](packaging.md)
 - [CI](ci.md)

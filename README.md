@@ -10,6 +10,7 @@ RS Levels lets a user capture level and display-context data from their own Rock
 - A cross-platform local API service that stores the latest level snapshot and display stats.
 - Stable JSON, text, and streaming APIs for display integrations.
 - Display-only plugins for charting platforms.
+- TradingView VARIS Zones support using captured risk interval (`RI`) from the same paste payload.
 
 ## What This Is Not
 
@@ -44,7 +45,7 @@ The release output includes a source-style directory, a source zip archive, a st
 
 Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`.
 
-See [User setup](docs/user-setup.md) for the local API, browser extension, and TradingView workflow.
+See [User setup](docs/user-setup.md) for the local API, browser extension, TradingView workflow, and VARIS Zones setup.
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml), also served at `http://127.0.0.1:8765/openapi.yaml` after startup. Local API docs: `http://127.0.0.1:8765/docs`.
 

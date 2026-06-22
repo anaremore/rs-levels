@@ -3,6 +3,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const pine = readFileSync(join(__dirname, '..', 'rs-levels.pine'), 'utf8');
+const varis = readFileSync(join(__dirname, '..', 'varis-zones.pine'), 'utf8');
 
 assert.match(pine, /indicator\("RS Levels"/);
 assert.doesNotMatch(pine, /\bstrategy\s*\(/i);
@@ -182,5 +183,30 @@ assert.match(pine, /max_labels_count = 500/);
 assert.match(pine, /maxval = 500/);
 assert.match(pine, /drawStatsPanel\(levelText\)/);
 assert.doesNotMatch(pine, /label\.style_label_down/);
+
+assert.match(varis, /indicator\("VARIS Zones"/);
+assert.match(varis, /IAmTheLiquidity2/);
+assert.match(varis, /payload = input\.string\("", "RS Levels Payload", display = display\.none\)/);
+assert.match(varis, /chartFamilyInput = input\.string\("Auto", "Chart family"/);
+assert.match(varis, /options = \["Auto", "ES", "NQ"\]/);
+assert.match(varis, /manualRiskInterval = input\.float\(25\.0, "Manual Risk Interval \(Points\)"/);
+assert.match(varis, /usePayloadRi = input\.bool\(true, "Use pasted RI when available"\)/);
+assert.match(varis, /statValue\(levelText, "RI"\)/);
+assert.match(varis, /riskInterval = usePayloadRi and not na\(payloadRiskInterval\) \? payloadRiskInterval : manualRiskInterval/);
+assert.match(varis, /band1Points = riskInterval \* 0\.5/);
+assert.match(varis, /band2Points = riskInterval/);
+assert.match(varis, /hour\(time, "America\/New_York"\) == 18/);
+assert.match(varis, /cumTPV/);
+assert.match(varis, /vwapValue/);
+assert.match(varis, /fill\(vwapPlot, upper1Plot/);
+assert.match(varis, /fill\(vwapPlot, lower2Plot/);
+assert.match(varis, /RSLEVELS/);
+assert.match(varis, /array\.get\(parts, 1\) == "2"/);
+assert.match(varis, /syminfo\.root/);
+assert.match(varis, /syminfo\.tickerid/);
+assert.doesNotMatch(varis, /\bstrategy\s*\(/i);
+assert.doesNotMatch(varis, /\bstrategy\./i);
+assert.doesNotMatch(varis, /\balertcondition\s*\(/i);
+assert.doesNotMatch(varis, /\brequest\./i);
 
 console.log('TradingView plugin tests passed');

@@ -1,0 +1,125 @@
+//@version=6
+// VARIS Zones concept credited to RocketScooter community member IAmTheLiquidity2.
+indicator("VARIS Zones", overlay = true)
+
+payload = input.string("", "RS Levels Payload", display = display.none)
+chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
+usePayloadRi = input.bool(true, "Use pasted RI when available")
+manualRiskInterval = input.float(25.0, "Manual Risk Interval (Points)", step = 0.25, minval = 0.001)
+
+showVWAP = input.bool(true, "Show VWAP")
+showUpper1 = input.bool(true, "Show Upper Band 1")
+showLower1 = input.bool(true, "Show Lower Band 1")
+showUpper2 = input.bool(true, "Show Upper Band 2")
+showLower2 = input.bool(true, "Show Lower Band 2")
+
+vwapColor = input.color(color.rgb(255, 0, 0), "VWAP Line Color")
+vwapWidth = input.int(1, "VWAP Line Width", minval = 1, maxval = 5)
+
+upper1Color = input.color(color.rgb(0, 0, 0), "Upper Band 1 Color")
+upper1Width = input.int(1, "Upper Band 1 Width", minval = 1, maxval = 5)
+lower1Color = input.color(color.rgb(0, 0, 0), "Lower Band 1 Color")
+lower1Width = input.int(1, "Lower Band 1 Width", minval = 1, maxval = 5)
+
+upper2Color = input.color(color.rgb(0, 0, 0), "Upper Band 2 Color")
+upper2Width = input.int(1, "Upper Band 2 Width", minval = 1, maxval = 5)
+lower2Color = input.color(color.rgb(0, 0, 0), "Lower Band 2 Color")
+lower2Width = input.int(1, "Lower Band 2 Width", minval = 1, maxval = 5)
+
+showFill1 = input.bool(true, "Show Fill Band 1")
+fill1Color = input.color(color.rgb(255, 255, 255), "Band 1 Fill Color")
+fill1Trans = input.int(75, "Band 1 Fill Transparency", minval = 0, maxval = 100)
+
+showFill2 = input.bool(true, "Show Fill Band 2")
+fill2Color = input.color(color.rgb(0, 0, 0), "Band 2 Fill Color")
+fill2Trans = input.int(90, "Band 2 Fill Transparency", minval = 0, maxval = 100)
+
+payloadCompact(payloadText) =>
+    cleaned = str.replace_all(payloadText, "\r", "")
+    cleaned := str.replace_all(cleaned, "\n", "")
+    cleaned := str.replace_all(cleaned, "\t", "")
+    cleaned
+
+chartPayloadSymbol() =>
+    if chartFamilyInput != "Auto"
+        chartFamilyInput
+    else
+        rootText = str.upper(syminfo.root)
+        tickerText = str.upper(syminfo.ticker)
+        tickerIdText = str.upper(syminfo.tickerid)
+        descriptionText = str.upper(syminfo.description)
+        nqChart = rootText == "NQ" or rootText == "MNQ" or str.startswith(tickerText, "NQ") or str.startswith(tickerText, "MNQ") or str.contains(tickerIdText, ":NQ") or str.contains(tickerIdText, ":MNQ") or str.contains(descriptionText, "NASDAQ")
+        esChart = rootText == "ES" or rootText == "MES" or str.startswith(tickerText, "ES") or str.startswith(tickerText, "MES") or str.contains(tickerIdText, ":ES") or str.contains(tickerIdText, ":MES") or str.contains(descriptionText, "S&P 500") or str.contains(descriptionText, "SP 500") or str.contains(descriptionText, "SP500")
+        nqChart ? "NQ" : esChart ? "ES" : ""
+
+payloadSymbolLevelText(parts, wantedSymbol) =>
+    found = ""
+    if array.size(parts) >= 6
+        for sectionIndex = 3 to array.size(parts) - 3 by 3
+            sectionSymbol = array.get(parts, sectionIndex)
+            sectionLevels = array.get(parts, sectionIndex + 2)
+            if sectionSymbol == wantedSymbol
+                found := sectionLevels
+    found
+
+levelTextForChart(payloadText) =>
+    parts = str.split(payloadCompact(payloadText), "|")
+    validPayload = array.size(parts) >= 6 and array.get(parts, 0) == "RSLEVELS" and array.get(parts, 1) == "2"
+    if not validPayload
+        ""
+    else
+        chartSymbol = chartPayloadSymbol()
+        esLevelText = payloadSymbolLevelText(parts, "ES")
+        nqLevelText = payloadSymbolLevelText(parts, "NQ")
+        chartSymbol == "ES" ? esLevelText : chartSymbol == "NQ" ? nqLevelText : esLevelText != "" and nqLevelText == "" ? esLevelText : nqLevelText != "" and esLevelText == "" ? nqLevelText : ""
+
+statValue(levelText, statName) =>
+    out = na
+    wanted = str.upper(statName)
+    items = str.split(levelText, ";")
+    for i = 0 to array.size(items) - 1
+        fields = str.split(array.get(items, i), ",")
+        if array.size(fields) >= 3
+            name = str.upper(array.get(fields, 0))
+            price = str.tonumber(array.get(fields, 1))
+            kind = str.lower(array.get(fields, 2))
+            if kind == "stat" and name == wanted and not na(price)
+                out := price
+    out
+
+levelText = levelTextForChart(payload)
+payloadRiskInterval = statValue(levelText, "RI")
+riskInterval = usePayloadRi and not na(payloadRiskInterval) ? payloadRiskInterval : manualRiskInterval
+band1Points = riskInterval * 0.5
+band2Points = riskInterval
+
+isNewSession = hour(time, "America/New_York") == 18 and minute(time, "America/New_York") == 0
+tp = (high + low + close) / 3
+
+var float cumTPV = 0.0
+var float cumVol = 0.0
+
+if isNewSession
+    cumTPV := tp * volume
+    cumVol := volume
+else
+    cumTPV += tp * volume
+    cumVol += volume
+
+vwapValue = cumVol != 0 ? cumTPV / cumVol : na
+
+upperBand1 = vwapValue + band1Points
+lowerBand1 = vwapValue - band1Points
+upperBand2 = vwapValue + band2Points
+lowerBand2 = vwapValue - band2Points
+
+vwapPlot = plot(showVWAP ? vwapValue : na, title = "VWAP", color = vwapColor, linewidth = vwapWidth)
+upper1Plot = plot(showUpper1 ? upperBand1 : na, title = "Upper Band 1", color = upper1Color, linewidth = upper1Width)
+lower1Plot = plot(showLower1 ? lowerBand1 : na, title = "Lower Band 1", color = lower1Color, linewidth = lower1Width)
+upper2Plot = plot(showUpper2 ? upperBand2 : na, title = "Upper Band 2", color = upper2Color, linewidth = upper2Width)
+lower2Plot = plot(showLower2 ? lowerBand2 : na, title = "Lower Band 2", color = lower2Color, linewidth = lower2Width)
+
+fill(vwapPlot, upper1Plot, color = showFill1 and showUpper1 ? color.new(fill1Color, fill1Trans) : na, title = "Upper Fill 1")
+fill(vwapPlot, lower1Plot, color = showFill1 and showLower1 ? color.new(fill1Color, fill1Trans) : na, title = "Lower Fill 1")
+fill(vwapPlot, upper2Plot, color = showFill2 and showUpper2 ? color.new(fill2Color, fill2Trans) : na, title = "Upper Fill 2")
+fill(vwapPlot, lower2Plot, color = showFill2 and showLower2 ? color.new(fill2Color, fill2Trans) : na, title = "Lower Fill 2")

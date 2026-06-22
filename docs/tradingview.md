@@ -5,12 +5,14 @@ TradingView Pine scripts cannot poll the local API directly, so RS Levels uses a
 1. Run the local service.
 2. Capture RocketScooter levels with the browser extension.
 3. Use `Copy TradingView` in the extension popup.
-4. Add `plugins/tradingview/rs-levels.pine` to a TradingView chart.
+4. Add `plugins/tradingview/rs-levels.pine` to a TradingView chart. For VARIS Zones, add `plugins/tradingview/varis-zones.pine`.
 5. Paste the copied payload into the `RS Levels Payload` input, then click `OK`.
 
 The all-symbol export carries `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. The `Chart family` setting can force `ES` or `NQ` when needed. SPY, QQQ, and other non-futures panels may be open in RocketScooter without being included in the TradingView export.
 
 The extension can copy the TradingView payload from its latest normalized page-reader capture without the local API. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint.
+
+`varis-zones.pine` is a separate display-only TradingView indicator based on the VARIS Zones concept credited to RocketScooter community member `IAmTheLiquidity2`. It uses the same copied payload and reads the `RI` stat row for the matching ES/MES or NQ/MNQ chart family. See [VARIS Zones](varis-zones.md).
 
 ## API
 

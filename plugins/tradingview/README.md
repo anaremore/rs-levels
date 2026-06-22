@@ -9,6 +9,8 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels workf
 3. Use `Copy TradingView` in the extension popup, or copy the text from `http://127.0.0.1:8765/tradingview`.
 4. Add `rs-levels.pine` to a TradingView chart, paste the payload into the `RS Levels Payload` input, and click `OK`.
 
+`varis-zones.pine` is a separate display-only VARIS Zones indicator. It uses the same copied payload, reads the `RI` stat row for the matching chart family, and falls back to a manual risk interval input when no pasted RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+
 The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. If TradingView does not expose enough symbol context, use the `Chart family` override.
 
 ## Payload Format
@@ -21,7 +23,7 @@ The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;.
 
 ## Safety Boundary
 
-This indicator only draws lines, labels, and zone fills. It does not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or automation.
+These indicators only draw overlays. They do not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or automation.
 
 ## Indicator Controls
 

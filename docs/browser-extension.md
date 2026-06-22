@@ -31,7 +31,7 @@ The RS Levels browser extension is the first-priority capture UX.
 4. Check the popup status.
 5. Use the capture toggle when you need to pause or resume allowlisted capture.
 6. Choose `ES + NQ`, `ES`, or `NQ` in the export dropdown. The popup narrows this list when only one family has captured levels.
-7. Use `Copy TradingView` for the selected export, then paste that `RSLEVELS|2` payload directly into `plugins/tradingview/rs-levels.pine`.
+7. Use `Copy TradingView` for the selected export, then paste that `RSLEVELS|2` payload directly into `plugins/tradingview/rs-levels.pine` or `plugins/tradingview/varis-zones.pine`.
 8. Use `Plugins` to inspect the local display-adapter manifest.
 9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
 10. Expand `Debug` when troubleshooting local API, extension, or stale-source setup.

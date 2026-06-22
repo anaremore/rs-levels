@@ -19,6 +19,23 @@
       }
     },
     {
+      "id": "tradingview-varis-zones",
+      "name": "VARIS Zones TradingView Pine Indicator",
+      "platform": "TradingView",
+      "kind": "paste-indicator",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/tradingview/varis-zones.pine",
+      "readme": "plugins/tradingview/README.md",
+      "api": {
+        "mode": "manual-paste",
+        "endpoints": [
+          "GET /tradingview",
+          "GET /tradingview/:symbol"
+        ]
+      }
+    },
+    {
       "id": "sierra-chart",
       "name": "RS Levels Sierra Chart Study",
       "platform": "Sierra Chart",
