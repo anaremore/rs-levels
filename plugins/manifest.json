@@ -52,6 +52,22 @@
       }
     },
     {
+      "id": "sierra-chart-varis-zones",
+      "name": "VARIS Zones Sierra Chart Study",
+      "platform": "Sierra Chart",
+      "kind": "custom-study",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/sierra-chart/varis-zones-sierra.cpp",
+      "readme": "plugins/sierra-chart/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /sierra/:symbol"
+        ]
+      }
+    },
+    {
       "id": "ninjatrader",
       "name": "RS Levels NinjaTrader Indicator",
       "platform": "NinjaTrader",
@@ -66,6 +82,23 @@
           "GET /status",
           "GET /levels/:symbol?format=rows",
           "GET /stats/:symbol?format=rows"
+        ]
+      }
+    },
+    {
+      "id": "ninjatrader-varis-zones",
+      "name": "VARIS Zones NinjaTrader Indicator",
+      "platform": "NinjaTrader",
+      "kind": "indicator",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/ninjatrader/VARISZones.cs",
+      "readme": "plugins/ninjatrader/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /stats/:symbol"
         ]
       }
     },

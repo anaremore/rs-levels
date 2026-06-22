@@ -27,6 +27,13 @@ VARIS Zones draws:
 
 The default visual controls follow the original script shape: separate visibility toggles, line colors/widths, and fill colors/transparency for the VWAP and each band.
 
-## Platform Direction
+## Direct Platform Studies
 
-Direct platform variants should read `RI` from `GET /stats/:symbol?format=rows` or the combined `GET /sierra/:symbol` feed and compute VWAP from local chart bars where the platform API supports it. TradingView remains paste-based because Pine has no arbitrary localhost HTTP polling.
+Sierra Chart and NinjaTrader now include separate display-only VARIS sources:
+
+- `plugins/sierra-chart/varis-zones-sierra.cpp`
+- `plugins/ninjatrader/VARISZones.cs`
+
+These variants read captured `RI` from the local API and compute VWAP from local chart bars. Sierra uses the combined `GET /sierra/:symbol` feed; NinjaTrader uses `GET /stats/:symbol?format=rows` plus `GET /status`.
+
+Quantower and Bookmap VARIS variants are tracked separately because their chart APIs need platform-specific verification for bar VWAP and fill behavior. TradingView remains paste-based because Pine has no arbitrary localhost HTTP polling.

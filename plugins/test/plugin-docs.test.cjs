@@ -4,7 +4,16 @@ const { join } = require('node:path');
 
 const root = join(__dirname, '..');
 const platforms = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'tradingview'];
-const pluginIds = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'tradingview', 'tradingview-varis-zones'];
+const pluginIds = [
+  'sierra-chart',
+  'sierra-chart-varis-zones',
+  'ninjatrader',
+  'ninjatrader-varis-zones',
+  'quantower',
+  'bookmap',
+  'tradingview',
+  'tradingview-varis-zones'
+];
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 
 assert.equal(manifest.schemaVersion, '0.1.0');
@@ -21,11 +30,12 @@ for (const plugin of manifest.plugins) {
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
   } else {
     assert.equal(plugin.api.mode, 'local-http');
-    if (plugin.id === 'sierra-chart') {
+    if (plugin.platform === 'Sierra Chart') {
       assert.ok(plugin.api.endpoints.includes('GET /sierra/:symbol'));
     } else {
       assert.ok(plugin.api.endpoints.includes('GET /status'), `${plugin.id} must poll status`);
-      assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
+      if (!plugin.id.includes('varis-zones'))
+        assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/levels/:symbol')), `${plugin.id} must poll symbol levels`);
       assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/stats/:symbol')), `${plugin.id} must poll symbol stats`);
     }
   }
@@ -93,6 +103,19 @@ assert.doesNotMatch(sierraSource, /std::(?:min|max)\s*\(/, 'Sierra headers defin
 assertManualKinds(sierraSource);
 assertNoPlatformApiTerms(sierraSource);
 
+const sierraVarisSource = readFileSync(join(root, 'sierra-chart', 'varis-zones-sierra.cpp'), 'utf8');
+assert.match(sierraVarisSource, /SCSFExport scsf_VARISZones/);
+assert.match(sierraVarisSource, /IAmTheLiquidity2/);
+assert.match(sierraVarisSource, /\/sierra\/%s/);
+assert.match(sierraVarisSource, /FindRiskInterval/);
+assert.match(sierraVarisSource, /Upper Half RI/);
+assert.match(sierraVarisSource, /Lower Full RI/);
+assert.match(sierraVarisSource, /cumulativeTpv/);
+assert.match(sierraVarisSource, /sc\.Volume\[i\]/);
+assert.match(sierraVarisSource, /Session reset hour ET/);
+assert.match(sierraVarisSource, /VARIS_BUILD/);
+assertNoPlatformApiTerms(sierraVarisSource);
+
 const ninjaSource = readFileSync(join(root, 'ninjatrader', 'RSLevelsDisplay.cs'), 'utf8');
 assert.match(ninjaSource, /class RSLevelsDisplay : Indicator/);
 assert.match(ninjaSource, /\/status/);
@@ -114,6 +137,19 @@ assert.match(ninjaSource, /zone-bear/);
 assert.doesNotMatch(ninjaSource, /DashStyleHelper/);
 assertManualKinds(ninjaSource);
 assertNoPlatformApiTerms(ninjaSource);
+
+const ninjaVarisSource = readFileSync(join(root, 'ninjatrader', 'VARISZones.cs'), 'utf8');
+assert.match(ninjaVarisSource, /class VARISZones : Indicator/);
+assert.match(ninjaVarisSource, /IAmTheLiquidity2/);
+assert.match(ninjaVarisSource, /\/stats\//);
+assert.match(ninjaVarisSource, /ParseRiskInterval/);
+assert.match(ninjaVarisSource, /AddPlot\(Brushes\.Red, "VWAP"\)/);
+assert.match(ninjaVarisSource, /Upper Half RI/);
+assert.match(ninjaVarisSource, /Values\[0\]\[0\]/);
+assert.match(ninjaVarisSource, /Volume\[0\]/);
+assert.match(ninjaVarisSource, /TimeZoneInfo/);
+assert.match(ninjaVarisSource, /ManualRiskInterval/);
+assertNoPlatformApiTerms(ninjaVarisSource);
 
 const quantowerSource = readFileSync(join(root, 'quantower', 'RSLevelsDisplayQuantower.cs'), 'utf8');
 assert.match(quantowerSource, /class RSLevelsDisplayQuantower : Indicator/);

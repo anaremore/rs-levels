@@ -1,10 +1,13 @@
 # Sierra Chart Plugin
 
-Display-only Sierra Chart study for drawing RS Levels overlays from the local API.
+Display-only Sierra Chart studies for drawing RS Levels overlays and VARIS Zones from the local API.
 
 ## Status
 
-Initial ACSIL source is included at `rs-levels-sierra.cpp`.
+Initial ACSIL sources are included at:
+
+- `rs-levels-sierra.cpp` for horizontal RS Levels overlays.
+- `varis-zones-sierra.cpp` for VWAP-centered VARIS Zones using captured `RI`.
 
 ## API Path
 
@@ -28,6 +31,8 @@ Map,BLD
 
 The `STATE` row provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories. Empty feeds still return a `STATE` row so Sierra Chart can observe that the HTTP request completed before levels are available.
 
+`varis-zones-sierra.cpp` uses the same `GET /sierra/:symbol` feed to read `RI`, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input when captured `RI` is unavailable.
+
 ## Study Inputs
 
 - service URL, default `http://127.0.0.1:8765`
@@ -42,6 +47,14 @@ The `STATE` row provides source freshness. The level `kind` lets the study disti
 - per-kind colors for DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT, bull zones, bear zones, and other levels
 - show debug status, default off
 
+`VARIS Zones` adds:
+
+- manual Risk Interval fallback
+- use captured `RI` when available
+- session reset hour, default 18 ET
+- show/hide VWAP, half-RI bands, full-RI bands, and status
+- colors and line widths for VWAP, half-RI bands, and full-RI bands
+
 ## Install
 
 1. Copy `rs-levels-sierra.cpp` to the Sierra Chart `ACS_Source` folder.
@@ -49,6 +62,8 @@ The `STATE` row provides source freshness. The level `kind` lets the study disti
 3. Select `rs-levels-sierra.cpp` and build it.
 4. Add **RS Levels Display** to a chart.
 5. Set the service URL and symbol if different from the defaults.
+
+For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add **VARIS Zones** to the chart. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
 ## Rendering Plan
 
