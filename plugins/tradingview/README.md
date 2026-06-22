@@ -16,10 +16,10 @@ The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicato
 ## Payload Format
 
 ```text
-RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull;RI,68.75,stat|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp;RI,266.25,stat
+RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;Bull Zone Top,7588,zone-bull;RI,68.75,stat|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp;Bear Zone Top,30450,zone-bear;RI,266.25,stat
 ```
 
-The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. Bull and bear zones use `zone-bull` and `zone-bear`; the exporter converts generic horizontal `Bull Zone` and `Bear Zone` rows into DD-bounded `BZT`/`BZB` and `BrZT`/`BrZB` boundaries before TradingView receives the payload. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders Map and RI in its stats panel and does not draw stats as price lines. VARIS-style Pine indicators can read `RI` from the same pasted payload.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. Bull and bear zones use `zone-bull` and `zone-bear`; current TradingView exports name boundaries as `Bull Zone Top`, `Bull Zone Bottom`, `Bear Zone Top`, and `Bear Zone Bottom`. The exporter converts generic horizontal `Bull Zone` and `Bear Zone` rows into DD-bounded boundaries before TradingView receives the payload. Compact `BZT`/`BZB` and `BrZT`/`BrZB` names remain accepted for older pasted payloads and platform adapter feeds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders Map and RI in its stats panel and does not draw stats as price lines. VARIS-style Pine indicators can read `RI` from the same pasted payload.
 
 ## Safety Boundary
 

@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.06.22.4", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.06.22.5", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)

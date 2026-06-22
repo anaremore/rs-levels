@@ -462,6 +462,8 @@
     const raw = tradingViewField(level.name || level.label || level.text || level.title || colorName || 'Level');
     const cleanedName = cleanTradingViewLevelName(raw);
     const explicitKind = canonicalTradingViewKind(level.kind);
+    const zoneName = zoneBoundaryDisplayName(raw, explicitKind);
+    if (zoneName) return zoneName;
     if (explicitKind === 'red-line') return 'Red Line';
     if (explicitKind === 'yellow-line') return 'Yellow Line';
     if (explicitKind === 'cat') return 'CAT';
@@ -546,7 +548,7 @@
   }
 
   function zoneBoundaryPayloadRow(level, name, price, kind) {
-    return { ...level, name, price, kind };
+    return { ...level, name: zoneBoundaryDisplayName(name, kind) || name, price, kind };
   }
 
   function highestZoneOrdinal(levels, kind) {
@@ -671,6 +673,15 @@
 
   function isZoneSideKind(kind) {
     return kind === 'zone-bull' || kind === 'zone-bear';
+  }
+
+  function zoneBoundaryDisplayName(name, kind = '') {
+    const compact = tradingViewField(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+    if (/^BRZT\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('TOP') || compact.includes('UPPER')))) return 'Bear Zone Top';
+    if (/^BRZB\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'Bear Zone Bottom';
+    if (/^BZT\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('TOP') || compact.includes('UPPER')))) return 'Bull Zone Top';
+    if (/^BZB\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'Bull Zone Bottom';
+    return '';
   }
 
   function levelColor(level = {}) {

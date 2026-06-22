@@ -434,8 +434,8 @@ try {
   const bundledTradingViewPayload = await getText(`${baseUrl}/tradingview`);
   assert.match(bundledTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|ES\|/);
   assert.match(bundledTradingViewPayload, /\|NQ\|/);
-  assert.match(bundledTradingViewPayload, /BZT1,7580,zone-bull/);
-  assert.match(bundledTradingViewPayload, /BrZT1,30450,zone-bear/);
+  assert.match(bundledTradingViewPayload, /Bull Zone Top,7580,zone-bull/);
+  assert.match(bundledTradingViewPayload, /Bear Zone Top,30450,zone-bear/);
   assert.match(bundledTradingViewPayload, /Yellow Line,7598,yellow-line/);
   assert.match(bundledTradingViewPayload, /Yellow Line,7632,yellow-line/);
   assert.match(bundledTradingViewPayload, /Red Line,7520,red-line/);
@@ -448,6 +448,7 @@ try {
   assert.match(bundledTradingViewPayload, /WRes,-29\.29,stat/);
   assert.match(bundledTradingViewPayload, /Map BLD,0,stat/);
   assert.doesNotMatch(bundledTradingViewPayload, /tradingview-bundle-json|compactPayload|notes/);
+  assert.doesNotMatch(bundledTradingViewPayload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 
   const mesRowsWithKinds = await getText(`${baseUrl}/levels/MES?format=rows`);
   assert.match(mesRowsWithKinds, /BZT1,7580\.00,76,175,80,zone-bull/);
@@ -459,7 +460,7 @@ try {
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|NQ\|/);
-  assert.match(mnqTradingViewPayload, /BrZT1,30450,zone-bear/);
+  assert.match(mnqTradingViewPayload, /Bear Zone Top,30450,zone-bear/);
 
   const cqgNqLevels = await getJson(`${baseUrl}/levels/F.US.ENQU26`);
   assert.equal(cqgNqLevels.symbol, 'NQ');

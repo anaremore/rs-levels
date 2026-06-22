@@ -203,6 +203,8 @@ function tradingViewLevelName(level) {
   const raw = field(level?.name);
   if (!raw) return 'Level';
   const kind = canonicalTradingViewKind(level?.kind);
+  const zoneName = zoneBoundaryDisplayName(raw, kind);
+  if (zoneName) return zoneName;
   if (kind === 'red-line') return 'Red Line';
   if (kind === 'yellow-line') return 'Yellow Line';
   if (kind === 'cat') return 'CAT';
@@ -278,6 +280,15 @@ function inferManualKind(name) {
 
 function isZoneSideKind(kind) {
   return kind === 'zone-bull' || kind === 'zone-bear';
+}
+
+function zoneBoundaryDisplayName(name, kind = '') {
+  const compact = field(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  if (/^BRZT\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('TOP') || compact.includes('UPPER')))) return 'Bear Zone Top';
+  if (/^BRZB\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'Bear Zone Bottom';
+  if (/^BZT\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('TOP') || compact.includes('UPPER')))) return 'Bull Zone Top';
+  if (/^BZB\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'Bull Zone Bottom';
+  return '';
 }
 
 function manualKindFromColor(color) {
