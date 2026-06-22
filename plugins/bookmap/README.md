@@ -1,17 +1,17 @@
 # Bookmap Plugin
 
-Display-only Bookmap add-on for drawing RS Levels overlays from the local API.
+Display-only Bookmap add-ons for drawing RS Levels overlays and VARIS Zones from the local API.
 
 ## Status
 
-Initial Java add-on source is included at:
+Initial Java add-on sources are included at:
 
 ```text
 plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java
+plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java
 ```
 
-It registers a display-only horizontal level indicator and polls the local
-service from a background worker.
+`RSLevelsDisplayBookmap.java` registers display-only horizontal level indicators and polls the local service from a background worker. `VARISZonesBookmap.java` registers display-only primary-chart line indicators, listens to one-minute Bookmap bars, polls captured `RI`, and publishes VWAP plus half/full RI bands.
 
 ## Recommended API Path
 
@@ -35,12 +35,21 @@ Stats rows are `name,value` and can include `DD`, `Res`, `MRes`, `WRes`, and
 `Map`. Bookmap exposes that display context in the indicator full name because
 the public value-line API is optimized for horizontal price markers.
 
+The VARIS add-on uses `GET /status` and `GET /stats/:symbol?format=rows`. It reads `RI` from the stats rows and falls back to a manual JVM property when no captured value is available.
+
 ## Add-On Settings
 
 - service URL: JVM system property `rslevels.serviceUrl`, default `http://127.0.0.1:8765`
 - symbol mapping: JVM system property `rslevels.symbol`, default inferred from the Bookmap alias
 - refresh interval: JVM system property `rslevels.refreshMs`, default `1000`
 - stale threshold: JVM system property `rslevels.staleSeconds`, default `82800`
+
+VARIS-specific properties:
+
+- manual Risk Interval fallback: `rslevels.varis.manualRi`, default `25.0`
+- use captured `RI`: `rslevels.varis.useCapturedRi`, default `true`
+- refresh interval: `rslevels.varis.refreshMs`, default `1000`
+- request timeout: `rslevels.varis.timeoutMs`, default `1500`
 
 ## Rendering
 
@@ -51,6 +60,8 @@ the public value-line API is optimized for horizontal price markers.
 - Shows DD/Res/MRes/WRes/Map context in the indicator full name when available.
 - Clears displayed lines after stale/offline data exceeds the configured threshold.
 - Logs feed availability warnings through Bookmap's logging API.
+
+`VARISZonesBookmap.java` uses Bookmap's simplified `BarDataListener` at `Intervals.INTERVAL_1_MINUTE` to compute VWAP from bar VWAP/volume, then draws VWAP, upper/lower half-RI bands, and upper/lower full-RI bands as primary-chart indicators. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
 ## Safety Boundary
 

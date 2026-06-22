@@ -10,7 +10,9 @@ const pluginIds = [
   'ninjatrader',
   'ninjatrader-varis-zones',
   'quantower',
+  'quantower-varis-zones',
   'bookmap',
+  'bookmap-varis-zones',
   'tradingview',
   'tradingview-varis-zones'
 ];
@@ -173,6 +175,18 @@ assert.match(quantowerSource, /zone-bear/);
 assertManualKinds(quantowerSource);
 assertNoPlatformApiTerms(quantowerSource);
 
+const quantowerVarisSource = readFileSync(join(root, 'quantower', 'VARISZonesQuantower.cs'), 'utf8');
+assert.match(quantowerVarisSource, /class VARISZonesQuantower : Indicator/);
+assert.match(quantowerVarisSource, /\/stats\//);
+assert.match(quantowerVarisSource, /ParseRiskInterval/);
+assert.match(quantowerVarisSource, /AddLineSeries\("VWAP"/);
+assert.match(quantowerVarisSource, /Upper Half RI/);
+assert.match(quantowerVarisSource, /this\.Volume\(\)/);
+assert.match(quantowerVarisSource, /this\.Time\(\)/);
+assert.match(quantowerVarisSource, /BeginCloud/);
+assert.match(quantowerVarisSource, /ManualRiskInterval/);
+assertNoPlatformApiTerms(quantowerVarisSource);
+
 const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'RSLevelsDisplayBookmap.java'), 'utf8');
 assert.match(bookmapSource, /class RSLevelsDisplayBookmap implements CustomModule/);
 assert.match(bookmapSource, /\/status/);
@@ -189,6 +203,20 @@ assert.match(bookmapSource, /zone-bull/);
 assert.match(bookmapSource, /zone-bear/);
 assertManualKinds(bookmapSource);
 assertNoPlatformApiTerms(bookmapSource);
+
+const bookmapVarisSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'VARISZonesBookmap.java'), 'utf8');
+assert.match(bookmapVarisSource, /class VARISZonesBookmap implements CustomModule, BarDataListener/);
+assert.match(bookmapVarisSource, /IAmTheLiquidity2/);
+assert.match(bookmapVarisSource, /\/stats\//);
+assert.match(bookmapVarisSource, /parseRiskInterval/);
+assert.match(bookmapVarisSource, /registerLine\("VARIS VWAP"/);
+assert.match(bookmapVarisSource, /api\.registerIndicator\(name/);
+assert.match(bookmapVarisSource, /Intervals\.INTERVAL_1_MINUTE/);
+assert.match(bookmapVarisSource, /bar\.getVwap\(\)/);
+assert.match(bookmapVarisSource, /bar\.getVolumeTotal\(\)/);
+assert.match(bookmapVarisSource, /currentEasternSessionKey/);
+assert.match(bookmapVarisSource, /manualRiskInterval/);
+assertNoPlatformApiTerms(bookmapVarisSource);
 
 const tradingViewSource = readFileSync(join(root, 'tradingview', 'rs-levels.pine'), 'utf8');
 assert.match(tradingViewSource, /^indicator\(/m);

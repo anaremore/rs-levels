@@ -1,10 +1,13 @@
 # Quantower Plugin
 
-Display-only Quantower indicator for drawing RS Levels overlays from the local API.
+Display-only Quantower indicators for drawing RS Levels overlays and VARIS Zones from the local API.
 
 ## Status
 
-Initial Quantower indicator source is included at `RSLevelsDisplayQuantower.cs`.
+Initial Quantower indicator sources are included at:
+
+- `RSLevelsDisplayQuantower.cs` for horizontal RS Levels overlays.
+- `VARISZonesQuantower.cs` for VWAP-centered VARIS Zones using captured `RI`.
 
 ## API Path
 
@@ -15,6 +18,8 @@ GET /stats/:symbol?format=rows
 ```
 
 The indicator uses generic text row feeds to keep parsing simple inside Quantower. `/levels/:symbol?format=rows` provides horizontal display levels. `/stats/:symbol?format=rows` provides chart-corner display context such as `DD`, `Res`, `MRes`, `WRes`, and `Map`. `/status` provides source freshness.
+
+`VARISZonesQuantower.cs` polls `/status` and `/stats/:symbol?format=rows`, reads the `RI` row, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input when captured `RI` is unavailable.
 
 ## Indicator Settings
 
@@ -28,6 +33,13 @@ The indicator uses generic text row feeds to keep parsing simple inside Quantowe
 - label vertical offset
 - line width
 
+`VARIS Zones Quantower` adds:
+
+- manual Risk Interval fallback
+- use captured `RI` when available
+- show/hide VWAP, half-RI bands, full-RI bands, fills, and status
+- fill opacity
+
 ## Install
 
 1. Open Quantower Algo in Visual Studio.
@@ -36,6 +48,8 @@ The indicator uses generic text row feeds to keep parsing simple inside Quantowe
 4. Build the indicator.
 5. Add **RS Levels Display** to a chart.
 6. Set the service URL and symbol override if needed.
+
+For VARIS Zones, add `VARISZonesQuantower.cs` to the same project, build it, and add **VARIS Zones Quantower** to the chart. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
 ## Rendering Plan
 

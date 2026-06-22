@@ -29,11 +29,13 @@ The default visual controls follow the original script shape: separate visibilit
 
 ## Direct Platform Studies
 
-Sierra Chart and NinjaTrader now include separate display-only VARIS sources:
+Direct platform adapters include separate display-only VARIS sources:
 
 - `plugins/sierra-chart/varis-zones-sierra.cpp`
 - `plugins/ninjatrader/VARISZones.cs`
+- `plugins/quantower/VARISZonesQuantower.cs`
+- `plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java`
 
-These variants read captured `RI` from the local API and compute VWAP from local chart bars. Sierra uses the combined `GET /sierra/:symbol` feed; NinjaTrader uses `GET /stats/:symbol?format=rows` plus `GET /status`.
+These variants read captured `RI` from the local API and compute VWAP from local chart bars. Sierra uses the combined `GET /sierra/:symbol` feed. NinjaTrader, Quantower, and Bookmap use `GET /stats/:symbol?format=rows` plus `GET /status`. Each direct-platform variant falls back to a manual risk interval when captured `RI` is unavailable.
 
-Quantower and Bookmap VARIS variants are tracked separately because their chart APIs need platform-specific verification for bar VWAP and fill behavior. TradingView remains paste-based because Pine has no arbitrary localhost HTTP polling.
+Bookmap's public simplified API provides one-minute bars through its bar listener, so its VARIS source publishes the VWAP and risk bands as display-only indicators rather than filled chart regions. TradingView remains paste-based because Pine has no arbitrary localhost HTTP polling.

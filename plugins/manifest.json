@@ -121,6 +121,23 @@
       }
     },
     {
+      "id": "quantower-varis-zones",
+      "name": "VARIS Zones Quantower Indicator",
+      "platform": "Quantower",
+      "kind": "indicator",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/quantower/VARISZonesQuantower.cs",
+      "readme": "plugins/quantower/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /stats/:symbol"
+        ]
+      }
+    },
+    {
       "id": "bookmap",
       "name": "RS Levels Bookmap Add-on",
       "platform": "Bookmap",
@@ -135,6 +152,23 @@
           "GET /status",
           "GET /levels/:symbol?format=rows",
           "GET /stats/:symbol?format=rows"
+        ]
+      }
+    },
+    {
+      "id": "bookmap-varis-zones",
+      "name": "VARIS Zones Bookmap Add-on",
+      "platform": "Bookmap",
+      "kind": "addon",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java",
+      "readme": "plugins/bookmap/README.md",
+      "api": {
+        "mode": "local-http",
+        "endpoints": [
+          "GET /status",
+          "GET /stats/:symbol"
         ]
       }
     }

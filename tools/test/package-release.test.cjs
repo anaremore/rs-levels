@@ -12,7 +12,7 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /20 critical entries/);
+assert.match(checkOutput, /22 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /extension zip enabled/);
 

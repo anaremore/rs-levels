@@ -68,7 +68,9 @@ const requiredReleaseEntries = [
   'plugins/ninjatrader/RSLevelsDisplay.cs',
   'plugins/ninjatrader/VARISZones.cs',
   'plugins/quantower/RSLevelsDisplayQuantower.cs',
+  'plugins/quantower/VARISZonesQuantower.cs',
   'plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java',
+  'plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java',
   'tools/scan-text.mjs'
 ];
 
