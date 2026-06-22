@@ -58,6 +58,7 @@ It reads `RI` from that response, then computes VWAP, half-RI bands, and full-RI
 - manual Risk Interval fallback
 - use captured `RI` when available
 - symbol override, default `Auto` from the Sierra chart symbol with ES/MES and NQ/MNQ family detection
+- follow chart symbol, default on, so existing studies do not keep a stale manual symbol after rebuild
 - session reset hour, default 18 ET
 - show/hide VWAP, half-RI bands, full-RI bands, and status
 - colors and line widths for VWAP, half-RI bands, and full-RI bands
@@ -72,6 +73,8 @@ It reads `RI` from that response, then computes VWAP, half-RI bands, and full-RI
 
 For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add **VARIS Zones** to the chart. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
+Existing Sierra studies preserve input values across rebuilds. After updating VARIS Zones, confirm the on-chart status marker shows the current `varis-sierra-...` build tag and the settings include `Follow chart symbol`. If the marker still shows an older build tag, copy the current `varis-zones-sierra.cpp` into `ACS_Source`, rebuild that file, and re-add or reset the study. `Follow chart symbol` defaults on and is auto-enabled once for upgraded study instances. During that migration, old `ES`, `MES`, `NQ`, or `MNQ` symbol overrides are reset to `Auto` so an old `MES` input cannot keep an NQ/MNQ chart on the ES family.
+
 ## Rendering Plan
 
 - Poll `/sierra/:symbol` for RS Levels source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
@@ -82,7 +85,7 @@ For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add *
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
 - When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
-- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input.
+- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input. The marker includes the source build tag so stale compiled studies are easy to spot.
 
 ## Safety Boundary
 

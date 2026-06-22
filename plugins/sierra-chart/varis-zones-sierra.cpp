@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.2";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.4";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -98,25 +98,57 @@ std::vector<std::string> SplitRow(const std::string& row)
     return fields;
 }
 
-void ResolveStudySymbol(SCStudyInterfaceRef sc, const char* inputSymbol, SCString& out)
+bool ResolveChartSymbol(SCStudyInterfaceRef sc, SCString& out)
 {
+    const char* chartSymbol = sc.Symbol.GetChars();
+    if (ContainsIgnoreCase(chartSymbol, "MNQ"))
+    {
+        out = "MNQ";
+        return true;
+    }
+    else if (ContainsIgnoreCase(chartSymbol, "MES"))
+    {
+        out = "MES";
+        return true;
+    }
+    else if (ContainsIgnoreCase(chartSymbol, "ENQ") || ContainsIgnoreCase(chartSymbol, "NQ"))
+    {
+        out = "NQ";
+        return true;
+    }
+    else if (ContainsIgnoreCase(chartSymbol, "EP") || ContainsIgnoreCase(chartSymbol, "ES"))
+    {
+        out = "ES";
+        return true;
+    }
+    return false;
+}
+
+void ResolveStudySymbol(SCStudyInterfaceRef sc, const char* inputSymbol, bool followChartSymbol, SCString& out)
+{
+    if (followChartSymbol && ResolveChartSymbol(sc, out))
+        return;
+
     if (inputSymbol != nullptr && *inputSymbol != 0 && !EqualsIgnoreCase(inputSymbol, "AUTO"))
     {
         out = inputSymbol;
         return;
     }
 
-    const char* chartSymbol = sc.Symbol.GetChars();
-    if (ContainsIgnoreCase(chartSymbol, "MNQ"))
-        out = "MNQ";
-    else if (ContainsIgnoreCase(chartSymbol, "MES"))
-        out = "MES";
-    else if (ContainsIgnoreCase(chartSymbol, "ENQ") || ContainsIgnoreCase(chartSymbol, "NQ"))
-        out = "NQ";
-    else if (ContainsIgnoreCase(chartSymbol, "EP") || ContainsIgnoreCase(chartSymbol, "ES"))
-        out = "ES";
-    else
-        out = "MES";
+    if (ResolveChartSymbol(sc, out))
+        return;
+
+    out = "MES";
+}
+
+bool IsKnownFamilyOverride(const char* inputSymbol)
+{
+    if (inputSymbol == nullptr || *inputSymbol == 0)
+        return false;
+    return EqualsIgnoreCase(inputSymbol, "ES") ||
+        EqualsIgnoreCase(inputSymbol, "MES") ||
+        EqualsIgnoreCase(inputSymbol, "NQ") ||
+        EqualsIgnoreCase(inputSymbol, "MNQ");
 }
 
 double FindRiskInterval(const SCString& body)
@@ -194,6 +226,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     SCInputRef FullBandColor = sc.Input[13];
     SCInputRef VwapWidth = sc.Input[14];
     SCInputRef BandWidth = sc.Input[15];
+    SCInputRef FollowChartSymbol = sc.Input[16];
 
     SCSubgraphRef Vwap = sc.Subgraph[0];
     SCSubgraphRef UpperHalf = sc.Subgraph[1];
@@ -216,6 +249,9 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
 
         Symbol.Name = "Symbol override (Auto, ES, MES, NQ, MNQ)";
         Symbol.SetString("Auto");
+
+        FollowChartSymbol.Name = "Follow chart symbol";
+        FollowChartSymbol.SetYesNo(1);
 
         RefreshMs.Name = "Refresh interval milliseconds";
         RefreshMs.SetInt(1000);
@@ -281,14 +317,37 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     int& requestState = sc.GetPersistentInt(1);
     int& lastRequestSeconds = sc.GetPersistentInt(2);
     int& lastFeedSeconds = sc.GetPersistentInt(3);
+    int& migratedFollowChartSymbol = sc.GetPersistentInt(4);
     double& capturedRiskInterval = sc.GetPersistentDouble(1);
     SCString& sourceState = sc.GetPersistentSCString(1);
     SCString& lastIssue = sc.GetPersistentSCString(2);
+    SCString& lastResolvedSymbol = sc.GetPersistentSCString(3);
+
+    if (migratedFollowChartSymbol == 0)
+    {
+        if (IsKnownFamilyOverride(Symbol.GetString()))
+            Symbol.SetString("Auto");
+        FollowChartSymbol.SetYesNo(1);
+        migratedFollowChartSymbol = 1;
+    }
 
     const int nowSeconds = sc.CurrentSystemDateTime.GetTimeInSeconds();
     const int refreshSeconds = AtLeast(1, RefreshMs.GetInt() / 1000);
     SCString requestSymbol;
-    ResolveStudySymbol(sc, Symbol.GetString(), requestSymbol);
+    ResolveStudySymbol(sc, Symbol.GetString(), FollowChartSymbol.GetYesNo() != 0, requestSymbol);
+
+    const char* lastResolvedText = lastResolvedSymbol.GetChars();
+    const char* requestSymbolText = requestSymbol.GetChars();
+    if (lastResolvedText == nullptr || requestSymbolText == nullptr || std::strcmp(lastResolvedText, requestSymbolText) != 0)
+    {
+        capturedRiskInterval = 0.0;
+        lastFeedSeconds = 0;
+        requestState = REQUEST_NONE;
+        sourceState = "unknown";
+        lastIssue = "";
+        sc.HTTPResponse = "";
+        lastResolvedSymbol = requestSymbol;
+    }
 
     if (lastRequestSeconds > 0 && nowSeconds < lastRequestSeconds)
     {
