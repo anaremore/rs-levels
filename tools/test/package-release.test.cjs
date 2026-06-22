@@ -6,6 +6,9 @@ const { join } = require('node:path');
 const root = join(__dirname, '..', '..');
 const extensionManifest = JSON.parse(readFileSync(join(root, 'apps', 'browser-extension', 'manifest.json'), 'utf8'));
 const extensionVersion = extensionManifest.version || '0.0.0';
+const packagingDoc = readFileSync(join(root, 'docs', 'packaging.md'), 'utf8');
+const ciDoc = readFileSync(join(root, 'docs', 'ci.md'), 'utf8');
+const ciWorkflow = readFileSync(join(root, '.github', 'workflows', 'ci.yml'), 'utf8');
 const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs', '--check'], {
   cwd: root,
   encoding: 'utf8'
@@ -72,5 +75,11 @@ assert.doesNotMatch(extensionZipText, /test\/extension\.test\.cjs/);
 
 const extensionChecksum = readFileSync(`${extensionZipPath}.sha256`, 'utf8').trim();
 assert.match(extensionChecksum, new RegExp(`^[a-f0-9]{64}  rs-levels-browser-extension-${extensionVersion.replaceAll('.', '\\.')}.zip$`));
+
+assert.match(packagingDoc, /rs-levels-browser-extension-<extension-version>\.zip/);
+assert.doesNotMatch(packagingDoc, /rs-levels-browser-extension-0\.1\.[0-9]+\.zip/);
+assert.match(ciDoc, /release archive sidecars/);
+assert.match(ciWorkflow, /Upload release archives/);
+assert.match(ciWorkflow, /dist\/rs-levels-browser-extension-\*\.zip/);
 
 console.log('package release tests passed');

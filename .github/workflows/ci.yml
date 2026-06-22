@@ -44,3 +44,14 @@ jobs:
           name: rs-levels-source-package-${{ matrix.os }}
           path: dist/rs-levels-0.0.0
           if-no-files-found: error
+
+      - name: Upload release archives
+        uses: actions/upload-artifact@v6
+        with:
+          name: rs-levels-release-archives-${{ matrix.os }}
+          path: |
+            dist/rs-levels-0.0.0.zip
+            dist/rs-levels-0.0.0.zip.sha256
+            dist/rs-levels-browser-extension-*.zip
+            dist/rs-levels-browser-extension-*.zip.sha256
+          if-no-files-found: error

@@ -14,8 +14,8 @@ Output:
 dist/rs-levels-0.0.0/
 dist/rs-levels-0.0.0.zip
 dist/rs-levels-0.0.0.zip.sha256
-dist/rs-levels-browser-extension-0.1.1.zip
-dist/rs-levels-browser-extension-0.1.1.zip.sha256
+dist/rs-levels-browser-extension-<extension-version>.zip
+dist/rs-levels-browser-extension-<extension-version>.zip.sha256
 ```
 
 The release directory includes:
@@ -56,7 +56,7 @@ dist/rs-levels-0.0.0/apps/browser-extension
 Or unzip the focused browser-extension artifact and load the extracted folder:
 
 ```text
-dist/rs-levels-browser-extension-0.1.1.zip
+dist/rs-levels-browser-extension-<extension-version>.zip
 ```
 
 ## Service Start From Package

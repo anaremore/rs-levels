@@ -21,7 +21,15 @@ npm run scan:secrets
 npm run package
 ```
 
-It also uploads the generated source-style release directory as an OS-named build artifact.
+It also uploads the generated source-style release directory and the release archive sidecars as OS-named build artifacts:
+
+```text
+dist/rs-levels-0.0.0/
+dist/rs-levels-0.0.0.zip
+dist/rs-levels-0.0.0.zip.sha256
+dist/rs-levels-browser-extension-<extension-version>.zip
+dist/rs-levels-browser-extension-<extension-version>.zip.sha256
+```
 
 The workflow uses current major versions of the official checkout, Node setup, and artifact upload actions while testing the project on Node.js 20 for user compatibility.
 
