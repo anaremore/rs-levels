@@ -199,6 +199,8 @@ assert.match(varis, /options = \["Auto", "ES", "NQ"\]/);
 assert.match(varis, /manualRiskInterval = input\.float\(25\.0, "Manual Risk Interval \(Points\)"/);
 assert.match(varis, /usePayloadRi = input\.bool\(true, "Use pasted RI when available"\)/);
 assert.match(varis, /statValue\(levelText, "RI"\)/);
+assert.match(varis, /float out = na/);
+assert.doesNotMatch(varis, /^\s*out = na$/m);
 assert.match(varis, /riskInterval = usePayloadRi and not na\(payloadRiskInterval\) \? payloadRiskInterval : manualRiskInterval/);
 assert.match(varis, /band1Points = riskInterval \* 0\.5/);
 assert.match(varis, /band2Points = riskInterval/);

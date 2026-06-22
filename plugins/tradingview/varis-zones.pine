@@ -74,7 +74,7 @@ levelTextForChart(payloadText) =>
         chartSymbol == "ES" ? esLevelText : chartSymbol == "NQ" ? nqLevelText : esLevelText != "" and nqLevelText == "" ? esLevelText : nqLevelText != "" and esLevelText == "" ? nqLevelText : ""
 
 statValue(levelText, statName) =>
-    out = na
+    float out = na
     wanted = str.upper(statName)
     items = str.split(levelText, ";")
     for i = 0 to array.size(items) - 1
