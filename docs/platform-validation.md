@@ -46,7 +46,7 @@ Every RS Levels overlay must verify:
 
 Every VARIS Zones adapter must verify:
 
-- Captured `RI` is read from the RS Levels stats feed or pasted TradingView payload.
+- Captured or display-derived `RI` is read from the RS Levels stats feed or pasted TradingView payload.
 - Manual risk interval fallback works when no captured `RI` is present.
 - VWAP resets on the configured 18:00 ET futures session boundary.
 - Half-risk and full-risk bands are drawn around VWAP.
@@ -59,7 +59,7 @@ Every VARIS Zones adapter must verify:
 | TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` paste payload | Paste all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, verify manual lines and stats panel. |
 | TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` paste payload | Paste same payload, verify `RI` selection, manual fallback, VWAP, half-RI bands, and full-RI bands. |
 | Sierra Chart | `plugins/sierra-chart/rs-levels-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify levels, labels, stats marker, zone fills, stale/offline marker, and hidden debug default. |
-| Sierra Chart | `plugins/sierra-chart/varis-zones-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify captured `RI`, manual fallback, VWAP, and RI bands. |
+| Sierra Chart | `plugins/sierra-chart/varis-zones-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify `API RI` status from captured or DD-derived RI, manual fallback before RI is available, VWAP, and RI bands. |
 | NinjaTrader | `plugins/ninjatrader/RSLevelsDisplay.cs` | `GET /levels/:symbol?format=rows`, `GET /stats/:symbol?format=rows` | Compile NinjaScript, add indicator, verify levels, stats, zone fills, label controls, and stale/offline state. |
 | NinjaTrader | `plugins/ninjatrader/VARISZones.cs` | `GET /stats/:symbol?format=rows` | Compile NinjaScript, add indicator, verify captured `RI`, manual fallback, VWAP, and RI bands. |
 | Quantower | `plugins/quantower/RSLevelsDisplayQuantower.cs` | `GET /levels/:symbol?format=rows`, `GET /stats/:symbol?format=rows` | Compile/import indicator, verify levels, stats, zone fills, label controls, and stale/offline state. |

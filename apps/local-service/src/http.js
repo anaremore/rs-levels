@@ -92,7 +92,7 @@ export function createHttpApp({ store, config }) {
       if (req.method === 'GET' && statsRowsMatch) {
         const symbol = normalizeSymbol(statsRowsMatch[1]);
         const row = store.getSnapshot().symbols[symbol] || null;
-        return sendText(res, 200, statsToRowsText(row ? row.stats : {}), 'text/plain; charset=utf-8');
+        return sendText(res, 200, statsToRowsText(row ? row.stats : {}, row ? row.levels : []), 'text/plain; charset=utf-8');
       }
 
       const statsMatch = pathname.match(/^\/stats\/([^/]+)$/);
@@ -100,7 +100,7 @@ export function createHttpApp({ store, config }) {
         const symbol = normalizeSymbol(statsMatch[1]);
         const row = store.getSnapshot().symbols[symbol] || null;
         if (isDisplayRowsFormat(url.searchParams.get('format'))) {
-          return sendText(res, 200, statsToRowsText(row ? row.stats : {}), 'text/plain; charset=utf-8');
+          return sendText(res, 200, statsToRowsText(row ? row.stats : {}, row ? row.levels : []), 'text/plain; charset=utf-8');
         }
         return sendJson(res, row ? 200 : 404, row ? publicStatsRow(row) : { ok: false, error: 'symbol not found' });
       }
@@ -233,7 +233,7 @@ function symbolSummaries(snapshot = {}) {
     symbol: displaySymbolFor(row.symbol || row.displaySymbol || ''),
     displaySymbol: displaySymbolFor(row.displaySymbol || row.symbol || ''),
     levelCount: Array.isArray(row.levels) ? row.levels.length : 0,
-    stats: publicStats(row.stats),
+    stats: publicStats(row.stats, row.levels),
     capturedAt: String(row.capturedAt || ''),
     warnings: Array.isArray(row.warnings) ? row.warnings.map((warning) => String(warning)).filter(Boolean) : []
   })).sort((a, b) => a.symbol.localeCompare(b.symbol));
@@ -246,7 +246,7 @@ function publicSymbolSnapshot(row = {}) {
     ...row,
     symbol: display,
     displaySymbol: display,
-    stats: publicStats(row.stats),
+    stats: publicStats(row.stats, row.levels),
     levels: Array.isArray(row.levels) ? row.levels.map((level) => publicLevel(level, canonical, display)) : []
   };
 }
@@ -264,14 +264,15 @@ function publicStatsRow(row = {}) {
     symbol: display,
     displaySymbol: display,
     capturedAt: String(row.capturedAt || ''),
-    stats: publicStats(row.stats)
+    stats: publicStats(row.stats, row.levels)
   };
 }
 
-function publicStats(stats = {}) {
+function publicStats(stats = {}, levels = []) {
+  const explicitRiskInterval = finiteNumberOrNull(stats.riskInterval);
   return {
     dd: finiteNumberOrNull(stats.dd),
-    riskInterval: finiteNumberOrNull(stats.riskInterval),
+    riskInterval: explicitRiskInterval == null ? riskIntervalFromDdBands(levels) : explicitRiskInterval,
     resilience: finiteNumberOrNull(stats.resilience),
     weeklyResilience: finiteNumberOrNull(stats.weeklyResilience),
     monthlyResilience: finiteNumberOrNull(stats.monthlyResilience),
@@ -279,8 +280,8 @@ function publicStats(stats = {}) {
   };
 }
 
-function statsToRowsText(stats = {}) {
-  const clean = publicStats(stats);
+function statsToRowsText(stats = {}, levels = []) {
+  const clean = publicStats(stats, levels);
   const rows = [];
   if (clean.dd != null) rows.push(`DD,${formatMetric(clean.dd)}`);
   if (clean.riskInterval != null) rows.push(`RI,${formatMetric(clean.riskInterval)}`);
@@ -295,7 +296,7 @@ function sierraFeedText(source = {}, row = null) {
   const rows = [`STATE,${rowCell(source.state || 'waiting')}`];
   const levelRows = levelsToDisplayRowsText(row ? row.levels : []).trim();
   if (levelRows) rows.push(...levelRows.split(/\r?\n/));
-  const statRows = statsToRowsText(row ? row.stats : {}).trim();
+  const statRows = statsToRowsText(row ? row.stats : {}, row ? row.levels : []).trim();
   if (statRows) rows.push(...statRows.split(/\r?\n/));
   return `${rows.join('\n')}\n`;
 }
@@ -307,6 +308,19 @@ function rowCell(value) {
 function hasPublicStats(stats = {}) {
   return Boolean(stats.mapCode) ||
     [stats.dd, stats.riskInterval, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
+}
+
+function riskIntervalFromDdBands(levels = []) {
+  if (!Array.isArray(levels)) return null;
+  const prices = Array.from(new Set(levels
+    .filter((level) => level?.kind === 'dd-band' || /\bDD\b/i.test(String(level?.name || '')))
+    .map((level) => finiteNumberOrNull(level?.price))
+    .filter((price) => price != null)
+    .map((price) => Number(price.toFixed(6)))))
+    .sort((a, b) => a - b);
+  if (prices.length < 2) return null;
+  const derived = (prices[prices.length - 1] - prices[0]) / 2;
+  return derived > 0 ? Number(derived.toFixed(6)) : null;
 }
 
 function publicLevel(level = {}, canonical, display) {

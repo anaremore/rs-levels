@@ -31,7 +31,7 @@ Map,BLD
 
 The `STATE` row provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories. Empty feeds still return a `STATE` row so Sierra Chart can observe that the HTTP request completed before levels are available.
 
-`varis-zones-sierra.cpp` uses the same `GET /sierra/:symbol` feed to read `RI`, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input when captured `RI` is unavailable.
+`varis-zones-sierra.cpp` uses the same `GET /sierra/:symbol` feed to read `RI`, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands.
 
 ## Study Inputs
 
@@ -74,6 +74,7 @@ For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add *
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
 - When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
+- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input.
 
 ## Safety Boundary
 

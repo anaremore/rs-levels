@@ -121,6 +121,8 @@ assert.match(sierraVarisSource, /SCSFExport scsf_VARISZones/);
 assert.match(sierraVarisSource, /IAmTheLiquidity2/);
 assert.match(sierraVarisSource, /\/sierra\/%s/);
 assert.match(sierraVarisSource, /FindRiskInterval/);
+assert.match(sierraVarisSource, /API RI/);
+assert.match(sierraVarisSource, /manual RI/);
 assert.match(sierraVarisSource, /Upper Half RI/);
 assert.match(sierraVarisSource, /Lower Full RI/);
 assert.match(sierraVarisSource, /cumulativeTpv/);

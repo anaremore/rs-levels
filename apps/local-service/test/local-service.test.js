@@ -243,17 +243,18 @@ try {
       symbol: 'MES',
       levels: [
         { name: 'OVNHP', price: 7537, color: [41, 98, 255] },
-        { label: 'DD Upper', value: 7579.75, color: '#29b6f6' }
+        { label: 'DD Upper', value: 7579.75, color: '#29b6f6' },
+        { label: 'DD Lower', value: 7498.25, color: '#29b6f6' }
       ]
     })
   });
   assert.equal(captureResponse.ok, true);
-  assert.equal(captureResponse.snapshot.symbols.MES.levels.length, 2);
+  assert.equal(captureResponse.snapshot.symbols.MES.levels.length, 3);
 
   const captureDiagnostics = await getJson(`${baseUrl}/diagnostics`);
   assert.equal(captureDiagnostics.source.connected, true);
-  assert.equal(captureDiagnostics.levelCount, 2);
-  assert.deepEqual(captureDiagnostics.symbolSummaries.map((row) => [row.symbol, row.levelCount]), [['ES', 2]]);
+  assert.equal(captureDiagnostics.levelCount, 3);
+  assert.deepEqual(captureDiagnostics.symbolSummaries.map((row) => [row.symbol, row.levelCount]), [['ES', 3]]);
   assert.equal(captureDiagnostics.source.endpointCount, 1);
   assert.equal(captureDiagnostics.source.endpoints[0].key, '/platform/api/v1/ddbands/MES');
   assert.equal(Object.hasOwn(captureDiagnostics.source.endpoints[0], 'url'), false);
@@ -274,11 +275,12 @@ try {
 
   const statusAfterCapture = await getJson(`${baseUrl}/status`);
   assert.equal(statusAfterCapture.symbolCount, 1);
-  assert.equal(statusAfterCapture.levelCount, 2);
+  assert.equal(statusAfterCapture.levelCount, 3);
   assert.deepEqual(statusAfterCapture.symbols, ['ES']);
   assert.equal(statusAfterCapture.symbolSummaries[0].symbol, 'ES');
   assert.equal(statusAfterCapture.symbolSummaries[0].displaySymbol, 'ES');
-  assert.equal(statusAfterCapture.symbolSummaries[0].levelCount, 2);
+  assert.equal(statusAfterCapture.symbolSummaries[0].levelCount, 3);
+  assert.equal(statusAfterCapture.symbolSummaries[0].stats.riskInterval, 40.75);
   assert.equal(statusAfterCapture.symbolSummaries[0].capturedAt, capturedAt);
 
   const aliasLevels = await getJson(`${baseUrl}/levels/ES`);
@@ -297,7 +299,10 @@ try {
   const sierraFeed = await getText(`${baseUrl}/sierra/MES`);
   assert.match(sierraFeed, /^STATE,capturing/m);
   assert.match(sierraFeed, /OVNHP,7537\.00,41,98,255,hp/);
+  assert.match(sierraFeed, /RI,40\.75/);
   assert.doesNotMatch(sierraFeed, /"levels"/);
+  const derivedStatsRows = await getText(`${baseUrl}/stats/ES?format=rows`);
+  assert.match(derivedStatsRows, /RI,40\.75/);
 
   const tradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(tradingViewResponse.ok, true, `${baseUrl}/tradingview/ES returned ${tradingViewResponse.status}`);
@@ -308,7 +313,7 @@ try {
   assert.match(tradingViewPayload, /OVNHP,7537,hp/);
   assert.doesNotMatch(tradingViewPayload, /tradingview-json|compactPayload|notes/);
   const ddbands = await getJson(`${baseUrl}/ddbands`);
-  assert.equal(ddbands.levels.length, 1);
+  assert.equal(ddbands.levels.length, 2);
 
   const replacementCapture = await postJson(`${baseUrl}/capture/api`, {
     endpoint: '/platform/api/v1/ddbands/MES',

@@ -278,7 +278,7 @@ Returns display context stats for every symbol with captured stats:
 ```
 
 Stats are display-only RocketScooter context. `mapCode` is the liquidity-map code as exposed by RocketScooter, for example `BLD`.
-`riskInterval` is the RocketScooter RI value for the ES/NQ futures family and is used by VARIS-style display indicators.
+`riskInterval` is the RocketScooter RI value for the ES/NQ futures family and is used by VARIS-style display indicators. When explicit `RI` has not been captured yet but the API has both DD band prices for a symbol, display stats may include a derived RI equal to half the outer DD-band distance.
 
 ## GET /stats/:symbol?format=rows
 
@@ -322,7 +322,7 @@ Returns the all-symbol futures `RSLEVELS|2` paste payload for the included Tradi
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;BZT1,7588,zone-bull;DD,0.66,stat;RI,68.75,stat;Map BLD,0,stat|NQ|2026-06-19T14:29:59.500Z|BrZT1,30450,zone-bear;RI,266.25,stat;Res,73.82,stat;MRes,49.87,stat;WRes,-29.29,stat
 ```
 
-The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set. User-added RocketScooter yellow, red, and purple CAT chart lines are exported as `yellow-line`, `red-line`, and `cat` kinds when they are captured. Multiple yellow or red lines are preserved as separate rows when they have distinct prices. Display context travels as `stat` rows; the included Pine indicator uses those rows for its stats panel and does not draw them as price levels. VARIS-style indicators can read the `RI` stat row from the same payload.
+The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set. User-added RocketScooter yellow, red, and purple CAT chart lines are exported as `yellow-line`, `red-line`, and `cat` kinds when they are captured. Multiple yellow or red lines are preserved as separate rows when they have distinct prices. Display context travels as `stat` rows; the included Pine indicator uses those rows for its stats panel and does not draw them as price levels. VARIS-style indicators can read the `RI` stat row from the same payload. If explicit `RI` is missing but both DD bands are present, the exported display payload can include derived RI from those DD bands.
 
 ## GET /tradingview/:symbol
 

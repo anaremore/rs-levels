@@ -11,7 +11,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-21.1";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.1";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -267,7 +267,9 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         sc.HTTPResponse = "";
     }
 
-    const double riskInterval = UseApiRiskInterval.GetYesNo() != 0
+    const bool apiEnabled = UseApiRiskInterval.GetYesNo() != 0;
+    const bool hasCapturedRiskInterval = capturedRiskInterval > 0.0;
+    const double riskInterval = apiEnabled
         ? PositiveOr(capturedRiskInterval, ManualRiskInterval.GetFloat())
         : ManualRiskInterval.GetFloat();
     const double halfRisk = riskInterval * 0.5;
@@ -324,9 +326,18 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
             color = RGB(255, 152, 0);
             status.Format("VARIS stale %s RI %.2f", sourceState.GetLength() ? sourceState.GetChars() : "unknown", riskInterval);
         }
+        else if (apiEnabled && !hasCapturedRiskInterval)
+        {
+            color = RGB(255, 152, 0);
+            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
+        }
+        else if (!apiEnabled)
+        {
+            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
+        }
         else
         {
-            status.Format("VARIS %s RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
+            status.Format("VARIS %s API RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
         }
         DrawStatus(sc, status.GetChars(), color);
     }
