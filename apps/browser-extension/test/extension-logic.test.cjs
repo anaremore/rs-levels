@@ -112,7 +112,11 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
     stats: {
       ES: { dd: 0.66, riskInterval: 68.75, resilience: 14.47, monthlyResilience: 19.87, mapCode: 'BLD' },
       NQ: { dd: 0.66, riskInterval: 266.25, resilience: 73.82, monthlyResilience: 49.87, weeklyResilience: -29.29, mapCode: 'BLD' }
-    }
+    },
+    zoneRectangles: [
+      { index: 'ES', chart: 'F.US.EPU26', top: 7571.5, bottom: 7566.4, color: '#555555', source: 'chart_shape' },
+      { index: 'ES', chart: 'F.US.EPU26', top: 7556.2, bottom: 7548, color: '#555555', source: 'chart_shape' }
+    ]
   })
 });
 assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSON.stringify(['ES', 'NQ']));
@@ -120,10 +124,12 @@ const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(loca
 assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
 assert.match(localPayload, /Half Gap,7569,open-close/);
-assert.match(localPayload, /Bull Zone Top 1,7579\.75,zone-bull/);
+assert.match(localPayload, /Bull Zone Top 1,7571\.5,zone-bull/);
 assert.match(localPayload, /Bull Zone Bottom 1,7566\.4,zone-bull/);
 assert.match(localPayload, /Bear Zone Top 1,7556\.2,zone-bear/);
-assert.match(localPayload, /Bear Zone Bottom 1,7506,zone-bear/);
+assert.match(localPayload, /Bear Zone Bottom 1,7548,zone-bear/);
+assert.doesNotMatch(localPayload, /Bull Zone Top 1,7579\.75,zone-bull/);
+assert.doesNotMatch(localPayload, /Bear Zone Bottom 1,7506,zone-bear/);
 assert.doesNotMatch(localPayload, /Bull Zone,|Bear Zone,/);
 assert.doesNotMatch(localPayload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 assert.match(localPayload, /Yellow Line,7598,yellow-line/);

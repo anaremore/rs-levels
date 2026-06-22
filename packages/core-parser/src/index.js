@@ -104,7 +104,196 @@ export function collectLevels(root, options = {}) {
       levels.push({ ...candidate, id });
     });
   });
+  addMatchedZoneRectangles(root, levels, seen, options);
   return levels;
+}
+
+function addMatchedZoneRectangles(root, levels, seen, options = {}) {
+  const rectangles = collectExplicitZoneRectangles(root, options);
+  if (!rectangles.length) return;
+  const consumedLabels = new Set();
+  const boundaryKeys = new Set(levels.map(zoneBoundaryDedupeKey).filter(Boolean));
+  const ordinals = new Map();
+
+  for (const rectangle of rectangles) {
+    const match = rectangle.side ? null : matchedZoneLabel(levels, consumedLabels, rectangle);
+    const side = rectangle.side || (match && match.side) || '';
+    if (side !== 'bull' && side !== 'bear') continue;
+    if (match && match.level) consumedLabels.add(match.level);
+    const kind = side === 'bear' ? 'zone-bear' : 'zone-bull';
+    const prefix = side === 'bear' ? 'BrZ' : 'BZ';
+    const ordinal = nextZoneOrdinal(ordinals, levels, rectangle.symbol, side);
+    [
+      { name: `${prefix}T${ordinal}`, price: rectangle.top, edge: 'top' },
+      { name: `${prefix}B${ordinal}`, price: rectangle.bottom, edge: 'bottom' }
+    ].forEach((boundary) => {
+      const candidate = normalizeLevel(rectangle.symbol, {
+        symbol: rectangle.symbol,
+        name: boundary.name,
+        price: boundary.price,
+        kind,
+        color: rectangle.color,
+        source: rectangle.source || options.source || 'rocketscooter',
+        capturedAt: rectangle.capturedAt || options.capturedAt || '',
+        metadata: withEndpointMetadata({ ...rectangle.metadata, side, edge: boundary.edge }, options.endpointKey)
+      });
+      const key = zoneBoundaryDedupeKey(candidate);
+      if (!key || boundaryKeys.has(key)) return;
+      boundaryKeys.add(key);
+      const id = candidate.id || stableLevelId(candidate.symbol, candidate);
+      if (seen.has(id)) return;
+      seen.add(id);
+      levels.push({ ...candidate, id });
+    });
+  }
+
+  if (consumedLabels.size) {
+    for (let index = levels.length - 1; index >= 0; index -= 1) {
+      if (consumedLabels.has(levels[index])) levels.splice(index, 1);
+    }
+  }
+}
+
+function collectExplicitZoneRectangles(root, options = {}) {
+  const out = [];
+  const visit = (value, depth, symbolHint) => {
+    if (depth > MAX_DEPTH || !value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      value.forEach((entry) => visit(entry, depth + 1, symbolHint));
+      return;
+    }
+    const nodeSymbol = candidateSymbolFromNode(value, { symbolHint }) || candidateSymbol(symbolHint);
+    if (Array.isArray(value.zoneRectangles)) {
+      value.zoneRectangles.forEach((entry, index) => {
+        const rectangle = explicitZoneRectangle(entry, {
+          ...options,
+          symbolHint: nodeSymbol || options.symbolHint,
+          nameHint: String(index)
+        });
+        if (rectangle) out.push(rectangle);
+      });
+    }
+    Object.entries(value).forEach(([key, child]) => {
+      if (key === 'zoneRectangles') return;
+      if (!child || typeof child !== 'object') return;
+      visit(child, depth + 1, nodeSymbol || symbolHint);
+    });
+  };
+  visit(root, 0, options.symbolHint || '');
+  return out;
+}
+
+function explicitZoneRectangle(node, options = {}) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) return null;
+  const top = firstNumber(node, ZONE_TOP_KEYS);
+  const bottom = firstNumber(node, ZONE_BOTTOM_KEYS);
+  if (top == null || bottom == null || top <= bottom) return null;
+  const symbol = candidateSymbolFromNode(node, options);
+  if (!symbol) return null;
+  const metadata = displayMetadata(node);
+  const side = zoneSideFromText(
+    [metadata.side, metadata.type, metadata.group, displayNameText(node), options.zoneSide]
+      .map(stringValue)
+      .filter(Boolean)
+      .join(' ')
+  ) || zoneSideFromColor(inputColor(node));
+  return {
+    symbol,
+    top,
+    bottom,
+    side,
+    color: inputColor(node),
+    source: stringValue(node.source || options.source || 'rocketscooter'),
+    capturedAt: stringValue(node.capturedAt || options.capturedAt || ''),
+    metadata
+  };
+}
+
+function matchedZoneLabel(levels, consumedLabels, rectangle) {
+  let best = null;
+  for (const level of levels) {
+    if (!level || consumedLabels.has(level)) continue;
+    if (normalizeSymbol(level.symbol) !== normalizeSymbol(rectangle.symbol)) continue;
+    if (!isGenericZoneLevel(level)) continue;
+    const price = numberValue(level.price);
+    if (price == null || !priceWithinRange(price, rectangle.top, rectangle.bottom)) continue;
+    const side = zoneSideFromText(level.name) || (level.kind === 'zone-bear' ? 'bear' : 'bull');
+    if (side !== 'bull' && side !== 'bear') continue;
+    const score = Math.min(
+      Math.abs(rectangle.top - price),
+      Math.abs(rectangle.bottom - price),
+      Math.abs(((rectangle.top + rectangle.bottom) / 2) - price)
+    );
+    if (!best || score < best.score) best = { level, side, score };
+  }
+  return best;
+}
+
+function isGenericZoneLevel(level) {
+  const kind = levelKind(level.name, level.kind);
+  if (!isZoneSideKind(kind)) return false;
+  const compact = stringValue(level.name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  return compact === 'BULLZONE' || compact === 'BEARZONE' || compact === 'BEAZONE';
+}
+
+function priceWithinRange(price, top, bottom) {
+  const tolerance = Math.max(0.01, Math.abs(top - bottom) * 0.0025);
+  return price <= top + tolerance && price >= bottom - tolerance;
+}
+
+function nextZoneOrdinal(ordinals, levels, symbol, side) {
+  const key = `${normalizeSymbol(symbol)}:${side}`;
+  if (!ordinals.has(key)) ordinals.set(key, highestZoneOrdinal(levels, symbol, side));
+  const next = ordinals.get(key) + 1;
+  ordinals.set(key, next);
+  return next;
+}
+
+function highestZoneOrdinal(levels, symbol, side) {
+  const kind = side === 'bear' ? 'zone-bear' : 'zone-bull';
+  let highest = 0;
+  for (const level of levels) {
+    if (normalizeSymbol(level.symbol) !== normalizeSymbol(symbol)) continue;
+    if (levelKind(level.name, level.kind) !== kind) continue;
+    highest = Math.max(highest, zoneOrdinalFromName(level.name, side));
+  }
+  return highest;
+}
+
+function zoneOrdinalFromName(name, side) {
+  const compact = stringValue(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  const prefix = side === 'bear' ? 'BRZ' : 'BZ';
+  const match = compact.match(new RegExp(`^${prefix}[TB](\\d*)$`));
+  if (match) return match[1] ? Number(match[1]) : 1;
+  const friendlyPrefix = side === 'bear' ? '(?:BEARZONE|BEAZONE)' : 'BULLZONE';
+  const friendlyMatch = compact.match(new RegExp(`^${friendlyPrefix}(?:TOP|BOTTOM|UPPER|LOWER)(\\d*)$`));
+  if (friendlyMatch) return friendlyMatch[1] ? Number(friendlyMatch[1]) : 1;
+  return 0;
+}
+
+function zoneBoundaryDedupeKey(level = {}) {
+  const kind = levelKind(level.name, level.kind);
+  if (!isZoneSideKind(kind)) return '';
+  const price = numberValue(level.price);
+  if (price == null) return '';
+  const edge = zoneBoundaryEdge(level.name, kind);
+  if (!edge) return '';
+  return [normalizeSymbol(level.symbol), kind, edge, Number(price).toFixed(6)].join('|');
+}
+
+function zoneBoundaryEdge(name, kind) {
+  const compact = stringValue(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  if (/^(?:BRZ|BZ)T\d*$/.test(compact) || (isZoneSideKind(kind) && (compact.includes('TOP') || compact.includes('UPPER')))) return 'top';
+  if (/^(?:BRZ|BZ)B\d*$/.test(compact) || (isZoneSideKind(kind) && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'bottom';
+  return '';
+}
+
+function zoneSideFromColor(color) {
+  const rgb = hexToRgb(color);
+  if (!rgb) return '';
+  if (rgb.r >= 190 && rgb.g <= 130 && rgb.b <= 170) return 'bear';
+  if (rgb.g >= 140 && rgb.r <= 140 && rgb.b <= 140) return 'bull';
+  return '';
 }
 
 export function collectStats(root, options = {}) {

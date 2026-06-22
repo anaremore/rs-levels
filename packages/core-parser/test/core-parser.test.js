@@ -368,10 +368,11 @@ const pageReaderSnapshotArrays = normalizeCapture({
     ],
     referenceLines: [
       { index: 'ES', name: 'LastOpen', price: 7559.25, source: 'chart_shape' },
+      { index: 'ES', name: 'Bull Zone', price: 7566.4, source: 'chart_shape' },
       { index: 'NQ', name: 'MidGap', price: 30625.75, source: 'study:Liquidity Map' }
     ],
     zoneRectangles: [
-      { index: 'ES', chart: 'F.US.EPU26', top: 7580, bottom: 7560, text: 'Bull Zone: 7580', source: 'chart_shape' },
+      { index: 'ES', chart: 'F.US.EPU26', top: 7580, bottom: 7560, text: '', source: 'chart_shape' },
       { index: 'NQ', chart: 'F.US.ENQU26', top: 30710, bottom: 30680, text: 'Bear Zone: 30710', source: 'chart_shape' }
     ]
   }
@@ -384,6 +385,7 @@ assert.equal(pageReaderSnapshotArrays.symbols.MES.filter((level) => level.kind =
 assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name === 'CAT').kind, 'cat');
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'LastOpen').kind, 'open-close');
 assert.equal(pageReaderSnapshotArrays.symbols.MES.find((level) => level.name === 'BZT1').kind, 'zone-bull');
+assert.equal(pageReaderSnapshotArrays.symbols.MES.some((level) => level.name === 'Bull Zone'), false);
 assert.equal(pageReaderSnapshotArrays.symbols.MNQ.find((level) => level.name.startsWith('BrZT')).kind, 'zone-bear');
 assert.equal(pageReaderSnapshotArrays.symbols.SPY, undefined);
 

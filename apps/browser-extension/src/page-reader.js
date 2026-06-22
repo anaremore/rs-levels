@@ -393,9 +393,9 @@
         const color = shapeColor(props);
         const side = zoneSide(label);
         const shapeName = safeString(shape && shape.name);
+        const isRectangle = isZoneRectangleShape(shapeName, props);
 
-        if (side && prices.length >= 2) {
-          zoneCounts[side] += 1;
+        if (isRectangle && prices.length >= 2) {
           const top = Math.max(...prices);
           const bottom = Math.min(...prices);
           addZoneRectangle(state, seen, {
@@ -409,27 +409,30 @@
             source: 'chart_shape',
             side
           });
-          addLevel(state.levels, seen, {
-            symbol,
-            name: side === 'bear' ? `BrZT${zoneCounts[side]}` : `BZT${zoneCounts[side]}`,
-            price: top,
-            kind: side === 'bear' ? 'zone-bear' : 'zone-bull',
-            color,
-            source: 'rocketscooter-page',
-            capturedAt: state.capturedAt,
-            metadata: { rawSymbol, reader: 'shape-zone-top' }
-          });
-          addLevel(state.levels, seen, {
-            symbol,
-            name: side === 'bear' ? `BrZB${zoneCounts[side]}` : `BZB${zoneCounts[side]}`,
-            price: bottom,
-            kind: side === 'bear' ? 'zone-bear' : 'zone-bull',
-            color,
-            source: 'rocketscooter-page',
-            capturedAt: state.capturedAt,
-            metadata: { rawSymbol, reader: 'shape-zone-bottom' }
-          });
-          continue;
+          if (side) {
+            zoneCounts[side] += 1;
+            addLevel(state.levels, seen, {
+              symbol,
+              name: side === 'bear' ? `BrZT${zoneCounts[side]}` : `BZT${zoneCounts[side]}`,
+              price: top,
+              kind: side === 'bear' ? 'zone-bear' : 'zone-bull',
+              color,
+              source: 'rocketscooter-page',
+              capturedAt: state.capturedAt,
+              metadata: { rawSymbol, reader: 'shape-zone-top' }
+            });
+            addLevel(state.levels, seen, {
+              symbol,
+              name: side === 'bear' ? `BrZB${zoneCounts[side]}` : `BZB${zoneCounts[side]}`,
+              price: bottom,
+              kind: side === 'bear' ? 'zone-bear' : 'zone-bull',
+              color,
+              source: 'rocketscooter-page',
+              capturedAt: state.capturedAt,
+              metadata: { rawSymbol, reader: 'shape-zone-bottom' }
+            });
+            continue;
+          }
         }
 
         const price = prices[0];
@@ -600,6 +603,12 @@
 
   function shapeColor(props) {
     return normalizeColor(props && (props.linecolor || props.color || props.textcolor || props.backgroundColor));
+  }
+
+  function isZoneRectangleShape(shapeName, props) {
+    const name = safeString(shapeName);
+    if (/rect|box|range/i.test(name)) return true;
+    return Boolean(props && (props.backgroundColor || props.bgcolor || props.fillColor || props.fillcolor));
   }
 
   function levelNameFromLabel(label, color) {
