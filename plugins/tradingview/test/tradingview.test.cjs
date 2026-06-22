@@ -5,7 +5,7 @@ const { join } = require('node:path');
 const pine = readFileSync(join(__dirname, '..', 'rs-levels.pine'), 'utf8');
 const varis = readFileSync(join(__dirname, '..', 'varis-zones.pine'), 'utf8');
 
-assert.match(pine, /indicator\("RS Levels v2026\.06\.22\.5"/);
+assert.match(pine, /indicator\("RS Levels v2026\.06\.22\.6"/);
 assert.doesNotMatch(pine, /\bstrategy\s*\(/i);
 assert.doesNotMatch(pine, /\bstrategy\./i);
 assert.doesNotMatch(pine, new RegExp('\\b' + 'ord' + 'er' + '\\b', 'i'));
@@ -161,7 +161,7 @@ assert.match(pine, /catLineColorInput = input\.color\(color\.rgb\(126, 87, 194\)
 assert.match(pine, /showBullZones = input\.bool\(true, "Bull zones", inline = "bullZone"\)/);
 assert.match(pine, /bullZoneColorInput = input\.color\(color\.rgb\(76, 175, 80\), "", inline = "bullZone"\)/);
 assert.match(pine, /showBearZones = input\.bool\(true, "Bear zones", inline = "bearZone"\)/);
-assert.match(pine, /bearZoneColorInput = input\.color\(color\.rgb\(240, 98, 146\), "", inline = "bearZone"\)/);
+assert.match(pine, /bearZoneColorInput = input\.color\(color\.rgb\(242, 54, 69\), "", inline = "bearZone"\)/);
 assert.match(pine, /showOtherLevels = input\.bool\(true, "Other levels", inline = "otherLevels"\)/);
 assert.match(pine, /otherLevelColorInput = input\.color\(color\.rgb\(158, 158, 158\), "", inline = "otherLevels"\)/);
 assert.match(pine, /showDdBands[\s\S]*ddBandColorInput/);

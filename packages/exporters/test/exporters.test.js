@@ -40,8 +40,8 @@ const payload = createTradingViewPayloadExport(row, { generatedAt: '2026-06-19T1
 assert.match(payload, /^RSLEVELS\|2\|2026-06-19T14:30:00\.000Z\|ES\|2026-06-19T14:29:59\.500Z\|/);
 assert.match(payload, /DD Upper bad chars,7579\.75,dd-band/);
 assert.match(payload, /DD Lower,7506,dd-band/);
-assert.match(payload, /Bull Zone Top,7588,zone-bull/);
-assert.match(payload, /Bear Zone Top,7612,zone-bear/);
+assert.match(payload, /Bull Zone Top 1,7588,zone-bull/);
+assert.match(payload, /Bear Zone Top 1,7612,zone-bear/);
 assert.match(payload, /Yellow Line,7598,yellow-line/);
 assert.match(payload, /Red Line,7520,red-line/);
 assert.match(payload, /Red Line,7496,red-line/);
@@ -52,10 +52,10 @@ assert.match(payload, /Yellow Line,7608,yellow-line/);
 assert.match(payload, /CAT,7820,cat/);
 assert.match(payload, /Open,7559,open-close/);
 assert.match(payload, /Half Gap,7569,open-close/);
-assert.match(payload, /Bull Zone Top,7579\.75,zone-bull/);
-assert.match(payload, /Bull Zone Bottom,7566\.4,zone-bull/);
-assert.match(payload, /Bear Zone Top,7556\.2,zone-bear/);
-assert.match(payload, /Bear Zone Bottom,7506,zone-bear/);
+assert.match(payload, /Bull Zone Top 2,7579\.75,zone-bull/);
+assert.match(payload, /Bull Zone Bottom 2,7566\.4,zone-bull/);
+assert.match(payload, /Bear Zone Top 2,7556\.2,zone-bear/);
+assert.match(payload, /Bear Zone Bottom 2,7506,zone-bear/);
 assert.doesNotMatch(payload, /Bull Zone,|Bear Zone,/);
 assert.doesNotMatch(payload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 assert.doesNotMatch(payload, /MidGap|Mid Gap/);
@@ -81,12 +81,12 @@ const mismatchedZoneSidePayload = createTradingViewPayloadExport({
     { name: 'BZT4', price: 30992.75, kind: 'zone-bear' }
   ]
 }, { generatedAt: '2026-06-22T14:35:01.000Z' });
-assert.match(mismatchedZoneSidePayload, /Bear Zone Top,30655\.75,zone-bear/);
-assert.match(mismatchedZoneSidePayload, /Bear Zone Bottom,30460\.25,zone-bear/);
-assert.match(mismatchedZoneSidePayload, /Bull Zone Top,30992\.75,zone-bull/);
-assert.match(mismatchedZoneSidePayload, /Bull Zone Bottom,30697\.25,zone-bull/);
-assert.match(mismatchedZoneSidePayload, /Bear Zone Top,30380,zone-bear/);
-assert.match(mismatchedZoneSidePayload, /Bull Zone Top,30992\.75,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /Bear Zone Top 5,30655\.75,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /Bear Zone Bottom 5,30460\.25,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /Bull Zone Top 5,30992\.75,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /Bull Zone Bottom 5,30697\.25,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /Bear Zone Top 4,30380,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /Bull Zone Top 4,30992\.75,zone-bull/);
 assert.doesNotMatch(mismatchedZoneSidePayload, /Bear Zone,|Bull Zone,/);
 assert.doesNotMatch(mismatchedZoneSidePayload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 
@@ -149,7 +149,7 @@ const bundleSnapshot = {
 };
 const bundlePayload = createTradingViewBundlePayloadExport(bundleSnapshot, { generatedAt: '2026-06-19T14:31:05.000Z' });
 assert.match(bundlePayload, /^RSLEVELS\|2\|2026-06-19T14:31:05\.000Z\|ES\|2026-06-19T14:29:59\.500Z\|/);
-assert.match(bundlePayload, /\|NQ\|2026-06-19T14:30:30\.000Z\|Bear Zone Top,30450,zone-bear/);
+assert.match(bundlePayload, /\|NQ\|2026-06-19T14:30:30\.000Z\|Bear Zone Top 1,30450,zone-bear/);
 assert.match(bundlePayload, /Map BLD,0,stat/);
 assert.doesNotMatch(bundlePayload, /\|SPY\|/);
 assert.doesNotMatch(bundlePayload, /\|QQQ\|/);

@@ -120,10 +120,10 @@ const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(loca
 assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
 assert.match(localPayload, /Half Gap,7569,open-close/);
-assert.match(localPayload, /Bull Zone Top,7579\.75,zone-bull/);
-assert.match(localPayload, /Bull Zone Bottom,7566\.4,zone-bull/);
-assert.match(localPayload, /Bear Zone Top,7556\.2,zone-bear/);
-assert.match(localPayload, /Bear Zone Bottom,7506,zone-bear/);
+assert.match(localPayload, /Bull Zone Top 1,7579\.75,zone-bull/);
+assert.match(localPayload, /Bull Zone Bottom 1,7566\.4,zone-bull/);
+assert.match(localPayload, /Bear Zone Top 1,7556\.2,zone-bear/);
+assert.match(localPayload, /Bear Zone Bottom 1,7506,zone-bear/);
 assert.doesNotMatch(localPayload, /Bull Zone,|Bear Zone,/);
 assert.doesNotMatch(localPayload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 assert.match(localPayload, /Yellow Line,7598,yellow-line/);
@@ -161,12 +161,12 @@ const mismatchedZoneSideSnapshot = sharedContext.RS_LEVELS.captureToTradingViewS
   })
 });
 const mismatchedZoneSidePayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(mismatchedZoneSideSnapshot, 'NQ');
-assert.match(mismatchedZoneSidePayload, /Bear Zone Top,30655\.75,zone-bear/);
-assert.match(mismatchedZoneSidePayload, /Bear Zone Bottom,30460\.25,zone-bear/);
-assert.match(mismatchedZoneSidePayload, /Bull Zone Top,30992\.75,zone-bull/);
-assert.match(mismatchedZoneSidePayload, /Bull Zone Bottom,30697\.25,zone-bull/);
-assert.match(mismatchedZoneSidePayload, /Bear Zone Top,30380,zone-bear/);
-assert.match(mismatchedZoneSidePayload, /Bull Zone Top,30992\.75,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /Bear Zone Top 5,30655\.75,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /Bear Zone Bottom 5,30460\.25,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /Bull Zone Top 5,30992\.75,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /Bull Zone Bottom 5,30697\.25,zone-bull/);
+assert.match(mismatchedZoneSidePayload, /Bear Zone Top 4,30380,zone-bear/);
+assert.match(mismatchedZoneSidePayload, /Bull Zone Top 4,30992\.75,zone-bull/);
 assert.doesNotMatch(mismatchedZoneSidePayload, /Bear Zone,|Bull Zone,/);
 assert.doesNotMatch(mismatchedZoneSidePayload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 

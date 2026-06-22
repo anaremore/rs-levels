@@ -564,8 +564,11 @@
     const compact = tradingViewField(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
     const prefix = kind === 'zone-bear' ? 'BRZ' : 'BZ';
     const match = compact.match(new RegExp(`^${prefix}[TB](\\d*)$`));
-    if (!match) return 0;
-    return match[1] ? Number(match[1]) : 1;
+    if (match) return match[1] ? Number(match[1]) : 1;
+    const friendlyPrefix = kind === 'zone-bear' ? 'BEARZONE' : 'BULLZONE';
+    const friendlyMatch = compact.match(new RegExp(`^${friendlyPrefix}(?:TOP|BOTTOM)(\\d*)$`));
+    if (friendlyMatch) return friendlyMatch[1] ? Number(friendlyMatch[1]) : 1;
+    return 0;
   }
 
   function isGenericZonePayloadRow(level = {}, kind = canonicalTradingViewKind(level.kind)) {
@@ -677,11 +680,19 @@
 
   function zoneBoundaryDisplayName(name, kind = '') {
     const compact = tradingViewField(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
-    if (/^BRZT\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('TOP') || compact.includes('UPPER')))) return 'Bear Zone Top';
-    if (/^BRZB\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'Bear Zone Bottom';
-    if (/^BZT\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('TOP') || compact.includes('UPPER')))) return 'Bull Zone Top';
-    if (/^BZB\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return 'Bull Zone Bottom';
+    const suffix = zoneBoundaryOrdinalSuffix(compact);
+    if (/^BRZT\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('TOP') || compact.includes('UPPER')))) return `Bear Zone Top${suffix}`;
+    if (/^BRZB\d*$/.test(compact) || (kind === 'zone-bear' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return `Bear Zone Bottom${suffix}`;
+    if (/^BZT\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('TOP') || compact.includes('UPPER')))) return `Bull Zone Top${suffix}`;
+    if (/^BZB\d*$/.test(compact) || (kind === 'zone-bull' && (compact.includes('BOTTOM') || compact.includes('LOWER')))) return `Bull Zone Bottom${suffix}`;
     return '';
+  }
+
+  function zoneBoundaryOrdinalSuffix(compact) {
+    const compactMatch = compact.match(/^(?:BRZ|BZ)[TB](\d+)$/);
+    if (compactMatch && compactMatch[1]) return ` ${compactMatch[1]}`;
+    const friendlyMatch = compact.match(/(?:TOP|BOTTOM|UPPER|LOWER)(\d+)$/);
+    return friendlyMatch && friendlyMatch[1] ? ` ${friendlyMatch[1]}` : '';
   }
 
   function levelColor(level = {}) {
