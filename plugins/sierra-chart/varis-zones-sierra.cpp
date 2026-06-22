@@ -3,6 +3,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -11,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.1";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.2";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -32,6 +33,41 @@ std::string Upper(std::string value)
     for (char& ch : value)
         ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
     return value;
+}
+
+bool EqualsIgnoreCase(const char* first, const char* second)
+{
+    if (first == nullptr || second == nullptr)
+        return false;
+
+    while (*first && *second)
+    {
+        if (std::toupper(static_cast<unsigned char>(*first)) != std::toupper(static_cast<unsigned char>(*second)))
+            return false;
+        ++first;
+        ++second;
+    }
+    return *first == 0 && *second == 0;
+}
+
+bool ContainsIgnoreCase(const char* text, const char* needle)
+{
+    if (text == nullptr || needle == nullptr || *needle == 0)
+        return false;
+
+    const size_t needleLength = std::strlen(needle);
+    for (const char* position = text; *position; ++position)
+    {
+        size_t index = 0;
+        while (index < needleLength && position[index] &&
+               std::toupper(static_cast<unsigned char>(position[index])) == std::toupper(static_cast<unsigned char>(needle[index])))
+        {
+            ++index;
+        }
+        if (index == needleLength)
+            return true;
+    }
+    return false;
 }
 
 int AtLeast(int minimum, int value)
@@ -60,6 +96,27 @@ std::vector<std::string> SplitRow(const std::string& row)
     while (std::getline(stream, field, ','))
         fields.push_back(Trim(field));
     return fields;
+}
+
+void ResolveStudySymbol(SCStudyInterfaceRef sc, const char* inputSymbol, SCString& out)
+{
+    if (inputSymbol != nullptr && *inputSymbol != 0 && !EqualsIgnoreCase(inputSymbol, "AUTO"))
+    {
+        out = inputSymbol;
+        return;
+    }
+
+    const char* chartSymbol = sc.Symbol.GetChars();
+    if (ContainsIgnoreCase(chartSymbol, "MNQ"))
+        out = "MNQ";
+    else if (ContainsIgnoreCase(chartSymbol, "MES"))
+        out = "MES";
+    else if (ContainsIgnoreCase(chartSymbol, "ENQ") || ContainsIgnoreCase(chartSymbol, "NQ"))
+        out = "NQ";
+    else if (ContainsIgnoreCase(chartSymbol, "EP") || ContainsIgnoreCase(chartSymbol, "ES"))
+        out = "ES";
+    else
+        out = "MES";
 }
 
 double FindRiskInterval(const SCString& body)
@@ -157,8 +214,8 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         ServiceUrl.Name = "Service URL";
         ServiceUrl.SetString("http://127.0.0.1:8765");
 
-        Symbol.Name = "Symbol";
-        Symbol.SetString("MES");
+        Symbol.Name = "Symbol override (Auto, ES, MES, NQ, MNQ)";
+        Symbol.SetString("Auto");
 
         RefreshMs.Name = "Refresh interval milliseconds";
         RefreshMs.SetInt(1000);
@@ -230,6 +287,8 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
 
     const int nowSeconds = sc.CurrentSystemDateTime.GetTimeInSeconds();
     const int refreshSeconds = AtLeast(1, RefreshMs.GetInt() / 1000);
+    SCString requestSymbol;
+    ResolveStudySymbol(sc, Symbol.GetString(), requestSymbol);
 
     if (lastRequestSeconds > 0 && nowSeconds < lastRequestSeconds)
     {
@@ -241,7 +300,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     {
         const SCString baseUrl = CleanBaseUrl(ServiceUrl.GetString());
         SCString url;
-        url.Format("%s/sierra/%s", baseUrl.GetChars(), Symbol.GetString());
+        url.Format("%s/stats/%s/rows", baseUrl.GetChars(), requestSymbol.GetChars());
         sc.HTTPResponse = "";
         sc.MakeHTTPRequest(url);
         requestState = REQUEST_FEED;
@@ -329,15 +388,15 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         else if (apiEnabled && !hasCapturedRiskInterval)
         {
             color = RGB(255, 152, 0);
-            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
+            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(requestSymbol.GetChars()).c_str(), riskInterval, VARIS_BUILD);
         }
         else if (!apiEnabled)
         {
-            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
+            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(requestSymbol.GetChars()).c_str(), riskInterval, VARIS_BUILD);
         }
         else
         {
-            status.Format("VARIS %s API RI %.2f  %s", DisplaySymbol(Symbol.GetString()).c_str(), riskInterval, VARIS_BUILD);
+            status.Format("VARIS %s API RI %.2f  %s", DisplaySymbol(requestSymbol.GetChars()).c_str(), riskInterval, VARIS_BUILD);
         }
         DrawStatus(sc, status.GetChars(), color);
     }

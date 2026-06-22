@@ -11,7 +11,7 @@ Initial ACSIL sources are included at:
 
 ## API Path
 
-The included study polls:
+The RS Levels display study polls:
 
 ```text
 GET /sierra/:symbol
@@ -31,7 +31,13 @@ Map,BLD
 
 The `STATE` row provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories. Empty feeds still return a `STATE` row so Sierra Chart can observe that the HTTP request completed before levels are available.
 
-`varis-zones-sierra.cpp` uses the same `GET /sierra/:symbol` feed to read `RI`, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands.
+`varis-zones-sierra.cpp` polls the smaller stats feed:
+
+```text
+GET /stats/:symbol/rows
+```
+
+It reads `RI` from that response, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands.
 
 ## Study Inputs
 
@@ -51,6 +57,7 @@ The `STATE` row provides source freshness. The level `kind` lets the study disti
 
 - manual Risk Interval fallback
 - use captured `RI` when available
+- symbol override, default `Auto` from the Sierra chart symbol with ES/MES and NQ/MNQ family detection
 - session reset hour, default 18 ET
 - show/hide VWAP, half-RI bands, full-RI bands, and status
 - colors and line widths for VWAP, half-RI bands, and full-RI bands
@@ -67,7 +74,8 @@ For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add *
 
 ## Rendering Plan
 
-- Poll `/sierra/:symbol` for source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
+- Poll `/sierra/:symbol` for RS Levels source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
+- Poll `/stats/:symbol/rows` for VARIS Zones `RI`, with `Auto` symbol detection from the Sierra chart symbol.
 - Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently, including numbered RocketScooter aliases such as `YL2` and `RL3`.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Suppress duplicate same-name open/close rows from noisy feeds, so only one `Close` label is drawn while independent manual lines still remain separate by price.

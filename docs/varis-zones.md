@@ -36,6 +36,6 @@ Direct platform adapters include separate display-only VARIS sources:
 - `plugins/quantower/VARISZonesQuantower.cs`
 - `plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java`
 
-These variants read captured `RI` from the local API and compute VWAP from local chart bars. Sierra uses the combined `GET /sierra/:symbol` feed. NinjaTrader, Quantower, and Bookmap use `GET /stats/:symbol?format=rows` plus `GET /status`. When explicit `RI` is not available but both DD bands are present, the local API can expose a display-derived RI equal to half the DD-band distance. Each direct-platform variant falls back to a manual risk interval when API RI is unavailable.
+These variants read captured `RI` from the local API and compute VWAP from local chart bars. Sierra VARIS uses `GET /stats/:symbol/rows` and defaults to Auto symbol detection from the Sierra chart symbol. NinjaTrader, Quantower, and Bookmap use `GET /stats/:symbol?format=rows` plus `GET /status`. When explicit `RI` is not available but both DD bands are present, the local API can expose a display-derived RI equal to half the DD-band distance. Each direct-platform variant falls back to a manual risk interval when API RI is unavailable.
 
 Bookmap's public simplified API provides one-minute bars through its bar listener, so its VARIS source publishes the VWAP and risk bands as display-only indicators rather than filled chart regions. TradingView remains paste-based because Pine has no arbitrary localhost HTTP polling.
