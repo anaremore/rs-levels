@@ -36,14 +36,14 @@ Single-symbol payload:
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;DD,7579.75,dd-band
 ```
 
-The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. Bull and bear zones use `zone-bull` and `zone-bear` kinds. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders those in its stats panel and does not draw them as price lines. VARIS-style Pine indicators can use the same pasted payload to read `RI` as their risk interval. Explicit captured `RI` wins; if RocketScooter exposes DD bands but no explicit RI, the TradingView exporter derives a display fallback from the outer DD-band pair. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. Bull and bear zones use `zone-bull` and `zone-bear` kinds. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows and is never drawn as price lines. The RS Levels TradingView panel intentionally shows only Map and RI because DD/Res/MRes/WRes can change quickly during regular trading hours while TradingView Pine cannot poll the local live API. VARIS-style Pine indicators can use the same pasted payload to read `RI` as their risk interval. Explicit captured `RI` wins; if RocketScooter exposes DD bands but no explicit RI, the TradingView exporter derives a display fallback from the outer DD-band pair. When the payload includes matching top/bottom names such as `BZT1`/`BZB1`, `BrZT1`/`BrZB1`, or `Bull Zone Top`/`Bull Zone Bottom`, the indicator fills the area between those boundaries.
 
 ## Indicator Controls
 
 - `RS Levels Payload`: `RSLEVELS|2` text copied from the extension or local API. It uses TradingView's single-row text input and is hidden from the status line to avoid chart-header clutter.
 - `Chart family`: leave on `Auto` for normal ES/MES and NQ/MNQ charts, or force `ES`/`NQ` when you intentionally want a specific bundle section.
 - `Labels`: show or hide level labels.
-- `Stats panel`: show or hide DD/RI/Res/MRes/WRes/Map context from `stat` rows.
+- `Stats panel`: show or hide Map and RI context from `stat` rows.
 - `Stats panel position` and `Stats panel bottom padding`: defaults to bottom-left with a transparent spacer row so the panel sits above TradingView's lower-left watermark; move it or adjust the padding when your chart layout needs it.
 - Kind toggles: DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other levels. Each colored kind keeps its checkbox and color picker on one row. Yellow lines default to yellow, red lines default to red, and CAT lines default to purple; the indicator honors those visible manual-line names even if a captured row arrives with a generic kind.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.

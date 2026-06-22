@@ -297,11 +297,7 @@ appendStatText(existingText, label, value) =>
 
 statsPanelBody(levelText) =>
     lineText = ""
-    lineText := appendStatText(lineText, "DD", statValue(levelText, "DD"))
     lineText := appendStatText(lineText, "RI", statValue(levelText, "RI"))
-    lineText := appendStatText(lineText, "Res", statValue(levelText, "RES"))
-    lineText := appendStatText(lineText, "MRes", statValue(levelText, "MRES"))
-    lineText := appendStatText(lineText, "WRes", statValue(levelText, "WRES"))
     lineText
 
 drawStatsPanel(levelText) =>
