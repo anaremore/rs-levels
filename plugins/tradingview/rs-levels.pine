@@ -5,6 +5,7 @@ payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 showLabels = input.bool(true, "Labels")
 showStatsPanel = input.bool(true, "Stats panel")
+statsPanelPositionInput = input.string("Top left", "Stats panel position", options = ["Top left", "Top right", "Middle left", "Middle right", "Bottom center", "Bottom right", "Bottom left"], display = display.none)
 showDdBands = input.bool(true, "DD bands", inline = "dd")
 ddBandColorInput = input.color(color.rgb(0, 188, 212), "", inline = "dd")
 showHp = input.bool(true, "HP", inline = "hp")
@@ -39,10 +40,20 @@ lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed
 labelStackRows = 6
 labelStackColumnBars = 4
 
+statsPanelPosition() =>
+    switch statsPanelPositionInput
+        "Top right" => position.top_right
+        "Middle left" => position.middle_left
+        "Middle right" => position.middle_right
+        "Bottom center" => position.bottom_center
+        "Bottom right" => position.bottom_right
+        "Bottom left" => position.bottom_left
+        => position.top_left
+
 var line[] rsLines = array.new_line()
 var label[] rsLabels = array.new_label()
 var box[] rsBoxes = array.new_box()
-var table rsStatsTable = table.new(position.bottom_left, 1, 2)
+var table rsStatsTable = table.new(statsPanelPosition(), 1, 2)
 var float visibleHigh = na
 var float visibleLow = na
 
