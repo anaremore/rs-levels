@@ -1,5 +1,7 @@
+import { prepareDisplayLevels } from '../../../packages/exporters/src/index.js';
+
 export function levelsToDisplayRowsText(levels) {
-  const rows = levels.map((level) => {
+  const rows = prepareDisplayLevels(levels).map((level) => {
     const [r, g, b] = hexToRgb(level.color || kindColor(level.kind));
     return [
       csvCell(displayLevelName(level)),

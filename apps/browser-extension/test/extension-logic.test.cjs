@@ -95,6 +95,8 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
     levels: [
       { name: 'text SPY Open : 7559 Liquidity Map', price: 7559, kind: 'open-close' },
       { name: 'MidGap', price: 7569, kind: 'open-close' },
+      { name: 'DD', price: 7579.75, kind: 'dd-band' },
+      { name: 'DD', price: 7506, kind: 'dd-band' },
       { name: 'Bull Zone', price: 7566.4, kind: 'zone-bull' },
       { name: 'Bear Zone', price: 7556.2, kind: 'zone-bear' },
       { name: 'Yellow Line', price: 7598, kind: 'yellow-line' },
@@ -118,8 +120,11 @@ const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(loca
 assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
 assert.match(localPayload, /Half Gap,7569,open-close/);
-assert.match(localPayload, /Bull Zone Top,7566\.4,zone-bull/);
-assert.match(localPayload, /Bear Zone Bottom,7556\.2,zone-bear/);
+assert.match(localPayload, /BZT1,7579\.75,zone-bull/);
+assert.match(localPayload, /BZB1,7566\.4,zone-bull/);
+assert.match(localPayload, /BrZT1,7556\.2,zone-bear/);
+assert.match(localPayload, /BrZB1,7506,zone-bear/);
+assert.doesNotMatch(localPayload, /Bull Zone,|Bear Zone,/);
 assert.match(localPayload, /Yellow Line,7598,yellow-line/);
 assert.match(localPayload, /Red Line,7520,red-line/);
 assert.match(localPayload, /DD,0\.66,stat/);

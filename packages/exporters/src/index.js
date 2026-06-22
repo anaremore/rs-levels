@@ -2,7 +2,7 @@ import { displaySymbolFor, normalizeSymbolSnapshot } from '../../schemas/src/ind
 
 export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
   const row = normalizeRow(symbolSnapshot, options);
-  const levels = limitLevels(prepareTradingViewLevels(row.levels), options.maxLevels).filter((level) => Number.isFinite(level.price));
+  const levels = limitLevels(prepareDisplayLevels(row.levels), options.maxLevels).filter((level) => Number.isFinite(level.price));
   const statRows = tradingViewStatsRows(statsWithDerivedRiskInterval(row.stats, levels));
   return tradingViewPayload([{
     symbol: displaySymbolFor(row.symbol),
@@ -14,7 +14,7 @@ export function createTradingViewPayloadExport(symbolSnapshot, options = {}) {
 export function createTradingViewBundlePayloadExport(snapshot, options = {}) {
   const rows = bundleRows(snapshot, options);
   return tradingViewPayload(rows.map((row) => {
-    const levels = limitLevels(prepareTradingViewLevels(row.levels), options.maxLevels).filter((level) => Number.isFinite(level.price));
+    const levels = limitLevels(prepareDisplayLevels(row.levels), options.maxLevels).filter((level) => Number.isFinite(level.price));
     return {
       symbol: displaySymbolFor(row.symbol),
       capturedAt: row.capturedAt,
@@ -65,41 +65,96 @@ function tradingViewLevelRow(level) {
   return name && price && kind ? `${name},${price},${kind}` : '';
 }
 
-function prepareTradingViewLevels(levels = []) {
+export function prepareDisplayLevels(levels = []) {
   if (!Array.isArray(levels)) return [];
   const prepared = levels.map((level) => ({ ...level }));
-  const bullIndexes = [];
-  const bearIndexes = [];
-  prepared.forEach((level, index) => {
+  const consumedIndexes = new Set();
+  const derivedZones = deriveDdBoundedZones(prepared, consumedIndexes);
+  return prepared.filter((_level, index) => !consumedIndexes.has(index)).concat(derivedZones);
+}
+
+function deriveDdBoundedZones(levels, consumedIndexes) {
+  const genericIndexes = levels
+    .map((level, index) => [level, index])
+    .filter(([level]) => isGenericZoneLevel(level, canonicalTradingViewKind(level?.kind)))
+    .map(([_level, index]) => index);
+  const ddPrices = uniqueSortedPrices(levels
+    .filter((level) => canonicalTradingViewKind(level?.kind) === 'dd-band' || /\bDD\b/i.test(field(level?.name)))
+    .map((level) => finiteNumber(level?.price))
+    .filter((price) => price != null));
+  if (!ddPrices.length) {
+    genericIndexes.forEach((index) => consumedIndexes.add(index));
+    return [];
+  }
+
+  const zones = [];
+  let bullOrdinal = highestZoneOrdinal(levels, 'zone-bull') + 1;
+  let bearOrdinal = highestZoneOrdinal(levels, 'zone-bear') + 1;
+  levels.forEach((level, index) => {
     const kind = canonicalTradingViewKind(level?.kind);
     if (!isGenericZoneLevel(level, kind)) return;
-    if (kind === 'zone-bull') bullIndexes.push(index);
-    if (kind === 'zone-bear') bearIndexes.push(index);
+    consumedIndexes.add(index);
+    const price = finiteNumber(level?.price);
+    if (price == null) return;
+    if (kind === 'zone-bull') {
+      const top = lowestAbove(ddPrices, price);
+      if (top == null || top <= price) return;
+      zones.push(zoneBoundaryLevel(level, `BZT${bullOrdinal}`, top, kind));
+      zones.push(zoneBoundaryLevel(level, `BZB${bullOrdinal}`, price, kind));
+      bullOrdinal += 1;
+    } else if (kind === 'zone-bear') {
+      const bottom = highestBelow(ddPrices, price);
+      if (bottom == null || price <= bottom) return;
+      zones.push(zoneBoundaryLevel(level, `BrZT${bearOrdinal}`, price, kind));
+      zones.push(zoneBoundaryLevel(level, `BrZB${bearOrdinal}`, bottom, kind));
+      bearOrdinal += 1;
+    }
   });
-  const pairCount = Math.min(bullIndexes.length, bearIndexes.length);
-  for (let index = 0; index < pairCount; index += 1) {
-    const bull = prepared[bullIndexes[index]];
-    const bear = prepared[bearIndexes[index]];
-    const bullPrice = finiteNumber(bull?.price);
-    const bearPrice = finiteNumber(bear?.price);
-    if (bullPrice == null || bearPrice == null) continue;
-    bull.name = bullPrice >= bearPrice ? 'Bull Zone Top' : 'Bull Zone Bottom';
-    bear.name = bearPrice >= bullPrice ? 'Bear Zone Top' : 'Bear Zone Bottom';
+  return zones;
+}
+
+function uniqueSortedPrices(prices) {
+  return Array.from(new Set(prices.map((price) => Number(price.toFixed(6))))).sort((a, b) => a - b);
+}
+
+function lowestAbove(prices, price) {
+  return prices.find((candidate) => candidate > price) ?? null;
+}
+
+function highestBelow(prices, price) {
+  for (let index = prices.length - 1; index >= 0; index -= 1) {
+    if (prices[index] < price) return prices[index];
   }
-  return prepared;
+  return null;
+}
+
+function zoneBoundaryLevel(level, name, price, kind) {
+  const { id, ...rest } = level;
+  return { ...rest, name, price, kind };
+}
+
+function highestZoneOrdinal(levels, kind) {
+  let highest = 0;
+  for (const level of levels) {
+    if (canonicalTradingViewKind(level?.kind) !== kind) continue;
+    const ordinal = zoneOrdinal(level?.name, kind);
+    highest = Math.max(highest, ordinal);
+  }
+  return highest;
+}
+
+function zoneOrdinal(name, kind) {
+  const compact = field(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  const prefix = kind === 'zone-bear' ? 'BRZ' : 'BZ';
+  const match = compact.match(new RegExp(`^${prefix}[TB](\\d*)$`));
+  if (!match) return 0;
+  return match[1] ? Number(match[1]) : 1;
 }
 
 function isGenericZoneLevel(level, kind = canonicalTradingViewKind(level?.kind)) {
   if (kind !== 'zone-bull' && kind !== 'zone-bear') return false;
   const compact = field(level?.name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
-  return (compact === 'BULLZONE' || compact === 'BEARZONE') && !zoneBoundarySide(compact);
-}
-
-function zoneBoundarySide(text) {
-  const compact = field(text).toUpperCase().replace(/[^A-Z0-9]+/g, '');
-  if (compact.includes('TOP') || compact.includes('UPPER') || compact.includes('BZT') || compact.includes('BRZT')) return 1;
-  if (compact.includes('BOTTOM') || compact.includes('LOWER') || compact.includes('BZB') || compact.includes('BRZB')) return -1;
-  return 0;
+  return compact === 'BULLZONE' || compact === 'BEARZONE';
 }
 
 function hasTradingViewRows(row) {

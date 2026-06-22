@@ -18,6 +18,7 @@ const row = {
   levels: [
     { name: 'OVNHP', price: 7537, kind: 'hp', color: '#2962FF' },
     { name: 'DD Upper; bad|chars', price: 7579.75, kind: 'dd-band', color: '#29B6F6' },
+    { name: 'DD Lower', price: 7506, kind: 'dd-band', color: '#29B6F6' },
     { name: 'BZT1', price: 7588, kind: 'zone-bull', color: '#4CAF50' },
     { name: 'BrZT1', price: 7612, kind: 'zone-bear', color: '#F06292' },
     { name: 'Yellow Line', price: 7598, kind: 'yellow-line', color: '#FFEB3B' },
@@ -38,6 +39,7 @@ const row = {
 const payload = createTradingViewPayloadExport(row, { generatedAt: '2026-06-19T14:30:00.000Z' });
 assert.match(payload, /^RSLEVELS\|2\|2026-06-19T14:30:00\.000Z\|ES\|2026-06-19T14:29:59\.500Z\|/);
 assert.match(payload, /DD Upper bad chars,7579\.75,dd-band/);
+assert.match(payload, /DD Lower,7506,dd-band/);
 assert.match(payload, /BZT1,7588,zone-bull/);
 assert.match(payload, /BrZT1,7612,zone-bear/);
 assert.match(payload, /Yellow Line,7598,yellow-line/);
@@ -50,8 +52,11 @@ assert.match(payload, /Yellow Line,7608,yellow-line/);
 assert.match(payload, /CAT,7820,cat/);
 assert.match(payload, /Open,7559,open-close/);
 assert.match(payload, /Half Gap,7569,open-close/);
-assert.match(payload, /Bull Zone Top,7566\.4,zone-bull/);
-assert.match(payload, /Bear Zone Bottom,7556\.2,zone-bear/);
+assert.match(payload, /BZT2,7579\.75,zone-bull/);
+assert.match(payload, /BZB2,7566\.4,zone-bull/);
+assert.match(payload, /BrZT2,7556\.2,zone-bear/);
+assert.match(payload, /BrZB2,7506,zone-bear/);
+assert.doesNotMatch(payload, /Bull Zone,|Bear Zone,/);
 assert.doesNotMatch(payload, /MidGap|Mid Gap/);
 assert.match(payload, /DD,0\.66,stat/);
 assert.match(payload, /RI,68\.75,stat/);

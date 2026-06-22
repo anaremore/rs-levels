@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.06.22.2", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.06.22.3", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -38,8 +38,8 @@ zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval =
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
 
-labelStackRows = 6
-labelStackColumnBars = 4
+labelStackRows = 8
+labelStackColumnBars = 5
 
 statsPanelPosition() =>
     switch statsPanelPositionInput
@@ -153,13 +153,6 @@ zoneBoundarySide(name) =>
         -1
     else
         0
-
-genericZoneBoundary(name, kind) =>
-    zoneKind(kind) and zoneBoundarySide(name) == 0
-
-pairedZoneBoundary(name, kind) =>
-    upperName = str.upper(name)
-    genericZoneBoundary(name, kind) or (zoneKind(kind) and (str.contains(upperName, "BULL ZONE") or str.contains(upperName, "BEAR ZONE")))
 
 zoneBoundaryLabel(kind, side) =>
     normalizedKind = cleanKind(kind)
@@ -373,60 +366,11 @@ labelX(labelIndex) =>
 labelOffset(labelIndex, priceRange) =>
     stackMultiplier = labelStackRow(labelIndex) + 1
     tickOffset = math.max(labelVerticalOffset * stackMultiplier * syminfo.mintick, syminfo.mintick)
-    rangeOffset = math.max(priceRange, syminfo.mintick) * 0.0045 * stackMultiplier
+    rangeOffset = math.max(priceRange, syminfo.mintick) * 0.0065 * stackMultiplier
     math.max(tickOffset, rangeOffset)
 
 labelPrice(name, kind, price, labelIndex, priceRange, zoneSide) =>
     price + labelOffset(labelIndex, priceRange) * labelDirectionForSide(name, kind, zoneSide)
-
-zoneOccurrenceAt(items, count, index, kind) =>
-    occurrence = 0
-    if index >= 0
-        for j = 0 to index
-            fields = str.split(array.get(items, j), ",")
-            if array.size(fields) >= 3
-                itemName = array.get(fields, 0)
-                itemKind = levelKind(itemName, array.get(fields, 2))
-                if itemKind == kind and genericZoneBoundary(itemName, itemKind)
-                    occurrence += 1
-    occurrence
-
-zonePriceByOccurrence(items, count, kind, occurrence) =>
-    float result = na
-    seen = 0
-    for j = 0 to count - 1
-        fields = str.split(array.get(items, j), ",")
-        if array.size(fields) >= 3
-            itemName = array.get(fields, 0)
-            itemKind = levelKind(itemName, array.get(fields, 2))
-            itemPrice = str.tonumber(array.get(fields, 1))
-            if itemKind == kind and pairedZoneBoundary(itemName, itemKind) and not na(itemPrice)
-                seen += 1
-                if seen == occurrence
-                    result := itemPrice
-    result
-
-genericZoneCount(items, count, kind) =>
-    total = 0
-    for j = 0 to count - 1
-        fields = str.split(array.get(items, j), ",")
-        if array.size(fields) >= 3
-            itemName = array.get(fields, 0)
-            itemKind = levelKind(itemName, array.get(fields, 2))
-            itemPrice = str.tonumber(array.get(fields, 1))
-            if itemKind == kind and pairedZoneBoundary(itemName, itemKind) and not na(itemPrice)
-                total += 1
-    total
-
-zoneBoundarySideAt(items, count, index, name, kind, price) =>
-    explicitSide = zoneBoundarySide(name)
-    if explicitSide != 0 or not zoneKind(kind) or na(price)
-        explicitSide
-    else
-        occurrence = zoneOccurrenceAt(items, count, index, kind)
-        pairedKind = kind == "zone-bull" ? "zone-bear" : "zone-bull"
-        pairedPrice = zonePriceByOccurrence(items, count, pairedKind, occurrence)
-        not na(pairedPrice) ? (price >= pairedPrice ? 1 : -1) : 0
 
 drawLevel(name, priceText, kind, labelIndex, priceRange, zoneSide) =>
     price = str.tonumber(priceText)
@@ -487,17 +431,6 @@ drawZoneFills(levelText, maxCount) =>
                             drawZoneFill(bearTop, bearBottom, kind)
                             bearTop := na
                             bearBottom := na
-        bullGenericCount = genericZoneCount(items, count, "zone-bull")
-        bearGenericCount = genericZoneCount(items, count, "zone-bear")
-        genericPairCount = math.min(bullGenericCount, bearGenericCount)
-        if genericPairCount > 0
-            for pairIndex = 1 to genericPairCount
-                bullPrice = zonePriceByOccurrence(items, count, "zone-bull", pairIndex)
-                bearPrice = zonePriceByOccurrence(items, count, "zone-bear", pairIndex)
-                if not na(bullPrice) and not na(bearPrice)
-                    topKind = bullPrice >= bearPrice ? "zone-bull" : "zone-bear"
-                    drawZoneFill(bullPrice, bearPrice, topKind)
-
 levelPriceRange(levelText, maxCount) =>
     float minPrice = na
     float maxPrice = na
@@ -530,7 +463,7 @@ drawLevelText(levelText, maxCount) =>
                 name = array.get(fields, 0)
                 kind = levelKind(name, array.get(fields, 2))
                 price = str.tonumber(array.get(fields, 1))
-                zoneSide = zoneBoundarySideAt(items, count, i, name, kind, price)
+                zoneSide = zoneBoundarySide(name)
                 if drawLevel(name, array.get(fields, 1), array.get(fields, 2), drawnCount, priceRange, zoneSide)
                     drawnCount := drawnCount + 1
     [drawnCount, totalCount]

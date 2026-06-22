@@ -485,25 +485,85 @@
 
   function normalizeTradingViewPayloadRows(levels = []) {
     const prepared = (Array.isArray(levels) ? levels : []).map((level) => ({ ...level }));
-    const bullIndexes = [];
-    const bearIndexes = [];
-    prepared.forEach((level, index) => {
+    const consumedIndexes = new Set();
+    const derivedZones = deriveDdBoundedZones(prepared, consumedIndexes);
+    return prepared.filter((_level, index) => !consumedIndexes.has(index)).concat(derivedZones);
+  }
+
+  function deriveDdBoundedZones(levels, consumedIndexes) {
+    const genericIndexes = levels
+      .map((level, index) => [level, index])
+      .filter(([level]) => isGenericZonePayloadRow(level, canonicalTradingViewKind(level.kind)))
+      .map(([_level, index]) => index);
+    const ddPrices = uniqueSortedPrices(levels
+      .filter((level) => canonicalTradingViewKind(level.kind) === 'dd-band' || /\bDD\b/i.test(tradingViewField(level.name)))
+      .map((level) => firstFinite(level.price))
+      .filter((price) => price != null));
+    if (!ddPrices.length) {
+      genericIndexes.forEach((index) => consumedIndexes.add(index));
+      return [];
+    }
+
+    const zones = [];
+    let bullOrdinal = highestZoneOrdinal(levels, 'zone-bull') + 1;
+    let bearOrdinal = highestZoneOrdinal(levels, 'zone-bear') + 1;
+    levels.forEach((level, index) => {
       const kind = canonicalTradingViewKind(level.kind);
       if (!isGenericZonePayloadRow(level, kind)) return;
-      if (kind === 'zone-bull') bullIndexes.push(index);
-      if (kind === 'zone-bear') bearIndexes.push(index);
+      consumedIndexes.add(index);
+      const price = firstFinite(level.price);
+      if (price == null) return;
+      if (kind === 'zone-bull') {
+        const top = lowestAbove(ddPrices, price);
+        if (top == null || top <= price) return;
+        zones.push(zoneBoundaryPayloadRow(level, `BZT${bullOrdinal}`, top, kind));
+        zones.push(zoneBoundaryPayloadRow(level, `BZB${bullOrdinal}`, price, kind));
+        bullOrdinal += 1;
+      } else if (kind === 'zone-bear') {
+        const bottom = highestBelow(ddPrices, price);
+        if (bottom == null || price <= bottom) return;
+        zones.push(zoneBoundaryPayloadRow(level, `BrZT${bearOrdinal}`, price, kind));
+        zones.push(zoneBoundaryPayloadRow(level, `BrZB${bearOrdinal}`, bottom, kind));
+        bearOrdinal += 1;
+      }
     });
-    const pairCount = Math.min(bullIndexes.length, bearIndexes.length);
-    for (let index = 0; index < pairCount; index += 1) {
-      const bull = prepared[bullIndexes[index]];
-      const bear = prepared[bearIndexes[index]];
-      const bullPrice = firstFinite(bull.price);
-      const bearPrice = firstFinite(bear.price);
-      if (bullPrice == null || bearPrice == null) continue;
-      bull.name = bullPrice >= bearPrice ? 'Bull Zone Top' : 'Bull Zone Bottom';
-      bear.name = bearPrice >= bullPrice ? 'Bear Zone Top' : 'Bear Zone Bottom';
+    return zones;
+  }
+
+  function uniqueSortedPrices(prices) {
+    return Array.from(new Set(prices.map((price) => Number(price.toFixed(6))))).sort((a, b) => a - b);
+  }
+
+  function lowestAbove(prices, price) {
+    return prices.find((candidate) => candidate > price) ?? null;
+  }
+
+  function highestBelow(prices, price) {
+    for (let index = prices.length - 1; index >= 0; index -= 1) {
+      if (prices[index] < price) return prices[index];
     }
-    return prepared;
+    return null;
+  }
+
+  function zoneBoundaryPayloadRow(level, name, price, kind) {
+    return { ...level, name, price, kind };
+  }
+
+  function highestZoneOrdinal(levels, kind) {
+    let highest = 0;
+    for (const level of levels) {
+      if (canonicalTradingViewKind(level.kind) !== kind) continue;
+      highest = Math.max(highest, zoneOrdinal(level.name, kind));
+    }
+    return highest;
+  }
+
+  function zoneOrdinal(name, kind) {
+    const compact = tradingViewField(name).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+    const prefix = kind === 'zone-bear' ? 'BRZ' : 'BZ';
+    const match = compact.match(new RegExp(`^${prefix}[TB](\\d*)$`));
+    if (!match) return 0;
+    return match[1] ? Number(match[1]) : 1;
   }
 
   function isGenericZonePayloadRow(level = {}, kind = canonicalTradingViewKind(level.kind)) {
