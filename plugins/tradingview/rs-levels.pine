@@ -52,8 +52,12 @@ clearDrawings() =>
     while array.size(rsLabels) > 0
         label.delete(array.pop(rsLabels))
 
+cleanKind(kind) =>
+    str.lower(str.replace_all(kind, " ", ""))
+
 kindColor(kind) =>
-    switch kind
+    normalizedKind = cleanKind(kind)
+    switch normalizedKind
         "dd-band" => ddBandColorInput
         "hp" => hpColorInput
         "mhp" => mhpColorInput
@@ -67,7 +71,8 @@ kindColor(kind) =>
         => otherLevelColorInput
 
 kindEnabled(kind) =>
-    switch kind
+    normalizedKind = cleanKind(kind)
+    switch normalizedKind
         "dd-band" => showDdBands
         "hp" => showHp
         "mhp" => showMhp
@@ -82,7 +87,8 @@ kindEnabled(kind) =>
         => showOtherLevels
 
 zoneKind(kind) =>
-    kind == "zone-bull" or kind == "zone-bear"
+    normalizedKind = cleanKind(kind)
+    normalizedKind == "zone-bull" or normalizedKind == "zone-bear"
 
 zoneBoundarySide(name) =>
     upperName = str.upper(name)
@@ -109,6 +115,7 @@ labelSize() =>
 
 displayLabelName(name, kind) =>
     upperName = str.upper(name)
+    normalizedKind = cleanKind(kind)
     if str.contains(upperName, "PREVDAYCLOSE") or str.contains(upperName, "PREV DAY CLOSE")
         "Prev Close"
     else if str.contains(upperName, "MIDGAP") or str.contains(upperName, "HALFGAP") or str.contains(upperName, "HALF GAP") or str.contains(upperName, " HG")
@@ -121,17 +128,17 @@ displayLabelName(name, kind) =>
         "OVNMHP"
     else if str.contains(upperName, "OVNHP")
         "OVNHP"
-    else if kind == "mhp" or str.contains(upperName, "MAN_MHP") or str.contains(upperName, " MHP")
+    else if normalizedKind == "mhp" or str.contains(upperName, "MAN_MHP") or str.contains(upperName, " MHP")
         "MHP"
-    else if kind == "hp" or str.contains(upperName, "MAN_HP") or str.contains(upperName, " HP")
+    else if normalizedKind == "hp" or str.contains(upperName, "MAN_HP") or str.contains(upperName, " HP")
         "HP"
-    else if kind == "dd-band" or str.contains(upperName, "DD")
+    else if normalizedKind == "dd-band" or str.contains(upperName, "DD")
         "DD"
-    else if kind == "cat" or str.contains(upperName, "CAT")
+    else if normalizedKind == "cat" or str.contains(upperName, "CAT")
         "CAT"
-    else if kind == "yellow-line" or str.contains(upperName, "YELLOW LINE") or upperName == "YL"
+    else if normalizedKind == "yellow-line" or str.contains(upperName, "YELLOW LINE") or upperName == "YL"
         "Yellow Line"
-    else if kind == "red-line" or str.contains(upperName, "RED LINE") or upperName == "RL"
+    else if normalizedKind == "red-line" or str.contains(upperName, "RED LINE") or upperName == "RL"
         "Red Line"
     else
         cleaned = str.replace_all(name, "horizontal_line", "")
@@ -196,8 +203,9 @@ statValue(levelText, metricName) =>
             if array.size(fields) >= 3
                 name = array.get(fields, 0)
                 kind = array.get(fields, 2)
+                normalizedKind = cleanKind(kind)
                 upperName = str.upper(name)
-                if kind == "stat"
+                if normalizedKind == "stat"
                     if target == "MAP" and str.startswith(upperName, "MAP")
                         mapText = str.replace_all(name, "Map ", "")
                         mapText := str.replace_all(mapText, "MAP ", "")
@@ -232,12 +240,13 @@ drawStatsPanel(levelText) =>
 
 labelDirection(name, kind) =>
     upperName = str.upper(name)
+    normalizedKind = cleanKind(kind)
     if str.contains(upperName, "LOWER") or str.contains(upperName, "BZB") or str.contains(upperName, "BRZB")
         -1
     else if str.contains(upperName, "UPPER") or str.contains(upperName, "BZT") or str.contains(upperName, "BRZT")
         1
     else
-        switch kind
+        switch normalizedKind
             "mhp" => -1
             "zone-bull" => -1
             "zone-bear" => 1
@@ -295,7 +304,7 @@ drawZoneFills(levelText, maxCount) =>
             if array.size(fields) >= 3
                 name = array.get(fields, 0)
                 price = str.tonumber(array.get(fields, 1))
-                kind = array.get(fields, 2)
+                kind = cleanKind(array.get(fields, 2))
                 side = zoneBoundarySide(name)
                 if not na(price) and zoneKind(kind) and kindEnabled(kind) and side != 0
                     if kind == "zone-bull"
@@ -328,7 +337,7 @@ drawLevelText(levelText, maxCount) =>
         for i = 0 to count - 1
             fields = str.split(array.get(items, i), ",")
             if array.size(fields) >= 3
-                if drawLevel(array.get(fields, 0), array.get(fields, 1), array.get(fields, 2), drawnCount)
+                if drawLevel(array.get(fields, 0), array.get(fields, 1), cleanKind(array.get(fields, 2)), drawnCount)
                     drawnCount := drawnCount + 1
     [drawnCount, totalCount]
 

@@ -30,6 +30,7 @@ This indicator only draws lines, labels, and zone fills. It does not contain str
 - `Labels`: show or hide level labels.
 - `Stats panel`: show or hide DD/Res/MRes/WRes/Map context from `stat` rows.
 - Kind toggles: DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other levels. Each colored kind keeps its checkbox and color picker on one row.
+- Yellow lines default to yellow, red lines default to red, and CAT lines default to purple. The indicator normalizes captured kind text before applying these colors.
 - `Zone fills` and `Zone fill opacity %`: fill matched zone top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label bar offset`, `Label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. Level labels render a few ticks above or below their line, automatically stagger into rows/columns, and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels.
 
