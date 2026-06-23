@@ -12,10 +12,11 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.6";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.7";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
+constexpr int DEBUG_LINE = 736001;
 constexpr int HTTP_TIMEOUT_SEC = 10;
 
 std::string Trim(const std::string& value)
@@ -136,6 +137,26 @@ double ParsePositiveNumber(const std::string& value)
     return end == value.c_str() || parsed <= 0.0 ? 0.0 : parsed;
 }
 
+std::string ResponseShape(const SCString& body)
+{
+    const char* text = body.GetChars();
+    if (text == nullptr)
+        return "empty";
+
+    for (int i = 0; text[i] != 0; ++i)
+    {
+        const unsigned char ch = static_cast<unsigned char>(text[i]);
+        if (std::isspace(ch))
+            continue;
+        if (ch == '{' || ch == '[')
+            return "json";
+        if (std::isprint(ch))
+            return std::string("text:") + static_cast<char>(ch);
+        return "binary";
+    }
+    return "blank";
+}
+
 bool ResolveChartSymbol(SCStudyInterfaceRef sc, SCString& out)
 {
     const char* chartSymbol = sc.Symbol.GetChars();
@@ -240,6 +261,38 @@ double FindRiskInterval(const SCString& body)
     return 0.0;
 }
 
+bool HasExplicitRiskInterval(const SCString& body)
+{
+    const std::vector<std::string> rows = SplitLines(body);
+    for (const std::string& row : rows)
+    {
+        const std::vector<std::string> fields = SplitRow(row);
+        if (fields.size() < 2)
+            continue;
+        const std::string name = Upper(fields[0]);
+        if ((name == "RI" || name == "RISKINTERVAL" || name == "RISK INTERVAL") && ParsePositiveNumber(fields[1]) > 0.0)
+            return true;
+    }
+    return false;
+}
+
+int CountDdBandRows(const SCString& body)
+{
+    int count = 0;
+    const std::vector<std::string> rows = SplitLines(body);
+    for (const std::string& row : rows)
+    {
+        const std::vector<std::string> fields = SplitRow(row);
+        if (fields.size() < 6)
+            continue;
+        const std::string name = Upper(fields[0]);
+        const std::string kind = Upper(fields[5]);
+        if ((kind == "DD-BAND" || name == "DD") && ParsePositiveNumber(fields[1]) > 0.0)
+            ++count;
+    }
+    return count;
+}
+
 std::string FindSourceState(const SCString& body)
 {
     const std::vector<std::string> rows = SplitLines(body);
@@ -258,22 +311,43 @@ std::string DisplaySymbol(const char* input)
     return text.find("NQ") != std::string::npos ? "NQ" : "ES";
 }
 
-void DrawStatus(SCStudyInterfaceRef sc, const char* text, COLORREF color)
+void DrawStationaryText(SCStudyInterfaceRef sc, int lineNumber, const char* text, COLORREF color, int x, int y, int fontSize)
 {
+    if (text == nullptr || text[0] == '\0')
+    {
+        sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, lineNumber);
+        return;
+    }
+
     s_UseTool tool;
     tool.Clear();
     tool.ChartNumber = sc.ChartNumber;
     tool.DrawingType = DRAWING_STATIONARY_TEXT;
-    tool.LineNumber = STATUS_LINE;
+    tool.LineNumber = lineNumber;
     tool.AddMethod = UTAM_ADD_OR_ADJUST;
     tool.Region = sc.GraphRegion;
-    tool.BeginDateTime = 5;
-    tool.BeginValue = 8;
+    tool.BeginDateTime = x;
+    tool.BeginValue = y;
     tool.UseRelativeVerticalValues = 1;
     tool.Color = color;
-    tool.FontSize = 10;
+    tool.FontSize = fontSize;
     tool.Text = text;
     sc.UseTool(tool);
+}
+
+void DrawStatus(SCStudyInterfaceRef sc, const char* text, COLORREF color)
+{
+    DrawStationaryText(sc, STATUS_LINE, text, color, 5, 8, 10);
+}
+
+void DrawDebug(SCStudyInterfaceRef sc, const char* text, bool show)
+{
+    if (!show)
+    {
+        sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, DEBUG_LINE);
+        return;
+    }
+    DrawStationaryText(sc, DEBUG_LINE, text, RGB(179, 229, 252), 5, 13, 9);
 }
 }
 
@@ -296,6 +370,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     SCInputRef VwapWidth = sc.Input[14];
     SCInputRef BandWidth = sc.Input[15];
     SCInputRef FollowChartSymbol = sc.Input[16];
+    SCInputRef ShowDebugStatus = sc.Input[17];
 
     SCSubgraphRef Vwap = sc.Subgraph[0];
     SCSubgraphRef UpperHalf = sc.Subgraph[1];
@@ -370,6 +445,9 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         BandWidth.SetInt(1);
         BandWidth.SetIntLimits(1, 5);
 
+        ShowDebugStatus.Name = "Show debug status";
+        ShowDebugStatus.SetYesNo(0);
+
         Vwap.Name = "VWAP";
         UpperHalf.Name = "Upper Half RI";
         LowerHalf.Name = "Lower Half RI";
@@ -391,6 +469,8 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     SCString& sourceState = sc.GetPersistentSCString(1);
     SCString& lastIssue = sc.GetPersistentSCString(2);
     SCString& lastResolvedSymbol = sc.GetPersistentSCString(3);
+    SCString& lastRequestPath = sc.GetPersistentSCString(4);
+    SCString& lastFeedDebug = sc.GetPersistentSCString(5);
 
     if (migratedFollowChartSymbol == 0)
     {
@@ -414,6 +494,8 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         requestState = REQUEST_NONE;
         sourceState = "unknown";
         lastIssue = "";
+        lastRequestPath = "";
+        lastFeedDebug = "";
         sc.HTTPResponse = "";
         lastResolvedSymbol = requestSymbol;
     }
@@ -427,27 +509,48 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     if (requestState == REQUEST_NONE && (lastRequestSeconds == 0 || nowSeconds - lastRequestSeconds >= refreshSeconds))
     {
         const SCString baseUrl = CleanBaseUrl(ServiceUrl.GetString());
+        SCString path;
         SCString url;
-        url.Format("%s/sierra/%s", baseUrl.GetChars(), requestSymbol.GetChars());
+        path.Format("/sierra/%s", requestSymbol.GetChars());
+        url.Format("%s%s", baseUrl.GetChars(), path.GetChars());
         sc.HTTPResponse = "";
         sc.MakeHTTPRequest(url);
         requestState = REQUEST_FEED;
+        lastRequestPath = path;
+        lastFeedDebug.Format("feed pending %s", lastRequestPath.GetChars());
         lastRequestSeconds = nowSeconds;
     }
 
     if (requestState != REQUEST_NONE && sc.HTTPResponse.GetLength() == 0 && nowSeconds - lastRequestSeconds >= HTTP_TIMEOUT_SEC)
     {
         lastIssue = "HTTP timeout";
+        lastFeedDebug.Format("feed timeout %s", lastRequestPath.GetChars());
         requestState = REQUEST_NONE;
         sc.HTTPResponse = "";
     }
 
     if (requestState == REQUEST_FEED && sc.HTTPResponse.GetLength() > 0)
     {
+        const int responseLength = sc.HTTPResponse.GetLength();
+        const std::vector<std::string> rows = SplitLines(sc.HTTPResponse);
+        const int rawRowCount = static_cast<int>(rows.size());
+        const std::string shape = ResponseShape(sc.HTTPResponse);
+        const bool explicitRi = HasExplicitRiskInterval(sc.HTTPResponse);
+        const int ddBandRows = CountDdBandRows(sc.HTTPResponse);
         sourceState = FindSourceState(sc.HTTPResponse).c_str();
         const double nextRi = FindRiskInterval(sc.HTTPResponse);
         if (nextRi > 0.0)
             capturedRiskInterval = nextRi;
+        lastFeedDebug.Format(
+            "feed %s len=%d rows=%d shape=%s state=%s ri=%d ddBands=%d parsedRi=%.2f",
+            lastRequestPath.GetChars(),
+            responseLength,
+            rawRowCount,
+            shape.c_str(),
+            sourceState.GetChars(),
+            explicitRi ? 1 : 0,
+            ddBandRows,
+            nextRi);
         lastFeedSeconds = nowSeconds;
         lastIssue = "";
         requestState = REQUEST_NONE;
@@ -532,4 +635,13 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     {
         sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, STATUS_LINE);
     }
+
+    std::string debugLine;
+    if (lastFeedDebug.GetLength())
+        debugLine += lastFeedDebug.GetChars();
+    if (!debugLine.empty())
+        debugLine += " | ";
+    debugLine += "build=";
+    debugLine += VARIS_BUILD;
+    DrawDebug(sc, debugLine.c_str(), ShowDebugStatus.GetYesNo() != 0);
 }
