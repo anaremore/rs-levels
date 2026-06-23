@@ -31,13 +31,13 @@ Map,BLD
 
 The `STATE` row provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories. Empty feeds still return a `STATE` row so Sierra Chart can observe that the HTTP request completed before levels are available.
 
-`varis-zones-sierra.cpp` polls the smaller stats feed:
+`varis-zones-sierra.cpp` polls the same Sierra feed:
 
 ```text
-GET /stats/:symbol/rows
+GET /sierra/:symbol
 ```
 
-It reads `RI` from that response, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands.
+It reads `RI` from the stats rows inside that response, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands. Using the same `/sierra/:symbol` text feed as the RS Levels overlay keeps both Sierra studies on the known-good ACSIL polling path.
 
 ## Study Inputs
 
@@ -78,7 +78,7 @@ Existing Sierra studies preserve input values across rebuilds. After updating VA
 ## Rendering Plan
 
 - Poll `/sierra/:symbol` for RS Levels source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
-- Poll `/stats/:symbol/rows` for VARIS Zones `RI`, with `Auto` symbol detection from the Sierra chart symbol.
+- Poll `/sierra/:symbol` for VARIS Zones `RI`, with `Auto` symbol detection from the Sierra chart symbol.
 - Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently, including numbered RocketScooter aliases such as `YL2` and `RL3`.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Suppress duplicate same-name open/close rows from noisy feeds, so only one `Close` label is drawn while independent manual lines still remain separate by price.
