@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.5";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.6";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -98,6 +98,44 @@ std::vector<std::string> SplitRow(const std::string& row)
     return fields;
 }
 
+std::vector<std::string> SplitLines(const SCString& body)
+{
+    std::vector<std::string> rows;
+    std::string row;
+    const char* text = body.GetChars();
+    if (text == nullptr)
+        return rows;
+
+    for (const char* ch = text; *ch; ++ch)
+    {
+        if (*ch == '\r' || *ch == '\n')
+        {
+            const std::string trimmed = Trim(row);
+            if (!trimmed.empty())
+                rows.push_back(trimmed);
+            row.clear();
+            if (*ch == '\r' && ch[1] == '\n')
+                ++ch;
+        }
+        else
+        {
+            row.push_back(*ch);
+        }
+    }
+
+    const std::string trimmed = Trim(row);
+    if (!trimmed.empty())
+        rows.push_back(trimmed);
+    return rows;
+}
+
+double ParsePositiveNumber(const std::string& value)
+{
+    char* end = nullptr;
+    const double parsed = std::strtod(value.c_str(), &end);
+    return end == value.c_str() || parsed <= 0.0 ? 0.0 : parsed;
+}
+
 bool ResolveChartSymbol(SCStudyInterfaceRef sc, SCString& out)
 {
     const char* chartSymbol = sc.Symbol.GetChars();
@@ -153,9 +191,8 @@ bool IsKnownFamilyOverride(const char* inputSymbol)
 
 double FindRiskInterval(const SCString& body)
 {
-    std::stringstream stream(body.GetChars());
-    std::string row;
-    while (std::getline(stream, row))
+    const std::vector<std::string> rows = SplitLines(body);
+    for (const std::string& row : rows)
     {
         const std::vector<std::string> fields = SplitRow(row);
         if (fields.size() < 2)
@@ -163,18 +200,50 @@ double FindRiskInterval(const SCString& body)
         const std::string name = Upper(fields[0]);
         if (name != "RI" && name != "RISKINTERVAL" && name != "RISK INTERVAL")
             continue;
-        char* end = nullptr;
-        const double value = std::strtod(fields[1].c_str(), &end);
-        return end == fields[1].c_str() ? 0.0 : value;
+        return ParsePositiveNumber(fields[1]);
     }
+
+    bool hasLow = false;
+    bool hasHigh = false;
+    double low = 0.0;
+    double high = 0.0;
+    for (const std::string& row : rows)
+    {
+        const std::vector<std::string> fields = SplitRow(row);
+        if (fields.size() < 6)
+            continue;
+
+        const std::string name = Upper(fields[0]);
+        const std::string kind = Upper(fields[5]);
+        if (kind != "DD-BAND" && name != "DD")
+            continue;
+
+        const double price = ParsePositiveNumber(fields[1]);
+        if (price <= 0.0)
+            continue;
+
+        if (!hasLow || price < low)
+        {
+            low = price;
+            hasLow = true;
+        }
+        if (!hasHigh || price > high)
+        {
+            high = price;
+            hasHigh = true;
+        }
+    }
+
+    if (hasLow && hasHigh && high > low)
+        return (high - low) * 0.5;
+
     return 0.0;
 }
 
 std::string FindSourceState(const SCString& body)
 {
-    std::stringstream stream(body.GetChars());
-    std::string row;
-    while (std::getline(stream, row))
+    const std::vector<std::string> rows = SplitLines(body);
+    for (const std::string& row : rows)
     {
         const std::vector<std::string> fields = SplitRow(row);
         if (fields.size() >= 2 && Upper(fields[0]) == "STATE")
@@ -447,7 +516,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         else if (apiEnabled && !hasCapturedRiskInterval)
         {
             color = RGB(255, 152, 0);
-            status.Format("VARIS %s manual RI %.2f  %s", DisplaySymbol(requestSymbol.GetChars()).c_str(), riskInterval, VARIS_BUILD);
+            status.Format("VARIS %s manual RI %.2f (API RI missing)  %s", DisplaySymbol(requestSymbol.GetChars()).c_str(), riskInterval, VARIS_BUILD);
         }
         else if (!apiEnabled)
         {
