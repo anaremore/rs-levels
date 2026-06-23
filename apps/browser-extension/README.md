@@ -1,6 +1,6 @@
 # Browser Extension
 
-For the full user workflow, see docs/user-setup.md.
+For the shortest TradingView-only workflow, see [TradingView quickstart](../../docs/tradingview-quickstart.md). For the full local API workflow, see [User setup](../../docs/user-setup.md).
 
 Manifest V3 extension for allowlisted RocketScooter response capture and display-only chart-level/context reading.
 

@@ -2,6 +2,8 @@
 
 Display-only Pine indicator for RS Levels.
 
+For the shortest extension-plus-indicator setup, see [TradingView quickstart](../../docs/tradingview-quickstart.md).
+
 TradingView Pine scripts cannot poll the local API directly. The RS Levels workflow is copy/paste:
 
 1. Run the local service.

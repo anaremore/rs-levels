@@ -14,6 +14,7 @@
 - [Platform plugins](platform-plugins.md)
 - [Platform validation](platform-validation.md)
 - [Display plugin contract](plugin-contract.md)
+- [TradingView quickstart](tradingview-quickstart.md)
 - [TradingView](tradingview.md)
 - [VARIS Zones](varis-zones.md)
 - [Install](install.md)

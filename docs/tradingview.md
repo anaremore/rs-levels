@@ -1,5 +1,7 @@
 # TradingView
 
+For the shortest TradingView-only setup, see [TradingView quickstart](tradingview-quickstart.md). It covers the browser extension plus the RS Levels Pine indicator without the direct-platform API/plugin details.
+
 TradingView Pine scripts cannot poll the local API directly, so RS Levels uses a small copy/paste payload built for Pine.
 
 1. Run the local service.
