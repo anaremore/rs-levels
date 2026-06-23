@@ -22,7 +22,20 @@ RS Levels lets a user capture level and display-context data from their own Rock
 
 Users must have their own RocketScooter access. This project only processes data already loaded in the user's browser and keeps it local by default.
 
-## Quick Start
+## Choose Your Path
+
+Most users should start with [Getting started](docs/getting-started.md), which points to the shortest workflow for each use case.
+
+| Use case | Start here |
+| --- | --- |
+| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) |
+| TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md), then [VARIS Zones](docs/varis-zones.md) |
+| Sierra Chart, NinjaTrader, Quantower, or Bookmap | [User setup](docs/user-setup.md), then [Platform plugins](docs/platform-plugins.md) |
+| API clients or examples | [User setup](docs/user-setup.md), then [API](docs/api.md) |
+| Tailscale or trusted private networks | [Networking](docs/networking.md) |
+| Packaging and release checks | [Packaging](docs/packaging.md) |
+
+## Developer Quick Start
 
 ```powershell
 npm test
@@ -44,8 +57,6 @@ npm run package
 The release output includes a source-style directory, a source zip archive, a standalone browser-extension zip, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and checksum sidecars.
 
 Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`.
-
-See [TradingView quickstart](docs/tradingview-quickstart.md) for the extension-plus-indicator workflow, or [User setup](docs/user-setup.md) for the local API, browser extension, TradingView workflow, and VARIS Zones setup.
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml), also served at `http://127.0.0.1:8765/openapi.yaml` after startup. Local API docs: `http://127.0.0.1:8765/docs`.
 

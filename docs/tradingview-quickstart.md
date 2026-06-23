@@ -1,6 +1,6 @@
 # TradingView Quickstart
 
-This is the short path for users who only want RocketScooter levels on TradingView.
+This is the short path for users who only want RocketScooter levels on TradingView. For other workflows, see [Getting started](getting-started.md).
 
 You need two pieces:
 

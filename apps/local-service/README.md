@@ -2,6 +2,8 @@
 
 Cross-platform localhost API service for RS Levels.
 
+For help choosing between TradingView copy/paste, direct platform plugins, API clients, and private-network use, see [Getting started](../../docs/getting-started.md).
+
 The service receives browser-extension captures, normalizes display levels, keeps the latest snapshot in memory, and exposes read-only REST plus Server-Sent Events feeds for charting tools.
 
 ## Start

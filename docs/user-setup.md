@@ -1,6 +1,6 @@
 # User Setup
 
-This guide is for users who want the local API, browser extension, and TradingView paste workflow. If you only want TradingView levels, start with [TradingView quickstart](tradingview-quickstart.md).
+This guide is for users who want the local API, browser extension, and TradingView paste workflow. If you are choosing a workflow, start with [Getting started](getting-started.md). If you only want TradingView levels, use [TradingView quickstart](tradingview-quickstart.md).
 
 ## Requirements
 

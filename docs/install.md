@@ -1,6 +1,6 @@
 # Install
 
-For the end-to-end local API, extension, and TradingView workflow, see [User setup](user-setup.md).
+For the end-to-end local API, extension, and TradingView workflow, see [User setup](user-setup.md). If you are not sure which path you need, start with [Getting started](getting-started.md).
 
 RS Levels is in early development. The current developer flow works on Windows, macOS, and Linux with Node.js 20 or newer.
 
