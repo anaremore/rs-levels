@@ -4,13 +4,13 @@ Local-first RocketScooter level and display-context capture feeds.
 
 RS Levels lets a user capture level and display-context data from their own RocketScooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
 
-## What This Is
+## Included Feature Areas
 
-- A browser extension for allowlisted RocketScooter response capture.
-- A cross-platform local API service that stores the latest level snapshot and display stats.
-- Stable JSON, text, and streaming APIs for display integrations.
-- Display-only plugins for charting platforms.
-- VARIS Zones support using captured risk interval (`RI`) in TradingView, Sierra Chart, NinjaTrader, Quantower, and Bookmap source artifacts.
+RS Levels is organized around three display-only pieces:
+
+- **Browser extension**: captures allowlisted RocketScooter display data from the user's own browser session, provides `Copy TradingView`, scrubbed diagnostics, API docs links, and extension status/debug tools.
+- **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
+- **Platform plugins, indicators, and studies**: includes TradingView Pine scripts, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
 ## What This Is Not
 
