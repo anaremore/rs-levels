@@ -28,7 +28,20 @@ The local API service is optional for this workflow. It is useful for diagnostic
 
 The extension captures futures display data from the visible RocketScooter charts. It ignores SPY, QQQ, watchlist rows, broker panels, account data, order-entry controls, and execution data.
 
-## 3. Add The TradingView Indicator
+## 3. Add Optional Manual RocketScooter Lines
+
+RS Levels passes through display levels that RocketScooter exposes. It does not invent optional manual levels.
+
+If you want these items to appear in TradingView, add or keep them visible on the matching RocketScooter futures chart before copying the payload:
+
+- overnight HP and overnight MHP
+- yellow lines
+- red lines
+- CAT lines
+
+Add them on the current ES/MES or NQ/MNQ RocketScooter chart family you care about. ES-family captures apply to ES and MES charts; NQ-family captures apply to NQ and MNQ charts. After adding or changing a manual line, refresh/reconnect the RocketScooter tab if needed, then copy a fresh TradingView payload.
+
+## 4. Add The TradingView Indicator
 
 1. In TradingView, open a futures chart such as `ES1!`, `MES1!`, `NQ1!`, or `MNQ1!`.
 2. Open Pine Editor.
@@ -38,7 +51,7 @@ The extension captures futures display data from the visible RocketScooter chart
 
 Leave `Chart family` on `Auto` unless the chart does not detect correctly. In `Auto`, ES and MES charts use the ES section of the payload, while NQ and MNQ charts use the NQ section.
 
-## 4. Copy And Paste Levels
+## 5. Copy And Paste Levels
 
 1. Open the `RS Levels Capture` popup on the RocketScooter tab.
 2. Leave the symbol selector on `ES + NQ` when both families are available.
@@ -61,6 +74,8 @@ The indicator can draw:
 - user-added yellow lines, red lines, and CAT lines
 - bull and bear zone boundaries and fills
 - a small stats panel with liquidity map and RI when RocketScooter exposes them
+
+User-added lines appear only when they were added in RocketScooter and included in the latest capture.
 
 ## Troubleshooting
 

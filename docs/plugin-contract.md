@@ -104,6 +104,8 @@ New extractors should emit `zone-bull` or `zone-bear` for every zone. Generic `z
 
 Manual RocketScooter chart lines should use `yellow-line`, `red-line`, or `cat` when the extractor sees those explicit labels, numbered aliases such as `YL2` or `RL3`, or their visible yellow, red, or purple line colors. Multiple manual lines of the same kind must remain separate rows when their prices differ. Display settings should expose them as first-class categories when the platform supports kind controls.
 
+Manual display levels are source-owned. Extractors and plugins should pass through overnight HP/MHP, yellow lines, red lines, and CAT lines when RocketScooter exposes them, but they must not fabricate those optional user-managed levels when they are absent from the capture.
+
 The generic display row text feed is:
 
 ```text

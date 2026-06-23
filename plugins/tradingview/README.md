@@ -15,6 +15,8 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels workf
 
 The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. If TradingView does not expose enough symbol context, use the `Chart family` override.
 
+Optional manual RocketScooter lines must exist before you copy the payload. If you want overnight HP/MHP, yellow lines, red lines, or CAT lines to appear in TradingView, add or keep them visible on the matching RocketScooter futures chart first, then use `Copy TradingView` again.
+
 ## Payload Format
 
 ```text
