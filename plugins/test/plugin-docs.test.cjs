@@ -36,7 +36,7 @@ for (const plugin of manifest.plugins) {
     assert.equal(plugin.api.mode, 'local-http');
     if (plugin.platform === 'Sierra Chart') {
       if (plugin.id.includes('varis-zones'))
-        assert.ok(plugin.api.endpoints.includes('GET /sierra/:symbol'), `${plugin.id} must poll the Sierra feed`);
+        assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol/rows'), `${plugin.id} must poll the stats rows feed`);
       else
         assert.ok(plugin.api.endpoints.includes('GET /sierra/:symbol'), `${plugin.id} must poll the Sierra levels feed`);
     } else {
@@ -123,7 +123,8 @@ assertNoPlatformApiTerms(sierraSource);
 const sierraVarisSource = readFileSync(join(root, 'sierra-chart', 'varis-zones-sierra.cpp'), 'utf8');
 assert.match(sierraVarisSource, /SCSFExport scsf_VARISZones/);
 assert.match(sierraVarisSource, /IAmTheLiquidity2/);
-assert.match(sierraVarisSource, /\/sierra\/%s/);
+assert.match(sierraVarisSource, /\/stats\/%s\/rows/);
+assert.doesNotMatch(sierraVarisSource, /\/sierra\/%s/);
 assert.match(sierraVarisSource, /ResolveStudySymbol/);
 assert.match(sierraVarisSource, /ResolveChartSymbol/);
 assert.match(sierraVarisSource, /IsKnownFamilyOverride/);
@@ -137,9 +138,6 @@ assert.match(sierraVarisSource, /migratedFollowChartSymbol/);
 assert.match(sierraVarisSource, /FindRiskInterval/);
 assert.match(sierraVarisSource, /SplitLines/);
 assert.match(sierraVarisSource, /ResponseShape/);
-assert.match(sierraVarisSource, /HasExplicitRiskInterval/);
-assert.match(sierraVarisSource, /CountDdBandRows/);
-assert.match(sierraVarisSource, /DD-BAND/);
 assert.match(sierraVarisSource, /API RI/);
 assert.match(sierraVarisSource, /API RI missing/);
 assert.match(sierraVarisSource, /manual RI/);

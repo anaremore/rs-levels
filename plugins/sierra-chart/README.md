@@ -31,13 +31,13 @@ Map,BLD
 
 The `STATE` row provides source freshness. The level `kind` lets the study distinguish `zone-bull`, `zone-bear`, `yellow-line`, `red-line`, `cat`, and other display categories. Empty feeds still return a `STATE` row so Sierra Chart can observe that the HTTP request completed before levels are available.
 
-`varis-zones-sierra.cpp` polls the same Sierra feed:
+`varis-zones-sierra.cpp` polls the dedicated stats row feed:
 
 ```text
-GET /sierra/:symbol
+GET /stats/:symbol/rows
 ```
 
-It reads `RI` from the stats rows inside that response, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands. Using the same `/sierra/:symbol` text feed as the RS Levels overlay keeps both Sierra studies on the known-good ACSIL polling path.
+It reads `RI` from that response, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands. ES and MES resolve to the same ES-family stats, and NQ and MNQ resolve to the same NQ-family stats.
 
 ## Study Inputs
 
@@ -79,14 +79,14 @@ Existing Sierra studies preserve input values across rebuilds. After updating VA
 ## Rendering Plan
 
 - Poll `/sierra/:symbol` for RS Levels source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
-- Poll `/sierra/:symbol` for VARIS Zones `RI`, with `Auto` symbol detection from the Sierra chart symbol.
+- Poll `/stats/:symbol/rows` for VARIS Zones `RI`, with `Auto` symbol detection from the Sierra chart symbol.
 - Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently, including numbered RocketScooter aliases such as `YL2` and `RL3`.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Suppress duplicate same-name open/close rows from noisy feeds, so only one `Close` label is drawn while independent manual lines still remain separate by price.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
 - When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
-- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input. The marker includes the source build tag so stale compiled studies are easy to spot. Its optional debug marker is hidden by default and shows only scrubbed transport details such as `/sierra/:symbol`, response length, response shape, row count, detected RI/DD rows, parsed RI, and build tag.
+- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input. The marker includes the source build tag so stale compiled studies are easy to spot. Its optional debug marker is hidden by default and shows only scrubbed transport details such as `/stats/:symbol/rows`, response length, response shape, row count, detected RI, parsed RI, and build tag.
 
 ## Safety Boundary
 

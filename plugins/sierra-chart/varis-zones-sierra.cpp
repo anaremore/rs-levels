@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.7";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.8";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -224,85 +224,7 @@ double FindRiskInterval(const SCString& body)
         return ParsePositiveNumber(fields[1]);
     }
 
-    bool hasLow = false;
-    bool hasHigh = false;
-    double low = 0.0;
-    double high = 0.0;
-    for (const std::string& row : rows)
-    {
-        const std::vector<std::string> fields = SplitRow(row);
-        if (fields.size() < 6)
-            continue;
-
-        const std::string name = Upper(fields[0]);
-        const std::string kind = Upper(fields[5]);
-        if (kind != "DD-BAND" && name != "DD")
-            continue;
-
-        const double price = ParsePositiveNumber(fields[1]);
-        if (price <= 0.0)
-            continue;
-
-        if (!hasLow || price < low)
-        {
-            low = price;
-            hasLow = true;
-        }
-        if (!hasHigh || price > high)
-        {
-            high = price;
-            hasHigh = true;
-        }
-    }
-
-    if (hasLow && hasHigh && high > low)
-        return (high - low) * 0.5;
-
     return 0.0;
-}
-
-bool HasExplicitRiskInterval(const SCString& body)
-{
-    const std::vector<std::string> rows = SplitLines(body);
-    for (const std::string& row : rows)
-    {
-        const std::vector<std::string> fields = SplitRow(row);
-        if (fields.size() < 2)
-            continue;
-        const std::string name = Upper(fields[0]);
-        if ((name == "RI" || name == "RISKINTERVAL" || name == "RISK INTERVAL") && ParsePositiveNumber(fields[1]) > 0.0)
-            return true;
-    }
-    return false;
-}
-
-int CountDdBandRows(const SCString& body)
-{
-    int count = 0;
-    const std::vector<std::string> rows = SplitLines(body);
-    for (const std::string& row : rows)
-    {
-        const std::vector<std::string> fields = SplitRow(row);
-        if (fields.size() < 6)
-            continue;
-        const std::string name = Upper(fields[0]);
-        const std::string kind = Upper(fields[5]);
-        if ((kind == "DD-BAND" || name == "DD") && ParsePositiveNumber(fields[1]) > 0.0)
-            ++count;
-    }
-    return count;
-}
-
-std::string FindSourceState(const SCString& body)
-{
-    const std::vector<std::string> rows = SplitLines(body);
-    for (const std::string& row : rows)
-    {
-        const std::vector<std::string> fields = SplitRow(row);
-        if (fields.size() >= 2 && Upper(fields[0]) == "STATE")
-            return fields[1];
-    }
-    return "unknown";
 }
 
 std::string DisplaySymbol(const char* input)
@@ -511,7 +433,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         const SCString baseUrl = CleanBaseUrl(ServiceUrl.GetString());
         SCString path;
         SCString url;
-        path.Format("/sierra/%s", requestSymbol.GetChars());
+        path.Format("/stats/%s/rows", requestSymbol.GetChars());
         url.Format("%s%s", baseUrl.GetChars(), path.GetChars());
         sc.HTTPResponse = "";
         sc.MakeHTTPRequest(url);
@@ -535,21 +457,18 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         const std::vector<std::string> rows = SplitLines(sc.HTTPResponse);
         const int rawRowCount = static_cast<int>(rows.size());
         const std::string shape = ResponseShape(sc.HTTPResponse);
-        const bool explicitRi = HasExplicitRiskInterval(sc.HTTPResponse);
-        const int ddBandRows = CountDdBandRows(sc.HTTPResponse);
-        sourceState = FindSourceState(sc.HTTPResponse).c_str();
         const double nextRi = FindRiskInterval(sc.HTTPResponse);
+        const bool hasRiskInterval = nextRi > 0.0;
+        sourceState = "stats";
         if (nextRi > 0.0)
             capturedRiskInterval = nextRi;
         lastFeedDebug.Format(
-            "feed %s len=%d rows=%d shape=%s state=%s ri=%d ddBands=%d parsedRi=%.2f",
+            "stats %s len=%d rows=%d shape=%s ri=%d parsedRi=%.2f",
             lastRequestPath.GetChars(),
             responseLength,
             rawRowCount,
             shape.c_str(),
-            sourceState.GetChars(),
-            explicitRi ? 1 : 0,
-            ddBandRows,
+            hasRiskInterval ? 1 : 0,
             nextRi);
         lastFeedSeconds = nowSeconds;
         lastIssue = "";

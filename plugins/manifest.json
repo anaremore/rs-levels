@@ -63,7 +63,7 @@
       "api": {
         "mode": "local-http",
         "endpoints": [
-          "GET /sierra/:symbol"
+          "GET /stats/:symbol/rows"
         ]
       }
     },
