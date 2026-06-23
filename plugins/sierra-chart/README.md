@@ -62,7 +62,7 @@ Sierra Chart studies use the single Sierra compatibility feed for reliability. T
 - session reset hour, default 18 ET
 - show/hide VWAP, half-RI bands, full-RI bands, and status
 - colors and line widths for VWAP, half-RI bands, and full-RI bands
-- show debug status, default off, for the latest local request path, response length, response shape, row count, detected RI/DD rows, parsed RI, and build tag
+- show debug status, default off, for the latest local request path, response length, response shape, row count, detected stat keys, parsed RI, and build tag
 
 ## Install
 
@@ -86,7 +86,7 @@ Existing Sierra studies preserve input values across rebuilds. After updating VA
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
 - When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
-- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input. The marker includes the source build tag so stale compiled studies are easy to spot. Its optional debug marker is hidden by default and shows only scrubbed transport details such as `/sierra/:symbol`, response length, response shape, row count, detected RI, parsed RI, and build tag.
+- The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input. The marker includes the source build tag so stale compiled studies are easy to spot. Its optional debug marker is hidden by default and shows only scrubbed transport details such as `/sierra/:symbol`, response length, response shape, row count, detected stat keys, parsed RI, and build tag.
 
 ## Safety Boundary
 

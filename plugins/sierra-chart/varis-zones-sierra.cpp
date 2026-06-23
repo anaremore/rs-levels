@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.10";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.11";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -34,6 +34,18 @@ std::string Upper(std::string value)
     for (char& ch : value)
         ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
     return value;
+}
+
+std::string CompactUpper(const std::string& value)
+{
+    std::string result;
+    for (char ch : value)
+    {
+        const unsigned char unsignedCh = static_cast<unsigned char>(ch);
+        if (std::isalnum(unsignedCh))
+            result.push_back(static_cast<char>(std::toupper(unsignedCh)));
+    }
+    return result;
 }
 
 bool EqualsIgnoreCase(const char* first, const char* second)
@@ -130,11 +142,22 @@ std::vector<std::string> SplitLines(const SCString& body)
     return rows;
 }
 
-double ParsePositiveNumber(const std::string& value)
+double FirstPositiveNumber(const std::string& value)
 {
-    char* end = nullptr;
-    const double parsed = std::strtod(value.c_str(), &end);
-    return end == value.c_str() || parsed <= 0.0 ? 0.0 : parsed;
+    const char* text = value.c_str();
+    for (int i = 0; text[i] != 0; ++i)
+    {
+        const unsigned char ch = static_cast<unsigned char>(text[i]);
+        if (!std::isdigit(ch) && text[i] != '-' && text[i] != '+' && text[i] != '.')
+            continue;
+
+        char* end = nullptr;
+        const double parsed = std::strtod(text + i, &end);
+        if (end != text + i && parsed > 0.0)
+            return parsed;
+    }
+
+    return 0.0;
 }
 
 std::string ResponseShape(const SCString& body)
@@ -210,21 +233,79 @@ bool IsKnownFamilyOverride(const char* inputSymbol)
         EqualsIgnoreCase(inputSymbol, "MNQ");
 }
 
-double FindRiskInterval(const SCString& body)
+bool IsRiskIntervalKey(const std::string& key)
 {
-    const std::vector<std::string> rows = SplitLines(body);
+    return key == "RI" ||
+        key == "RISKINTERVAL" ||
+        key == "RISKINT" ||
+        key == "STATRI" ||
+        key == "STATRISKINTERVAL" ||
+        key == "STATRISKINT";
+}
+
+bool IsDisplayStatKey(const std::string& key)
+{
+    return key == "STATE" ||
+        key == "DD" ||
+        key == "RI" ||
+        key == "RISKINTERVAL" ||
+        key == "RISKINT" ||
+        key == "RES" ||
+        key == "MRES" ||
+        key == "WRES" ||
+        key == "MAP" ||
+        key == "MAPCODE" ||
+        key == "STATRI" ||
+        key == "STATRISKINTERVAL" ||
+        key == "STATRISKINT";
+}
+
+double FindRiskInterval(const std::vector<std::string>& rows)
+{
     for (const std::string& row : rows)
     {
         const std::vector<std::string> fields = SplitRow(row);
         if (fields.size() < 2)
             continue;
-        const std::string name = Upper(fields[0]);
-        if (name != "RI" && name != "RISKINTERVAL" && name != "RISK INTERVAL")
-            continue;
-        return ParsePositiveNumber(fields[1]);
+
+        const std::string key = CompactUpper(fields[0]);
+        if (IsRiskIntervalKey(key))
+            return FirstPositiveNumber(fields[1]);
+
+        if ((key == "STAT" || key == "STATS") && fields.size() >= 3 && IsRiskIntervalKey(CompactUpper(fields[1])))
+            return FirstPositiveNumber(fields[2]);
     }
 
     return 0.0;
+}
+
+std::string StatKeySummary(const std::vector<std::string>& rows)
+{
+    std::string summary;
+    for (const std::string& row : rows)
+    {
+        const std::vector<std::string> fields = SplitRow(row);
+        if (fields.empty())
+            continue;
+
+        std::string key = CompactUpper(fields[0]);
+        if ((key == "STAT" || key == "STATS") && fields.size() >= 2)
+            key += ":" + CompactUpper(fields[1]);
+
+        if (!IsDisplayStatKey(key) && key.find("STAT:RI") != 0 && key.find("STAT:RISK") != 0)
+            continue;
+
+        if (!summary.empty())
+            summary += "|";
+        summary += key;
+        if (summary.size() > 80)
+        {
+            summary += "|...";
+            break;
+        }
+    }
+
+    return summary.empty() ? "none" : summary;
 }
 
 std::string DisplaySymbol(const char* input)
@@ -457,19 +538,21 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         const std::vector<std::string> rows = SplitLines(sc.HTTPResponse);
         const int rawRowCount = static_cast<int>(rows.size());
         const std::string shape = ResponseShape(sc.HTTPResponse);
-        const double nextRi = FindRiskInterval(sc.HTTPResponse);
+        const double nextRi = FindRiskInterval(rows);
         const bool hasRiskInterval = nextRi > 0.0;
+        const std::string statKeys = StatKeySummary(rows);
         sourceState = "sierra";
         if (nextRi > 0.0)
             capturedRiskInterval = nextRi;
         lastFeedSeconds = nowSeconds;
         lastIssue = "";
         lastFeedDebug.Format(
-            "sierra %s len=%d rows=%d shape=%s ri=%d parsedRi=%.2f",
+            "sierra %s len=%d rows=%d shape=%s stats=%s ri=%d parsedRi=%.2f",
             lastRequestPath.GetChars(),
             responseLength,
             rawRowCount,
             shape.c_str(),
+            statKeys.c_str(),
             hasRiskInterval ? 1 : 0,
             nextRi);
         requestState = REQUEST_NONE;
