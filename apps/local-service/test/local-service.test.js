@@ -404,6 +404,8 @@ try {
   const nqStatsRows = await getText(`${baseUrl}/stats/NQ?format=rows`);
   const nqStatsPathRows = await getText(`${baseUrl}/stats/NQ/rows`);
   assert.equal(nqStatsPathRows, nqStatsRows);
+  const mnqStatsRows = await getText(`${baseUrl}/stats/MNQ?format=rows`);
+  assert.equal(mnqStatsRows, nqStatsRows);
   const mnqStatsPathRows = await getText(`${baseUrl}/stats/MNQ/rows`);
   assert.equal(mnqStatsPathRows, nqStatsRows);
   assert.match(nqStatsRows, /DD,0\.66/);

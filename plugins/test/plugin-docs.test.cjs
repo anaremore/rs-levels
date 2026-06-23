@@ -36,7 +36,7 @@ for (const plugin of manifest.plugins) {
     assert.equal(plugin.api.mode, 'local-http');
     if (plugin.platform === 'Sierra Chart') {
       if (plugin.id.includes('varis-zones'))
-        assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol/rows'), `${plugin.id} must poll the stats rows feed`);
+        assert.ok(plugin.api.endpoints.includes('GET /stats/:symbol?format=rows'), `${plugin.id} must poll the stats rows feed`);
       else
         assert.ok(plugin.api.endpoints.includes('GET /sierra/:symbol'), `${plugin.id} must poll the Sierra levels feed`);
     } else {
@@ -80,7 +80,7 @@ assert.match(contract, /Freshness Rules/);
 assert.match(contract, /Endpoint Selection/);
 assert.match(contract, /narrowest endpoint/);
 assert.match(contract, /VARIS Zones direct adapter/);
-assert.match(contract, /GET \/stats\/:symbol\/rows/);
+assert.match(contract, /GET \/stats\/:symbol\?format=rows/);
 assert.match(contract, /should not parse the combined Sierra level feed/);
 assert.match(contract, /Plugin manifests, plugin docs, and plugin source must agree/);
 assert.match(contract, /Safety Tests/);
@@ -129,7 +129,7 @@ assertNoPlatformApiTerms(sierraSource);
 const sierraVarisSource = readFileSync(join(root, 'sierra-chart', 'varis-zones-sierra.cpp'), 'utf8');
 assert.match(sierraVarisSource, /SCSFExport scsf_VARISZones/);
 assert.match(sierraVarisSource, /IAmTheLiquidity2/);
-assert.match(sierraVarisSource, /\/stats\/%s\/rows/);
+assert.match(sierraVarisSource, /\/stats\/%s\?format=rows/);
 assert.doesNotMatch(sierraVarisSource, /\/sierra\/%s/);
 assert.match(sierraVarisSource, /ResolveStudySymbol/);
 assert.match(sierraVarisSource, /ResolveChartSymbol/);

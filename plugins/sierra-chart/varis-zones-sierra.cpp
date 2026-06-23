@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.8";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.9";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -433,7 +433,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         const SCString baseUrl = CleanBaseUrl(ServiceUrl.GetString());
         SCString path;
         SCString url;
-        path.Format("/stats/%s/rows", requestSymbol.GetChars());
+        path.Format("/stats/%s?format=rows", requestSymbol.GetChars());
         url.Format("%s%s", baseUrl.GetChars(), path.GetChars());
         sc.HTTPResponse = "";
         sc.MakeHTTPRequest(url);
