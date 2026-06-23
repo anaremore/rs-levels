@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.9";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.10";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -433,7 +433,7 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         const SCString baseUrl = CleanBaseUrl(ServiceUrl.GetString());
         SCString path;
         SCString url;
-        path.Format("/stats/%s?format=rows", requestSymbol.GetChars());
+        path.Format("/sierra/%s", requestSymbol.GetChars());
         url.Format("%s%s", baseUrl.GetChars(), path.GetChars());
         sc.HTTPResponse = "";
         sc.MakeHTTPRequest(url);
@@ -459,19 +459,19 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         const std::string shape = ResponseShape(sc.HTTPResponse);
         const double nextRi = FindRiskInterval(sc.HTTPResponse);
         const bool hasRiskInterval = nextRi > 0.0;
-        sourceState = "stats";
+        sourceState = "sierra";
         if (nextRi > 0.0)
             capturedRiskInterval = nextRi;
+        lastFeedSeconds = nowSeconds;
+        lastIssue = "";
         lastFeedDebug.Format(
-            "stats %s len=%d rows=%d shape=%s ri=%d parsedRi=%.2f",
+            "sierra %s len=%d rows=%d shape=%s ri=%d parsedRi=%.2f",
             lastRequestPath.GetChars(),
             responseLength,
             rawRowCount,
             shape.c_str(),
             hasRiskInterval ? 1 : 0,
             nextRi);
-        lastFeedSeconds = nowSeconds;
-        lastIssue = "";
         requestState = REQUEST_NONE;
         sc.HTTPResponse = "";
     }

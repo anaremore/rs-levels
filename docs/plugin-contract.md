@@ -50,7 +50,8 @@ Adapters should use the narrowest endpoint that matches the job:
 | Horizontal level overlay | `GET /levels/:symbol/rows` or `GET /levels/:symbol?format=rows` | Draw only price levels from `name,price,red,green,blue,kind` rows. |
 | Sierra Chart RS Levels overlay | `GET /sierra/:symbol` | Sierra receives source state, level rows, and context rows in one ACSIL-friendly plain-text response. |
 | Context/stat panel | `GET /stats/:symbol?format=rows` or `GET /stats/:symbol/rows` | Read `DD`, `RI`, `Res`, `MRes`, `WRes`, and `Map` without parsing price-level rows. |
-| VARIS Zones direct adapter | `GET /stats/:symbol?format=rows` | VARIS needs `RI`; it should not parse the combined Sierra level feed just to find a stat. |
+| Sierra Chart VARIS Zones | `GET /sierra/:symbol` | Sierra VARIS reads the `RI` stat row from the same ACSIL-friendly feed used by the Sierra RS Levels study. |
+| NinjaTrader, Quantower, and Bookmap VARIS Zones | `GET /stats/:symbol?format=rows` | These adapters need `RI` and can use the narrow stats feed directly. |
 | TradingView RS Levels and VARIS | `GET /tradingview` or `GET /tradingview/:symbol` | Pine cannot poll localhost, so users paste the short `RSLEVELS|2` payload. |
 
 Plugin manifests, plugin docs, and plugin source must agree on the endpoint family. When a plugin changes endpoint contracts, update the manifest, this contract, platform docs, and automated static tests in the same slice.
