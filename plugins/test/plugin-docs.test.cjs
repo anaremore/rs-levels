@@ -77,6 +77,12 @@ const contract = readFileSync(join(root, '..', 'docs', 'plugin-contract.md'), 'u
 assert.match(contract, /GET \/levels\/:symbol/);
 assert.match(contract, /GET \/stats\/:symbol/);
 assert.match(contract, /Freshness Rules/);
+assert.match(contract, /Endpoint Selection/);
+assert.match(contract, /narrowest endpoint/);
+assert.match(contract, /VARIS Zones direct adapter/);
+assert.match(contract, /GET \/stats\/:symbol\/rows/);
+assert.match(contract, /should not parse the combined Sierra level feed/);
+assert.match(contract, /Plugin manifests, plugin docs, and plugin source must agree/);
 assert.match(contract, /Safety Tests/);
 assert.match(contract, /name,price,red,green,blue,kind/);
 assert.match(contract, /Other levels/);

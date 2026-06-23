@@ -41,6 +41,20 @@ GET /tradingview/:symbol
 
 The `/rows` paths return the same text bodies as `?format=rows` and exist for direct clients that prefer compact text parsing. `/sierra/:symbol` is a Sierra Chart compatibility feed that combines source state, levels, and stats in one plain-text response for ACSIL reliability.
 
+## Endpoint Selection
+
+Adapters should use the narrowest endpoint that matches the job:
+
+| Adapter job | Preferred contract | Notes |
+| --- | --- | --- |
+| Horizontal level overlay | `GET /levels/:symbol/rows` or `GET /levels/:symbol?format=rows` | Draw only price levels from `name,price,red,green,blue,kind` rows. |
+| Sierra Chart RS Levels overlay | `GET /sierra/:symbol` | Sierra receives source state, level rows, and context rows in one ACSIL-friendly plain-text response. |
+| Context/stat panel | `GET /stats/:symbol/rows` or `GET /stats/:symbol?format=rows` | Read `DD`, `RI`, `Res`, `MRes`, `WRes`, and `Map` without parsing price-level rows. |
+| VARIS Zones direct adapter | `GET /stats/:symbol/rows` or `GET /stats/:symbol?format=rows` | VARIS needs `RI`; it should not parse the combined Sierra level feed just to find a stat. |
+| TradingView RS Levels and VARIS | `GET /tradingview` or `GET /tradingview/:symbol` | Pine cannot poll localhost, so users paste the short `RSLEVELS|2` payload. |
+
+Plugin manifests, plugin docs, and plugin source must agree on the endpoint family. When a plugin changes endpoint contracts, update the manifest, this contract, platform docs, and automated static tests in the same slice.
+
 Plugins should accept `ES`/`MES` and `NQ`/`MNQ` aliases the same way the API does. Plugins do not need RocketScooter's CQG current-contract code; `/levels/F.US.EP...` resolves to the ES family, and `/levels/F.US.ENQ...` resolves to the NQ family. JSON status, `/levels/:symbol` responses, and TradingView payloads use user-facing `ES`/`NQ` labels.
 
 The API sends `Cache-Control: no-store` on HTTP responses. Plugins should still poll on their own refresh interval and use `/status` freshness fields as the source of truth.
