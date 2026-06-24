@@ -218,6 +218,16 @@ assert.match(quantowerSource, /zone-bear/);
 assertManualKinds(quantowerSource);
 assertNoPlatformApiTerms(quantowerSource);
 
+const quantowerProject = readFileSync(join(root, 'quantower', 'RSLevels.csproj'), 'utf8');
+assert.match(quantowerProject, /<TargetFramework>net10\.0<\/TargetFramework>/);
+assert.match(quantowerProject, /System\.Drawing\.Common/);
+assert.match(quantowerProject, /TradingPlatform\.BusinessLayer/);
+assert.match(quantowerProject, /QuantowerRoot/);
+assert.match(quantowerProject, /QuantowerVersion/);
+const quantowerReadme = readFileSync(join(root, 'quantower', 'README.md'), 'utf8');
+assert.match(quantowerReadme, /RSLevels\.csproj/);
+assert.match(quantowerReadme, /Status panel bottom offset pixels/);
+
 const quantowerVarisSource = readFileSync(join(root, 'quantower', 'VARISZonesQuantower.cs'), 'utf8');
 assert.match(quantowerVarisSource, /class VARISZonesQuantower : Indicator/);
 assert.match(quantowerVarisSource, /\/stats\//);
@@ -228,6 +238,7 @@ assert.match(quantowerVarisSource, /this\.Volume\(\)/);
 assert.match(quantowerVarisSource, /this\.Time\(\)/);
 assert.match(quantowerVarisSource, /BeginCloud/);
 assert.match(quantowerVarisSource, /ManualRiskInterval/);
+assert.match(quantowerVarisSource, /StatusPanelBottomOffsetPixels/);
 assertNoPlatformApiTerms(quantowerVarisSource);
 
 const bookmapSource = readFileSync(join(root, 'bookmap', 'src', 'main', 'java', 'com', 'rslevels', 'bookmap', 'RSLevelsDisplayBookmap.java'), 'utf8');

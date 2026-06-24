@@ -84,6 +84,9 @@ namespace RSLevelsQuantower
         [InputParameter("Show status", 11)]
         public bool ShowStatus = true;
 
+        [InputParameter("Status panel bottom offset pixels", 12, 0, 200, 1, 0)]
+        public int StatusPanelBottomOffsetPixels = 44;
+
         protected override void OnInit()
         {
             ResetSnapshot();
@@ -139,7 +142,8 @@ namespace RSLevelsQuantower
             using (Brush backBrush = new SolidBrush(Color.FromArgb(155, 16, 20, 24)))
             {
                 SizeF size = args.Graphics.MeasureString(status, font);
-                RectangleF box = new RectangleF(rect.Left + 8, rect.Bottom - size.Height - 10, size.Width + 8, size.Height + 4);
+                float bottomOffset = 10 + Math.Max(0, StatusPanelBottomOffsetPixels);
+                RectangleF box = new RectangleF(rect.Left + 8, rect.Bottom - size.Height - bottomOffset, size.Width + 8, size.Height + 4);
                 args.Graphics.FillRectangle(backBrush, box);
                 args.Graphics.DrawString(status, font, textBrush, box.Left + 4, box.Top + 2);
             }

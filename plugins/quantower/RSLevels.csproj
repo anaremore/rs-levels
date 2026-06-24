@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CA1416;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <QuantowerRoot Condition="'$(QuantowerRoot)' == '' and '$(QUANTOWER_ROOT)' != ''">$(QUANTOWER_ROOT)</QuantowerRoot>
+    <QuantowerRoot Condition="'$(QuantowerRoot)' == ''">C:\Quantower</QuantowerRoot>
+    <QuantowerVersion Condition="'$(QuantowerVersion)' == ''">v1.146.13</QuantowerVersion>
+    <QuantowerBin Condition="'$(QuantowerBin)' == ''">$(QuantowerRoot)\TradingPlatform\$(QuantowerVersion)\bin</QuantowerBin>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="TradingPlatform.BusinessLayer">
+      <HintPath>$(QuantowerBin)\TradingPlatform.BusinessLayer.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
