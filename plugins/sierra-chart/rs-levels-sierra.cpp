@@ -526,13 +526,20 @@ int LabelDirection(const RsLevel& level)
     return 1;
 }
 
+bool IsHalfGap(const RsLevel& level)
+{
+    const std::string upper = Upper(level.name);
+    const std::string compact = CompactUpper(level.name);
+    return compact == "MIDGAP" || compact == "HALFGAP" || compact == "HG" || upper.find("HALF GAP") != std::string::npos;
+}
+
 std::string DisplayLabel(const RsLevel& level)
 {
     const std::string upper = Upper(level.name);
     if (upper.find("PREVDAYCLOSE") != std::string::npos || upper.find("PREV DAY CLOSE") != std::string::npos)
         return "Prev Close";
-    if (upper.find("MIDGAP") != std::string::npos || upper.find("HALFGAP") != std::string::npos || upper.find("HALF GAP") != std::string::npos)
-        return "Mid Gap";
+    if (IsHalfGap(level))
+        return "Half Gap";
     if (upper.find("LASTOPEN") != std::string::npos || (upper.find("OPEN") != std::string::npos && upper.find("CLOSE") == std::string::npos))
         return "Open";
     if (upper.find("CLOSE") != std::string::npos)
@@ -585,7 +592,7 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     lineTool.EndValue = static_cast<float>(level.price);
     lineTool.Color = color;
     lineTool.LineWidth = static_cast<unsigned short>(lineWidth);
-    lineTool.LineStyle = LINESTYLE_SOLID;
+    lineTool.LineStyle = IsHalfGap(level) ? LINESTYLE_DASH : LINESTYLE_SOLID;
     DisableToolAutoLabels(lineTool);
     sc.UseTool(lineTool);
 
