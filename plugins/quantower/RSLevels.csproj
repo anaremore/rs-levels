@@ -10,6 +10,8 @@
     <QuantowerRoot Condition="'$(QuantowerRoot)' == '' and '$(QUANTOWER_ROOT)' != ''">$(QUANTOWER_ROOT)</QuantowerRoot>
     <QuantowerRoot Condition="'$(QuantowerRoot)' == ''">C:\Quantower</QuantowerRoot>
     <QuantowerVersion Condition="'$(QuantowerVersion)' == ''">v1.146.13</QuantowerVersion>
+    <QuantowerScriptsDir Condition="'$(QuantowerScriptsDir)' == '' and '$(QUANTOWER_SCRIPTS_DIR)' != ''">$(QUANTOWER_SCRIPTS_DIR)</QuantowerScriptsDir>
+    <OutputPath Condition="'$(QuantowerScriptsDir)' != ''">$(QuantowerScriptsDir)\RSLevels\</OutputPath>
     <QuantowerBin Condition="'$(QuantowerBin)' == ''">$(QuantowerRoot)\TradingPlatform\$(QuantowerVersion)\bin</QuantowerBin>
   </PropertyGroup>
 

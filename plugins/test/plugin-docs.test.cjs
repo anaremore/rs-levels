@@ -225,8 +225,10 @@ assert.match(quantowerProject, /TradingPlatform\.BusinessLayer/);
 assert.match(quantowerProject, /QuantowerRoot/);
 assert.match(quantowerProject, /QuantowerVersion/);
 const quantowerReadme = readFileSync(join(root, 'quantower', 'README.md'), 'utf8');
+assert.match(quantowerProject, /QuantowerScriptsDir/);
 assert.match(quantowerReadme, /RSLevels\.csproj/);
 assert.match(quantowerReadme, /Status panel bottom offset pixels/);
+assert.match(quantowerReadme, /QuantowerScriptsDir/);
 
 const quantowerVarisSource = readFileSync(join(root, 'quantower', 'VARISZonesQuantower.cs'), 'utf8');
 assert.match(quantowerVarisSource, /class VARISZonesQuantower : Indicator/);

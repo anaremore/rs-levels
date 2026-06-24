@@ -29,7 +29,26 @@ The indicator uses generic text row feeds to keep parsing simple inside Quantowe
 Build from the repository root or from `plugins/quantower` with your installed Quantower root/version:
 
 ```powershell
-dotnet build .\plugins\quantower\RSLevels.csproj -c Release -p:QuantowerRoot=D:\Quantower -p:QuantowerVersion=v1.146.13
+dotnet build .\plugins\quantower\RSLevels.csproj `
+  -c Release `
+  -p:QuantowerRoot=D:\Quantower `
+  -p:QuantowerVersion=v1.146.13
+```
+
+To build and place the DLL directly in Quantower's Scripts indicators folder, also pass `QuantowerScriptsDir`:
+
+```powershell
+dotnet build .\plugins\quantower\RSLevels.csproj `
+  -c Release `
+  -p:QuantowerRoot=D:\Quantower `
+  -p:QuantowerVersion=v1.146.13 `
+  -p:QuantowerScriptsDir=D:\Quantower\Settings\Scripts\Indicators
+```
+
+That command writes the DLL into:
+
+```text
+D:\Quantower\Settings\Scripts\Indicators\RSLevels\RSLevels.dll
 ```
 
 The project targets the .NET runtime used by current Quantower builds and references `System.Drawing.Common` for chart painting. If Quantower updates its TradingPlatform runtime path, pass the matching `-p:QuantowerVersion=...` value.
@@ -58,8 +77,8 @@ The project targets the .NET runtime used by current Quantower builds and refere
 
 1. Install a .NET SDK compatible with the Quantower build you are targeting.
 2. Build `plugins/quantower/RSLevels.csproj` with `QuantowerRoot` and `QuantowerVersion` pointing at your local Quantower install.
-3. Copy or build the output DLL into Quantower's Scripts indicators folder as required by your Quantower setup.
-4. Restart Quantower or reload Scripts.
+3. Pass `QuantowerScriptsDir` when you want the build to install directly into Quantower's Scripts indicators folder; otherwise copy the output DLL manually.
+4. Restart Quantower or reload Scripts after the DLL changes.
 5. Add **RS Levels Display** and, optionally, **VARIS Zones Quantower** to a chart.
 6. Set the service URL only when you intentionally use a trusted private-network/Tailscale URL instead of `http://127.0.0.1:8765`.
 7. Leave symbol override on Auto unless the chart symbol cannot be detected.
