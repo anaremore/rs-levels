@@ -22,6 +22,8 @@ GET /stats/:symbol?format=rows
 
 The indicator uses generic text row feeds to keep parsing simple inside Quantower. `/levels/:symbol?format=rows` provides horizontal display levels. `/stats/:symbol?format=rows` provides chart-corner display context such as `DD`, `Res`, `MRes`, `WRes`, and `Map`. `/status` provides source freshness.
 
+With the default **Levels/stats refresh milliseconds** value, RS Levels Display polls levels and stats once per second, so `DD`, `Res`, `MRes`, and `WRes` follow the local API cadence.
+
 `VARISZonesQuantower.cs` polls `/status` and `/stats/:symbol?format=rows`, reads the `RI` row, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input when captured `RI` is unavailable.
 
 ## Build
@@ -57,7 +59,7 @@ The project targets the .NET runtime used by current Quantower builds and refere
 
 - service URL, default `http://127.0.0.1:8765`
 - symbol override, optional
-- refresh interval, default 1000 ms
+- levels/stats refresh interval, default 1000 ms
 - stale threshold, default 23 hours
 - label visibility
 - zone fill visibility

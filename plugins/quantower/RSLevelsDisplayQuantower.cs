@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
+using System.Drawing.Drawing2D;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,7 +48,7 @@ namespace RSLevelsQuantower
         })]
         public string SymbolOverride = "Auto";
 
-        [InputParameter("Refresh milliseconds", 2, 250, 60000, 250, 0)]
+        [InputParameter("Levels/stats refresh milliseconds", 2, 250, 60000, 250, 0)]
         public int RefreshMilliseconds = 1000;
 
         [InputParameter("Stale seconds", 3, 1, 86400, 1, 0)]
@@ -183,9 +184,13 @@ namespace RSLevelsQuantower
                     if (y < rect.Top - 40 || y > rect.Bottom + 40)
                         continue;
 
-                    Color color = Color.FromArgb(level.Red, level.Green, level.Blue);
+                    Color color = LevelColor(level);
                     using (Pen pen = new Pen(color, Math.Max(1, LineWidth)))
+                    {
+                        if (IsHalfGap(level))
+                            pen.DashStyle = DashStyle.Dash;
                         graphics.DrawLine(pen, rect.Left, y, rect.Right, y);
+                    }
 
                     if (!ShowLabels)
                         continue;
@@ -470,6 +475,8 @@ namespace RSLevelsQuantower
         {
             string name = level.Name ?? "Level";
             string upper = name.ToUpperInvariant();
+            if (IsHalfGap(level))
+                return "Half Gap";
             if (upper.Contains("PREVDAYCLOSE") || upper.Contains("PREV DAY CLOSE"))
                 return "Prev Close";
             if (upper.Contains("LASTOPEN") || (upper.Contains("OPEN") && !upper.Contains("CLOSE")))
@@ -489,6 +496,13 @@ namespace RSLevelsQuantower
             if (level.Kind == "red-line" || upper.Contains("RED LINE") || upper == "RL")
                 return "Red Line";
             return name.Replace("horizontal_line", "").Replace("horizontal_ray", "").Replace("horizontal", "").Replace("Liquidity Map", "").Replace("text", "").Trim();
+        }
+
+        private static Color LevelColor(LevelRow level)
+        {
+            if (IsHalfGap(level))
+                return Color.White;
+            return Color.FromArgb(level.Red, level.Green, level.Blue);
         }
 
         private static int LabelDirection(LevelRow level)
@@ -512,6 +526,14 @@ namespace RSLevelsQuantower
             if (text.Contains("BOTTOM") || text.Contains("LOWER") || text.Contains("BZB") || text.Contains("BRZB"))
                 return -1;
             return 0;
+        }
+
+        private static bool IsHalfGap(LevelRow level)
+        {
+            string text = (level != null ? level.Name : "") ?? "";
+            string upper = text.ToUpperInvariant();
+            string compact = upper.Replace(" ", "").Replace("_", "").Replace("-", "");
+            return compact == "MIDGAP" || compact == "HALFGAP" || compact == "HG" || upper.Contains("HALF GAP");
         }
 
         private static string InferKind(string name)
