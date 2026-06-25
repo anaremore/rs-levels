@@ -30,16 +30,18 @@ Users must have their own RocketScooter access. This project only processes data
 
 ## Choose Your Path
 
-Most users should start with [Getting started](docs/getting-started.md), which points to the shortest workflow for each use case.
+Use this table as the repo map. TradingView users can start with the extension and Pine indicator; the local server is still useful for diagnostics, API docs, examples, and direct platform plugins.
 
-| Use case | Start here |
-| --- | --- |
-| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) |
-| TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md), then [VARIS Zones](docs/varis-zones.md) |
-| Sierra Chart, NinjaTrader, Quantower, or Bookmap | [User setup](docs/user-setup.md), then [Platform plugins](docs/platform-plugins.md) |
-| API clients or examples | [User setup](docs/user-setup.md), then [API](docs/api.md) |
-| Tailscale or trusted private networks | [Networking](docs/networking.md) |
-| Packaging and release checks | [Packaging](docs/packaging.md) |
+| Use case | Start here | Then use |
+| --- | --- | --- |
+| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [TradingView reference](docs/tradingview.md) |
+| TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md) | [VARIS Zones](docs/varis-zones.md) |
+| Local API, diagnostics, examples, or private-network setup | [Local API and extension setup](docs/user-setup.md) | [API](docs/api.md), [Networking](docs/networking.md) |
+| Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](docs/user-setup.md) | [Platform plugins](docs/platform-plugins.md) |
+| API clients or display adapters | [API](docs/api.md) | [Schema reference](docs/schema-reference.md), [display plugin contract](docs/plugin-contract.md) |
+| Packaging and release checks | [Packaging](docs/packaging.md) | [Release checklist](docs/release-checklist.md) |
+
+The full documentation map lives in [docs/index.md](docs/index.md).
 
 ## Developer Quick Start
 

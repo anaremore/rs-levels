@@ -1,13 +1,13 @@
-# User Setup
+# Local API And Extension Setup
 
-This guide is for users who want the local API, browser extension, and TradingView paste workflow. If you are choosing a workflow, start with [Getting started](getting-started.md). If you only want TradingView levels, use [TradingView quickstart](tradingview-quickstart.md).
+Use this guide when you want the local service, API docs, diagnostics, examples, direct platform plugins, or trusted private-network access. If you only want the shortest TradingView copy/paste workflow, use [TradingView quickstart](tradingview-quickstart.md).
 
 ## Requirements
 
 - Node.js 20 or newer
 - A Chromium-based browser for the extension
 - Your own RocketScooter browser access
-- TradingView, if you want to use the Pine indicator
+- TradingView or a supported platform plugin, depending on the display target
 
 ## 1. Start The Local API
 
@@ -103,19 +103,13 @@ RS Levels does not create optional manual levels on its own. If you want overnig
 
 If capture does not start, open extension options and review the endpoint allowlist.
 
-## 4. Use TradingView
+## 4. Use TradingView Payloads
 
-1. In TradingView, open Pine Editor.
-2. Paste the contents of `plugins/tradingview/rs-levels.pine`.
-3. Add the indicator to your chart.
-4. In the extension popup, keep the export dropdown on `ES + NQ` and click `Copy TradingView`.
-5. Paste the copied `RSLEVELS|2` text into the indicator's `RS Levels Payload` input, then click `OK`. One all-symbol payload can carry ES and NQ together; in `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata. If TradingView does not expose enough symbol context, set `Chart family` to `ES` or `NQ`.
+The full TradingView walkthrough lives in [TradingView quickstart](tradingview-quickstart.md).
 
-`Copy TradingView` first uses the extension's latest normalized display capture, so it can work without the local API when the RocketScooter page-reader has captured visible ES/NQ chart levels. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
+From this setup, the important detail is that `Copy TradingView` copies one `RSLEVELS|2` payload that can carry both ES and NQ. In `Auto`, the RS Levels Pine indicator uses ES-family data on ES/MES charts and NQ-family data on NQ/MNQ charts. The same payload can feed `plugins/tradingview/varis-zones.pine`, which reads the matching `RI` stat row when it is present.
 
-The same dropdown can copy only `ES` or only `NQ` payloads when you want a single-family export for inspection or third-party tooling. `Plugins` opens the local display-plugin manifest.
-
-The same copied payload can also feed `plugins/tradingview/varis-zones.pine`. That indicator reads the `RI` stat row for the matching chart family and falls back to a manual risk interval input when no pasted RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`; see [VARIS Zones](varis-zones.md).
+`Copy TradingView` first uses the extension's latest normalized page-reader capture, so it can work without the local API when RocketScooter levels have already been captured in the browser. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
 
 ## 5. Tailscale Or Trusted Private Network
 

@@ -2,7 +2,7 @@
 
 Plugins in this repository are display-only. They read the local levels API or accept a manual export and draw overlays inside charting platforms.
 
-If you are deciding which workflow to use, start with [Getting started](getting-started.md). Adapter authors should start with the shared [display plugin contract](plugin-contract.md), then use the platform-specific README for implementation details.
+If you are deciding which workflow to use, start with [Getting started](getting-started.md). If you need the service-backed setup steps first, use [Local API and extension setup](user-setup.md). Adapter authors should start with the shared [display plugin contract](plugin-contract.md), then use the platform-specific README for implementation details.
 
 ## Safety Boundary
 

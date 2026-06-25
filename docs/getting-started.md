@@ -8,8 +8,8 @@ Use this page to choose the shortest path for what you want to do.
 | --- | --- | --- |
 | Show RocketScooter levels on TradingView | [TradingView quickstart](tradingview-quickstart.md) | Browser extension and the `RS Levels` Pine indicator. |
 | Show VARIS Zones on TradingView | [TradingView quickstart](tradingview-quickstart.md), then [VARIS Zones](varis-zones.md) | Same copied payload, plus the `VARIS Zones` Pine indicator. |
-| Use Sierra Chart, NinjaTrader, Quantower, or Bookmap | [User setup](user-setup.md), then [Platform plugins](platform-plugins.md) | Local API, browser extension, and the platform-specific source file. |
-| Explore the local API or build a display client | [User setup](user-setup.md), then [API](api.md) | Local API and either live capture or the demo capture. |
+| Use Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](user-setup.md), then [Platform plugins](platform-plugins.md) | Local API, browser extension, and the platform-specific source file. |
+| Explore the local API or build a display client | [Local API and extension setup](user-setup.md), then [API](api.md) | Local API and either live capture or the demo capture. |
 | Use another machine over Tailscale or a trusted LAN | [Networking](networking.md) | Explicit remote binding and a trusted private address. |
 | Build or verify a release package | [Packaging](packaging.md) | `npm run package` and release checks. |
 | Understand the public safety boundary | [Public boundary](public-boundary.md) and [Privacy and security](privacy-security.md) | The rules for display-only, public-safe work. |
