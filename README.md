@@ -12,6 +12,12 @@ RS Levels is organized around three display-only pieces:
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
 - **Platform plugins, indicators, and studies**: includes TradingView Pine scripts, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
+Screenshots are available for the main user paths:
+
+- [Browser extension popup](screenshots/rslevels-extension.png)
+- [TradingView RS Levels overlay](screenshots/tradingview-levels.png)
+- [Quantower RS Levels and VARIS Zones indicators](screenshots/quantower-levels.png)
+
 ## What This Is Not
 
 - No trading strategy.

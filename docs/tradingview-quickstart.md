@@ -64,6 +64,10 @@ One copied payload can carry both ES and NQ. You can paste the same payload into
 
 TradingView Pine cannot poll RocketScooter or localhost directly. When RocketScooter levels change, copy a fresh payload from the extension and paste it into the indicator again.
 
+![RS Levels TradingView indicator overlay](../screenshots/tradingview-levels.png)
+
+When the paste is working, the chart should show the display-only RS Levels overlay: DD bands, HP/MHP, user-added yellow/red/CAT lines, open/close references, bull and bear zones, and the small map/RI panel.
+
 ## What Should Appear
 
 The indicator can draw:

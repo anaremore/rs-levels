@@ -56,6 +56,10 @@ Capture-hook counters are aggregate only:
 
 These counters do not include ignored URLs, response bodies, request headers, cookies, or page text.
 
+![RS Levels browser extension popup](../screenshots/rslevels-extension.png)
+
+The popup screenshot shows the normal capture surface: local API status, the ES/NQ export selector, `Copy TradingView`, diagnostics, docs links, plugin links, and the collapsed debug panel.
+
 ## Settings
 
 Default service URL:
