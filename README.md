@@ -15,8 +15,8 @@ RS Levels is organized around three display-only pieces:
 Screenshots are available for the main user paths:
 
 - [Browser extension popup](screenshots/rslevels-extension.png)
-- [TradingView RS Levels overlay](screenshots/tradingview-levels.png)
-- [Quantower RS Levels and VARIS Zones indicators](screenshots/quantower-levels.png)
+- [TradingView RS Levels Indicator](screenshots/tradingview-levels.png)
+- [Quantower RS Levels Plugin](screenshots/quantower-levels.png)
 
 ## What This Is Not
 
