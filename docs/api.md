@@ -316,7 +316,7 @@ The first row is always `STATE,<state>` so ACSIL studies can observe a completed
 
 ## GET /tradingview
 
-Returns the all-symbol futures `RSLEVELS|2` paste payload for the included TradingView Pine indicator. The extension popup copies this endpoint for `ES + NQ`. In `Auto`, the Pine indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and draws the matching section. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same ES/NQ families. SPY, QQQ, and other watchlist/ETF symbols are intentionally omitted.
+Returns the all-symbol futures `RSLEVELS|2` paste payload for the included TradingView Pine indicator. These local endpoints remain ES/NQ-only fallbacks for the extension. The popup's primary page-reader path can additionally build stock sections directly from supported RocketScooter charts that are open in the browser; those stock sections are not exposed by this local API. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same ES/NQ families.
 
 ```text
 RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;Bull Zone Top 1,7588,zone-bull;DD,0.66,stat;RI,68.75,stat;Map BLD,0,stat|NQ|2026-06-19T14:29:59.500Z|Bear Zone Top 1,30450,zone-bear;RI,266.25,stat;Res,73.82,stat;MRes,49.87,stat;WRes,-29.29,stat

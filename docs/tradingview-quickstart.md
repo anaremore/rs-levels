@@ -23,44 +23,44 @@ The local API service is optional for this workflow. It is useful for diagnostic
 ## 2. Open RocketScooter
 
 1. Open RocketScooter in the same browser profile.
-2. Keep the current ES/MES and NQ/MNQ futures charts visible.
+2. Keep the futures or stock charts you want to copy open in the RocketScooter chart grid.
 3. If RocketScooter was already open before loading or reloading the extension, click `Reconnect Tab` in the extension popup, then refresh RocketScooter data or reload the RocketScooter tab.
 
-The extension captures futures display data from the visible RocketScooter charts. It ignores SPY, QQQ, watchlist rows, broker panels, account data, order-entry controls, and execution data.
+The extension captures supported display data from open RocketScooter charts. Futures keep their complete RS Levels capture. Stock charts can provide HP, MHP, and liquidity-map context. Watchlist rows alone are ignored, as are broker panels, account data, order-entry controls, and execution data.
 
 ## 3. Add Optional Manual RocketScooter Lines
 
 RS Levels passes through display levels that RocketScooter exposes. It does not invent optional manual levels.
 
-If you want these items to appear in TradingView, add or keep them visible on the matching RocketScooter futures chart before copying the payload:
+If you want these items to appear in TradingView, add or keep them visible on the matching RocketScooter chart before copying the payload:
 
 - overnight HP and overnight MHP
 - yellow lines
 - red lines
 - CAT lines
 
-Add them on the current ES/MES or NQ/MNQ RocketScooter chart family you care about. ES-family captures apply to ES and MES charts; NQ-family captures apply to NQ and MNQ charts. After adding or changing a manual line, refresh/reconnect the RocketScooter tab if needed, then copy a fresh TradingView payload.
+For futures, add them on the ES/MES or NQ/MNQ chart family you care about. For a stock such as NVDA, keep its stock chart open so detected HP, MHP, and map context can be included. After changing a chart or manual line, refresh/reconnect the RocketScooter tab if needed, then copy a fresh TradingView payload.
 
 ## 4. Add The TradingView Indicator
 
-1. In TradingView, open a futures chart such as `ES1!`, `MES1!`, `NQ1!`, or `MNQ1!`.
+1. In TradingView, open the matching chart, such as `NVDA`, `ES1!`, `MES1!`, `NQ1!`, or `MNQ1!`.
 2. Open Pine Editor.
 3. Paste the contents of `plugins/tradingview/rs-levels.pine`.
 4. Save the script.
 5. Add it to the chart.
 
-Leave `Chart family` on `Auto` unless the chart does not detect correctly. In `Auto`, ES and MES charts use the ES section of the payload, while NQ and MNQ charts use the NQ section.
+Leave `Chart family` on `Auto`. Stock charts match their ticker section; ES/MES charts use `ES`, and NQ/MNQ charts use `NQ`. The manual ES/NQ choices are futures overrides.
 
 ## 5. Copy And Paste Levels
 
 1. Open the `RS Levels Capture` popup on the RocketScooter tab.
-2. Leave the symbol selector on `ES + NQ` when both families are available.
+2. Choose the detected chart you want, or `All detected charts` when more than one supported chart is open.
 3. Click `Copy TradingView`.
 4. Open the TradingView indicator settings.
 5. Paste into `RS Levels Payload`.
 6. Click `OK`.
 
-One copied payload can carry both ES and NQ. You can paste the same payload into ES/MES and NQ/MNQ TradingView charts; each chart draws the matching family.
+One copied payload can carry multiple detected tickers and futures families. You can paste the same payload into matching TradingView charts; each chart draws its own section in `Auto`.
 
 TradingView Pine cannot poll RocketScooter or localhost directly. When RocketScooter levels change, copy a fresh payload from the extension and paste it into the indicator again.
 
@@ -85,8 +85,8 @@ User-added lines appear only when they were added in RocketScooter and included 
 
 - `Copy TradingView` can still work when the popup says the local service is offline, because the extension tries its own latest RocketScooter page-reader capture first.
 - If `Copy TradingView` says no extension-captured levels are available, click `Reconnect Tab`, then reload RocketScooter or refresh the chart data.
-- If levels paste but do not draw, confirm the TradingView chart is an ES/MES or NQ/MNQ futures chart. If needed, set `Chart family` to `ES` or `NQ`.
-- If the wrong family appears, copy the all-symbol `ES + NQ` payload again and leave `Chart family` on `Auto`, or force the intended family.
+- If stock levels paste but do not draw, confirm the TradingView ticker exactly matches the detected RocketScooter ticker and leave `Chart family` on `Auto`.
+- If futures levels paste but do not draw, confirm the chart is ES/MES or NQ/MNQ. If needed, force `ES` or `NQ`.
 - If you need a support bundle or want to inspect API state, start the local service with `npm start`, then use `Copy Diagnostics` in the popup.
 
 ## Safety Boundary

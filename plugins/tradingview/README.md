@@ -13,14 +13,14 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels workf
 
 `varis-zones.pine` is a separate display-only VARIS Zones indicator. It uses the same copied payload, reads the `RI` stat row for the matching chart family, and falls back to a manual risk interval input when no pasted RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
-The all-symbol payload can carry `ES` and `NQ` together. In `Auto`, the indicator detects ES/MES or NQ/MNQ from TradingView's chart symbol metadata and uses the matching section. If TradingView does not expose enough symbol context, use the `Chart family` override.
+The extension payload can carry every supported symbol detected in the open RocketScooter chart grid. In `Auto`, the indicator maps futures charts to `ES` or `NQ` and matches stock charts by ticker, such as `NVDA`. The manual `Chart family` override remains available for futures.
 
-Optional manual RocketScooter lines must exist before you copy the payload. If you want overnight HP/MHP, yellow lines, red lines, or CAT lines to appear in TradingView, add or keep them visible on the matching RocketScooter futures chart first, then use `Copy TradingView` again.
+Optional RocketScooter lines must exist before you copy the payload. Stock HP/MHP and liquidity-map context are included only when that stock has a supported chart open in RocketScooter. Futures manual yellow/red/CAT lines keep their existing pass-through behavior.
 
 ## Payload Format
 
 ```text
-RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;Bull Zone Top 1,7588,zone-bull;RI,68.75,stat|NQ|2026-06-19T14:29:59.500Z|OVNMHP,30475,mhp;Bear Zone Top 1,30450,zone-bear;RI,266.25,stat
+RSLEVELS|2|2026-07-09T20:08:23.000Z|ES|2026-07-09T20:08:22.000Z|OVNHP,7537,hp;RI,68.75,stat|NVDA|2026-07-09T20:08:22.000Z|HP,202.5,hp;MHP,205,mhp;Map BLD,0,stat
 ```
 
 The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. Bull and bear zones use `zone-bull` and `zone-bear`; current TradingView exports name boundaries as `Bull Zone Top`, `Bull Zone Bottom`, `Bear Zone Top`, and `Bear Zone Bottom`, with optional occurrence numbers so repeated pairs remain distinct for fills. Pine displays clean boundary labels without the occurrence number. When RocketScooter exposes zone rectangles separately from text labels, the extension and API prefer the exact rectangle top/bottom boundaries and consume the matched generic zone label. DD-bounded reconstruction remains only as a compatibility fallback for older captures that expose generic horizontal `Bull Zone` or `Bear Zone` rows without rectangle geometry. Compact `BZT`/`BZB` and `BrZT`/`BrZB` names remain accepted for older pasted payloads and platform adapter feeds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders Map and RI in its stats panel and does not draw stats as price lines. VARIS-style Pine indicators can read `RI` from the same pasted payload.
@@ -32,7 +32,7 @@ These indicators only draw overlays. They do not contain strategy logic, alerts,
 ## Indicator Controls
 
 - `RS Levels Payload`: `RSLEVELS|2` text from the extension or local API, pasted into TradingView's single-row text input.
-- `Chart family`: `Auto`, `ES`, or `NQ`.
+- `Chart family`: leave on `Auto` for stock ticker matching and normal futures detection; `ES` and `NQ` are futures-only overrides.
 - `Labels`: show or hide level labels.
 - `Stats panel`: show or hide Map and RI context from `stat` rows.
 - Kind toggles: DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other levels. Each colored kind keeps its checkbox and color picker on one row.

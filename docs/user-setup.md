@@ -48,7 +48,7 @@ npm run package
 
 Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 
-The package command also writes `dist/rs-levels-browser-extension-0.1.2.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
+The package command also writes `dist/rs-levels-browser-extension-0.2.0.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
 
 Release packages include cross-platform service launch scripts:
 
@@ -107,9 +107,9 @@ If capture does not start, open extension options and review the endpoint allowl
 
 The full TradingView walkthrough lives in [TradingView quickstart](tradingview-quickstart.md).
 
-From this setup, the important detail is that `Copy TradingView` copies one `RSLEVELS|2` payload that can carry both ES and NQ. In `Auto`, the RS Levels Pine indicator uses ES-family data on ES/MES charts and NQ-family data on NQ/MNQ charts. The same payload can feed `plugins/tradingview/varis-zones.pine`, which reads the matching `RI` stat row when it is present.
+From this setup, the important detail is that `Copy TradingView` copies one `RSLEVELS|2` payload containing the supported RocketScooter charts selected in the popup. In `Auto`, the RS Levels Pine indicator matches stocks by ticker and futures by ES/NQ family. The same payload can feed `plugins/tradingview/varis-zones.pine`, which reads the matching futures `RI` stat row when it is present.
 
-`Copy TradingView` first uses the extension's latest normalized page-reader capture, so it can work without the local API when RocketScooter levels have already been captured in the browser. If no extension-local payload is available, it falls back to the local `/tradingview` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
+`Copy TradingView` first uses the extension's latest detected-chart capture, so stock and futures copying can work without the local API. The popup lists only open charts with supported data, never the full watchlist. ES/NQ can fall back to the local `/tradingview/:symbol` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
 
 ## 5. Tailscale Or Trusted Private Network
 

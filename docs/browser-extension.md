@@ -8,7 +8,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Loads only on RocketScooter app host patterns: `rocket.place` and `rocketscooter.com`.
 - Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
 - Captures only response URLs that match the configured allowlist.
-- Falls back to a frame-aware display-only page reader for visible futures TradingView lines, user-added yellow/red/CAT chart lines, study plots, and bull/bear zone shapes when API responses are not parseable as generic level JSON.
+- Falls back to a frame-aware display-only page reader for the TradingView charts currently open in RocketScooter, including futures display data and stock HP/MHP/liquidity-map data.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides a popup capture toggle plus TradingView payload copy, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
@@ -32,7 +32,7 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 3. Open RocketScooter.
 4. Check the popup status.
 5. Use the capture toggle when you need to pause or resume allowlisted capture.
-6. Choose `ES + NQ`, `ES`, or `NQ` in the export dropdown. The popup narrows this list when only one family has captured levels.
+6. Choose a symbol from `Detected chart`. Only open charts with supported data appear; use `All detected charts` when more than one is available.
 7. Use `Copy TradingView` for the selected export, then paste that `RSLEVELS|2` payload directly into `plugins/tradingview/rs-levels.pine` or `plugins/tradingview/varis-zones.pine`.
 8. Use `Plugins` to inspect the local display-adapter manifest.
 9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
@@ -41,9 +41,9 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 
-Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.1.2.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
+Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.2.0.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
-The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.1.2+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.2.0+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 The collapsed `Debug` section includes aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
@@ -58,7 +58,7 @@ These counters do not include ignored URLs, response bodies, request headers, co
 
 ![RS Levels browser extension popup](../screenshots/rslevels-extension.png)
 
-The popup screenshot shows the normal capture surface: local API status, the ES/NQ export selector, `Copy TradingView`, diagnostics, docs links, plugin links, and the collapsed debug panel.
+The popup screenshot shows the normal capture controls. Current builds label the selector `Detected chart` and populate it from supported data in the open RocketScooter chart grid.
 
 ## Settings
 
@@ -102,9 +102,9 @@ db/nq
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.
 
-Capture is not symbol-selected. If a single allowlisted RocketScooter response includes both ES/MES and NQ/MNQ display data, the local parser stores both symbols. The extension also keeps the latest normalized display capture in memory so `Copy TradingView` can produce a payload without the local API when page-reader levels are available. That direct copy path includes user-added yellow lines, red lines, and CAT lines from both normalized `levels` rows and chart-line arrays. The popup presents user-facing `ES` and `NQ` export choices, and TradingView payloads use those same public family labels. RocketScooter CQG-style current-contract symbols such as `F.US.EP...` are stored in the ES family, and `F.US.ENQ...` symbols are stored in the NQ family, so users can apply those levels to ES/MES or NQ/MNQ charts in their destination platform. Contract month/year suffixes are detected by pattern rather than hard-coded to a specific rollover, so `F.US.EPU`, `F.US.EPU26`, `F.US.EPZ26`, and `F.US.EPH27` stay in the ES/MES family, while `F.US.ENQU`, `F.US.ENQU26`, `F.US.ENQZ26`, and `F.US.ENQH27` stay in the NQ/MNQ family. SPY, QQQ, and other watchlist/ETF symbols can be open in RocketScooter without being included in futures exports.
+Capture is not limited by the popup selection. The extension keeps the latest page-reader snapshot in memory so `Copy TradingView` can work without the local API. The selector is derived from payload-capable symbols in `tvWidget.chartsCount()/chart(i)`, not from RocketScooter's watchlist table. Futures contract symbols continue to normalize to public `ES` and `NQ` families. Stock charts use their ticker, so an open `NVDA` chart with HP, MHP, or map context produces an `NVDA` choice and payload section. A watchlist row alone does not create a choice.
 
-When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots from futures charts, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays for compatibility with RocketScooter live-chart display snapshots. Zone rectangles are captured as geometry even when the rectangle itself is unlabeled; matching visible Bull/Bear zone labels are used only to classify the rectangle side, so exports can use the exact rectangle top/bottom prices. It also recognizes every visible user-added yellow line, red line, and purple CAT line from futures chart objects, including color-only lines when RocketScooter does not expose a useful label. When RocketScooter exposes an RL/DD grid, the reader extracts only public display stats such as futures family and `RI` from the visible row cells. It skips SPY/QQQ chart families. It does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
+When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays. Futures keep their existing zone, manual-line, reference, and stat extraction. Detected stocks can add visible HP/MHP prices and a liquidity-map code from the matching scanner row. Scanner rows are consulted only for symbols already detected in the open chart grid, so the full watchlist is never turned into popup options. The reader does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
 
 Because these manual lines are read from RocketScooter's visible chart state, changing them in RocketScooter requires a fresh capture before downstream indicators/studies/plugins can update.
 

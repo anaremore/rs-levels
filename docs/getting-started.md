@@ -29,7 +29,7 @@ Use this page to choose the shortest path for what you want to do.
 ### TradingView Levels Only
 
 1. Load the browser extension.
-2. Open RocketScooter with ES/MES and NQ/MNQ futures charts visible.
+2. Open RocketScooter with the futures or stock charts you want to copy visible.
 3. Add optional manual RocketScooter lines you want exported.
 4. Add `plugins/tradingview/rs-levels.pine` to TradingView.
 5. Click `Copy TradingView` in the extension popup.
@@ -66,7 +66,7 @@ See [Platform plugins](platform-plugins.md).
 ## Troubleshooting Shortcuts
 
 - Extension stuck waiting: open RocketScooter, click `Reconnect Tab`, then reload or refresh the RocketScooter tab.
-- TradingView shows no levels: copy a fresh payload and confirm the chart is ES/MES or NQ/MNQ. Force `Chart family` to `ES` or `NQ` if needed.
+- TradingView shows no levels: copy a fresh payload, confirm the stock ticker or futures family matches a detected RocketScooter chart, and leave `Chart family` on `Auto` for stocks. Force `ES` or `NQ` only for futures when needed.
 - Manual lines missing: add them in RocketScooter first, then capture/copy again.
 - Direct plugin has no data: verify `http://127.0.0.1:8765/health`, then inspect `http://127.0.0.1:8765/status`.
 - Support bundle: use `Copy Diagnostics` in the extension popup.
