@@ -52,14 +52,14 @@ The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;.
 
 - `RS Levels Payload`: `RSLEVELS|2` text copied from the extension or local API. It uses TradingView's single-row text input and is hidden from the status line to avoid chart-header clutter.
 - `Chart family`: leave on `Auto` for stock ticker matching and normal futures detection, or force `ES`/`NQ` when you intentionally want a futures bundle section.
-- `Labels`: show or hide level labels.
+- `Label layout`: `Rail` (default) places high-contrast tinted chips in one column, vertically separates only nearby collisions, and uses subtle dotted leaders for displaced labels. `On line` keeps labels at their exact prices and staggers nearby labels horizontally. `Hidden` removes labels while preserving lines and fills.
 - `Stats panel`: show or hide Map and RI context from `stat` rows.
 - `Stats panel position` and `Stats panel bottom padding`: defaults to bottom-left with a transparent spacer row so the panel sits above TradingView's lower-left watermark; move it or adjust the padding when your chart layout needs it.
 - Kind toggles: DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other levels. Each colored kind keeps its checkbox and color picker on one row. Yellow lines default to yellow, red lines default to red, and CAT lines default to purple; the indicator honors those visible manual-line names even if a captured row arrives with a generic kind.
 - `Zone fills` and `Zone fill opacity %`: fill matched explicit top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label bar offset`, `Min label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences.
 
-Level labels render above or below their own line using dynamic spacing from the visible chart range and the drawn level range, with the tick input acting as a minimum. Nearby labels stagger into rows/columns only when their prices cluster, so unrelated levels do not push zone labels away from their boundaries. Labels trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are dashed even when the default line style is solid.
+Level labels use the consistent `Name · Price` format with white text on a subtle level-color tint. Rail labels remain at the exact level price unless collision spacing is needed. Labels trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map` from display labels. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are dashed even when the default line style is solid.
 
 `Other levels` is the fallback display category for parsed levels whose kind is not one of the recognized DD, HP, MHP, open/close, reference, manual line, bull zone, or bear zone kinds.
 

@@ -1,9 +1,10 @@
 //@version=6
-indicator("RS Levels v2026.07.09.2", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.07.09.3", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
-showLabels = input.bool(true, "Labels")
+labelLayoutInput = input.string("Rail", "Label layout", options = ["Rail", "On line", "Hidden"])
+showLabels = labelLayoutInput != "Hidden"
 showStatsPanel = input.bool(true, "Stats panel")
 statsPanelPositionInput = input.string("Bottom left", "Stats panel position", options = ["Bottom left", "Bottom center", "Bottom right", "Middle left", "Middle right", "Top left", "Top right"], display = display.none)
 statsPanelBottomPaddingInput = input.int(4, "Stats panel bottom padding", minval = 0, maxval = 20, display = display.none)
@@ -38,7 +39,6 @@ zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval =
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
 
-labelStackRows = 8
 labelStackColumnBars = 5
 
 statsPanelPosition() =>
@@ -59,7 +59,6 @@ var label[] rsLabels = array.new_label()
 var box[] rsBoxes = array.new_box()
 var string[] rsLabelKeys = array.new_string()
 var float[] rsLabelBasePrices = array.new_float()
-var int[] rsLabelDirections = array.new_int()
 var table rsStatsTable = table.new(statsPanelPosition(), 1, 3)
 var float visibleHigh = na
 var float visibleLow = na
@@ -83,7 +82,6 @@ clearDrawings() =>
         label.delete(array.pop(rsLabels))
     array.clear(rsLabelKeys)
     array.clear(rsLabelBasePrices)
-    array.clear(rsLabelDirections)
 
 cleanKind(kind) =>
     compactKind = str.lower(str.replace_all(kind, " ", ""))
@@ -391,39 +389,32 @@ labelDirection(name, kind) =>
 labelDirectionForSide(name, kind, zoneSide) =>
     zoneKind(kind) and zoneSide != 0 ? zoneSide : labelDirection(name, kind)
 
-labelStackRow(labelIndex) =>
-    labelIndex % labelStackRows
-
-labelStackColumn(labelIndex) =>
-    int(math.floor(labelIndex / labelStackRows)) % labelStackRows
-
 labelX(labelSlot) =>
-    bar_index + labelBarsOffset + labelStackColumn(labelSlot) * labelStackColumnBars
+    labelLayoutInput == "Rail" ? bar_index + labelBarsOffset : bar_index + labelBarsOffset + math.min(labelSlot, 20) * labelStackColumnBars
 
 labelClusterThreshold(priceRange) =>
     math.max(labelVerticalOffset * syminfo.mintick * 2.0, math.max(priceRange, syminfo.mintick) * 0.002)
 
-labelStackSlot(price, direction, priceRange) =>
+labelStackSlot(price, priceRange) =>
     slot = 0
     threshold = labelClusterThreshold(priceRange)
     if array.size(rsLabelBasePrices) > 0
         for i = 0 to array.size(rsLabelBasePrices) - 1
-            if array.get(rsLabelDirections, i) == direction and math.abs(array.get(rsLabelBasePrices, i) - price) <= threshold
+            if math.abs(array.get(rsLabelBasePrices, i) - price) <= threshold
                 slot += 1
     array.push(rsLabelBasePrices, price)
-    array.push(rsLabelDirections, direction)
     slot
 
 labelOffset(labelSlot, priceRange, isZoneLabel) =>
-    stackMultiplier = labelStackRow(labelSlot) + 1
+    stackMultiplier = math.min(labelSlot, 20)
     tickOffset = math.max(labelVerticalOffset * stackMultiplier * syminfo.mintick, syminfo.mintick)
     rangeUnit = math.max(priceRange, syminfo.mintick) * (isZoneLabel ? 0.0012 : 0.0025)
     cappedRangeUnit = math.min(rangeUnit, syminfo.mintick * (isZoneLabel ? 12 : 24))
     rangeOffset = cappedRangeUnit * stackMultiplier
-    math.max(tickOffset, rangeOffset)
+    labelSlot == 0 ? 0.0 : math.max(tickOffset, rangeOffset)
 
 labelPrice(name, kind, price, labelSlot, priceRange, zoneSide) =>
-    price + labelOffset(labelSlot, priceRange, zoneKind(kind)) * labelDirectionForSide(name, kind, zoneSide)
+    labelLayoutInput == "Rail" ? price + labelOffset(labelSlot, priceRange, zoneKind(kind)) * labelDirectionForSide(name, kind, zoneSide) : price
 
 labelAlreadyDrawn(labelKey) =>
     seen = false
@@ -443,13 +434,16 @@ drawLevel(name, priceText, kind, priceRange, zoneSide) =>
         array.push(rsLines, newLine)
         if showLabels and array.size(rsLabels) < 499
             labelName = displayLabelNameForSide(name, effectiveKind, zoneSide)
-            labelText = labelName + " " + str.tostring(price, format.mintick)
+            labelText = labelName + " · " + str.tostring(price, format.mintick)
             labelKey = cleanKind(effectiveKind) + "|" + labelName + "|" + str.tostring(price, format.mintick)
             if not labelAlreadyDrawn(labelKey)
-                labelDirection = labelDirectionForSide(name, effectiveKind, zoneSide)
-                labelSlot = labelStackSlot(price, labelDirection, priceRange)
+                labelSlot = labelStackSlot(price, priceRange)
                 labelY = labelPrice(name, effectiveKind, price, labelSlot, priceRange, zoneSide)
-                newLabel = label.new(labelX(labelSlot), labelY, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 80), size = labelSize())
+                labelXValue = labelX(labelSlot)
+                if labelLayoutInput == "Rail" and labelY != price and maxLevelsInput <= 250 and array.size(rsLines) < 499
+                    leaderLine = line.new(bar_index, price, labelXValue, labelY, color = color.new(levelColor, 55), width = 1, style = line.style_dotted)
+                    array.push(rsLines, leaderLine)
+                newLabel = label.new(labelXValue, labelY, labelText, style = label.style_label_left, textcolor = color.white, color = color.new(levelColor, 78), size = labelSize())
                 array.push(rsLabels, newLabel)
                 array.push(rsLabelKeys, labelKey)
         drawn := true
