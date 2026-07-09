@@ -51,7 +51,7 @@ For futures, add them on the ES/MES or NQ/MNQ chart family you care about. For a
 
 Leave `Chart family` on `Auto`. Stock charts match their ticker section; ES/MES charts use `ES`, and NQ/MNQ charts use `NQ`. The manual ES/NQ choices are futures overrides.
 
-`Label layout` defaults to `Rail` for a consistent right-side column. Choose `On line` to keep every chip at its exact price or `Hidden` to show only the lines and fills.
+`Label layout` defaults to `Rail`, which stays beside the latest bar. Choose `On line` to place every chip across the visible price lines at its exact price or `Hidden` to show only the lines and fills.
 
 ## 5. Copy And Paste Levels
 

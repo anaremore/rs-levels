@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.07.09.3", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.07.09.4", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -38,8 +38,6 @@ labelVerticalOffset = input.int(6, "Min label vertical offset (ticks)", minval =
 zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval = 50, display = display.none)
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
-
-labelStackColumnBars = 5
 
 statsPanelPosition() =>
     switch statsPanelPositionInput
@@ -389,8 +387,9 @@ labelDirection(name, kind) =>
 labelDirectionForSide(name, kind, zoneSide) =>
     zoneKind(kind) and zoneSide != 0 ? zoneSide : labelDirection(name, kind)
 
-labelX(labelSlot) =>
-    labelLayoutInput == "Rail" ? bar_index + labelBarsOffset : bar_index + labelBarsOffset + math.min(labelSlot, 20) * labelStackColumnBars
+onLineLabelTime(labelSlot) =>
+    visibleTimeSpan = math.max(chart.right_visible_bar_time - chart.left_visible_bar_time, 1)
+    chart.left_visible_bar_time + int(visibleTimeSpan / 2) + int(visibleTimeSpan * math.min(labelSlot, 10) / 50)
 
 labelClusterThreshold(priceRange) =>
     math.max(labelVerticalOffset * syminfo.mintick * 2.0, math.max(priceRange, syminfo.mintick) * 0.002)
@@ -439,12 +438,16 @@ drawLevel(name, priceText, kind, priceRange, zoneSide) =>
             if not labelAlreadyDrawn(labelKey)
                 labelSlot = labelStackSlot(price, priceRange)
                 labelY = labelPrice(name, effectiveKind, price, labelSlot, priceRange, zoneSide)
-                labelXValue = labelX(labelSlot)
+                railX = bar_index + labelBarsOffset
                 if labelLayoutInput == "Rail" and labelY != price and maxLevelsInput <= 250 and array.size(rsLines) < 499
-                    leaderLine = line.new(bar_index, price, labelXValue, labelY, color = color.new(levelColor, 55), width = 1, style = line.style_dotted)
+                    leaderLine = line.new(bar_index, price, railX, labelY, color = color.new(levelColor, 55), width = 1, style = line.style_dotted)
                     array.push(rsLines, leaderLine)
-                newLabel = label.new(labelXValue, labelY, labelText, style = label.style_label_left, textcolor = color.white, color = color.new(levelColor, 78), size = labelSize())
-                array.push(rsLabels, newLabel)
+                if labelLayoutInput == "Rail"
+                    railLabel = label.new(railX, labelY, labelText, style = label.style_label_left, textcolor = color.white, color = color.rgb(15, 23, 42), size = labelSize())
+                    array.push(rsLabels, railLabel)
+                else
+                    onLineLabel = label.new(onLineLabelTime(labelSlot), labelY, labelText, xloc = xloc.bar_time, style = label.style_label_left, textcolor = color.white, color = color.rgb(15, 23, 42), size = labelSize())
+                    array.push(rsLabels, onLineLabel)
                 array.push(rsLabelKeys, labelKey)
         drawn := true
     drawn
