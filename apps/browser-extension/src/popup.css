@@ -135,12 +135,18 @@ input {
 
 select {
   width: 100%;
-  min-height: 34px;
-  padding: 6px 8px;
+  min-height: 44px;
+  padding: 8px;
   background: #0b1118;
   color: #eef6ff;
   box-shadow: inset 0 0 0 1px #2f405a;
   outline: none;
+}
+
+.chart-hint {
+  color: #8ea2ba;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .actions {
@@ -159,7 +165,7 @@ footer {
 }
 
 button {
-  min-height: 34px;
+  min-height: 44px;
   padding: 6px 8px;
   background: #12365d;
   color: #eaf5ff;

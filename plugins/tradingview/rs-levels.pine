@@ -1,5 +1,5 @@
 //@version=6
-indicator("RS Levels v2026.06.22.9", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.07.09.1", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -292,9 +292,10 @@ chartPayloadSymbol() =>
         tickerText = str.upper(syminfo.ticker)
         tickerIdText = str.upper(syminfo.tickerid)
         descriptionText = str.upper(syminfo.description)
-        nqChart = rootText == "NQ" or rootText == "MNQ" or str.startswith(tickerText, "NQ") or str.startswith(tickerText, "MNQ") or str.contains(tickerIdText, ":NQ") or str.contains(tickerIdText, ":MNQ") or str.contains(descriptionText, "NASDAQ")
-        esChart = rootText == "ES" or rootText == "MES" or str.startswith(tickerText, "ES") or str.startswith(tickerText, "MES") or str.contains(tickerIdText, ":ES") or str.contains(tickerIdText, ":MES") or str.contains(descriptionText, "S&P 500") or str.contains(descriptionText, "SP 500") or str.contains(descriptionText, "SP500")
-        nqChart ? "NQ" : esChart ? "ES" : ""
+        futuresChart = syminfo.type == "futures"
+        nqChart = futuresChart and (rootText == "NQ" or rootText == "MNQ" or str.startswith(tickerText, "NQ") or str.startswith(tickerText, "MNQ") or str.contains(tickerIdText, ":NQ") or str.contains(tickerIdText, ":MNQ") or str.contains(descriptionText, "NASDAQ"))
+        esChart = futuresChart and (rootText == "ES" or rootText == "MES" or str.startswith(tickerText, "ES") or str.startswith(tickerText, "MES") or str.contains(tickerIdText, ":ES") or str.contains(tickerIdText, ":MES") or str.contains(descriptionText, "S&P 500") or str.contains(descriptionText, "SP 500") or str.contains(descriptionText, "SP500"))
+        nqChart ? "NQ" : esChart ? "ES" : tickerText
 
 payloadCompact(payloadText) =>
     cleaned = str.replace_all(payloadText, "\r", "")
@@ -312,10 +313,13 @@ payloadSymbolLevelText(payloadText, symbolText) =>
     levelText
 
 bestPayloadLevelText(payloadText, chartSymbol) =>
+    directLevelText = payloadSymbolLevelText(payloadText, chartSymbol)
     esLevelText = payloadSymbolLevelText(payloadText, "ES")
     nqLevelText = payloadSymbolLevelText(payloadText, "NQ")
     levelText = ""
-    if chartSymbol == "ES"
+    if directLevelText != ""
+        levelText := directLevelText
+    else if chartSymbol == "ES"
         levelText := esLevelText
     else if chartSymbol == "NQ"
         levelText := nqLevelText

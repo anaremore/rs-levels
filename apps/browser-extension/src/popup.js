@@ -28,7 +28,7 @@ const els = {
 const ALL_SCOPE = 'ALL';
 
 let settings = globalThis.RS_LEVELS.cleanSettings({});
-let symbols = [ALL_SCOPE, ...globalThis.RS_LEVELS.defaults.symbols];
+let symbols = [];
 let latestServiceStatus = null;
 
 init();
@@ -60,53 +60,66 @@ function bindEvents() {
 }
 
 async function refresh() {
-  setMessage('Checking local service');
+  setMessage('Checking open RocketScooter charts');
+  let extState = {};
+  try {
+    const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
+    extState = extensionState && extensionState.state ? extensionState.state : {};
+  } catch (_err) {}
+  symbols = exportScopes(extState.detectedSymbols);
+  renderSymbols(symbols);
+  renderCopyState();
+  els.postedCount.textContent = String(extState.postedCount || 0);
+  els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
+  els.lastPost.textContent = formatTime(extState.lastPostAt);
+  els.lastError.textContent = extState.lastError || 'none';
+  renderCaptureStats(extState.captureStats);
+
   try {
     const health = await getJson('/health');
     const status = await getJson('/status');
     latestServiceStatus = combineServiceStatus(health, status);
-    const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
-    const extState = extensionState && extensionState.state ? extensionState.state : {};
-    symbols = exportScopes(latestServiceStatus);
-    renderSymbols(symbols);
     const source = health.source || {};
     const sourceState = source.state || 'waiting';
     els.sourceState.textContent = sourceState;
     els.levelCount.textContent = String(health.levelCount || 0);
     els.serviceVersion.textContent = serviceVersionText(health);
-    els.postedCount.textContent = String(extState.postedCount || 0);
-    els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
-    els.lastPost.textContent = formatTime(extState.lastPostAt);
-    els.lastError.textContent = extState.lastError || 'none';
-    renderCaptureStats(extState.captureStats);
-    renderCopyState(latestServiceStatus);
+    renderCopyState();
     renderPill(source);
-    const hasDisplayData = globalThis.RS_LEVELS.hasAnyDisplayData(latestServiceStatus);
-    if (extState.lastError && !hasDisplayData) {
+    if (symbols.length) {
+      setMessage(detectedMessage(), 'ok');
+    } else if (extState.lastError && !globalThis.RS_LEVELS.hasAnyDisplayData(latestServiceStatus)) {
       setMessage(extState.lastError, 'error');
     } else if (sourceState === 'stale') {
-      setMessage('Captured levels are stale.', 'warning');
+      setMessage('No supported data detected in the open charts. Captured service data is stale.', 'warning');
     } else {
-      setMessage(hasDisplayData ? 'Display data is available.' : 'Waiting for captured display data.', hasDisplayData ? 'ok' : '');
+      setMessage('No supported data detected in the open RocketScooter charts.');
     }
   } catch (err) {
     latestServiceStatus = null;
-    symbols = exportScopes();
-    renderSymbols(symbols);
-    renderCopyState({ levelCount: 0, source: { connected: false } });
+    els.sourceState.textContent = 'offline';
+    els.levelCount.textContent = '0';
     els.serviceVersion.textContent = 'unknown';
-    setPill('OFFLINE', 'error');
-    setMessage(err && err.message ? err.message : 'Local service unavailable', 'error');
+    setPill(symbols.length ? 'CAPTURED' : 'OFFLINE', symbols.length ? 'warning' : 'error');
+    renderCopyState();
+    setMessage(
+      symbols.length ? `${detectedMessage()} Local service is offline.` : (err && err.message ? err.message : 'Local service unavailable'),
+      symbols.length ? 'warning' : 'error'
+    );
   }
 }
 
 async function copyTradingViewPayload() {
   const scope = selectedSymbol();
+  if (!scope) {
+    setMessage('Open a RocketScooter chart with HP, MHP, or liquidity-map data first.', 'warning');
+    return;
+  }
   try {
     const localPayload = await extensionTradingViewPayload(scope);
     if (localPayload) {
       await navigator.clipboard.writeText(localPayload);
-      setMessage('TradingView payload copied from extension capture', 'ok');
+      setMessage(`${scopeLabel(scope)} TradingView data copied`, 'ok');
       return;
     }
   } catch (err) {
@@ -114,21 +127,20 @@ async function copyTradingViewPayload() {
     return;
   }
 
+  if (scope === ALL_SCOPE || !['ES', 'NQ'].includes(globalThis.RS_LEVELS.publicDisplaySymbol(scope))) {
+    setMessage(`No current chart data is available for ${scopeLabel(scope)}.`, 'warning');
+    return;
+  }
+
   try {
     latestServiceStatus = await getJson('/status');
-    symbols = exportScopes(latestServiceStatus);
-    renderSymbols(symbols);
-    renderCopyState(latestServiceStatus);
-    const allSymbols = scope === ALL_SCOPE;
-    const issue = allSymbols
-      ? globalThis.RS_LEVELS.tradingViewBundleCopyIssue(latestServiceStatus)
-      : globalThis.RS_LEVELS.selectedSymbolIssue(latestServiceStatus, scope);
+    renderCopyState();
+    const issue = globalThis.RS_LEVELS.selectedSymbolIssue(latestServiceStatus, scope);
     if (issue) {
       setMessage(issue, 'warning');
       return;
     }
-    const path = allSymbols ? '/tradingview' : `/tradingview/${scope}`;
-    await copyPayloadFromEndpoint(path, 'TradingView payload copied', { allSymbols });
+    await copyPayloadFromEndpoint(`/tradingview/${scope}`, `${scopeLabel(scope)} TradingView data copied`);
   } catch (err) {
     setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
   }
@@ -238,6 +250,17 @@ async function getJson(path) {
 
 function renderSymbols(nextSymbols) {
   const selected = selectedSymbol();
+  if (!nextSymbols.length) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'No chart data detected';
+    option.disabled = true;
+    option.selected = true;
+    els.symbol.replaceChildren(option);
+    els.symbol.disabled = true;
+    return;
+  }
+  els.symbol.disabled = false;
   els.symbol.replaceChildren(...nextSymbols.map((symbol) => {
     const option = document.createElement('option');
     option.value = symbol;
@@ -245,37 +268,29 @@ function renderSymbols(nextSymbols) {
     return option;
   }));
   if (nextSymbols.includes(selected)) els.symbol.value = selected;
-  else if (nextSymbols.length) els.symbol.value = nextSymbols[0];
+  else els.symbol.value = nextSymbols[0];
 }
 
 function selectedSymbol() {
-  return els.symbol.value || symbols[0] || ALL_SCOPE;
+  return els.symbol.value || symbols[0] || '';
 }
 
-function exportScopes(status = {}) {
-  const available = availableFamilies(status);
-  if (available.has('ES') && available.has('NQ')) return [ALL_SCOPE, 'ES', 'NQ'];
-  if (available.has('ES')) return ['ES'];
-  if (available.has('NQ')) return ['NQ'];
-  return [ALL_SCOPE, ...globalThis.RS_LEVELS.defaults.symbols];
-}
-
-function availableFamilies(status = {}) {
-  const out = new Set();
-  const summaries = Array.isArray(status.symbolSummaries) ? status.symbolSummaries : [];
-  summaries.forEach((summary) => {
-    if (globalThis.RS_LEVELS.summaryHasDisplayData(summary)) {
-      out.add(globalThis.RS_LEVELS.publicDisplaySymbol(summary.symbol || summary.displaySymbol));
-    }
-  });
-  if (out.size) return out;
-  (Array.isArray(status.symbols) ? status.symbols : []).forEach((symbol) => out.add(globalThis.RS_LEVELS.publicDisplaySymbol(symbol)));
-  return out;
+function exportScopes(detectedSymbols = []) {
+  const detected = Array.from(new Set((Array.isArray(detectedSymbols) ? detectedSymbols : [])
+    .map((symbol) => globalThis.RS_LEVELS.publicDisplaySymbol(symbol))
+    .filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b));
+  return detected.length > 1 ? [ALL_SCOPE, ...detected] : detected;
 }
 
 function scopeLabel(scope) {
-  if (scope === ALL_SCOPE) return 'ES + NQ';
+  if (scope === ALL_SCOPE) return 'All detected charts';
   return globalThis.RS_LEVELS.publicDisplaySymbol(scope);
+}
+
+function detectedMessage() {
+  const count = symbols.filter((symbol) => symbol !== ALL_SCOPE).length;
+  return `${count} open chart${count === 1 ? '' : 's'} with supported data detected.`;
 }
 
 function combineServiceStatus(health = {}, status = {}) {
@@ -297,6 +312,7 @@ function cleanExtensionState(state = {}) {
     lastPostAt: String(state.lastPostAt || ''),
     lastError: String(state.lastError || ''),
     contentDiagnostic: cleanContentDiagnostic(state.contentDiagnostic),
+    detectedSymbols: Array.isArray(state.detectedSymbols) ? state.detectedSymbols.map(String) : [],
     captureStats: cleanCaptureStats(state.captureStats)
   };
 }
@@ -332,13 +348,12 @@ function renderCaptureStats(stats = {}) {
   els.hookReason.textContent = clean.lastReason || 'none';
 }
 
-function renderCopyState(serviceStatus = latestServiceStatus || {}) {
+function renderCopyState() {
   const selected = selectedSymbol();
-  const copyIssue = selected === ALL_SCOPE
-    ? globalThis.RS_LEVELS.tradingViewBundleCopyIssue(serviceStatus)
-    : globalThis.RS_LEVELS.selectedSymbolIssue(serviceStatus, selected);
-  els.copyPayload.disabled = false;
-  els.copyPayload.title = copyIssue ? `${copyIssue} Will try extension capture first.` : `Copy ${scopeLabel(selected)} TradingView payload`;
+  els.copyPayload.disabled = !selected;
+  els.copyPayload.title = selected
+    ? `Copy ${scopeLabel(selected)} TradingView payload`
+    : 'Open a RocketScooter chart with supported data first';
 }
 
 function formatTime(value) {

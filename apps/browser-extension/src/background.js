@@ -119,7 +119,7 @@ function tradingViewPayloadResponse(scope) {
   return {
     ok: true,
     payload,
-    generatedAt: state.tradingViewPayloadAt,
+    generatedAt: snapshot.generatedAt || state.tradingViewPayloadAt,
     symbols: snapshot.symbols.map((row) => row.symbol)
   };
 }
