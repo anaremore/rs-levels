@@ -77,9 +77,20 @@
     const parts = text.split(/[^A-Z0-9]+/).filter(Boolean);
     if (parts.some((part) => part === 'MNQ' || part === 'NQ' || part === 'ENQ' || /^M?NQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) || /^ENQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part))) return 'MNQ';
     if (parts.some((part) => part === 'MES' || part === 'ES' || part === 'EP' || /^M?ES[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) || /^EP[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part))) return 'MES';
-    if (/\bNASDAQ\b/.test(text) || /\bNQ[-\s]?100\b/.test(text)) return 'MNQ';
+    if ((/\bNASDAQ\b/.test(text) && !/[:/]/.test(text)) || /\bNQ[-\s]?100\b/.test(text)) return 'MNQ';
     if (/\bS\s*&\s*P\s*500\b/.test(text) || /\bS\s+AND\s+P\s+500\b/.test(text) || /\bSPX?\s*500\b/.test(text)) return 'MES';
-    return text || 'MES';
+    return stockDisplaySymbol(text);
+  }
+
+  function stockDisplaySymbol(value) {
+    const text = String(value || '').trim().toUpperCase();
+    const candidate = text.split(/[:/]/).filter(Boolean).pop() || '';
+    return /^[A-Z][A-Z0-9.-]{0,14}$/.test(candidate) && candidate !== 'ALL' ? candidate : '';
+  }
+
+  function validPayloadSymbol(value) {
+    const text = String(value || '').trim().toUpperCase();
+    return /^[A-Z][A-Z0-9.-]{0,14}$/.test(text) && text !== 'ALL';
   }
 
   function publicDisplaySymbol(value) {
@@ -183,8 +194,7 @@
       throw new Error('Local service returned an unsupported TradingView payload. Restart the local service and reload the extension.');
     }
     for (let index = 3; index < parts.length; index += 3) {
-      const symbol = publicDisplaySymbol(parts[index]);
-      if (symbol !== 'ES' && symbol !== 'NQ') {
+      if (!validPayloadSymbol(parts[index])) {
         throw new Error('Local service returned a TradingView payload for an unsupported symbol.');
       }
       if (!validTradingViewLevelRows(parts[index + 2])) {
@@ -212,7 +222,7 @@
     const symbols = new Map();
     const ensureSymbol = (symbolInput, capturedAtInput) => {
       const symbol = publicDisplaySymbol(symbolInput);
-      if (symbol !== 'ES' && symbol !== 'NQ') return null;
+      if (!symbol) return null;
       if (!symbols.has(symbol)) {
         symbols.set(symbol, {
           symbol,
@@ -233,7 +243,7 @@
     };
     captureDisplayLevels(body, defaultSymbol).forEach((level) => {
       const symbol = publicDisplaySymbol(level && (level.symbol || level.displaySymbol) || defaultSymbol);
-      if (symbol !== 'ES' && symbol !== 'NQ') return;
+      if (!symbol) return;
       const price = Number(level.price);
       const kind = tradingViewField(tradingViewLevelKind(level, level && level.name));
       const name = tradingViewField(tradingViewLevelName({ ...level, kind }));
@@ -325,16 +335,7 @@
     if (!Array.isArray(rectangles) || !rectangles.length) return levels;
     const consumedLabels = new Set();
     const emitted = new Set(levels.map(zoneBoundaryDedupeKey).filter(Boolean));
-    const ordinals = {
-      ES: {
-        bull: highestZoneOrdinal(levels, 'zone-bull'),
-        bear: highestZoneOrdinal(levels, 'zone-bear')
-      },
-      NQ: {
-        bull: highestZoneOrdinal(levels, 'zone-bull'),
-        bear: highestZoneOrdinal(levels, 'zone-bear')
-      }
-    };
+    const ordinals = {};
     const exact = [];
 
     rectangles.forEach((rectangle) => {
@@ -343,7 +344,7 @@
       const bottom = firstFinite(rectangle.bottom, rectangle.lower, rectangle.low, rectangle.zoneBottom);
       if (top == null || bottom == null || top <= bottom) return;
       const symbol = publicDisplaySymbol(rectangle.symbol || rectangle.displaySymbol || rectangle.index || rectangle.chart || defaultSymbol);
-      if (symbol !== 'ES' && symbol !== 'NQ') return;
+      if (!symbol) return;
       const directSide = zoneSideFromText([
         rectangle.side,
         rectangle.kind,
@@ -359,6 +360,13 @@
       if (side !== 'bull' && side !== 'bear') return;
 
       if (match && match.level) consumedLabels.add(match.level);
+      if (!ordinals[symbol]) {
+        const symbolLevels = levels.filter((level) => publicDisplaySymbol(level.symbol || level.displaySymbol || symbol) === symbol);
+        ordinals[symbol] = {
+          bull: highestZoneOrdinal(symbolLevels, 'zone-bull'),
+          bear: highestZoneOrdinal(symbolLevels, 'zone-bear')
+        };
+      }
       ordinals[symbol][side] += 1;
       const ordinal = ordinals[symbol][side];
       const kind = side === 'bear' ? 'zone-bear' : 'zone-bull';
@@ -444,7 +452,7 @@
     const groups = new Map();
     const merge = (symbolInput, statsInput) => {
       const symbol = publicDisplaySymbol(symbolInput);
-      if (symbol !== 'ES' && symbol !== 'NQ') return;
+      if (!symbol) return;
       const stats = normalizeStatsAliases(statsInput);
       if (!hasStats(stats)) return;
       groups.set(symbol, mergeStats(groups.get(symbol), stats));
@@ -547,7 +555,7 @@
 
   function tradingViewPayloadFromSnapshot(snapshot, scope = 'ALL') {
     if (!snapshot || !Array.isArray(snapshot.symbols)) return '';
-    const selected = publicDisplaySymbol(scope);
+    const selected = String(scope || '').toUpperCase() === 'ALL' ? 'ALL' : publicDisplaySymbol(scope);
     const rows = snapshot.symbols
       .filter((row) => selected === 'ALL' || selected === row.symbol)
       .filter((row) => row && row.symbol && Array.isArray(row.levels) && row.levels.length)
@@ -897,6 +905,7 @@
     migrateSettings,
     normalizeDisplaySymbol,
     publicDisplaySymbol,
+    validPayloadSymbol,
     hasAnyDisplayData,
     selectedSymbolIssue,
     summaryHasDisplayData,

@@ -98,6 +98,10 @@ const charts = [
   ]),
   makeChart('SPY', [
     makeShape('spy-close', 'horizontal_line', [{ price: 722.51 }], { text: 'PrevDayClose' })
+  ]),
+  makeChart('NVDA', [
+    makeShape('nvda-hp', 'horizontal_line', [{ price: 202.5 }], { text: 'HP: 202.5', linecolor: '#00ffff' }),
+    makeShape('nvda-mhp', 'horizontal_line', [{ price: 205 }], { text: 'MHP: 205', linecolor: '#ff9800' })
   ])
 ];
 
@@ -135,6 +139,7 @@ const context = {
       MASTER_TABLE: {
         data: {
           SPY: { BBrMr: 'B', LS: 'L', UD: 'D' },
+          NVDA: { symbol: 'NVDA', hp: 202.5, mhp: 205, mapCode: 'BLD' },
           QQQ: { mapCode: 'BLD' },
           MES: { Contract: 'MES', RI: 1 },
           MNQ: { Contract: 'MNQ', RI: 2 },
@@ -178,10 +183,10 @@ assert.equal(captureMessage.capture.endpoint, '/page-reader/display');
 const body = JSON.parse(captureMessage.capture.body);
 assert.equal(body.type, 'rs_snapshot');
 assert.equal(body.source, 'page-reader');
-assert.equal(body.reader.chartCount, 3);
-assert.equal(body.reader.statCount, 2);
-assert.equal(body.chartLines.length, 10);
-assert.equal(body.referenceLines.length, 2);
+assert.equal(body.reader.chartCount, 4);
+assert.equal(body.reader.statCount, 4);
+assert.equal(body.chartLines.length, 13);
+assert.equal(body.referenceLines.length, 3);
 assert.equal(body.zoneRectangles.length, 2);
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNHP' && level.price === 7565));
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'Open' && level.price === 7559));
@@ -199,7 +204,11 @@ assert.equal(body.levels.some((level) => /Liquidity Map|horizontal|text/i.test(l
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.kind === 'zone-bear'));
 assert.equal(body.levels.some((level) => /Bea Zone/i.test(level.name)), false);
 assert.ok(body.levels.some((level) => level.symbol === 'MNQ' && level.name === 'MidGap'));
-assert.equal(body.levels.some((level) => level.symbol === 'SPY' || level.price === 722.51), false);
+assert.ok(body.levels.some((level) => level.symbol === 'SPY' && level.price === 722.51));
+assert.ok(body.levels.some((level) => level.symbol === 'NVDA' && level.name === 'HP' && level.price === 202.5));
+assert.ok(body.levels.some((level) => level.symbol === 'NVDA' && level.name === 'MHP' && level.price === 205));
+assert.equal(body.stats.NVDA.mapCode, 'BLD');
+assert.deepEqual(body.charts.map((chart) => chart.symbol), ['MES', 'MNQ', 'SPY', 'NVDA']);
 assert.equal(body.stats.MES.dd, 0.66);
 assert.equal(body.stats.MES.riskInterval, 68.75);
 assert.equal(body.stats.MES.resilience, 14.47);

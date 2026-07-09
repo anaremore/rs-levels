@@ -6,6 +6,8 @@ const state = {
   lastPostAt: '',
   lastError: '',
   tradingViewSnapshot: null,
+  detectedTradingViewSnapshot: null,
+  detectedSymbols: [],
   tradingViewPayloadAt: '',
   contentDiagnostic: {
     reason: '',
@@ -93,13 +95,21 @@ async function postCapture(capture) {
 
 function rememberTradingViewSnapshot(capture) {
   const snapshot = globalThis.RS_LEVELS.captureToTradingViewSnapshot(capture);
+  const isPageReader = capture && capture.endpoint === '/page-reader/display';
+  if (isPageReader) {
+    state.detectedTradingViewSnapshot = snapshot;
+    state.detectedSymbols = snapshot ? snapshot.symbols.map((row) => row.symbol) : [];
+  }
   if (!snapshot) return;
   state.tradingViewSnapshot = snapshot;
   state.tradingViewPayloadAt = snapshot.generatedAt || new Date().toISOString();
 }
 
 function tradingViewPayloadResponse(scope) {
-  const payload = globalThis.RS_LEVELS.tradingViewPayloadFromSnapshot(state.tradingViewSnapshot, scope || 'ALL');
+  const selectedScope = scope || 'ALL';
+  const detectedPayload = globalThis.RS_LEVELS.tradingViewPayloadFromSnapshot(state.detectedTradingViewSnapshot, selectedScope);
+  const snapshot = detectedPayload ? state.detectedTradingViewSnapshot : state.tradingViewSnapshot;
+  const payload = detectedPayload || globalThis.RS_LEVELS.tradingViewPayloadFromSnapshot(snapshot, selectedScope);
   if (!payload) {
     return {
       ok: false,
@@ -110,7 +120,7 @@ function tradingViewPayloadResponse(scope) {
     ok: true,
     payload,
     generatedAt: state.tradingViewPayloadAt,
-    symbols: state.tradingViewSnapshot.symbols.map((row) => row.symbol)
+    symbols: snapshot.symbols.map((row) => row.symbol)
   };
 }
 

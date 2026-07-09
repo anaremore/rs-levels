@@ -88,13 +88,18 @@
     }
 
     const snapshot = readDisplaySnapshot();
+    const hash = stableHash(snapshot);
     if (!snapshot.levels.length && !snapshotHasStats(snapshot)) {
       stats.skippedEmptyCount += 1;
+      if (hash !== lastHash) {
+        lastHash = hash;
+        publishSnapshot(snapshot);
+        return;
+      }
       publishDiagnostic(snapshot.reader.chartCount ? 'reader-empty' : 'reader-waiting');
       return;
     }
 
-    const hash = stableHash(snapshot);
     if (hash === lastHash && Date.now() - lastCaptureAt < 15000) {
       stats.ignoredCount += 1;
       publishDiagnostic('reader-unchanged');
@@ -112,6 +117,7 @@
       capturedAt,
       levels: [],
       stats: {},
+      charts: [],
       chartLines: [],
       referenceLines: [],
       zoneRectangles: [],
@@ -132,6 +138,7 @@
       referenceLines: new Set(),
       zoneRectangles: new Set()
     };
+    const detectedSymbols = new Set();
     try {
       const widget = globalThis.tvWidget;
       if (!widget) return state;
@@ -141,16 +148,19 @@
         const chart = safeChart(widget, index);
         if (!chart) continue;
         const rawSymbol = safeString(call(chart, 'symbol'));
-        const symbol = futuresSymbol(rawSymbol);
+        const symbol = chartDisplaySymbol(rawSymbol);
         if (!symbol) continue;
+        detectedSymbols.add(symbol);
+        state.charts.push({ symbol, rawSymbol });
         readShapeLevels(chart, symbol, rawSymbol, state, seen);
         readStudyLevels(chart, symbol, rawSymbol, state, seen);
         readStudyStats(chart, symbol, state);
       }
-      readHeaderStats(state);
-      readMapCodeStats(state);
-      readRiskIntervalStats(state);
-      readRiskIntervalDomStats(state);
+      readScannerDisplayData(state, detectedSymbols, seen);
+      readHeaderStats(state, detectedSymbols);
+      readMapCodeStats(state, detectedSymbols);
+      readRiskIntervalStats(state, detectedSymbols);
+      readRiskIntervalDomStats(state, detectedSymbols);
     } catch (_err) {
       stats.readErrorCount += 1;
     }
@@ -162,13 +172,13 @@
     return state;
   }
 
-  function readHeaderStats(state) {
+  function readHeaderStats(state, detectedSymbols) {
     try {
       const nav = globalThis.document && document.querySelector ? document.querySelector('nav.navbar') : null;
       const text = compact(nav && nav.textContent);
       if (!text) return;
       const sp = text.match(/SP500:\s*DD:\s*([-\d.]+)\s*Res:?\s*([-\d.]+)\s*\|\s*([-\d.]+)\s*HP:\s*([-\d.]+)\s*MHP:\s*([-\d.]+)/i);
-      if (sp) {
+      if (sp && detectedSymbols.has('MES')) {
         addStats(state, 'MES', {
           dd: numberValue(sp[1]),
           resilience: numberValue(sp[2]),
@@ -177,7 +187,7 @@
       }
 
       const nq = text.match(/NQ100:\s*Res:?\s*([-\d.]+)\s*\|\s*([-\d.]+)\s*HP:\s*([-\d.]+)\s*MHP:\s*([-\d.]+)/i);
-      if (nq) {
+      if (nq && detectedSymbols.has('MNQ')) {
         const esStats = state.stats.MES || {};
         addStats(state, 'MNQ', {
           dd: esStats.dd,
@@ -190,25 +200,34 @@
     }
   }
 
-  function readMapCodeStats(state) {
+  function readMapCodeStats(state, detectedSymbols) {
     try {
       const table = globalThis.RS_SOCK && RS_SOCK.scanner && RS_SOCK.scanner.MASTER_TABLE && RS_SOCK.scanner.MASTER_TABLE.data;
       if (!plainObject(table)) return;
-      addStats(state, 'MES', { mapCode: mapCodeFromNode(table.SPY || table.SPX || table.SP500) });
-      addStats(state, 'MNQ', { mapCode: mapCodeFromNode(table.QQQ || table.NDX || table.NQ100) });
+      if (detectedSymbols.has('MES')) {
+        addStats(state, 'MES', { mapCode: mapCodeFromNode(table.SPY || table.SPX || table.SP500) });
+      }
+      if (detectedSymbols.has('MNQ')) {
+        addStats(state, 'MNQ', { mapCode: mapCodeFromNode(table.QQQ || table.NDX || table.NQ100) });
+      }
+      detectedSymbols.forEach((symbol) => {
+        if (symbol === 'MES' || symbol === 'MNQ') return;
+        const row = scannerRow(table, symbol);
+        if (row) addStats(state, symbol, { mapCode: mapCodeFromNode(row) });
+      });
     } catch (_err) {
       stats.readErrorCount += 1;
     }
   }
 
-  function readRiskIntervalStats(state) {
+  function readRiskIntervalStats(state, detectedSymbols) {
     try {
       const table = globalThis.RS_SOCK && RS_SOCK.scanner && RS_SOCK.scanner.MASTER_TABLE && RS_SOCK.scanner.MASTER_TABLE.data;
       if (!plainObject(table)) return;
       Object.entries(table).forEach(([key, row]) => {
         if (!plainObject(row)) return;
         const symbol = futuresSymbol(row.contract || row.Contract || row.symbol || row.Symbol || row.ticker || row.Ticker || key);
-        if (!symbol) return;
+        if (!symbol || !detectedSymbols.has(symbol)) return;
         addStats(state, symbol, {
           riskInterval: firstFinite(row.riskInterval, row.ri, row.RI, row.risk, row.riskInt, row['Risk Interval'])
         });
@@ -218,18 +237,18 @@
     }
   }
 
-  function readRiskIntervalDomStats(state) {
+  function readRiskIntervalDomStats(state, detectedSymbols) {
     try {
       const doc = globalThis.document;
       if (!doc || typeof doc.querySelectorAll !== 'function') return;
-      readRiskIntervalTableRows(state, doc);
-      readRiskIntervalRoleRows(state, doc);
+      readRiskIntervalTableRows(state, doc, detectedSymbols);
+      readRiskIntervalRoleRows(state, doc, detectedSymbols);
     } catch (_err) {
       stats.readErrorCount += 1;
     }
   }
 
-  function readRiskIntervalTableRows(state, doc) {
+  function readRiskIntervalTableRows(state, doc, detectedSymbols) {
     domArray(doc.querySelectorAll('table')).forEach((table) => {
       let headers = [];
       domArray(table.querySelectorAll && table.querySelectorAll('tr')).forEach((row) => {
@@ -239,12 +258,12 @@
           headers = cells;
           return;
         }
-        addRiskIntervalFromCells(state, cells, headers);
+        addRiskIntervalFromCells(state, cells, headers, detectedSymbols);
       });
     });
   }
 
-  function readRiskIntervalRoleRows(state, doc) {
+  function readRiskIntervalRoleRows(state, doc, detectedSymbols) {
     let headers = [];
     domArray(doc.querySelectorAll('[role="row"]')).forEach((row) => {
       const cells = cellTexts(row, '[role="columnheader"],[role="cell"],[role="gridcell"]');
@@ -253,13 +272,13 @@
         headers = cells;
         return;
       }
-      addRiskIntervalFromCells(state, cells, headers);
+      addRiskIntervalFromCells(state, cells, headers, detectedSymbols);
     });
   }
 
-  function addRiskIntervalFromCells(state, cells, headers) {
+  function addRiskIntervalFromCells(state, cells, headers, detectedSymbols) {
     const symbol = symbolFromRiskIntervalCells(cells, headers);
-    if (!symbol) return;
+    if (!symbol || !detectedSymbols.has(symbol)) return;
     const riskInterval = riskIntervalFromCells(cells, headers);
     if (riskInterval == null) return;
     addStats(state, symbol, { riskInterval });
@@ -337,8 +356,47 @@
     }
   }
 
+  function readScannerDisplayData(state, detectedSymbols, seen) {
+    try {
+      const table = globalThis.RS_SOCK && RS_SOCK.scanner && RS_SOCK.scanner.MASTER_TABLE && RS_SOCK.scanner.MASTER_TABLE.data;
+      if (!plainObject(table)) return;
+      detectedSymbols.forEach((symbol) => {
+        if (symbol === 'MES' || symbol === 'MNQ') return;
+        const row = scannerRow(table, symbol);
+        if (!row) return;
+        [
+          { name: 'MHP', kind: 'mhp', price: firstFinite(row.mhp, row.MHP, row.man_MHP, row.monthlyHp, row.monthlyHP) },
+          { name: 'HP', kind: 'hp', price: firstFinite(row.hp, row.HP, row.man_HP, row.dailyHp, row.dailyHP) }
+        ].forEach((level) => {
+          if (!(level.price > 0)) return;
+          addLevel(state.levels, seen, {
+            symbol,
+            ...level,
+            color: '',
+            source: 'rocketscooter-page',
+            capturedAt: state.capturedAt,
+            metadata: { rawSymbol: symbol, reader: 'scanner-table' }
+          });
+        });
+      });
+    } catch (_err) {
+      stats.readErrorCount += 1;
+    }
+  }
+
+  function scannerRow(table, symbol) {
+    const direct = table[symbol];
+    if (plainObject(direct)) return direct;
+    for (const [key, row] of Object.entries(table)) {
+      if (!plainObject(row)) continue;
+      const rowSymbol = chartDisplaySymbol(row.symbol || row.Symbol || row.ticker || row.Ticker || key);
+      if (rowSymbol === symbol) return row;
+    }
+    return null;
+  }
+
   function addStats(state, symbolInput, statsInput = {}) {
-    const symbol = futuresSymbol(symbolInput);
+    const symbol = chartDisplaySymbol(symbolInput);
     if (!symbol || !plainObject(statsInput)) return;
     const clean = {
       dd: firstFinite(statsInput.dd, statsInput.ddRatio),
@@ -378,7 +436,7 @@
     const shapes = safeArray(call(chart, 'getAllShapes'));
     state.reader.shapeCount += shapes.length;
     const zoneCounts = { bull: 0, bear: 0 };
-    const index = futuresIndex(symbol);
+    const index = displayIndex(symbol);
 
     for (const shape of shapes) {
       try {
@@ -479,7 +537,7 @@
   function readStudyLevels(chart, symbol, rawSymbol, state, seen) {
     const studies = safeArray(call(chart, 'getAllStudies'));
     state.reader.studyCount += studies.length;
-    const index = futuresIndex(symbol);
+    const index = displayIndex(symbol);
     for (const study of studies) {
       try {
         if (!/Liquidity|Map|Gap|Open|Close|Level|Zone|HP|MHP|DD/i.test(safeString(study.name))) continue;
@@ -754,13 +812,25 @@
     const parts = text.split(/[^A-Z0-9]+/).filter(Boolean);
     if (parts.some((part) => part === 'MNQ' || part === 'NQ' || part === 'ENQ' || /^M?NQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) || /^ENQ[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part))) return 'MNQ';
     if (parts.some((part) => part === 'MES' || part === 'ES' || part === 'EP' || /^M?ES[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part) || /^EP[FGHJKMNQUVXZ](?:\d{1,2})?$/.test(part))) return 'MES';
-    if (/\bNASDAQ\b/.test(text) || /\bNQ[-\s]?100\b/.test(text)) return 'MNQ';
+    if ((/\bNASDAQ\b/.test(text) && !/[:/]/.test(text)) || /\bNQ[-\s]?100\b/.test(text)) return 'MNQ';
     if (/\bS\s*&\s*P\s*500\b/.test(text) || /\bS\s+AND\s+P\s+500\b/.test(text)) return 'MES';
     return '';
   }
 
-  function futuresIndex(symbol) {
-    return safeString(symbol).toUpperCase() === 'MNQ' ? 'NQ' : 'ES';
+  function chartDisplaySymbol(value) {
+    const futures = futuresSymbol(value);
+    if (futures) return futures;
+    const text = safeString(value).trim().toUpperCase();
+    if (!text) return '';
+    const candidate = text.split(/[:/]/).filter(Boolean).pop() || '';
+    return /^[A-Z][A-Z0-9.-]{0,14}$/.test(candidate) && candidate !== 'ALL' ? candidate : '';
+  }
+
+  function displayIndex(symbol) {
+    const clean = chartDisplaySymbol(symbol);
+    if (clean === 'MNQ') return 'NQ';
+    if (clean === 'MES') return 'ES';
+    return clean;
   }
 
   function chartCountFromWidget(widget) {

@@ -87,6 +87,25 @@ const bundlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|
 assert.match(bundlePayload, /^RSLEVELS\|2\|/);
 const singlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp');
 assert.match(singlePayload, /\|NQ\|/);
+const stockPayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-07-09T20:08:23.000Z|NVDA|2026-07-09T20:08:22.000Z|HP,202.5,hp;MHP,205,mhp;Map BLD,0,stat');
+assert.match(stockPayload, /\|NVDA\|/);
+const stockSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
+  capturedAt: '2026-07-09T20:08:23.000Z',
+  body: JSON.stringify({
+    symbol: 'NASDAQ:NVDA',
+    capturedAt: '2026-07-09T20:08:22.000Z',
+    levels: [
+      { name: 'HP', price: 202.5, kind: 'hp' },
+      { name: 'MHP', price: 205, kind: 'mhp' }
+    ],
+    stats: { NVDA: { mapCode: 'BLD' } }
+  })
+});
+assert.deepEqual(Array.from(stockSnapshot.symbols, (row) => row.symbol), ['NVDA']);
+const stockScopedPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(stockSnapshot, 'NVDA');
+assert.match(stockScopedPayload, /HP,202\.5,hp/);
+assert.match(stockScopedPayload, /MHP,205,mhp/);
+assert.match(stockScopedPayload, /Map BLD,0,stat/);
 const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-06-21T03:47:05.860Z',
   body: JSON.stringify({
@@ -119,7 +138,7 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
     ]
   })
 });
-assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSON.stringify(['ES', 'NQ']));
+assert.equal(JSON.stringify(localSnapshot.symbols.map((row) => row.symbol)), JSON.stringify(['ES', 'NQ', 'SPY']));
 const localPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'ALL');
 assert.match(localPayload, /^RSLEVELS\|2\|2026-06-21T03:47:02\.097Z\|ES\|/);
 assert.match(localPayload, /Open,7559,open-close/);
@@ -148,7 +167,7 @@ assert.match(localPayload, /Yellow Line,30979,yellow-line/);
 assert.match(localPayload, /RI,266\.25,stat/);
 assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /MidGap|Mid Gap/);
-assert.doesNotMatch(localPayload, /\|SPY\|/);
+assert.match(localPayload, /\|SPY\|[^|]+\|Open,740,open-close/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
 
 const mismatchedZoneSideSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
@@ -242,14 +261,14 @@ assert.match(chartLineOnlyPayload, /Red Line,30380,red-line/);
 assert.match(chartLineOnlyPayload, /CAT,31232\.74,cat/);
 assert.doesNotMatch(chartLineOnlyPayload, /horizontal_line/);
 assert.doesNotMatch(chartLineOnlyPayload, /horizontalLine/);
-assert.doesNotMatch(chartLineOnlyPayload, /\|SPY\|/);
+assert.match(chartLineOnlyPayload, /\|SPY\|[^|]+\|Prev Close,722\.51,open-close/);
 
 assert.throws(
   () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RS' + 'LEVELS|1|MES|2026-06-21T03:12:03.127Z|OVNHP,7565.00,hp'),
   /unsupported TradingView payload/
 );
 assert.throws(
-  () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|SPY|2026-06-21T03:47:02.097Z|Open,7559,open-close'),
+  () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|NASDAQ:NVDA|2026-06-21T03:47:02.097Z|HP,202.5,hp'),
   /unsupported symbol/
 );
 assert.throws(
