@@ -1,9 +1,10 @@
 //@version=6
-indicator("RS Levels v2026.07.09.5", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.07.09.6", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 labelLayoutInput = input.string("Rail", "Label layout", options = ["Rail", "On line", "Hidden"])
+labelPositionInput = input.string("Right side", "Label position", options = ["Right side", "Near current time"])
 showLabels = labelLayoutInput != "Hidden"
 showStatsPanel = input.bool(true, "Stats panel")
 statsPanelPositionInput = input.string("Bottom left", "Stats panel position", options = ["Bottom left", "Bottom center", "Bottom right", "Middle left", "Middle right", "Top left", "Top right"], display = display.none)
@@ -33,7 +34,7 @@ showOtherLevels = input.bool(true, "Other levels", inline = "otherLevels")
 otherLevelColorInput = input.color(color.rgb(158, 158, 158), "", inline = "otherLevels")
 lineWidth = input.int(1, "Line width", minval = 1, maxval = 4, display = display.none)
 fontSizeInput = input.string("Small", "Font size", options = ["Tiny", "Small", "Normal", "Large", "Huge"], display = display.none)
-railInsetPercentInput = input.int(2, "Rail inset %", minval = 0, maxval = 20, display = display.none)
+rightSideInsetPercentInput = input.int(2, "Right-side inset %", minval = 0, maxval = 20, display = display.none)
 labelVerticalOffset = input.int(6, "Min label vertical offset (ticks)", minval = 1, maxval = 100, display = display.none)
 zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval = 50, display = display.none)
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
@@ -387,16 +388,18 @@ labelDirection(name, kind) =>
 labelDirectionForSide(name, kind, zoneSide) =>
     zoneKind(kind) and zoneSide != 0 ? zoneSide : labelDirection(name, kind)
 
-onLineLabelTime(labelSlot) =>
+rightSideLabelTime() =>
     visibleTimeSpan = math.max(chart.right_visible_bar_time - chart.left_visible_bar_time, 1)
-    spreadSlot = math.min(labelSlot, 6)
-    spreadStep = int((spreadSlot + 1) / 2) * 6
-    anchorPercent = 68 + (spreadSlot % 2 == 1 ? spreadStep : -spreadStep)
-    chart.left_visible_bar_time + int(visibleTimeSpan * anchorPercent / 100)
+    chart.right_visible_bar_time - int(visibleTimeSpan * rightSideInsetPercentInput / 100)
 
-railLabelTime() =>
-    visibleTimeSpan = math.max(chart.right_visible_bar_time - chart.left_visible_bar_time, 1)
-    chart.right_visible_bar_time - int(visibleTimeSpan * railInsetPercentInput / 100)
+nearCurrentLabelTime() =>
+    na(time_close) ? time : time_close
+
+labelAnchorTime() =>
+    labelPositionInput == "Right side" ? rightSideLabelTime() : nearCurrentLabelTime()
+
+labelAnchorStyle() =>
+    labelPositionInput == "Right side" ? label.style_label_right : label.style_label_left
 
 labelClusterThreshold(priceRange) =>
     math.max(labelVerticalOffset * syminfo.mintick * 2.0, math.max(priceRange, syminfo.mintick) * 0.002)
@@ -424,7 +427,7 @@ onLineLabelOffset(priceRange) =>
 
 labelPrice(name, kind, price, labelSlot, priceRange, zoneSide) =>
     direction = labelDirectionForSide(name, kind, zoneSide)
-    labelLayoutInput == "Rail" ? price + labelOffset(labelSlot, priceRange, zoneKind(kind)) * direction : price + onLineLabelOffset(priceRange) * direction
+    labelLayoutInput == "Rail" ? price + labelOffset(labelSlot, priceRange, zoneKind(kind)) * direction : price + onLineLabelOffset(priceRange)
 
 labelAlreadyDrawn(labelKey) =>
     seen = false
@@ -447,17 +450,18 @@ drawLevel(name, priceText, kind, priceRange, zoneSide) =>
             labelText = labelName + " · " + str.tostring(price, format.mintick)
             labelKey = cleanKind(effectiveKind) + "|" + labelName + "|" + str.tostring(price, format.mintick)
             if not labelAlreadyDrawn(labelKey)
-                labelSlot = labelStackSlot(price, priceRange)
+                labelSlot = labelLayoutInput == "Rail" ? labelStackSlot(price, priceRange) : 0
                 labelY = labelPrice(name, effectiveKind, price, labelSlot, priceRange, zoneSide)
-                railXTime = railLabelTime()
+                labelXTime = labelAnchorTime()
+                labelStyle = labelAnchorStyle()
                 if labelLayoutInput == "Rail" and labelY != price and maxLevelsInput <= 250 and array.size(rsLines) < 499
-                    leaderLine = line.new(time, price, railXTime, labelY, xloc = xloc.bar_time, color = color.new(levelColor, 55), width = 1, style = line.style_dotted)
+                    leaderLine = line.new(time, price, labelXTime, labelY, xloc = xloc.bar_time, color = color.new(levelColor, 55), width = 1, style = line.style_dotted)
                     array.push(rsLines, leaderLine)
                 if labelLayoutInput == "Rail"
-                    railLabel = label.new(railXTime, labelY, labelText, xloc = xloc.bar_time, style = label.style_label_right, textcolor = color.white, color = color.rgb(15, 23, 42), size = labelSize())
+                    railLabel = label.new(labelXTime, labelY, labelText, xloc = xloc.bar_time, style = labelStyle, textcolor = color.white, color = color.rgb(15, 23, 42), size = labelSize())
                     array.push(rsLabels, railLabel)
                 else
-                    onLineLabel = label.new(onLineLabelTime(labelSlot), labelY, labelText, xloc = xloc.bar_time, style = label.style_none, textcolor = color.white, size = labelSize(), textalign = text.align_left)
+                    onLineLabel = label.new(labelXTime, labelY, labelText, xloc = xloc.bar_time, style = labelStyle, textcolor = color.white, color = color.new(color.black, 100), size = labelSize())
                     array.push(rsLabels, onLineLabel)
                 array.push(rsLabelKeys, labelKey)
         drawn := true

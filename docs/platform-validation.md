@@ -40,7 +40,7 @@ Every RS Levels overlay must verify:
 - Non-futures panels such as SPY and QQQ do not contaminate ES/NQ futures exports.
 - DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other finite-price levels render with distinct kind-aware styling where the platform supports it.
 - Multiple yellow-line and red-line rows at different prices render as separate levels.
-- TradingView label layouts expose `Rail`, `On line`, and `Hidden`; Rail is the default and docks opaque chips near the visible right boundary, while On line uses lightweight text offset from each level line and spreads crowded labels horizontally.
+- TradingView label layouts expose `Rail`, `On line`, and `Hidden`, independently of `Right side` and `Near current time` placement. Rail is the default; On line places a simple transparent label immediately above each level.
 - Waiting, offline, and stale states do not look live.
 - No plugin asks for account, trade, order, position, PnL, broker, or credential access.
 
