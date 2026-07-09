@@ -33,12 +33,12 @@ These indicators only draw overlays. They do not contain strategy logic, alerts,
 
 - `RS Levels Payload`: `RSLEVELS|2` text from the extension or local API, pasted into TradingView's single-row text input.
 - `Chart family`: leave on `Auto` for stock ticker matching and normal futures detection; `ES` and `NQ` are futures-only overrides.
-- `Label layout`: `Rail` (default) anchors high-contrast dark chips beside the latest bar and adds subtle leaders when collision spacing moves a label; `On line` places chips across the midpoint of the visible price lines at their exact prices and staggers collisions horizontally; `Hidden` removes labels while keeping level lines.
+- `Label layout`: `Rail` (default) docks high-contrast dark chips near the chart's visible right boundary and adds subtle leaders when collision spacing moves a label; `On line` uses lightweight white text just off each price line and spreads crowded labels horizontally; `Hidden` removes labels while keeping level lines.
 - `Stats panel`: show or hide Map and RI context from `stat` rows.
 - Kind toggles: DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other levels. Each colored kind keeps its checkbox and color picker on one row.
 - Yellow lines default to yellow, red lines default to red, and CAT lines default to purple. The indicator normalizes captured name/kind text before applying these colors.
 - `Zone fills` and `Zone fill opacity %`: fill matched explicit top/bottom pairs with a low-opacity version of the bull or bear zone color.
-- `Line width`, `Font size`, `Label bar offset`, `Min label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. `Label bar offset` controls the `Rail` distance from the latest bar; `On line` follows the visible chart range. Labels use the consistent `Name · Price` format and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map`. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are always dashed.
+- `Line width`, `Font size`, `Rail inset %`, `Min label vertical offset (ticks)`, `Max levels`, and `Line style`: display-only drawing preferences. `Rail inset %` keeps docked chips clear of the price scale; `On line` follows the visible chart range. Labels use the consistent `Name · Price` format and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map`. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are always dashed.
 
 The pasted payload input is hidden from TradingView's status line to avoid chart-header clutter. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limits.
 
