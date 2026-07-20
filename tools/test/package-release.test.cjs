@@ -68,6 +68,7 @@ assert.match(extensionZipText, /README\.md/);
 assert.match(extensionZipText, /src\/background\.js/);
 assert.match(extensionZipText, /src\/build-info\.js/);
 assert.match(extensionZipText, /src\/page-hook\.js/);
+assert.match(extensionZipText, /src\/tradingview-content\.js/);
 assert.match(extensionZipText, /src\/popup\.html/);
 assert.match(extensionZipText, /RS_LEVELS_BUILD/);
 assert.match(extensionZipText, /"source": "package"/);

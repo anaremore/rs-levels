@@ -143,6 +143,14 @@ select {
   outline: none;
 }
 
+select:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #66b7ff;
+  outline-offset: 2px;
+}
+
 .chart-hint {
   color: #8ea2ba;
   font-size: 11px;
@@ -157,6 +165,12 @@ select {
 
 .actions .wide {
   grid-column: 1 / -1;
+}
+
+.action-hint {
+  color: #8ea2ba;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 footer {
@@ -185,6 +199,10 @@ button.wide {
 button:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+button[aria-busy="true"] {
+  cursor: wait;
 }
 
 .message {
@@ -244,4 +262,13 @@ summary {
 footer button {
   background: #111923;
   box-shadow: inset 0 0 0 1px #2d3a50;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
 }

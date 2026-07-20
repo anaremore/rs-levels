@@ -13,7 +13,7 @@ Every direct API plugin should expose:
 - line visibility by kind
 - label visibility
 
-TradingView is the exception because Pine cannot poll localhost directly. It uses the short `RSLEVELS|2` paste workflow documented in [TradingView](tradingview.md).
+TradingView is the exception because Pine cannot poll localhost directly. It uses the short `RSLEVELS|2` payload, either handed to the visible settings field by the opt-in extension helper or pasted manually, as documented in [TradingView](tradingview.md).
 
 ## Required API Calls
 
@@ -52,7 +52,7 @@ Adapters should use the narrowest endpoint that matches the job:
 | Context/stat panel | `GET /stats/:symbol?format=rows` or `GET /stats/:symbol/rows` | Read `DD`, `RI`, `Res`, `MRes`, `WRes`, and `Map` without parsing price-level rows. |
 | Sierra Chart VARIS Zones | `GET /sierra/:symbol` | Sierra VARIS reads the `RI` stat row from the same ACSIL-friendly feed used by the Sierra RS Levels study. |
 | NinjaTrader, Quantower, and Bookmap VARIS Zones | `GET /stats/:symbol?format=rows` | These adapters need `RI` and can use the narrow stats feed directly. |
-| TradingView RS Levels and VARIS | `GET /tradingview` or `GET /tradingview/:symbol` | Pine cannot poll localhost, so users paste the short `RSLEVELS|2` payload. |
+| TradingView RS Levels and VARIS | `GET /tradingview` or `GET /tradingview/:symbol` | Pine cannot poll localhost; users send the short `RSLEVELS|2` payload through the opt-in extension helper or paste it manually. |
 
 Plugin manifests, plugin docs, and plugin source must agree on the endpoint family. When a plugin changes endpoint contracts, update the manifest, this contract, platform docs, and automated static tests in the same slice.
 

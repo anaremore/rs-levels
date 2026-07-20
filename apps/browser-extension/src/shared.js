@@ -174,9 +174,22 @@
     const source = status.source || {};
     const symbolIssue = selectedSymbolIssue(status, symbol);
     if (symbolIssue) return symbolIssue;
-    if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before copying TradingView.';
-    if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before copying TradingView.';
+    if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before sending or copying TradingView data.';
+    if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before sending or copying TradingView data.';
     return '';
+  }
+
+  function preferredTradingViewTabId(tabs = [], selectedId = 0) {
+    const candidates = (Array.isArray(tabs) ? tabs : [])
+      .filter((tab) => tab && Number.isInteger(tab.id) && tab.id > 0);
+    const wanted = nonNegativeInteger(selectedId);
+    const selected = candidates.find((tab) => tab.id === wanted);
+    if (selected) return selected.id;
+
+    const current = candidates.find((tab) => tab.current === true);
+    if (current) return current.id;
+
+    return candidates.length === 1 ? candidates[0].id : 0;
   }
 
   function tradingViewBundleCopyIssue(status = {}) {
@@ -886,7 +899,7 @@
 
   function tradingViewField(value) {
     return String(value ?? '')
-      .replace(/[|;,"\[\]\r\n]+/g, ' ')
+      .replace(/[|;,"\[\]\n]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -913,6 +926,7 @@
     cleanTradingViewPayload,
     captureToTradingViewSnapshot,
     tradingViewPayloadFromSnapshot,
+    preferredTradingViewTabId,
     tradingViewBundleCopyIssue,
     tradingViewCopyIssue
   };

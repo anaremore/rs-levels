@@ -8,7 +8,7 @@ RS Levels lets a user capture level and display-context data from their own Rock
 
 RS Levels is organized around three display-only pieces:
 
-- **Browser extension**: captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides `Copy TradingView`, scrubbed diagnostics, API docs links, and extension status/debug tools.
+- **Browser extension**: captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff with an explicit copy fallback, scrubbed diagnostics, API docs links, and extension status/debug tools.
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
 - **Platform plugins, indicators, and studies**: includes TradingView Pine scripts, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
@@ -102,4 +102,4 @@ scripts/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service, browser extension, TradingView paste workflow, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes, persisted service settings, and native app packaging.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service, browser extension, TradingView assisted handoff and paste-fallback workflow, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes, persisted service settings, and native app packaging.

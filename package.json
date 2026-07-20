@@ -13,7 +13,7 @@
     "test:exporters": "node packages/exporters/test/exporters.test.js",
     "test:service": "node apps/local-service/test/local-service.test.js",
     "test:tradingview": "node plugins/tradingview/test/tradingview.test.cjs",
-    "test:extension": "node apps/browser-extension/test/extension.test.cjs && node apps/browser-extension/test/extension-logic.test.cjs && node apps/browser-extension/test/page-reader.test.cjs",
+    "test:extension": "node apps/browser-extension/test/extension.test.cjs && node apps/browser-extension/test/extension-logic.test.cjs && node apps/browser-extension/test/page-reader.test.cjs && node apps/browser-extension/test/tradingview-background.test.cjs && node apps/browser-extension/test/tradingview-content.test.cjs",
     "test:openapi": "node docs/test/openapi.test.cjs",
     "test:examples": "node examples/test/examples.test.cjs",
     "test:plugins": "node plugins/test/plugin-docs.test.cjs",

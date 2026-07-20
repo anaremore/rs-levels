@@ -83,6 +83,18 @@ assert.match(sharedContext.RS_LEVELS.selectedSymbolIssue({
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'stale' } }), /stale/);
 assert.match(sharedContext.RS_LEVELS.tradingViewCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
 assert.match(sharedContext.RS_LEVELS.tradingViewBundleCopyIssue({ levelCount: 2, source: { connected: false, state: 'waiting' } }), /not live/);
+const ambiguousTradingViewTabs = [
+  { id: 30, current: false },
+  { id: 31, current: false }
+];
+assert.equal(sharedContext.RS_LEVELS.preferredTradingViewTabId(ambiguousTradingViewTabs), 0);
+assert.equal(sharedContext.RS_LEVELS.preferredTradingViewTabId(ambiguousTradingViewTabs, 31), 31);
+assert.equal(sharedContext.RS_LEVELS.preferredTradingViewTabId([{ id: 30, current: false }]), 30);
+assert.equal(sharedContext.RS_LEVELS.preferredTradingViewTabId([
+  { id: 30, current: false },
+  { id: 31, current: true }
+]), 31);
+assert.equal(sharedContext.RS_LEVELS.preferredTradingViewTabId(ambiguousTradingViewTabs, 99), 0);
 const bundlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,7565,hp;DD,0.66,stat|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp;Map BLD,0,stat');
 assert.match(bundlePayload, /^RSLEVELS\|2\|/);
 const singlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp');

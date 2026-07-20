@@ -4,18 +4,18 @@ Display-only Pine indicator for RS Levels.
 
 For the shortest extension-plus-indicator setup, see [TradingView quickstart](../../docs/tradingview-quickstart.md).
 
-TradingView Pine scripts cannot poll the local API directly. The RS Levels workflow is copy/paste:
+TradingView Pine scripts cannot poll the local API directly. The RS Levels extension can hand the compact payload to the visible settings field, while copy/paste remains the fallback:
 
-1. Run the local service.
-2. Capture RocketScooter levels with the browser extension or another approved local capture client.
-3. Use `Copy TradingView` in the extension popup, or copy the text from `http://127.0.0.1:8765/tradingview`.
-4. Add `rs-levels.pine` to a TradingView chart, paste the payload into the `RS Levels Payload` input, and click `OK`.
+1. Capture RocketScooter levels with the browser extension or another approved local capture client.
+2. Add `rs-levels.pine` to a TradingView chart.
+3. Use `Send to TradingView` in the extension popup, approve the exact site permission on first use, and open indicator settings within 45 seconds if needed.
+4. Review `RS Levels Payload` and click `OK` yourself. Or use `Copy payload instead` and paste manually; the local service also exposes text at `http://127.0.0.1:8765/tradingview`.
 
-`varis-zones.pine` is a separate display-only VARIS Zones indicator. It uses the same copied payload, reads the `RI` stat row for the matching chart family, and falls back to a manual risk interval input when no pasted RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+`varis-zones.pine` is a separate display-only VARIS Zones indicator. It uses the same sent or copied payload, reads the `RI` stat row for the matching chart family, and falls back to a manual risk interval input when no payload RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
 The extension payload can carry every supported symbol detected in the open RocketScooter chart grid. In `Auto`, the indicator maps futures charts to `ES` or `NQ` and matches stock charts by ticker, such as `NVDA`. The manual `Chart family` override remains available for futures.
 
-Optional RocketScooter lines must exist before you copy the payload. Stock HP/MHP and liquidity-map context are included only when that stock has a supported chart open in RocketScooter. Futures manual yellow/red/CAT lines keep their existing pass-through behavior.
+Optional RocketScooter lines must exist before you send or copy the payload. Stock HP/MHP and liquidity-map context are included only when that stock has a supported chart open in RocketScooter. Futures manual yellow/red/CAT lines keep their existing pass-through behavior.
 
 ## Payload Format
 
@@ -27,11 +27,11 @@ The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;.
 
 ## Safety Boundary
 
-These indicators only draw overlays. They do not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or automation.
+These indicators only draw overlays. They do not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or trading automation. The optional extension helper only fills the exact payload setting and never confirms the dialog. Confirm that extension-assisted input is permitted by the TradingView terms that apply to your use before enabling access.
 
 ## Indicator Controls
 
-- `RS Levels Payload`: `RSLEVELS|2` text from the extension or local API, pasted into TradingView's single-row text input.
+- `RS Levels Payload`: `RSLEVELS|2` text sent or copied from the extension, or copied from the local API, in TradingView's single-row text input.
 - `Chart family`: leave on `Auto` for stock ticker matching and normal futures detection; `ES` and `NQ` are futures-only overrides.
 - `Label layout`: `Rail` (default) uses high-contrast dark chips, collision spacing, and subtle leaders; `On line` uses a simple transparent label immediately above each price line; `Hidden` removes labels while keeping level lines.
 - `Label position`: `Right side` (default) places either label style near the chart's visible right boundary; `Near current time` keeps it beside the current bar.

@@ -1,6 +1,6 @@
 # Local API And Extension Setup
 
-Use this guide when you want the local service, API docs, diagnostics, examples, direct platform plugins, or trusted private-network access. If you only want the shortest TradingView copy/paste workflow, use [TradingView quickstart](tradingview-quickstart.md).
+Use this guide when you want the local service, API docs, diagnostics, examples, direct platform plugins, or trusted private-network access. If you only want the shortest TradingView send-or-paste workflow, use [TradingView quickstart](tradingview-quickstart.md).
 
 ## Requirements
 
@@ -48,7 +48,7 @@ npm run package
 
 Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 
-The package command also writes `dist/rs-levels-browser-extension-0.2.0.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
+The package command also writes `dist/rs-levels-browser-extension-0.3.2.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
 
 Release packages include cross-platform service launch scripts:
 
@@ -66,7 +66,7 @@ scripts/start-local-service.sh
 4. Select `apps/browser-extension` from this repository, `dist/rs-levels-0.0.0/apps/browser-extension` from a source release, or the extracted `rs-levels-browser-extension` folder from the standalone extension zip.
 5. Pin `RS Levels Capture` if you want quick access to the popup.
 
-The extension runs only on RocketScooter host patterns. It posts allowlisted response bodies to your configured local API URL and reads display-only chart metadata from RocketScooter top-level and child-frame chart contexts.
+Extension capture code runs only on RocketScooter host patterns. It posts allowlisted response bodies to your configured local API URL and reads display-only chart metadata from RocketScooter top-level and child-frame chart contexts. TradingView receives a one-shot helper only after an explicit send and exact site-permission grant.
 
 ## Demo Capture
 
@@ -99,7 +99,7 @@ You can keep the current ES and NQ futures contracts visible in RocketScooter. C
 
 When RocketScooter exposes DD ratio, RI, Res, MRes, WRes, or liquidity-map context such as `Map BLD`, RS Levels carries those values as display stats. TradingView shows them in its stats panel, VARIS Zones can use RI for band spacing, and direct platform plugins read them from `/stats/:symbol`.
 
-RS Levels does not create optional manual levels on its own. If you want overnight HP/MHP, yellow lines, red lines, or CAT lines to appear in TradingView, Sierra Chart, NinjaTrader, Quantower, or Bookmap, add or keep those lines visible on the relevant RocketScooter futures chart first. After adding or changing them, refresh/reconnect RocketScooter if needed and copy or poll a fresh capture.
+RS Levels does not create optional manual levels on its own. If you want overnight HP/MHP, yellow lines, red lines, or CAT lines to appear in TradingView, Sierra Chart, NinjaTrader, Quantower, or Bookmap, add or keep those lines visible on the relevant RocketScooter futures chart first. After adding or changing them, refresh/reconnect RocketScooter if needed and send, copy, or poll a fresh capture.
 
 If capture does not start, open extension options and review the endpoint allowlist.
 
@@ -107,9 +107,9 @@ If capture does not start, open extension options and review the endpoint allowl
 
 The full TradingView walkthrough lives in [TradingView quickstart](tradingview-quickstart.md).
 
-From this setup, the important detail is that `Copy TradingView` copies one `RSLEVELS|2` payload containing the supported RocketScooter charts selected in the popup. In `Auto`, the RS Levels Pine indicator matches stocks by ticker and futures by ES/NQ family. The same payload can feed `plugins/tradingview/varis-zones.pine`, which reads the matching futures `RI` stat row when it is present.
+From this setup, the important detail is that `Send to TradingView` freezes one `RSLEVELS|2` payload containing the supported RocketScooter charts selected in the popup. On first use it asks for the exact TradingView site permission; with several chart tabs, it asks you to choose. It fills only a visible `RS Levels Payload` field and leaves `OK` to you. `Copy payload instead` preserves manual paste. In `Auto`, the RS Levels Pine indicator matches stocks by ticker and futures by ES/NQ family. The same payload can feed `plugins/tradingview/varis-zones.pine`, which reads the matching futures `RI` stat row when it is present.
 
-`Copy TradingView` first uses the extension's latest detected-chart capture, so stock and futures copying can work without the local API. The popup lists only open charts with supported data, never the full watchlist. ES/NQ can fall back to the local `/tradingview/:symbol` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
+Both TradingView actions first use the extension's latest detected-chart capture, stored as a sanitized session-only snapshot, so stock and futures handoff can work without the local API. The popup lists only open charts with supported data, never the full watchlist. ES/NQ can fall back to the local `/tradingview/:symbol` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
 
 ## 5. Tailscale Or Trusted Private Network
 
@@ -149,5 +149,5 @@ All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the
 
 - `OFFLINE` in the popup: start the API or check the service URL. Use `Copy Diagnostics` for a scrubbed setup bundle.
 - No symbols in the popup: open RocketScooter and wait for allowlisted level responses. If `Observed` stays at 0 after RocketScooter data is visible, click `Reconnect Tab`, then reload the RocketScooter tab or refresh chart data so startup requests run with the hook installed. If `Hook` stays `none`, reload the extension and the RocketScooter tab. If `Observed` rises but `Ignored` also rises, review the endpoint allowlist in extension options. If `Skipped` rises, check max capture bytes or whether the endpoint returns empty/non-text responses.
-- TradingView lines do not update: copy a fresh TradingView payload, paste it into the indicator's `RS Levels Payload` input, click `OK`, and force `Chart family` to `ES` or `NQ` if the chart still does not draw.
+- TradingView lines do not update: send a fresh TradingView payload, open the settings within 45 seconds if needed, review `RS Levels Payload`, and click `OK`. Use `Copy payload instead` if assisted fill cannot find the field, and force `Chart family` to `ES` or `NQ` if the chart still does not draw.
 - Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and `Test Service` succeeds in the extension options page.

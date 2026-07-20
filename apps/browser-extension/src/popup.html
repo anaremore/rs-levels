@@ -29,14 +29,20 @@
         <input id="capture-enabled" type="checkbox">
         <span>Capture allowlisted responses</span>
       </label>
+      <div id="tradingview-target-row" class="row" hidden>
+        <label for="tradingview-tab">TradingView tab</label>
+        <select id="tradingview-tab"></select>
+      </div>
       <div class="actions">
-        <button id="copy-payload" type="button" class="wide primary-action">Copy TradingView</button>
+        <button id="send-tradingview" type="button" class="wide primary-action">Send to TradingView</button>
+        <p id="tradingview-access" class="action-hint wide">TradingView access: ask on first send.</p>
+        <button id="copy-payload" type="button" class="wide secondary">Copy payload instead</button>
         <button id="reconnect" type="button" class="secondary">Reconnect Tab</button>
         <button id="copy-diagnostics" type="button">Copy Diagnostics</button>
         <button id="open-docs" type="button">API Docs</button>
         <button id="open-plugins" type="button">Plugins</button>
       </div>
-      <p id="message" class="message">Start the local service, then open RocketScooter.</p>
+      <p id="message" class="message" role="status" aria-live="polite" aria-atomic="true">Start the local service, then open RocketScooter.</p>
     </section>
 
     <details class="panel compact debug-panel">

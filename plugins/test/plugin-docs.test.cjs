@@ -48,7 +48,9 @@ for (const plugin of manifest.plugins) {
 assert.match(validationDoc, /npm run scan:private/);
 assert.match(validationDoc, /npm run scan:secrets/);
 assert.match(validationDoc, /IAmTheLiquidity2/);
-assert.match(validationDoc, /Copy TradingView/);
+assert.match(validationDoc, /Send to TradingView/);
+assert.match(validationDoc, /Copy payload instead/);
+assert.match(validationDoc, /never clicks `OK`/);
 assert.match(validationDoc, /\/stats\/ES\?format=rows/);
 
 for (const platform of platforms) {

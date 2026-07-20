@@ -40,8 +40,8 @@ Status: public setup foundation complete; field validation planned.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
 - Add popup capture pause/resume toggle backed by extension storage.
-- Add a single popup TradingView payload action for all-symbol and selected-family exports, plus scrubbed diagnostics.
-- Make the copied `RSLEVELS|2` payload directly pasteable into the TradingView Pine indicator.
+- Add popup `Send to TradingView` for all-symbol and selected-scope exports, plus `Copy payload instead` and scrubbed diagnostics.
+- Make the `RSLEVELS|2` payload fillable through an opt-in, fail-closed TradingView settings helper and directly pasteable through the manual fallback.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
@@ -55,7 +55,7 @@ Status: public source artifacts complete; platform compile/install validation pl
 - NinjaTrader display indicator with local polling, kind-aware labels, and zone fills.
 - Quantower display indicator with local polling, kind-aware labels, and zone fills.
 - Bookmap display add-on with local polling and kind-aware value-line colors.
-- TradingView Pine indicator with paste-based level input, kind toggles, color controls, line controls, zone fills, stats panel, label controls, and max-level display control.
+- TradingView Pine indicator with settings-field handoff or paste-based level input, kind toggles, color controls, line controls, zone fills, stats panel, label controls, and max-level display control.
 - Direct platform adapters display DD/RI/Res/MRes/WRes/liquidity-map context from the platform's display feed: `/sierra/:symbol` for Sierra Chart and `/stats/:symbol?format=rows` for NinjaTrader, Quantower, and Bookmap.
 - Separate VARIS Zones indicators consume the same RI context for VWAP band spacing across TradingView, Sierra Chart, NinjaTrader, Quantower, and Bookmap.
 - Public `plugins/manifest.json` inventory with static display-only validation.

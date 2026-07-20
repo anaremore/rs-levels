@@ -88,7 +88,8 @@ const requiredExtensionEntries = [
   'src/page-reader.js',
   'src/popup.html',
   'src/popup.js',
-  'src/shared.js'
+  'src/shared.js',
+  'src/tradingview-content.js'
 ];
 
 const excludedNames = new Set([

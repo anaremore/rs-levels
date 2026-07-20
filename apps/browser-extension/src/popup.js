@@ -4,7 +4,11 @@ const els = {
   buildId: document.getElementById('build-id'),
   symbol: document.getElementById('symbol'),
   captureEnabled: document.getElementById('capture-enabled'),
+  sendTradingView: document.getElementById('send-tradingview'),
   copyPayload: document.getElementById('copy-payload'),
+  tradingViewTargetRow: document.getElementById('tradingview-target-row'),
+  tradingViewTab: document.getElementById('tradingview-tab'),
+  tradingViewAccess: document.getElementById('tradingview-access'),
   reconnect: document.getElementById('reconnect'),
   copyDiagnostics: document.getElementById('copy-diagnostics'),
   openDocs: document.getElementById('open-docs'),
@@ -26,10 +30,15 @@ const els = {
 };
 
 const ALL_SCOPE = 'ALL';
+const TRADINGVIEW_PERMISSION_ORIGIN = 'https://*.tradingview.com/*';
 
 let settings = globalThis.RS_LEVELS.cleanSettings({});
 let symbols = [];
 let latestServiceStatus = null;
+let tradingViewTabs = [];
+let tradingViewPermission = false;
+let tradingViewOpenMode = false;
+let sending = false;
 
 init();
 
@@ -44,18 +53,20 @@ async function init() {
   renderBuildIdentity();
   renderSymbols(symbols);
   bindEvents();
-  await refresh();
+  await Promise.all([refresh(), refreshTradingViewAccess()]);
 }
 
 function bindEvents() {
   els.refresh.addEventListener('click', refresh);
   els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  els.sendTradingView.addEventListener('click', sendTradingViewPayload);
   els.copyPayload.addEventListener('click', copyTradingViewPayload);
   els.reconnect.addEventListener('click', reconnectActiveTab);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
   els.openPlugins.addEventListener('click', () => window.open(`${settings.serviceUrl}/plugins`, '_blank', 'noopener'));
-  els.symbol.addEventListener('change', () => renderCopyState(latestServiceStatus));
+  els.symbol.addEventListener('change', renderTransferState);
+  els.tradingViewTab.addEventListener('change', renderTransferState);
   els.captureEnabled.addEventListener('change', toggleCapture);
 }
 
@@ -68,7 +79,7 @@ async function refresh() {
   } catch (_err) {}
   symbols = exportScopes(extState.detectedSymbols);
   renderSymbols(symbols);
-  renderCopyState();
+  renderTransferState();
   els.postedCount.textContent = String(extState.postedCount || 0);
   els.lastCapture.textContent = formatTime(extState.lastCaptureAt);
   els.lastPost.textContent = formatTime(extState.lastPostAt);
@@ -84,7 +95,7 @@ async function refresh() {
     els.sourceState.textContent = sourceState;
     els.levelCount.textContent = String(health.levelCount || 0);
     els.serviceVersion.textContent = serviceVersionText(health);
-    renderCopyState();
+    renderTransferState();
     renderPill(source);
     if (symbols.length) {
       setMessage(detectedMessage(), 'ok');
@@ -101,12 +112,176 @@ async function refresh() {
     els.levelCount.textContent = '0';
     els.serviceVersion.textContent = 'unknown';
     setPill(symbols.length ? 'CAPTURED' : 'OFFLINE', symbols.length ? 'warning' : 'error');
-    renderCopyState();
+    renderTransferState();
     setMessage(
       symbols.length ? `${detectedMessage()} Local service is offline.` : (err && err.message ? err.message : 'Local service unavailable'),
       symbols.length ? 'warning' : 'error'
     );
   }
+}
+
+async function refreshTradingViewAccess() {
+  try {
+    tradingViewPermission = await chrome.permissions.contains({
+      origins: [TRADINGVIEW_PERMISSION_ORIGIN]
+    });
+    if (tradingViewPermission) await loadTradingViewTabs();
+  } catch (_error) {
+    tradingViewPermission = false;
+    tradingViewTabs = [];
+  }
+  renderTradingViewTargets();
+  renderTradingViewAccess();
+  renderTransferState();
+}
+
+async function sendTradingViewPayload() {
+  if (sending) return;
+
+  if (tradingViewOpenMode) {
+    setSending(true, 'Opening…');
+    try {
+      await chrome.tabs.create({ url: 'https://www.tradingview.com/chart/' });
+      tradingViewOpenMode = false;
+      tradingViewTabs = [];
+      renderTradingViewTargets();
+      renderTradingViewAccess();
+      setMessage('TradingView opened. Open indicator settings, then send again.', 'ok');
+    } catch (err) {
+      setMessage(err && err.message ? err.message : 'Could not open TradingView.', 'error');
+    } finally {
+      setSending(false);
+    }
+    return;
+  }
+
+  const scope = selectedSymbol();
+  if (!scope) {
+    setMessage('Open a RocketScooter chart with HP, MHP, or liquidity-map data first.', 'warning');
+    return;
+  }
+
+  setSending(true);
+
+  try {
+    // This request must be the first awaited operation after the click.
+    tradingViewPermission = await chrome.permissions.request({
+      origins: [TRADINGVIEW_PERMISSION_ORIGIN]
+    });
+    if (!tradingViewPermission) {
+      tradingViewTabs = [];
+      renderTradingViewTargets();
+      renderTradingViewAccess();
+      setMessage('TradingView access was not enabled. You can keep using Copy payload instead.', 'warning');
+      return;
+    }
+
+    await loadTradingViewTabs();
+    renderTradingViewTargets();
+    renderTradingViewAccess();
+
+    if (!tradingViewTabs.length) {
+      tradingViewOpenMode = true;
+      setMessage('No open TradingView chart found. Open one, add RS Levels, then send again.', 'warning');
+      return;
+    }
+
+    if (tradingViewTabs.length > 1 && !selectedTradingViewTabId()) {
+      setMessage('Choose the TradingView chart to fill, then click Send to TradingView again.', 'warning');
+      return;
+    }
+
+    const tabId = selectedTradingViewTabId();
+    if (!tabId) throw new Error('Choose a TradingView chart tab first.');
+
+    const resolved = await resolveTradingViewPayload(scope, { detectedOnly: true });
+    if (!resolved.ok) {
+      setMessage(resolved.error, resolved.mode || 'warning');
+      return;
+    }
+
+    const result = await chrome.runtime.sendMessage({
+      type: 'rs-levels.send-to-tradingview',
+      tabId,
+      payload: resolved.payload,
+      scopeLabel: scopeLabel(scope)
+    });
+    if (!result || result.ok !== true) {
+      throw new Error(result && result.error || 'TradingView autofill did not start.');
+    }
+
+    if (result.state === 'filled') {
+      setMessage('RS Levels payload filled. Review the value, then click OK.', 'ok');
+    } else {
+      setMessage('Waiting up to 45 seconds for the RS Levels Payload field.', 'warning');
+    }
+  } catch (err) {
+    setMessage(err && err.message ? err.message : 'Could not send levels to TradingView.', 'error');
+  } finally {
+    setSending(false);
+    renderTradingViewAccess();
+  }
+}
+
+async function loadTradingViewTabs() {
+  const result = await chrome.runtime.sendMessage({ type: 'rs-levels.tradingview-tabs' });
+  if (!result || result.ok !== true) {
+    throw new Error(result && result.error || 'TradingView tabs are unavailable.');
+  }
+  tradingViewTabs = (Array.isArray(result.tabs) ? result.tabs : []).filter((tab) =>
+    tab && Number.isInteger(tab.id)
+  );
+  if (tradingViewTabs.length) tradingViewOpenMode = false;
+  return tradingViewTabs;
+}
+
+function renderTradingViewTargets() {
+  const selectedId = Number(els.tradingViewTab.value);
+  const preferredId = globalThis.RS_LEVELS.preferredTradingViewTabId(tradingViewTabs, selectedId);
+  const options = [];
+
+  if (tradingViewTabs.length > 1) {
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Choose a TradingView chart';
+    placeholder.disabled = true;
+    options.push(placeholder);
+  }
+
+  tradingViewTabs.forEach((tab) => {
+    const option = document.createElement('option');
+    option.value = String(tab.id);
+    option.textContent = `${tab.current ? 'Current · ' : ''}${tab.title || 'TradingView chart'}`;
+    options.push(option);
+  });
+  els.tradingViewTab.replaceChildren(...options);
+  els.tradingViewTab.value = preferredId ? String(preferredId) : '';
+
+  els.tradingViewTargetRow.hidden = tradingViewTabs.length <= 1;
+  els.tradingViewTab.disabled = sending || tradingViewTabs.length <= 1;
+}
+
+function renderTradingViewAccess() {
+  if (!tradingViewPermission) {
+    els.tradingViewAccess.textContent = 'TradingView access: ask on first send';
+    return;
+  }
+  const count = tradingViewTabs.length;
+  els.tradingViewAccess.textContent = count
+    ? `TradingView access: enabled · ${count} chart${count === 1 ? '' : 's'}`
+    : 'TradingView access: enabled · no open chart';
+}
+
+function selectedTradingViewTabId() {
+  const tabId = Number(els.tradingViewTab.value);
+  return Number.isInteger(tabId) && tabId > 0 ? tabId : 0;
+}
+
+function setSending(value, label = 'Sending…') {
+  sending = value === true;
+  els.sendTradingView.setAttribute('aria-busy', String(sending));
+  if (sending) els.sendTradingView.textContent = label;
+  renderTransferState();
 }
 
 async function copyTradingViewPayload() {
@@ -115,43 +290,76 @@ async function copyTradingViewPayload() {
     setMessage('Open a RocketScooter chart with HP, MHP, or liquidity-map data first.', 'warning');
     return;
   }
-  try {
-    const localPayload = await extensionTradingViewPayload(scope);
-    if (localPayload) {
-      await navigator.clipboard.writeText(localPayload);
-      setMessage(`${scopeLabel(scope)} TradingView data copied`, 'ok');
-      return;
-    }
-  } catch (err) {
-    setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
-    return;
-  }
 
-  if (scope === ALL_SCOPE || !['ES', 'NQ'].includes(globalThis.RS_LEVELS.publicDisplaySymbol(scope))) {
-    setMessage(`No current chart data is available for ${scopeLabel(scope)}.`, 'warning');
+  const resolved = await resolveTradingViewPayload(scope);
+  if (!resolved.ok) {
+    setMessage(resolved.error, resolved.mode || 'warning');
     return;
   }
 
   try {
-    latestServiceStatus = await getJson('/status');
-    renderCopyState();
-    const issue = globalThis.RS_LEVELS.selectedSymbolIssue(latestServiceStatus, scope);
-    if (issue) {
-      setMessage(issue, 'warning');
-      return;
-    }
-    await copyPayloadFromEndpoint(`/tradingview/${scope}`, `${scopeLabel(scope)} TradingView data copied`);
+    await navigator.clipboard.writeText(resolved.payload);
+    setMessage(`${scopeLabel(scope)} TradingView data copied`, 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
   }
 }
 
-async function extensionTradingViewPayload(scope) {
+async function resolveTradingViewPayload(scope, options = {}) {
+  const captured = await extensionTradingViewPayloadResult(scope, options);
+  if (captured.ok) return captured;
+
+  const publicSymbol = globalThis.RS_LEVELS.publicDisplaySymbol(scope);
+  if (scope === ALL_SCOPE || !['ES', 'NQ'].includes(publicSymbol)) {
+    return {
+      ok: false,
+      error: captured.error || `No current chart data is available for ${scopeLabel(scope)}.`,
+      mode: 'warning'
+    };
+  }
+
   try {
-    const result = await chrome.runtime.sendMessage({ type: 'rs-levels.tradingview-payload', scope });
-    return result && result.ok && result.payload ? globalThis.RS_LEVELS.cleanTradingViewPayload(result.payload) : '';
-  } catch (_err) {
-    return '';
+    latestServiceStatus = await getJson('/status');
+    renderTransferState();
+    const issue = globalThis.RS_LEVELS.tradingViewCopyIssue(latestServiceStatus, scope);
+    if (issue) return { ok: false, error: issue, mode: 'warning' };
+    return {
+      ok: true,
+      payload: await fetchTradingViewText(`/tradingview/${encodeURIComponent(scope)}`),
+      source: 'local-service'
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err && err.message ? err.message : 'TradingView payload unavailable.',
+      mode: 'error'
+    };
+  }
+}
+
+async function extensionTradingViewPayloadResult(scope, options = {}) {
+  try {
+    const result = await chrome.runtime.sendMessage({
+      type: 'rs-levels.tradingview-payload',
+      scope,
+      detectedOnly: options.detectedOnly === true
+    });
+    if (!result || result.ok !== true || !result.payload) {
+      return {
+        ok: false,
+        error: result && result.error || 'No extension-captured TradingView levels are available yet.'
+      };
+    }
+    return {
+      ...result,
+      ok: true,
+      payload: globalThis.RS_LEVELS.cleanTradingViewPayload(result.payload)
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err && err.message ? err.message : 'Extension-captured TradingView levels are unavailable.'
+    };
   }
 }
 
@@ -167,15 +375,6 @@ async function reconnectActiveTab() {
   }
 }
 
-async function copyPayloadFromEndpoint(path, success, options = {}) {
-  try {
-    const text = await fetchTradingViewText(path, options);
-    await navigator.clipboard.writeText(text);
-    setMessage(success, 'ok');
-  } catch (err) {
-    setMessage(err && err.message ? err.message : 'Copy failed', 'error');
-  }
-}
 
 async function fetchTradingViewText(path, options = {}) {
   const url = `${settings.serviceUrl}${path}`;
@@ -194,7 +393,7 @@ function copyFailureMessage(status, detail = '', options = {}) {
     return `All-symbol TradingView payload unavailable (${status})${detail ? `: ${detail}` : ''}`;
   }
   if (status === 404) return `No data for ${scopeLabel(selectedSymbol())}`;
-  return `Copy failed (${status})${detail ? `: ${detail}` : ''}`;
+  return `TradingView payload unavailable (${status})${detail ? `: ${detail}` : ''}`;
 }
 
 async function responseErrorDetail(response) {
@@ -348,12 +547,24 @@ function renderCaptureStats(stats = {}) {
   els.hookReason.textContent = clean.lastReason || 'none';
 }
 
-function renderCopyState() {
+function renderTransferState() {
   const selected = selectedSymbol();
-  els.copyPayload.disabled = !selected;
+  const canOpenTradingView = tradingViewOpenMode && tradingViewPermission;
+  if (!sending) {
+    els.sendTradingView.textContent = tradingViewOpenMode ? 'Open TradingView' : 'Send to TradingView';
+  }
+  els.sendTradingView.disabled = sending || (!selected && !canOpenTradingView);
+  els.sendTradingView.title = tradingViewOpenMode
+    ? 'Open a new TradingView chart'
+    : selected
+      ? `Fill ${scopeLabel(selected)} in an open RS Levels settings dialog`
+      : 'Open a RocketScooter chart with supported data first';
+
+  els.copyPayload.disabled = sending || !selected;
   els.copyPayload.title = selected
     ? `Copy ${scopeLabel(selected)} TradingView payload`
     : 'Open a RocketScooter chart with supported data first';
+  els.tradingViewTab.disabled = sending || tradingViewTabs.length <= 1;
 }
 
 function formatTime(value) {

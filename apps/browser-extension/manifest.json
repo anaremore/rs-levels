@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "RS Levels Capture",
-  "description": "Capture RocketScooter display levels into the local RS Levels API.",
-  "version": "0.2.0",
+  "description": "Capture RocketScooter display levels and hand them to RS Levels displays.",
+  "version": "0.3.2",
   "permissions": [
     "storage",
     "clipboardWrite",

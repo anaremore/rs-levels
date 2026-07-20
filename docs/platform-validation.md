@@ -56,8 +56,8 @@ Every VARIS Zones adapter must verify:
 
 | Platform | Artifact | Input path | Required validation |
 | --- | --- | --- | --- |
-| TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` paste payload | Paste all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, verify manual lines and stats panel. |
-| TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` paste payload | Paste same payload, verify `RI` selection, manual fallback, VWAP, half-RI bands, and full-RI bands. |
+| TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste an all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, manual confirmation, manual lines, and stats panel. |
+| TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste the same payload, verify manual confirmation, `RI` selection, manual fallback, VWAP, half-RI bands, and full-RI bands. |
 | Sierra Chart | `plugins/sierra-chart/rs-levels-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify levels, labels, stats marker, zone fills, stale/offline marker, and hidden debug default. |
 | Sierra Chart | `plugins/sierra-chart/varis-zones-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify the status build tag changed, `Follow chart symbol` is on, Auto symbol detection works on ES/MES and NQ/MNQ charts, `API RI` status comes from the Sierra compatibility feed, manual fallback works before RI is available, and VWAP/RI bands render. |
 | NinjaTrader | `plugins/ninjatrader/RSLevelsDisplay.cs` | `GET /levels/:symbol?format=rows`, `GET /stats/:symbol?format=rows` | Compile NinjaScript, add indicator, verify levels, stats, zone fills, label controls, and stale/offline state. |
@@ -67,6 +67,19 @@ Every VARIS Zones adapter must verify:
 | Bookmap | `plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java` | `GET /levels/:symbol?format=rows`, `GET /stats/:symbol?format=rows` | Build add-on, attach to instrument, verify colored value lines, manual lines, and stale clearing behavior. |
 | Bookmap | `plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java` | `GET /stats/:symbol?format=rows` | Build add-on, attach to instrument, verify captured `RI`, manual fallback, VWAP indicator, and RI band indicators. |
 
+## TradingView Handoff Check
+
+Run this manual smoke test in a Chromium profile before release:
+
+1. Decline the first `Send to TradingView` permission prompt and confirm no field changes and `Copy payload instead` still works.
+2. Grant only the requested TradingView origin and confirm a single open chart is selected automatically.
+3. Open two TradingView chart tabs and confirm the popup shows a target chooser and does not guess on the first multi-tab send.
+4. With settings already open, send to both `rs-levels.pine` and `varis-zones.pine`; confirm only the exact `RS Levels Payload` field changes.
+5. With settings closed, send, open settings within 45 seconds, and confirm the field fills. Repeat after 45 seconds and confirm it does not fill.
+6. Confirm the helper never clicks `OK`, presses Enter, changes another setting, or hides a TradingView error.
+7. Reload the extension or restart the browser and confirm no earlier session payload is sent until RocketScooter produces a fresh detected-chart capture.
+8. Exercise the copy fallback after a missing-field failure so a TradingView markup change does not block the release workflow.
+
 ## Live RocketScooter Field Check
 
 When the market is open and RocketScooter exposes live display context:
@@ -75,7 +88,7 @@ When the market is open and RocketScooter exposes live display context:
 2. Keep SPY/QQQ or other non-futures panels open if that is part of the user's normal layout.
 3. Reload the extension, reconnect the tab, and refresh RocketScooter.
 4. Confirm the popup lists only supported symbols from charts currently open in RocketScooter and adds `All detected charts` when several are available; watchlist-only rows must not appear.
-5. Open a stock such as NVDA and confirm `Copy TradingView` includes detected HP, MHP, and `Map` data under the stock ticker. Also confirm existing futures levels, manual yellow/red/CAT lines, zones, and stats remain intact.
+5. Open a stock such as NVDA and confirm both `Send to TradingView` and `Copy payload instead` include detected HP, MHP, and `Map` data under the stock ticker. Also confirm existing futures levels, manual yellow/red/CAT lines, zones, and stats remain intact.
 6. Confirm direct plugin feeds show the same display rows through `/sierra/:symbol`, `/levels/:symbol?format=rows`, and `/stats/:symbol?format=rows`.
 
 Any parser change made from a live field finding must add or update a synthetic fixture/test before release.
