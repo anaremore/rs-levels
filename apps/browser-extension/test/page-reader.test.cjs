@@ -76,6 +76,10 @@ function makeTable(rows) {
 const charts = [
   makeChart('F.US.EPU26', [
     makeShape('es-hp', 'horizontal_line', [{ price: 7565 }], { text: 'OVNHP', linecolor: '#2962ff' }),
+    makeShape('es-hp-2', 'horizontal_line', [{ price: 7548.75 }], { text: 'OVNHP', linecolor: '#2962ff' }),
+    makeShape('es-hp-duplicate', 'horizontal_line', [{ price: 7565 }], { text: 'OVNHP', linecolor: '#2962ff' }),
+    makeShape('es-mhp', 'horizontal_line', [{ price: 7588.5 }], { text: 'OVNMHP', linecolor: '#ff9800' }),
+    makeShape('es-mhp-2', 'horizontal_line', [{ price: 7600.25 }], { text: 'OVNMHP', linecolor: '#ff9800' }),
     makeShape('es-open', 'horizontal_line', [{ price: 7559 }], { text: 'SPY Open : 7,559 Liquidity Map', linecolor: '#e0e0e0' }),
     makeShape('es-yellow', 'horizontal_line', [{ price: 7598 }], { linecolor: '#ffeb3b' }),
     makeShape('es-yellow-2', 'horizontal_line', [{ price: 7632 }], { linecolor: '#ffeb3b' }),
@@ -185,10 +189,15 @@ assert.equal(body.type, 'rs_snapshot');
 assert.equal(body.source, 'page-reader');
 assert.equal(body.reader.chartCount, 4);
 assert.equal(body.reader.statCount, 4);
-assert.equal(body.chartLines.length, 13);
+assert.equal(body.chartLines.length, 16);
 assert.equal(body.referenceLines.length, 3);
 assert.equal(body.zoneRectangles.length, 2);
+assert.equal(body.levels.filter((level) => level.symbol === 'MES' && level.name === 'OVNHP').length, 2);
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNHP' && level.price === 7565));
+assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNHP' && level.price === 7548.75));
+assert.equal(body.levels.filter((level) => level.symbol === 'MES' && level.name === 'OVNMHP').length, 2);
+assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNMHP' && level.price === 7588.5));
+assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNMHP' && level.price === 7600.25));
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'Open' && level.price === 7559));
 assert.equal(body.levels.filter((level) => level.symbol === 'MES' && level.name === 'Yellow Line' && level.kind === 'yellow-line').length, 3);
 assert.equal(body.levels.filter((level) => level.symbol === 'MES' && level.name === 'Red Line' && level.kind === 'red-line').length, 3);

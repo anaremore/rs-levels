@@ -69,6 +69,25 @@ assert.doesNotMatch(payload, /compactPayload|notes|tradingview-json|tradingview-
 assert.doesNotMatch(payload, /horizontal_line/);
 assert.doesNotMatch(payload, /horizontalLine/);
 
+const multiOvernightPayload = createTradingViewPayloadExport({
+  symbol: 'ES',
+  capturedAt: '2026-07-31T13:30:59.000Z',
+  levels: [
+    { name: 'OVNHP', price: 7565, kind: 'hp' },
+    { name: 'OVNHP', price: 7548.75, kind: 'hp' },
+    { name: 'OVNHP', price: 7565, kind: 'hp' },
+    { name: 'OVNMHP', price: 7588.5, kind: 'mhp' },
+    { name: 'OVNMHP', price: 7600.25, kind: 'mhp' },
+    { name: 'OVNMHP', price: 7588.5, kind: 'mhp' }
+  ]
+}, { generatedAt: '2026-07-31T13:31:00.000Z' });
+assert.equal((multiOvernightPayload.match(/OVNHP,/g) || []).length, 2);
+assert.equal((multiOvernightPayload.match(/OVNMHP,/g) || []).length, 2);
+assert.match(multiOvernightPayload, /OVNHP,7565,hp/);
+assert.match(multiOvernightPayload, /OVNHP,7548\.75,hp/);
+assert.match(multiOvernightPayload, /OVNMHP,7588\.5,mhp/);
+assert.match(multiOvernightPayload, /OVNMHP,7600\.25,mhp/);
+
 const mismatchedZoneSidePayload = createTradingViewPayloadExport({
   symbol: 'NQ',
   capturedAt: '2026-06-22T14:35:00.000Z',

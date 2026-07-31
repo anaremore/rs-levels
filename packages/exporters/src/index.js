@@ -70,7 +70,24 @@ export function prepareDisplayLevels(levels = []) {
   const prepared = levels.map((level) => ({ ...level }));
   const consumedIndexes = new Set();
   const derivedZones = deriveDdBoundedZones(prepared, consumedIndexes);
-  return prepared.filter((_level, index) => !consumedIndexes.has(index)).concat(derivedZones);
+  return uniqueDisplayLevels(prepared.filter((_level, index) => !consumedIndexes.has(index)).concat(derivedZones));
+}
+
+function uniqueDisplayLevels(levels) {
+  const seen = new Set();
+  return levels.filter((level) => {
+    const price = finiteNumber(level?.price);
+    if (price == null) return true;
+    const key = [
+      field(level?.symbol).toUpperCase(),
+      field(level?.name).toUpperCase(),
+      canonicalTradingViewKind(level?.kind),
+      price.toFixed(6)
+    ].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function deriveDdBoundedZones(levels, consumedIndexes) {

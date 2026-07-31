@@ -118,6 +118,30 @@ const stockScopedPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapsho
 assert.match(stockScopedPayload, /HP,202\.5,hp/);
 assert.match(stockScopedPayload, /MHP,205,mhp/);
 assert.match(stockScopedPayload, /Map BLD,0,stat/);
+const multiOvernightSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
+  capturedAt: '2026-07-31T13:31:00.000Z',
+  body: JSON.stringify({
+    symbol: 'MES',
+    capturedAt: '2026-07-31T13:30:59.000Z',
+    levels: [
+      { name: 'OVNHP', price: 7565, kind: 'hp' },
+      { name: 'OVNHP', price: 7548.75, kind: 'hp' },
+      { name: 'OVNMHP', price: 7588.5, kind: 'mhp' },
+      { name: 'OVNMHP', price: 7600.25, kind: 'mhp' }
+    ],
+    chartLines: [
+      { index: 'ES', text: 'OVNHP', price: 7565, kind: 'hp' },
+      { index: 'ES', text: 'OVNMHP', price: 7588.5, kind: 'mhp' }
+    ]
+  })
+});
+const multiOvernightPayload = sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(multiOvernightSnapshot, 'ES');
+assert.equal((multiOvernightPayload.match(/OVNHP,/g) || []).length, 2);
+assert.equal((multiOvernightPayload.match(/OVNMHP,/g) || []).length, 2);
+assert.match(multiOvernightPayload, /OVNHP,7565,hp/);
+assert.match(multiOvernightPayload, /OVNHP,7548\.75,hp/);
+assert.match(multiOvernightPayload, /OVNMHP,7588\.5,mhp/);
+assert.match(multiOvernightPayload, /OVNMHP,7600\.25,mhp/);
 const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-06-21T03:47:05.860Z',
   body: JSON.stringify({

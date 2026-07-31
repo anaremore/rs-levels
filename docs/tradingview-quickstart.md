@@ -34,12 +34,12 @@ RS Levels passes through display levels that RocketScooter exposes. It does not 
 
 If you want these items to appear in TradingView, add or keep them visible on the matching RocketScooter chart before sending the payload:
 
-- overnight HP and overnight MHP
+- overnight HP labeled `OVNHP` and overnight MHP labeled `OVNMHP`
 - yellow lines
 - red lines
 - CAT lines
 
-For futures, add them on the ES/MES or NQ/MNQ chart family you care about. For a stock such as NVDA, keep its stock chart open so detected HP, MHP, and map context can be included. After changing a chart or manual line, refresh/reconnect the RocketScooter tab if needed, then send a fresh TradingView payload.
+For futures, add them on the ES/MES or NQ/MNQ chart family you care about. Multiple `OVNHP` or `OVNMHP` lines are supported when they use distinct prices; exact duplicate label-and-price captures are shown once. For a stock such as NVDA, keep its stock chart open so detected HP, MHP, and map context can be included. After changing a chart or manual line, refresh/reconnect the RocketScooter tab if needed, then send a fresh TradingView payload.
 
 ## 4. Add The TradingView Indicator
 

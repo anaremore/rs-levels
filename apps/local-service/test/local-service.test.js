@@ -358,12 +358,18 @@ try {
         { symbol: 'F.US.EPU26', name: 'Yellow Line', price: 7632, kind: 'yellow-line', color: '#ffeb3b' },
         { symbol: 'F.US.EPU26', name: 'Red Line', price: 7520, kind: 'red-line', color: '#f23645' },
         { symbol: 'F.US.EPU26', name: 'Red Line', price: 7496, kind: 'red-line', color: '#f23645' },
+        { symbol: 'F.US.EPU26', name: 'OVNHP', price: 7565, kind: 'hp', color: '#2962ff' },
+        { symbol: 'F.US.EPU26', name: 'OVNHP', price: 7548.75, kind: 'hp', color: '#2962ff' },
+        { symbol: 'F.US.EPU26', name: 'OVNMHP', price: 7588.5, kind: 'mhp', color: '#ff9800' },
+        { symbol: 'F.US.EPU26', name: 'OVNMHP', price: 7600.25, kind: 'mhp', color: '#ff9800' },
         { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat', color: '#7e57c2' }
       ]
     }
   });
   assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.kind === 'yellow-line').length, 2);
   assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.kind === 'red-line').length, 2);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.name === 'OVNHP').length, 2);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.name === 'OVNMHP').length, 2);
   assert.equal(manualLineCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'cat'), true);
 
   const statsCapture = await postJson(`${baseUrl}/capture/api`, {
@@ -428,10 +434,14 @@ try {
   assert.match(sierraManualFeed, /Yellow Line,7632\.00,255,235,59,yellow-line/);
   assert.match(sierraManualFeed, /Red Line,7520\.00,242,54,69,red-line/);
   assert.match(sierraManualFeed, /Red Line,7496\.00,242,54,69,red-line/);
+  assert.match(sierraManualFeed, /OVNHP,7565\.00,41,98,255,hp/);
+  assert.match(sierraManualFeed, /OVNHP,7548\.75,41,98,255,hp/);
+  assert.match(sierraManualFeed, /OVNMHP,7588\.50,255,152,0,mhp/);
+  assert.match(sierraManualFeed, /OVNMHP,7600\.25,255,152,0,mhp/);
 
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
   assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 7);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 11);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 3);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').stats.mapCode, 'BLD');
 
@@ -444,6 +454,12 @@ try {
   assert.match(bundledTradingViewPayload, /Yellow Line,7632,yellow-line/);
   assert.match(bundledTradingViewPayload, /Red Line,7520,red-line/);
   assert.match(bundledTradingViewPayload, /Red Line,7496,red-line/);
+  assert.equal((bundledTradingViewPayload.match(/OVNHP,/g) || []).length, 2);
+  assert.equal((bundledTradingViewPayload.match(/OVNMHP,/g) || []).length, 2);
+  assert.match(bundledTradingViewPayload, /OVNHP,7565,hp/);
+  assert.match(bundledTradingViewPayload, /OVNHP,7548\.75,hp/);
+  assert.match(bundledTradingViewPayload, /OVNMHP,7588\.5,mhp/);
+  assert.match(bundledTradingViewPayload, /OVNMHP,7600\.25,mhp/);
   assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
   assert.match(bundledTradingViewPayload, /DD,0\.66,stat/);
   assert.match(bundledTradingViewPayload, /RI,266\.25,stat/);
@@ -461,6 +477,10 @@ try {
   assert.match(mesRowsWithKinds, /Yellow Line,7632\.00,255,235,59,yellow-line/);
   assert.match(mesRowsWithKinds, /Red Line,7520\.00,242,54,69,red-line/);
   assert.match(mesRowsWithKinds, /Red Line,7496\.00,242,54,69,red-line/);
+  assert.match(mesRowsWithKinds, /OVNHP,7565\.00,41,98,255,hp/);
+  assert.match(mesRowsWithKinds, /OVNHP,7548\.75,41,98,255,hp/);
+  assert.match(mesRowsWithKinds, /OVNMHP,7588\.50,255,152,0,mhp/);
+  assert.match(mesRowsWithKinds, /OVNMHP,7600\.25,255,152,0,mhp/);
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|NQ\|/);
@@ -475,9 +495,11 @@ try {
   assert.equal(zones.levels.some((level) => level.kind === 'zone-bear'), true);
 
   const references = await getJson(`${baseUrl}/references`);
-  assert.equal(references.levels.length, 5);
+  assert.equal(references.levels.length, 9);
   assert.equal(references.levels.filter((level) => level.kind === 'yellow-line').length, 2);
   assert.equal(references.levels.filter((level) => level.kind === 'red-line').length, 2);
+  assert.equal(references.levels.filter((level) => level.kind === 'hp').length, 2);
+  assert.equal(references.levels.filter((level) => level.kind === 'mhp').length, 2);
   assert.equal(references.levels.some((level) => level.kind === 'cat'), true);
 
   const remoteService = createService({
