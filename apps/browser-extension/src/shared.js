@@ -1,8 +1,8 @@
 (() => {
   const defaults = {
-    settingsVersion: 4,
+    settingsVersion: 5,
     serviceUrl: 'http://127.0.0.1:8765',
-    captureEnabled: true,
+    captureEnabled: false,
     endpointPatterns: [
       'level',
       'levels',
@@ -104,7 +104,7 @@
     return {
       settingsVersion: defaults.settingsVersion,
       serviceUrl: cleanServiceUrl(input.serviceUrl),
-      captureEnabled: input.captureEnabled !== false,
+      captureEnabled: input.captureEnabled === true,
       endpointPatterns: cleanPatterns(input.endpointPatterns),
       maxCaptureBytes: cleanMaxBytes(input.maxCaptureBytes)
     };
@@ -115,6 +115,9 @@
     const version = Number(input.settingsVersion);
     if (!Number.isInteger(version) || version < defaults.settingsVersion) {
       settings.endpointPatterns = mergeEndpointPatterns(input.endpointPatterns, defaults.endpointPatterns);
+      if (!Number.isInteger(version) || version < 5) {
+        settings.captureEnabled = false;
+      }
     }
     return settings;
   }

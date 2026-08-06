@@ -15,7 +15,7 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /23 critical entries/);
+assert.match(checkOutput, /32 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /extension zip enabled/);
 
@@ -51,6 +51,9 @@ assert.equal(zip.readUInt32LE(0), 0x04034b50);
 assert.match(zipText, /rs-levels-0\.0\.0\/README\.md/);
 assert.match(zipText, /rs-levels-0\.0\.0\/docs\/platform-validation\.md/);
 assert.match(zipText, /rs-levels-0\.0\.0\/apps\/local-service\/src\/build-info\.js/);
+assert.match(zipText, /rs-levels-0\.0\.0\/docs\/privacy-policy\.md/);
+assert.match(zipText, /rs-levels-0\.0\.0\/docs\/chrome-web-store-release\.md/);
+assert.match(zipText, /rs-levels-0\.0\.0\/store-assets\/screenshot-popup-1280x800\.png/);
 assert.match(zipText, /rs-levels-0\.0\.0\/plugins\/manifest\.json/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.ps1/);
@@ -65,6 +68,10 @@ const extensionZipText = extensionZip.toString('utf8');
 assert.equal(extensionZip.readUInt32LE(0), 0x04034b50);
 assert.match(extensionZipText, /manifest\.json/);
 assert.match(extensionZipText, /README\.md/);
+assert.match(extensionZipText, /assets\/icon-16\.png/);
+assert.match(extensionZipText, /assets\/icon-32\.png/);
+assert.match(extensionZipText, /assets\/icon-48\.png/);
+assert.match(extensionZipText, /assets\/icon-128\.png/);
 assert.match(extensionZipText, /src\/background\.js/);
 assert.match(extensionZipText, /src\/build-info\.js/);
 assert.match(extensionZipText, /src\/page-hook\.js/);

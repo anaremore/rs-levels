@@ -25,10 +25,13 @@
         <select id="symbol"></select>
         <p class="chart-hint">Only supported data from charts open in RocketScooter appears here.</p>
       </div>
-      <label class="switch">
-        <input id="capture-enabled" type="checkbox">
-        <span>Capture allowlisted responses</span>
-      </label>
+      <div class="capture-consent">
+        <label class="switch">
+          <input id="capture-enabled" type="checkbox" aria-describedby="capture-disclosure">
+          <span>Enable RocketScooter capture</span>
+        </label>
+        <p id="capture-disclosure" class="disclosure">When enabled, RS Levels reads allowlisted RocketScooter response bodies and visible chart-level metadata, keeps a sanitized chart snapshot for this browser session, and sends captures only to the RS Levels service shown above (localhost by default). It does not read cookies, authorization headers, passwords, or unrelated form inputs. Enable only if you agree.</p>
+      </div>
       <div id="tradingview-target-row" class="row" hidden>
         <label for="tradingview-tab">TradingView tab</label>
         <select id="tradingview-tab"></select>
@@ -42,7 +45,7 @@
         <button id="open-docs" type="button">API Docs</button>
         <button id="open-plugins" type="button">Plugins</button>
       </div>
-      <p id="message" class="message" role="status" aria-live="polite" aria-atomic="true">Start the local service, then open RocketScooter.</p>
+      <p id="message" class="message" role="status" aria-live="polite" aria-atomic="true">Enable capture, start the local service, then open RocketScooter.</p>
     </section>
 
     <details class="panel compact debug-panel">

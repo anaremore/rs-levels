@@ -31,7 +31,7 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 2. Load `apps/browser-extension` unpacked.
 3. Open RocketScooter.
 4. Check the popup status.
-5. Use the capture toggle when you need to pause or resume allowlisted capture.
+5. Read the capture disclosure and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
 6. Choose a symbol from `Detected chart`. Only open charts with supported data appear; use `All detected charts` when more than one is available.
 7. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
 8. Use `Plugins` to inspect the local display-adapter manifest.
@@ -41,9 +41,9 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 
 The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
 
-Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-0.3.2.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
+Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-<extension-version>.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
-The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.3.2+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.0+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 The collapsed `Debug` section includes aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
@@ -100,7 +100,7 @@ db/sp
 db/nq
 ```
 
-Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns after the extension reloads or updates.
+Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns. Pre-v5 installs are paused once on update so the user can review the disclosure and opt in again.
 
 Capture is not limited by the popup selection. The extension keeps the latest sanitized page-reader snapshot in extension-only `chrome.storage.session`, allowing both TradingView actions to work without the local API while the browser session remains open. It stores no raw capture body, and the snapshot is cleared by a browser restart or extension update. The selector is derived from payload-capable symbols in `tvWidget.chartsCount()/chart(i)`, not from RocketScooter's watchlist table. Futures contract symbols continue to normalize to public `ES` and `NQ` families. Stock charts use their ticker, so an open `NVDA` chart with HP, MHP, or map context produces an `NVDA` choice and payload section. A watchlist row alone does not create a choice.
 

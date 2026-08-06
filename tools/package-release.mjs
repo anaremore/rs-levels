@@ -44,19 +44,26 @@ const includeEntries = [
   'examples',
   'docs',
   'scripts',
-  'tools'
+  'tools',
+  'store-assets'
 ];
 
-const extensionIncludeEntries = ['manifest.json', 'README.md', 'src'];
+const extensionIncludeEntries = ['manifest.json', 'README.md', 'assets', 'src'];
 
 const requiredReleaseEntries = [
   'README.md',
   'docs/openapi.yaml',
   'docs/user-setup.md',
   'docs/platform-validation.md',
+  'docs/privacy-policy.md',
+  'docs/chrome-web-store-release.md',
   'apps/local-service/src/build-info.js',
   'apps/local-service/src/cli.js',
   'apps/browser-extension/manifest.json',
+  'apps/browser-extension/assets/icon-16.png',
+  'apps/browser-extension/assets/icon-32.png',
+  'apps/browser-extension/assets/icon-48.png',
+  'apps/browser-extension/assets/icon-128.png',
   'apps/browser-extension/src/popup.html',
   'scripts/start-local-service.cmd',
   'scripts/start-local-service.ps1',
@@ -72,12 +79,19 @@ const requiredReleaseEntries = [
   'plugins/quantower/VARISZonesQuantower.cs',
   'plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java',
   'plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java',
+  'store-assets/icon-128.png',
+  'store-assets/small-promo-440x280.png',
+  'store-assets/screenshot-popup-1280x800.png',
   'tools/scan-text.mjs'
 ];
 
 const requiredExtensionEntries = [
   'manifest.json',
   'README.md',
+  'assets/icon-16.png',
+  'assets/icon-32.png',
+  'assets/icon-48.png',
+  'assets/icon-128.png',
   'src/background.js',
   'src/build-info.js',
   'src/capture-rules.js',
@@ -90,6 +104,16 @@ const requiredExtensionEntries = [
   'src/popup.js',
   'src/shared.js',
   'src/tradingview-content.js'
+];
+
+const requiredPngDimensions = [
+  ['apps/browser-extension/assets/icon-16.png', 16, 16],
+  ['apps/browser-extension/assets/icon-32.png', 32, 32],
+  ['apps/browser-extension/assets/icon-48.png', 48, 48],
+  ['apps/browser-extension/assets/icon-128.png', 128, 128],
+  ['store-assets/icon-128.png', 128, 128],
+  ['store-assets/small-promo-440x280.png', 440, 280],
+  ['store-assets/screenshot-popup-1280x800.png', 1280, 800]
 ];
 
 const excludedNames = new Set([
@@ -134,6 +158,7 @@ for (const entry of extensionIncludeEntries) {
 }
 extensionFiles.sort((a, b) => a.relative.localeCompare(b.relative));
 assertRequiredExtensionEntries(extensionFiles);
+await assertPngDimensions();
 
 if (checkOnly) {
   console.log(
@@ -207,6 +232,24 @@ console.log(`release zip checksum written to ${path.relative(root, zipShaPath)}`
 console.log(`browser extension zip written to ${path.relative(root, extensionZipPath)}`);
 console.log(`browser extension zip checksum written to ${path.relative(root, extensionZipShaPath)}`);
 console.log(`${manifestFiles.length} files`);
+
+async function assertPngDimensions() {
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  for (const [relative, expectedWidth, expectedHeight] of requiredPngDimensions) {
+    const absolute = path.join(root, relative);
+    const data = await fs.readFile(absolute);
+    if (data.length < 24 || !data.subarray(0, 8).equals(signature)) {
+      throw new Error(`Required PNG is invalid: ${relative}`);
+    }
+    const width = data.readUInt32BE(16);
+    const height = data.readUInt32BE(20);
+    if (width !== expectedWidth || height !== expectedHeight) {
+      throw new Error(
+        `Required PNG has wrong dimensions: ${relative} (${width}x${height}, expected ${expectedWidth}x${expectedHeight})`
+      );
+    }
+  }
+}
 
 async function assertExists(filePath) {
   try {

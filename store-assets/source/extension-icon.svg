@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">RS Levels Capture icon</title>
+  <desc id="desc">Three aqua chart levels and amber markers on a dark rounded square.</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16243a"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="384" height="384" rx="92" fill="url(#surface)" stroke="#d9f2ff" stroke-opacity=".36" stroke-width="10"/>
+  <path d="M132 174H380M132 256H380M132 338H380" fill="none" stroke="#62d9ff" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="214" cy="174" r="28" fill="#ffd166" stroke="#07111f" stroke-width="12"/>
+  <circle cx="318" cy="256" r="28" fill="#ffd166" stroke="#07111f" stroke-width="12"/>
+  <circle cx="258" cy="338" r="28" fill="#ffd166" stroke="#07111f" stroke-width="12"/>
+</svg>

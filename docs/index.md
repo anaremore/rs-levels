@@ -32,6 +32,8 @@ This is the canonical documentation map. The README is the public front door; th
 
 - [Public boundary](public-boundary.md)
 - [Privacy and security](privacy-security.md)
+- [Extension privacy policy](privacy-policy.md)
+- [Chrome Web Store release guide](chrome-web-store-release.md)
 - [Platform validation](platform-validation.md)
 - [Packaging](packaging.md)
 - [CI](ci.md)

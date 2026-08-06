@@ -16,7 +16,7 @@ The page hook skips clearly non-text response content types before reading a bod
 4. Start the local service with `npm start`.
 5. Open RocketScooter and use the extension popup to check status.
 
-Packaged releases also include `dist/rs-levels-browser-extension-0.3.2.zip`. Unzip it and load the extracted folder as the unpacked extension. The standalone zip contains only the extension manifest, README, and runtime `src/` files.
+Packaged releases also include `dist/rs-levels-browser-extension-<extension-version>.zip`. Unzip it and load the extracted folder as the unpacked extension. The standalone zip contains only the extension manifest, icon assets, README, and runtime `src/` files.
 
 ## Popup
 
@@ -32,6 +32,8 @@ The popup shows local service health, service version, extension version/build i
 - `Plugins`
 - options shortcut
 - collapsed debug section with aggregate observed, ignored, skipped, posted counters, hook status reason, and manual status refresh
+
+Capture is off by default. The popup and options page explain which RocketScooter data is handled, where it is sent, and what is excluded; capture begins only after the user enables the adjacent checkbox. See the public [privacy policy](../../docs/privacy-policy.md).
 
 The capture toggle updates the same `captureEnabled` setting as the options page. The selector contains only symbols with supported data in RocketScooter charts that are currently open; it does not copy the platform watchlist into a long dropdown. When several charts are available, `All detected charts` bundles them in one payload. `Send to TradingView` asks for `https://*.tradingview.com/*` access on first use, lets the user choose when several chart tabs are open, focuses the selected chart, and fills only the visible input identified by the exact accessible label `RS Levels Payload` or by that exact visible label in the same settings row. If settings are not open yet, the helper waits for up to 45 seconds. It never clicks `OK`; review the value and confirm it yourself. `Copy payload instead` keeps the original clipboard workflow. Both actions use the latest detected-chart capture first, including stock HP/MHP and liquidity-map context; ES/NQ can still fall back to the local `/tradingview/:symbol` endpoint. `Reconnect Tab` attaches the capture hook to the active RocketScooter tab if the extension was loaded after the page was already open. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`.
 
@@ -54,7 +56,7 @@ Options let users configure:
 - service reachability test
 - Chrome origin permission status for the configured service URL
 
-Older unpacked extension settings migrate to the current display-feed allowlist after reload or update.
+Pre-v5 extension settings migrate to the current display-feed allowlist and are paused once on update so the user can review the disclosure and opt in again.
 
 For Tailscale/private-network use, point the service URL at the trusted machine after the local service has been explicitly started with remote access enabled. Chrome will ask for permission to reach that specific origin.
 

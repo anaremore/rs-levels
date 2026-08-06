@@ -6,7 +6,14 @@ const root = join(__dirname, '..');
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, '0.3.2');
+assert.equal(manifest.version, '0.4.0');
+assert.deepEqual(manifest.icons, {
+  16: 'assets/icon-16.png',
+  32: 'assets/icon-32.png',
+  48: 'assets/icon-48.png',
+  128: 'assets/icon-128.png'
+});
+assert.deepEqual(manifest.action.default_icon, { 16: 'assets/icon-16.png', 32: 'assets/icon-32.png' });
 assert.equal(manifest.background.service_worker, 'src/background.js');
 assert.deepEqual(manifest.permissions.sort(), ['clipboardWrite', 'scripting', 'storage']);
 assert.ok(!JSON.stringify(manifest).includes('<all_urls>'));
@@ -197,6 +204,9 @@ assert.match(popupHtml, /reconnect/);
 assert.match(popupHtml, /open-docs/);
 assert.match(popupHtml, /open-plugins/);
 assert.match(popupHtml, /capture-enabled/);
+assert.match(popupHtml, /capture-disclosure/);
+assert.match(popupHtml, /Enable only if you agree/);
+assert.match(popupHtml, /response bodies and visible chart-level metadata/);
 assert.match(popupHtml, /observed-count/);
 assert.match(popupHtml, /ignored-count/);
 assert.match(popupHtml, /skipped-count/);
@@ -208,11 +218,13 @@ assert.match(popupCss, /\.chart-hint/);
 assert.match(popupCss, /min-height: 44px/);
 assert.match(popupCss, /:focus-visible/);
 assert.match(popupCss, /prefers-reduced-motion/);
+assert.match(popupCss, /\.row\[hidden\]/);
 assert.match(popupCss, /\.action-hint/);
 assert.match(readFileSync(join(root, 'src', 'capture-rules.js'), 'utf8'), /isTextLikeContentType/);
 assert.match(readFileSync(join(root, 'src', 'build-info.js'), 'utf8'), /RS_LEVELS_BUILD/);
 assert.match(readFileSync(join(root, '..', 'local-service', 'src', 'build-info.js'), 'utf8'), /SERVICE_BUILD/);
-assert.match(shared, /settingsVersion: 4/);
+assert.match(shared, /settingsVersion: 5/);
+assert.match(shared, /captureEnabled: false/);
 assert.match(shared, /symbols: \['ES', 'NQ'\]/);
 assert.match(shared, /publicDisplaySymbol/);
 assert.match(shared, /validPayloadSymbol/);
@@ -232,6 +244,8 @@ assert.match(options, /AbortController/);
 assert.match(options, /permissionStatus/);
 assert.match(options, /migrateSettings/);
 assert.match(optionsHtml, /test-service/);
+assert.match(optionsHtml, /capture-disclosure/);
+assert.match(optionsHtml, /Enable only if you agree/);
 assert.match(optionsHtml, /permission-status/);
 assert.match(optionsCss, /\.status\.warning/);
 assert.match(optionsCss, /box-sizing: border-box/);
