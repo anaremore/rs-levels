@@ -14,6 +14,9 @@
   <a href="docs/platform-plugins.md">Platform plugins</a>
 </p>
 
+> [!IMPORTANT]
+> **Community project:** RS Levels is independently created and maintained. It is not affiliated with, endorsed by, sponsored by, or officially supported by RocketScooter.
+
 RS Levels lets a user capture level and display-context data from their own RocketScooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
 
 ## Included Feature Areas
