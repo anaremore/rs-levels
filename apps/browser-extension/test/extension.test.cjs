@@ -6,7 +6,7 @@ const root = join(__dirname, '..');
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, '0.4.0');
+assert.equal(manifest.version, '0.4.1');
 assert.deepEqual(manifest.icons, {
   16: 'assets/icon-16.png',
   32: 'assets/icon-32.png',
