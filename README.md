@@ -26,14 +26,6 @@ RS Levels is organized around three display-only pieces:
 
 ## See It in Action
 
-<p align="center">
-  <a href="store-assets/screenshot-popup-1280x800.png">
-    <img src="store-assets/screenshot-popup-1280x800.png" alt="RS Levels Capture browser extension popup" width="100%">
-  </a>
-</p>
-
-<p align="center"><em>Capture levels locally, then send them to TradingView or another supported platform.</em></p>
-
 <table>
   <tr>
     <td width="50%">
