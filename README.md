@@ -1,6 +1,18 @@
 # RS Levels
 
-Local-first RocketScooter level and display-context capture feeds.
+<p align="center">
+  <img src="store-assets/marquee-promo-1400x560.png" alt="RS Levels Capture — RocketScooter levels on the platform you trade" width="100%">
+</p>
+
+<p align="center"><strong>Local-first RocketScooter level and display-context capture feeds.</strong></p>
+
+<p align="center">
+  <a href="docs/tradingview-quickstart.md">TradingView quickstart</a>
+  &nbsp;&bull;&nbsp;
+  <a href="docs/index.md">Documentation</a>
+  &nbsp;&bull;&nbsp;
+  <a href="docs/platform-plugins.md">Platform plugins</a>
+</p>
 
 RS Levels lets a user capture level and display-context data from their own RocketScooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
 
@@ -12,11 +24,36 @@ RS Levels is organized around three display-only pieces:
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
 - **Platform plugins, indicators, and studies**: includes TradingView Pine scripts, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
-Screenshots are available for the main user paths:
+## See It in Action
 
-- [Browser extension popup](screenshots/rslevels-extension.png)
-- [TradingView RS Levels Indicator](screenshots/tradingview-levels.png)
-- [Quantower RS Levels Plugin](screenshots/quantower-levels.png)
+<p align="center">
+  <a href="store-assets/screenshot-popup-1280x800.png">
+    <img src="store-assets/screenshot-popup-1280x800.png" alt="RS Levels Capture browser extension popup" width="100%">
+  </a>
+</p>
+
+<p align="center"><em>Capture levels locally, then send them to TradingView or another supported platform.</em></p>
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="screenshots/tradingview-levels.png">
+        <img src="screenshots/tradingview-levels.png" alt="RS Levels displayed in TradingView">
+      </a>
+    </td>
+    <td width="50%">
+      <a href="screenshots/quantower-levels.png">
+        <img src="screenshots/quantower-levels.png" alt="RS Levels displayed in Quantower">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>TradingView RS Levels Indicator</strong></td>
+    <td align="center"><strong>Quantower RS Levels Plugin</strong></td>
+  </tr>
+</table>
+
+Prefer the unframed extension view? Open the [browser extension popup screenshot](screenshots/rslevels-extension.png).
 
 ## What This Is Not
 
