@@ -27,7 +27,7 @@ Dashboard artwork:
 - Screenshot: `store-assets/screenshot-popup-1280x800.png`
 - Small promo tile: `store-assets/small-promo-440x280.png`
 
-Before submission, install the ZIP in a fresh Chrome profile, confirm capture starts off, read the disclosure, opt in, and exercise every advertised flow.
+Before submission, install the ZIP in a fresh Chrome profile, confirm capture starts off, open and read the disclosure tooltip, opt in, and exercise every advertised flow.
 
 ## Item choice
 
@@ -178,7 +178,7 @@ Paste and complete this template:
 Prerequisite: use the dedicated Chrome Web Store reviewer account supplied below. It contains synthetic/display-only data and no brokerage connection.
 
 1. Install RS Levels Capture 0.4.0.
-2. Open the extension popup. Confirm capture is OFF and the disclosure is visible.
+2. Open the extension popup. Confirm capture is OFF and the disclosure is available from the info tooltip beside the toggle.
 3. Sign in to RocketScooter using the reviewer credentials below and open a supported chart.
 4. In the extension popup, enable RocketScooter capture. Refresh the RocketScooter chart so the capture hook sees startup responses.
 5. The popup should list the detected chart. The local-service status may remain offline unless the optional local service is running.

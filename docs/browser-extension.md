@@ -31,7 +31,7 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 2. Load `apps/browser-extension` unpacked.
 3. Open RocketScooter.
 4. Check the popup status.
-5. Read the capture disclosure and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
+5. Open the info tooltip beside the capture toggle, read the disclosure, and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
 6. Choose a symbol from `Detected chart`. Only open charts with supported data appear; use `All detected charts` when more than one is available.
 7. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
 8. Use `Plugins` to inspect the local display-adapter manifest.

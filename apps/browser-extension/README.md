@@ -20,7 +20,7 @@ Packaged releases also include `dist/rs-levels-browser-extension-<extension-vers
 
 ## Popup
 
-The popup shows local service health, service version, extension version/build identity, captured display-data state, export actions, and the last extension-side issue. It includes:
+The popup shows local service health, service version, extension version/build identity, captured display-data state, export actions, and the last extension-side issue. The capture privacy disclosure is available from the info tooltip beside the capture toggle. The popup includes:
 
 - detected-chart selector
 - capture pause/resume toggle
