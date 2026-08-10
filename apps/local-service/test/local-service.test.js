@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createService, listen } from '../src/index.js';
+import { captureStatusText, createCaptureReporter } from '../src/cli-output.js';
 import { createLevelStore } from '../src/store.js';
 import { diagnostics } from '../src/http.js';
 import { levelsToDisplayRowsText } from '../src/display-rows.js';
@@ -13,6 +14,26 @@ assert.match(cliHelp, /RS_LEVELS_HOST/);
 assert.match(cliHelp, /trusted private networks/);
 const cliVersion = execFileSync(process.execPath, [cliPath, '--version'], { encoding: 'utf8' }).trim();
 assert.equal(cliVersion, '0.0.0');
+
+assert.equal(captureStatusText(), 'Capture received; no supported levels found.');
+const captureLog = [];
+const captureReporter = createCaptureReporter({
+  write: (line) => captureLog.push(line),
+  clock: () => new Date('2026-06-20T12:00:00.000Z'),
+  formatTime: () => '12:00:00 PM',
+  delayMs: 60000
+});
+const captureSummaryFixture = {
+  symbols: {
+    MES: { symbol: 'MES', displaySymbol: 'ES', levels: [{ price: 7537 }, { price: 7579.75 }] }
+  }
+};
+captureReporter.report(captureSummaryFixture);
+captureReporter.flush();
+captureReporter.report(captureSummaryFixture);
+captureReporter.flush();
+captureReporter.close();
+assert.deepEqual(captureLog, ['[12:00:00 PM] Captured 2 levels across 1 symbol (ES).']);
 
 assert.equal(
   levelsToDisplayRowsText([
@@ -126,8 +147,10 @@ assert.equal(statsOnlyStore.getSnapshot().symbols.MES.stats.dd, 0);
 assert.equal(statsOnlyStore.getSnapshot().symbols.MES.stats.mapCode, 'BLD');
 assert.equal(statsOnlyStore.getSnapshot().source.state, 'capturing');
 
+const captureEvents = [];
 const service = createService({
-  config: { host: '127.0.0.1', port: 0 }
+  config: { host: '127.0.0.1', port: 0 },
+  onCapture: (snapshot) => captureEvents.push(snapshot)
 });
 const address = await listen(service);
 const baseUrl = `http://127.0.0.1:${address.port}`;
@@ -250,6 +273,8 @@ try {
   });
   assert.equal(captureResponse.ok, true);
   assert.equal(captureResponse.snapshot.symbols.MES.levels.length, 3);
+  assert.equal(captureEvents.length, 1);
+  assert.equal(captureStatusText(captureEvents[0]), 'Captured 3 levels across 1 symbol (ES).');
 
   const captureDiagnostics = await getJson(`${baseUrl}/diagnostics`);
   assert.equal(captureDiagnostics.source.connected, true);

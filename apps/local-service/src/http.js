@@ -16,7 +16,7 @@ const PLUGIN_MANIFEST = JSON.parse(readFileSync(new URL('../../../plugins/manife
 const PACKAGE_JSON = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const SERVICE_VERSION = String(PACKAGE_JSON.version || '0.0.0');
 
-export function createHttpApp({ store, config }) {
+export function createHttpApp({ store, config, onCapture }) {
   const clients = new Set();
 
   const server = http.createServer(async (req, res) => {
@@ -109,6 +109,7 @@ export function createHttpApp({ store, config }) {
         const payload = await readJson(req);
         const snapshot = store.applyCapture(payload);
         broadcast(clients, 'snapshot', snapshot);
+        notifyCapture(onCapture, snapshot);
         return sendJson(res, 200, { ok: true, snapshot });
       }
 
@@ -119,6 +120,15 @@ export function createHttpApp({ store, config }) {
   });
 
   return { server, clients };
+}
+
+function notifyCapture(onCapture, snapshot) {
+  if (typeof onCapture !== 'function') return;
+  try {
+    onCapture(snapshot);
+  } catch (_error) {
+    // Reporting must never turn an accepted capture into a failed request.
+  }
 }
 
 export function rootInfo(config) {

@@ -5,7 +5,7 @@ import { createLevelStore } from './store.js';
 export function createService(options = {}) {
   const config = loadConfig(options.env || process.env, options.config || {});
   const store = options.store || createLevelStore({ staleMs: config.staleMs });
-  const app = createHttpApp({ store, config });
+  const app = createHttpApp({ store, config, onCapture: options.onCapture });
   return {
     config,
     store,

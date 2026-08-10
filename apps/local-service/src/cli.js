@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { createService, listen } from './index.js';
+import { createCaptureReporter } from './cli-output.js';
 
 const PACKAGE_JSON = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const args = new Set(process.argv.slice(2));
@@ -15,20 +16,22 @@ if (args.has('--version') || args.has('-v')) {
   process.exit(0);
 }
 
-const service = createService();
+const captureReporter = createCaptureReporter();
+const service = createService({ onCapture: captureReporter.report });
 const address = await listen(service);
 const host = typeof address === 'object' && address ? address.address : service.config.host;
 const port = typeof address === 'object' && address ? address.port : service.config.port;
 
 console.log('RS Levels local service');
 console.log(`API: http://${host}:${port}`);
-console.log('Status: waiting for browser capture');
+console.log('Ready. Waiting for first browser capture...');
 service.config.warnings.forEach((warning) => console.warn(`Warning: ${warning}`));
 
 process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
 
 function shutdown(code) {
+  captureReporter.close();
   service.server.close(() => process.exit(code));
 }
 
