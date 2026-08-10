@@ -67,21 +67,26 @@ English
 **Detailed description**
 
 ```text
-RS Levels Capture moves display-level data from your RocketScooter browser session into local RS Levels display tools.
+RS Levels Capture brings your RocketScooter levels into TradingView and other supported charting platforms.
 
-Capture is off until you opt in. After you enable it, the extension reads allowlisted RocketScooter response bodies and visible chart-level metadata on supported RocketScooter sites. It sends captures to an RS Levels service URL you choose; localhost is the default. Captured data is not sent to the developer.
+Use the same levels you already follow in RocketScooter without manually recreating them on every chart. The extension detects supported RocketScooter charts and prepares the level data for your preferred RS Levels display.
 
 Key features:
-• Detect display data for supported charts currently open in RocketScooter
-• Feed local RS Levels display APIs and compatible platform plugins
-• Copy a TradingView payload or, after an optional exact-site permission grant, fill the visible RS Levels Payload field for review
-• Pause capture at any time and inspect scrubbed connection diagnostics
-• Configure the endpoint allowlist, capture size, and a trusted local or private service URL
+• Display RocketScooter levels directly on TradingView charts
+• Send levels to TradingView in a few clicks—no manual data entry
+• Automatically detect supported RocketScooter charts
+• Choose a specific chart or send all detected charts
+• Use the same captured levels with Sierra Chart, NinjaTrader, Quantower, Bookmap, and other RS Levels integrations
+• Copy a validated payload whenever you prefer a manual workflow
+• Keep data local by default with the optional RS Levels service
+
+TradingView integration is simple: open the RS Levels indicator settings, click “Send to TradingView” in the extension, and review the populated payload before applying it.
+
+Capture is off until you enable it. The extension does not read cookies, passwords, authorization headers, or unrelated form inputs, and captured data is not sent to the extension developer.
 
 Requirements:
 • Your own RocketScooter access
-• The separately installed RS Levels local service for API and plugin workflows
-• A compatible RS Levels TradingView indicator for the optional handoff
+• A compatible RS Levels indicator or platform integration
 
 RS Levels Capture provides display-data transport only. It does not provide trading advice, recommendations, order entry, or broker automation.
 
