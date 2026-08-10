@@ -233,6 +233,8 @@ assert.match(popupCss, /\.capture-info:focus-within/);
 assert.match(popupCss, /\.capture-tooltip/);
 assert.match(popupCss, /\.chart-hint/);
 assert.match(popupCss, /min-height: 44px/);
+assert.match(popupCss, /appearance: none/);
+assert.match(popupCss, /background-position: right 14px center/);
 assert.match(popupCss, /:focus-visible/);
 assert.match(popupCss, /prefers-reduced-motion/);
 assert.match(popupCss, /\[hidden\]/);
