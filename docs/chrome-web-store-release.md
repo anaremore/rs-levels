@@ -16,7 +16,7 @@ npm run package
 Upload only:
 
 ```text
-dist/rs-levels-browser-extension-0.4.1.zip
+dist/rs-levels-browser-extension-0.4.2.zip
 ```
 
 The ZIP must contain `manifest.json` at its root. Do not upload the full `rs-levels-0.0.0.zip` source release.
@@ -26,6 +26,7 @@ Dashboard artwork:
 - Store icon: `store-assets/icon-128.png`
 - Screenshot: `store-assets/screenshot-popup-1280x800.png`
 - Small promo tile: `store-assets/small-promo-440x280.png`
+- Marquee promo tile: `store-assets/marquee-promo-1400x560.png` (optional)
 
 Before submission, install the ZIP in a fresh Chrome profile, confirm capture starts off, open and read the disclosure tooltip, opt in, and exercise every advertised flow.
 
@@ -46,10 +47,10 @@ RS Levels Capture
 **Summary**
 
 ```text
-Capture RocketScooter display levels and hand them to RS Levels displays.
+Capture RocketScooter chart levels and send them to TradingView or your local RS Levels tools.
 ```
 
-The summary is 73 characters and matches the manifest description.
+The summary is 94 characters and matches the manifest description.
 
 **Category**
 
@@ -177,7 +178,7 @@ Paste and complete this template:
 ```text
 Prerequisite: use the dedicated Chrome Web Store reviewer account supplied below. It contains synthetic/display-only data and no brokerage connection.
 
-1. Install RS Levels Capture 0.4.1.
+1. Install RS Levels Capture 0.4.2.
 2. Open the extension popup. Confirm capture is OFF and the disclosure is available from the info tooltip beside the toggle.
 3. Sign in to RocketScooter using the reviewer credentials below and open a supported chart.
 4. In the extension popup, enable RocketScooter capture. Refresh the RocketScooter chart so the capture hook sees startup responses.
@@ -199,9 +200,9 @@ If a compliant reviewer account cannot be provided, do not submit yet; an inacce
 2. Run the complete verification and package commands.
 3. Install the exact ZIP in a fresh Chrome profile and perform the manual test matrix.
 4. Open the RS Levels Capture item, or choose **New item** if none exists.
-5. Upload `dist/rs-levels-browser-extension-0.4.1.zip`.
+5. Upload `dist/rs-levels-browser-extension-0.4.2.zip`.
 6. Complete Store listing, Privacy practices, Distribution, and Test instructions using this guide.
-7. Upload the icon, screenshot, and small promo tile from `store-assets`.
+7. Upload the icon, screenshot, small promo tile, and optional marquee promo tile from `store-assets`.
 8. Choose deferred publishing, submit for review, and monitor the account email for reviewer questions.
 9. After approval, perform one final staged-package smoke test before publishing.
 

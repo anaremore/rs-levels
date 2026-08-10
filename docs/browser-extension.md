@@ -43,7 +43,7 @@ The popup distinguishes ready, paused, waiting, offline, and stale states so an 
 
 Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-<extension-version>.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
-The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.1+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.2+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 Nested `Technical details` include aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 

@@ -15,17 +15,14 @@
   <rect width="1280" height="800" fill="url(#background)"/>
   <rect width="1280" height="800" fill="url(#glow)"/>
   <g transform="translate(72 64)">
-    <rect width="82" height="82" rx="20" fill="#0b1728" stroke="#d9f2ff" stroke-opacity=".34" stroke-width="3"/>
-    <path d="M18 26H64M18 41H64M18 56H64" fill="none" stroke="#62d9ff" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="34" cy="26" r="7" fill="#ffd166" stroke="#0b1728" stroke-width="3"/>
-    <circle cx="51" cy="41" r="7" fill="#ffd166" stroke="#0b1728" stroke-width="3"/>
-    <circle cx="41" cy="56" r="7" fill="#ffd166" stroke="#0b1728" stroke-width="3"/>
+    <rect width="82" height="82" rx="20" fill="#0b1728" stroke="#d9f2ff" stroke-opacity=".4" stroke-width="3"/>
+    <text x="41" y="55" fill="#f8fafc" font-family="Segoe UI,Arial,sans-serif" font-size="35" font-weight="700" letter-spacing="-2" text-anchor="middle">RS</text>
   </g>
   <text x="178" y="94" fill="#9acced" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="700" letter-spacing="2.4">LOCAL-FIRST  •  OPT-IN  •  DISPLAY-ONLY</text>
-  <text x="72" y="234" fill="#f8fbff" font-family="Segoe UI,Arial,sans-serif" font-size="62" font-weight="700">Capture the levels</text>
-  <text x="72" y="304" fill="#f8fbff" font-family="Segoe UI,Arial,sans-serif" font-size="62" font-weight="700">you already use.</text>
-  <text x="72" y="370" fill="#b8cbe0" font-family="Segoe UI,Arial,sans-serif" font-size="25">Move RocketScooter display data into your local</text>
-  <text x="72" y="405" fill="#b8cbe0" font-family="Segoe UI,Arial,sans-serif" font-size="25">RS Levels tools—under your control.</text>
+  <text x="72" y="234" fill="#f8fbff" font-family="Segoe UI,Arial,sans-serif" font-size="58" font-weight="700">RocketScooter levels,</text>
+  <text x="72" y="304" fill="#f8fbff" font-family="Segoe UI,Arial,sans-serif" font-size="58" font-weight="700">ready for TradingView.</text>
+  <text x="72" y="370" fill="#b8cbe0" font-family="Segoe UI,Arial,sans-serif" font-size="25">Capture chart levels and use them in TradingView</text>
+  <text x="72" y="405" fill="#b8cbe0" font-family="Segoe UI,Arial,sans-serif" font-size="25">or your local RS Levels tools.</text>
   <g fill="#eaf6ff" font-family="Segoe UI,Arial,sans-serif" font-size="22">
     <circle cx="82" cy="490" r="6" fill="#62d9ff"/><text x="106" y="498">Capture stays off until you opt in</text>
     <circle cx="82" cy="552" r="6" fill="#62d9ff"/><text x="106" y="560">Localhost is the default destination</text>

@@ -81,6 +81,7 @@ const requiredReleaseEntries = [
   'plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java',
   'store-assets/icon-128.png',
   'store-assets/small-promo-440x280.png',
+  'store-assets/marquee-promo-1400x560.png',
   'store-assets/screenshot-popup-1280x800.png',
   'tools/scan-text.mjs'
 ];
@@ -113,6 +114,7 @@ const requiredPngDimensions = [
   ['apps/browser-extension/assets/icon-128.png', 128, 128],
   ['store-assets/icon-128.png', 128, 128],
   ['store-assets/small-promo-440x280.png', 440, 280],
+  ['store-assets/marquee-promo-1400x560.png', 1400, 560],
   ['store-assets/screenshot-popup-1280x800.png', 1280, 800]
 ];
 
