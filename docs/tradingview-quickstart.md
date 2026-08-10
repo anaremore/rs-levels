@@ -57,7 +57,7 @@ Leave `Chart family` on `Auto`. Stock charts match their ticker section; ES/MES 
 
 1. Keep the TradingView chart with the RS Levels indicator open in the same browser profile.
 2. Open the `RS Levels Capture` popup.
-3. Choose the detected RocketScooter chart you want, or `All detected charts` when more than one supported chart is open.
+3. Choose the detected RocketScooter chart you want, or `All charts (N)` when more than one supported chart is open.
 4. Click `Send to TradingView`.
 5. On first use, approve access to `https://*.tradingview.com/*`. The extension does not receive this access until you approve it.
 6. If several TradingView chart tabs are open, choose the target and click `Send to TradingView` again.

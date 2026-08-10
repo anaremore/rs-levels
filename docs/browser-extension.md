@@ -12,8 +12,8 @@ The RS Levels browser extension is the first-priority capture UX.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides a popup capture toggle plus opt-in TradingView settings-field handoff, explicit payload-copy fallback, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
-- Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in a collapsed debug section.
-- Shows the extension version/build identity in the popup corner for support and diagnostics.
+- Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in nested technical details under `Tools & diagnostics`.
+- Keeps local service and extension build identities under `Tools & diagnostics` for support without adding header clutter.
 
 Manual chart levels are pass-through data. Users must add or keep overnight HP/MHP, yellow lines, red lines, and CAT lines visible in RocketScooter if they want those levels exported to TradingView payloads or direct platform plugins.
 
@@ -32,20 +32,20 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 3. Open RocketScooter.
 4. Check the popup status.
 5. Open the info tooltip beside the capture toggle, read the disclosure, and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
-6. Choose a symbol from `Detected chart`. Only open charts with supported data appear; use `All detected charts` when more than one is available.
+6. Choose a symbol from `Chart`. Only open charts with supported data appear; use `All charts (N)` when more than one is available.
 7. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
-8. Use `Plugins` to inspect the local display-adapter manifest.
+8. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
 9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
-10. Expand `Debug` when troubleshooting local API, extension, or stale-source setup.
+10. Expand `Technical details` when troubleshooting local API, extension, or stale-source setup.
 11. Use `Copy Diagnostics` for a scrubbed support bundle.
 
-The popup distinguishes live, waiting, offline, and stale source states so an old capture is not presented as live data.
+The popup distinguishes ready, paused, waiting, offline, and stale states so an old capture is not presented as live data. When the local API is offline but the session snapshot can still be sent to TradingView, the popup says so explicitly instead of presenting that condition as a blocking failure.
 
 Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-<extension-version>.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
 
-The small popup build label shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.0+abc1234`. The collapsed `Debug` section shows the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.0+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
-The collapsed `Debug` section includes aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
+Nested `Technical details` include aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
 Capture-hook counters are aggregate only:
 
@@ -58,7 +58,7 @@ These counters do not include ignored URLs, response bodies, request headers, co
 
 ![RS Levels browser extension popup](../screenshots/rslevels-extension.png)
 
-The popup screenshot shows the normal capture controls. Current builds label the selector `Detected chart` and populate it from supported data in the open RocketScooter chart grid.
+The popup screenshot shows the normal capture controls. Current builds label the selector `Chart`, summarize the supported open-chart count, and keep troubleshooting utilities collapsed by default.
 
 ## Settings
 

@@ -9,27 +9,19 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <div>
+      <div class="brand-block">
         <h1>RS Levels</h1>
-        <p id="service-url">Loading</p>
+        <p id="header-summary" class="header-summary">Checking open charts…</p>
       </div>
-      <div class="status-stack">
-        <span id="status-pill" class="pill waiting">WAITING</span>
-        <span id="build-id" class="build-id">ext</span>
-      </div>
+      <span id="status-pill" class="pill waiting">WAITING</span>
     </header>
 
-    <section class="panel">
-      <div class="row">
-        <label for="symbol">Detected chart</label>
-        <select id="symbol"></select>
-        <p class="chart-hint">Only supported data from charts open in RocketScooter appears here.</p>
-      </div>
+    <section class="workflow">
       <div class="capture-consent">
         <div class="capture-consent-row">
           <label class="switch">
             <input id="capture-enabled" type="checkbox" aria-describedby="capture-disclosure">
-            <span>Enable RocketScooter capture</span>
+            <span>RocketScooter capture</span>
           </label>
           <div class="capture-info">
             <button id="capture-info" class="info-button" type="button" aria-label="About RocketScooter capture" aria-describedby="capture-disclosure">
@@ -38,80 +30,105 @@
                 <path d="M12 10.75v5.5M12 7.75h.01"></path>
               </svg>
             </button>
-            <p id="capture-disclosure" class="capture-tooltip" role="tooltip">When enabled, RS Levels reads allowlisted RocketScooter response bodies and visible chart-level metadata, keeps a sanitized chart snapshot for this browser session, and sends captures only to the RS Levels service shown above (localhost by default). It does not read cookies, authorization headers, passwords, or unrelated form inputs. Enable only if you agree.</p>
+            <p id="capture-disclosure" class="capture-tooltip" role="tooltip">When enabled, RS Levels reads allowlisted RocketScooter response bodies and visible chart-level metadata, keeps a sanitized chart snapshot for this browser session, and sends captures only to the RS Levels service shown in Tools &amp; diagnostics (localhost by default). It does not read cookies, authorization headers, passwords, or unrelated form inputs. Enable only if you agree.</p>
           </div>
         </div>
       </div>
+
+      <div class="row">
+        <label for="symbol">Chart</label>
+        <select id="symbol"></select>
+        <p id="chart-hint" class="chart-hint">Checking supported RocketScooter charts…</p>
+      </div>
+
       <div id="tradingview-target-row" class="row" hidden>
         <label for="tradingview-tab">TradingView tab</label>
         <select id="tradingview-tab"></select>
       </div>
-      <div class="actions">
-        <button id="send-tradingview" type="button" class="wide primary-action">Send to TradingView</button>
-        <p id="tradingview-access" class="action-hint wide">TradingView access: ask on first send.</p>
-        <button id="copy-payload" type="button" class="wide secondary">Copy payload instead</button>
-        <button id="reconnect" type="button" class="secondary">Reconnect Tab</button>
-        <button id="copy-diagnostics" type="button">Copy Diagnostics</button>
-        <button id="open-docs" type="button">API Docs</button>
-        <button id="open-plugins" type="button">Plugins</button>
+
+      <div class="primary-actions">
+        <button id="send-tradingview" type="button" class="primary-action wide">Send to TradingView</button>
+        <p id="tradingview-access" class="action-hint">TradingView access requested on first send</p>
+        <button id="copy-payload" type="button" class="tertiary wide">Copy payload instead</button>
       </div>
-      <p id="message" class="message" role="status" aria-live="polite" aria-atomic="true">Enable capture, start the local service, then open RocketScooter.</p>
+
+      <p id="message" class="message" role="status" aria-live="polite" aria-atomic="true">Checking open RocketScooter charts…</p>
     </section>
 
-    <details class="panel compact debug-panel">
-      <summary>Debug</summary>
-      <dl>
-        <div>
-          <dt>Source</dt>
-          <dd id="source-state">waiting</dd>
+    <details class="tools-panel">
+      <summary>Tools &amp; diagnostics</summary>
+      <div class="tools-content">
+        <div class="utility-actions">
+          <button id="reconnect" type="button" class="secondary">Reconnect Tab</button>
+          <button id="copy-diagnostics" type="button" class="secondary">Copy Diagnostics</button>
+          <button id="open-docs" type="button" class="secondary">API Docs</button>
+          <button id="open-plugins" type="button" class="secondary">Plugins</button>
+          <button id="options" type="button" class="secondary wide">Options</button>
         </div>
-        <div>
-          <dt>Levels</dt>
-          <dd id="level-count">0</dd>
-        </div>
-        <div>
-          <dt>Version</dt>
-          <dd id="service-version">unknown</dd>
-        </div>
-        <div>
-          <dt>Posted</dt>
-          <dd id="posted-count">0</dd>
-        </div>
-        <div>
-          <dt>Capture</dt>
-          <dd id="last-capture">none</dd>
-        </div>
-        <div>
-          <dt>Last post</dt>
-          <dd id="last-post">none</dd>
-        </div>
-        <div>
-          <dt>Issue</dt>
-          <dd id="last-error">none</dd>
-        </div>
-        <div>
-          <dt>Observed</dt>
-          <dd id="observed-count">0</dd>
-        </div>
-        <div>
-          <dt>Ignored</dt>
-          <dd id="ignored-count">0</dd>
-        </div>
-        <div>
-          <dt>Skipped</dt>
-          <dd id="skipped-count">0</dd>
-        </div>
-        <div>
-          <dt>Hook</dt>
-          <dd id="hook-reason">none</dd>
-        </div>
-      </dl>
-      <button id="refresh" type="button" class="secondary wide">Refresh status</button>
-    </details>
 
-    <footer>
-      <button id="options" type="button">Options</button>
-    </footer>
+        <dl class="build-meta">
+          <div>
+            <dt>Local API</dt>
+            <dd id="service-url">Loading</dd>
+          </div>
+          <div>
+            <dt>Extension</dt>
+            <dd id="build-id">ext</dd>
+          </div>
+        </dl>
+
+        <details class="technical-details">
+          <summary>Technical details</summary>
+          <dl>
+            <div>
+              <dt>Source</dt>
+              <dd id="source-state">waiting</dd>
+            </div>
+            <div>
+              <dt>Levels</dt>
+              <dd id="level-count">0</dd>
+            </div>
+            <div>
+              <dt>Version</dt>
+              <dd id="service-version">unknown</dd>
+            </div>
+            <div>
+              <dt>Posted</dt>
+              <dd id="posted-count">0</dd>
+            </div>
+            <div>
+              <dt>Capture</dt>
+              <dd id="last-capture">none</dd>
+            </div>
+            <div>
+              <dt>Last post</dt>
+              <dd id="last-post">none</dd>
+            </div>
+            <div>
+              <dt>Issue</dt>
+              <dd id="last-error">none</dd>
+            </div>
+            <div>
+              <dt>Observed</dt>
+              <dd id="observed-count">0</dd>
+            </div>
+            <div>
+              <dt>Ignored</dt>
+              <dd id="ignored-count">0</dd>
+            </div>
+            <div>
+              <dt>Skipped</dt>
+              <dd id="skipped-count">0</dd>
+            </div>
+            <div>
+              <dt>Hook</dt>
+              <dd id="hook-reason">none</dd>
+            </div>
+          </dl>
+          <button id="refresh" type="button" class="secondary wide">Refresh status</button>
+        </details>
+      </div>
+    </details>
   </main>
   <script src="shared.js"></script>
   <script src="build-info.js"></script>

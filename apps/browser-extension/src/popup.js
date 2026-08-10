@@ -1,8 +1,10 @@
 const els = {
   serviceUrl: document.getElementById('service-url'),
   statusPill: document.getElementById('status-pill'),
+  headerSummary: document.getElementById('header-summary'),
   buildId: document.getElementById('build-id'),
   symbol: document.getElementById('symbol'),
+  chartHint: document.getElementById('chart-hint'),
   captureEnabled: document.getElementById('capture-enabled'),
   sendTradingView: document.getElementById('send-tradingview'),
   copyPayload: document.getElementById('copy-payload'),
@@ -97,8 +99,10 @@ async function refresh() {
     els.serviceVersion.textContent = serviceVersionText(health);
     renderTransferState();
     renderPill(source);
-    if (symbols.length) {
-      setMessage(detectedMessage(), 'ok');
+    if (!settings.captureEnabled) {
+      setMessage(symbols.length ? 'Capture paused. The current chart snapshot remains available.' : 'Capture paused.', 'warning');
+    } else if (symbols.length) {
+      setMessage('Ready to send to TradingView.', 'ok');
     } else if (extState.lastError && !globalThis.RS_LEVELS.hasAnyDisplayData(latestServiceStatus)) {
       setMessage(extState.lastError, 'error');
     } else if (sourceState === 'stale') {
@@ -111,12 +115,16 @@ async function refresh() {
     els.sourceState.textContent = 'offline';
     els.levelCount.textContent = '0';
     els.serviceVersion.textContent = 'unknown';
-    setPill(symbols.length ? 'CAPTURED' : 'OFFLINE', symbols.length ? 'warning' : 'error');
+    renderPill({ state: 'offline' });
     renderTransferState();
-    setMessage(
-      symbols.length ? `${detectedMessage()} Local service is offline.` : (err && err.message ? err.message : 'Local service unavailable'),
-      symbols.length ? 'warning' : 'error'
-    );
+    if (!settings.captureEnabled) {
+      setMessage(symbols.length ? 'Capture paused. The current chart snapshot remains available.' : 'Capture paused.', 'warning');
+    } else {
+      setMessage(
+        symbols.length ? 'Local API offline — TradingView send still works.' : (err && err.message ? err.message : 'Local service unavailable'),
+        symbols.length ? 'warning' : 'error'
+      );
+    }
   }
 }
 
@@ -263,13 +271,13 @@ function renderTradingViewTargets() {
 
 function renderTradingViewAccess() {
   if (!tradingViewPermission) {
-    els.tradingViewAccess.textContent = 'TradingView access: ask on first send';
+    els.tradingViewAccess.textContent = 'TradingView access requested on first send';
     return;
   }
   const count = tradingViewTabs.length;
   els.tradingViewAccess.textContent = count
-    ? `TradingView access: enabled · ${count} chart${count === 1 ? '' : 's'}`
-    : 'TradingView access: enabled · no open chart';
+    ? `TradingView ready · ${count} tab${count === 1 ? '' : 's'}`
+    : 'TradingView enabled · no open tab';
 }
 
 function selectedTradingViewTabId() {
@@ -434,7 +442,12 @@ async function toggleCapture() {
       captureEnabled: els.captureEnabled.checked
     };
     await chrome.storage.local.set({ captureEnabled: settings.captureEnabled });
-    setMessage(settings.captureEnabled ? 'Capture enabled.' : 'Capture paused.', settings.captureEnabled ? 'ok' : 'warning');
+    renderOverview();
+    renderPill(latestServiceStatus && latestServiceStatus.source || {});
+    setMessage(
+      settings.captureEnabled ? 'Capture enabled.' : 'Capture paused. The current chart snapshot remains available.',
+      settings.captureEnabled ? 'ok' : 'warning'
+    );
   } catch (err) {
     els.captureEnabled.checked = settings.captureEnabled;
     setMessage(err && err.message ? err.message : 'Capture setting failed', 'error');
@@ -457,6 +470,7 @@ function renderSymbols(nextSymbols) {
     option.selected = true;
     els.symbol.replaceChildren(option);
     els.symbol.disabled = true;
+    renderOverview();
     return;
   }
   els.symbol.disabled = false;
@@ -468,6 +482,7 @@ function renderSymbols(nextSymbols) {
   }));
   if (nextSymbols.includes(selected)) els.symbol.value = selected;
   else els.symbol.value = nextSymbols[0];
+  renderOverview();
 }
 
 function selectedSymbol() {
@@ -483,13 +498,28 @@ function exportScopes(detectedSymbols = []) {
 }
 
 function scopeLabel(scope) {
-  if (scope === ALL_SCOPE) return 'All detected charts';
+  if (scope === ALL_SCOPE) return `All charts (${detectedChartCount()})`;
   return globalThis.RS_LEVELS.publicDisplaySymbol(scope);
 }
 
 function detectedMessage() {
-  const count = symbols.filter((symbol) => symbol !== ALL_SCOPE).length;
-  return `${count} open chart${count === 1 ? '' : 's'} with supported data detected.`;
+  const count = detectedChartCount();
+  return `${count} supported chart${count === 1 ? '' : 's'} detected.`;
+}
+
+function detectedChartCount() {
+  return symbols.filter((symbol) => symbol !== ALL_SCOPE).length;
+}
+
+function renderOverview() {
+  const count = detectedChartCount();
+  const captureText = settings.captureEnabled ? 'Capture on' : 'Capture paused';
+  els.headerSummary.textContent = count
+    ? `${count} chart${count === 1 ? '' : 's'} · ${captureText}`
+    : captureText;
+  els.chartHint.textContent = count
+    ? detectedMessage()
+    : 'Open a supported RocketScooter chart to begin.';
 }
 
 function combineServiceStatus(health = {}, status = {}) {
@@ -581,12 +611,24 @@ function nonNegativeInteger(value) {
 }
 
 function renderPill(source = {}) {
+  if (!settings.captureEnabled) {
+    setPill('PAUSED', 'warning');
+    return;
+  }
+  if (symbols.length) {
+    setPill('READY', 'live');
+    return;
+  }
   if (source.connected) {
-    setPill('LIVE', 'live');
+    setPill('WAITING', 'waiting');
     return;
   }
   if (source.state === 'stale') {
     setPill('STALE', 'warning');
+    return;
+  }
+  if (source.state === 'offline') {
+    setPill('OFFLINE', 'error');
     return;
   }
   setPill('WAITING', 'waiting');

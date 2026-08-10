@@ -87,7 +87,7 @@ When the market is open and RocketScooter exposes live display context:
 1. Load current ES/MES and NQ/MNQ futures charts in RocketScooter.
 2. Keep SPY/QQQ or other non-futures panels open if that is part of the user's normal layout.
 3. Reload the extension, reconnect the tab, and refresh RocketScooter.
-4. Confirm the popup lists only supported symbols from charts currently open in RocketScooter and adds `All detected charts` when several are available; watchlist-only rows must not appear.
+4. Confirm the popup lists only supported symbols from charts currently open in RocketScooter and adds `All charts (N)` when several are available; watchlist-only rows must not appear.
 5. Open a stock such as NVDA and confirm both `Send to TradingView` and `Copy payload instead` include detected HP, MHP, and `Map` data under the stock ticker. Also confirm existing futures levels, manual yellow/red/CAT lines, zones, and stats remain intact.
 6. Confirm direct plugin feeds show the same display rows through `/sierra/:symbol`, `/levels/:symbol?format=rows`, and `/stats/:symbol?format=rows`.
 
