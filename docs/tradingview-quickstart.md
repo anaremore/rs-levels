@@ -51,7 +51,7 @@ For futures, add them on the ES/MES or NQ/MNQ chart family you care about. Multi
 
 Leave `Chart family` on `Auto`. Stock charts match their ticker section; ES/MES charts use `ES`, and NQ/MNQ charts use `NQ`. The manual ES/NQ choices are futures overrides.
 
-`Label layout` defaults to `Rail`. Choose `On line` for a simple label immediately above each price line or `Hidden` to show only the lines and fills. Set `Label position` to `Right side` (default) or `Near current time` independently of the layout.
+Leave `Labels` enabled to show plain, color-matched labels at the right endpoint of each level line, or disable it to show only the lines and fills.
 
 ## 5. Send Levels
 
