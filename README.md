@@ -23,7 +23,7 @@ RS Levels lets a user capture level and display-context data from their own Rock
 
 RS Levels is organized around three display-only pieces:
 
-- **Browser extension**: captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff with an explicit copy fallback, scrubbed diagnostics, API docs links, and extension status/debug tools.
+- **Browser extension**: supports Chrome/Chromium and Firefox Desktop 140+ from one shared runtime, captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff with an explicit copy fallback, scrubbed diagnostics, API docs links, and extension status/debug tools.
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
 - **Platform plugins, indicators, and studies**: includes TradingView Pine scripts, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
@@ -94,7 +94,7 @@ Create a release directory:
 npm run package
 ```
 
-The release output includes a source-style directory, a source zip archive, a standalone browser-extension zip, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and checksum sidecars.
+The release output includes a source-style directory, a source ZIP archive, standalone Chrome/Chromium and Firefox extension ZIPs, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and checksum sidecars.
 
 Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`.
 

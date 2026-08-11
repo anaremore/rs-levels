@@ -11,6 +11,7 @@ const els = {
 };
 
 let permissionCheckId = 0;
+const webext = globalThis.browser ?? globalThis.chrome;
 
 init();
 
@@ -24,10 +25,10 @@ async function init() {
 }
 
 async function load() {
-  const stored = await chrome.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
   const settings = globalThis.RS_LEVELS.migrateSettings(stored);
   if (settings.settingsVersion !== stored.settingsVersion) {
-    await chrome.storage.local.set(settings);
+    await webext.storage.local.set(settings);
   }
   els.serviceUrl.value = settings.serviceUrl;
   els.captureEnabled.checked = settings.captureEnabled;
@@ -44,7 +45,7 @@ async function save() {
       maxCaptureBytes: Number(els.maxCaptureBytes.value)
     });
     await ensureServiceAccess(settings.serviceUrl);
-    await chrome.storage.local.set(settings);
+    await webext.storage.local.set(settings);
     await updatePermissionState();
     setMessage('Saved', 'ok');
   } catch (err) {
@@ -53,7 +54,7 @@ async function save() {
 }
 
 async function reset() {
-  await chrome.storage.local.set(globalThis.RS_LEVELS.cleanSettings(globalThis.RS_LEVELS.defaults));
+  await webext.storage.local.set(globalThis.RS_LEVELS.cleanSettings(globalThis.RS_LEVELS.defaults));
   await load();
   await updatePermissionState();
   setMessage('Defaults restored', 'ok');
@@ -74,9 +75,9 @@ async function testService() {
 
 async function ensureServiceAccess(serviceUrl) {
   const origin = originPattern(serviceUrl);
-  const hasAccess = await chrome.permissions.contains({ origins: [origin] });
+  const hasAccess = await webext.permissions.contains({ origins: [origin] });
   if (hasAccess) return;
-  const granted = await chrome.permissions.request({ origins: [origin] });
+  const granted = await webext.permissions.request({ origins: [origin] });
   if (!granted) throw new Error('Service URL permission was not granted');
 }
 
@@ -85,7 +86,7 @@ async function updatePermissionState() {
   try {
     const serviceUrl = globalThis.RS_LEVELS.cleanServiceUrl(els.serviceUrl.value);
     const origin = originPattern(serviceUrl);
-    const hasAccess = await chrome.permissions.contains({ origins: [origin] });
+    const hasAccess = await webext.permissions.contains({ origins: [origin] });
     if (checkId !== permissionCheckId) return;
     els.permissionStatus.textContent = hasAccess ? `Permission granted: ${origin}` : `Permission needed: ${origin}`;
     els.permissionStatus.className = hasAccess ? 'status ok' : 'status warning';

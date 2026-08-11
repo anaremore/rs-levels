@@ -16,6 +16,8 @@ dist/rs-levels-0.0.0.zip
 dist/rs-levels-0.0.0.zip.sha256
 dist/rs-levels-browser-extension-<extension-version>.zip
 dist/rs-levels-browser-extension-<extension-version>.zip.sha256
+dist/rs-levels-browser-extension-firefox-<extension-version>.zip
+dist/rs-levels-browser-extension-firefox-<extension-version>.zip.sha256
 ```
 
 The release directory includes:
@@ -35,7 +37,7 @@ The release directory includes:
 
 The zip artifact contains the release directory as its top-level folder. The `.zip.sha256` sidecar verifies the archive itself; `SHA256SUMS.txt` verifies files inside the unpacked release directory.
 
-The browser-extension zip is a focused install artifact with `manifest.json` at the archive root. It includes the extension README and runtime `src/` files, but not the extension test suite.
+Each browser-extension ZIP is a focused install artifact with the correct browser-specific `manifest.json` at the archive root. Both include the same extension README, assets, and runtime `src/` files, but not the extension test suite. The artifact without a browser suffix targets Chrome/Chromium; the `-firefox-` artifact targets Firefox Desktop 140+ and declares Firefox's built-in data-collection consent categories. Firefox for Android is not currently supported.
 
 ## Verify Packaging Inputs
 
@@ -47,17 +49,25 @@ npm run package:check
 
 ## Extension Install From Package
 
-Load this directory as an unpacked Chromium extension:
+Load this directory as an unpacked Chrome/Chromium extension:
 
 ```text
 dist/rs-levels-0.0.0/apps/browser-extension
 ```
 
-Or unzip the focused browser-extension artifact and load the extracted folder:
+Or unzip the focused Chrome/Chromium artifact and load the extracted folder:
 
 ```text
 dist/rs-levels-browser-extension-<extension-version>.zip
 ```
+
+For Firefox, open `about:debugging`, choose `This Firefox` and `Load Temporary Add-on`, then select:
+
+```text
+dist/rs-levels-browser-extension-firefox-<extension-version>.zip
+```
+
+Firefox temporary add-ons are removed on restart. A permanent Firefox install must use an artifact signed by Mozilla.
 
 ## Service Start From Package
 
@@ -91,4 +101,4 @@ http://127.0.0.1:8765
 
 ## Future Installers
 
-Native installers and signed extension artifacts can be added later. Until then, the release directory, source zip archive, standalone browser-extension zip, and checksum sidecars are the canonical cross-platform artifacts.
+Native installers and signed store artifacts can be added later. Until then, the release directory, source zip archive, Chrome/Chromium and Firefox browser-extension ZIPs, and checksum sidecars are the canonical cross-platform artifacts.

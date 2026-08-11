@@ -2,7 +2,7 @@
 
 Effective date: August 6, 2026
 
-RS Levels Capture is a local-first browser extension that transfers RocketScooter display-level data from a user's browser session to RS Levels display tools. This policy applies to the RS Levels Capture Chrome extension.
+RS Levels Capture is a local-first browser extension that transfers RocketScooter display-level data from a user's browser session to RS Levels display tools. This policy applies to the RS Levels Capture extension for Chrome/Chromium and Firefox.
 
 ## Data the extension handles
 
@@ -16,6 +16,8 @@ Capture is off by default. If the user enables it, the extension handles:
 
 The extension is not designed to read or transmit cookies, authorization headers, passwords, unrelated form inputs, complete browser history, screenshots, order-entry data, positions, balances, or profit-and-loss data.
 
+The Firefox manifest declares Mozilla's `browsingActivity` and `websiteContent` categories because the extension handles supported page and response URLs plus allowlisted response/chart content. This declaration does not broaden collection: Firefox shows it during installation, capture remains off by default, and the user must still enable the in-product capture control.
+
 ## How data is used
 
 The extension uses this data only to provide its single purpose: capture display-level data from the user's RocketScooter session and make it available to the user's RS Levels displays.
@@ -28,9 +30,9 @@ If the user explicitly chooses Send to TradingView, the extension asks for Tradi
 
 ## Storage and retention
 
-Extension settings are stored in `chrome.storage.local` until the user resets them or removes the extension.
+Extension settings are stored in browser-managed extension local storage until the user resets them or removes the extension.
 
-The latest sanitized chart snapshot may be stored in `chrome.storage.session`. It is cleared when the browser session ends or the extension is updated. Raw RocketScooter response bodies are not stored in extension session storage.
+The latest sanitized chart snapshot may be stored in browser-managed extension session storage. It is cleared when the browser session ends or the extension is updated. Raw RocketScooter response bodies are not stored in extension session storage.
 
 The separately installed RS Levels local service controls any data it receives. By default it runs on the user's device, keeps current display data locally, and does not send data to the developer. Users can delete local service data by removing its local data files or uninstalling the service.
 
@@ -42,9 +44,9 @@ Data reaches a third-party page only when the user explicitly starts the Trading
 
 ## User choices and deletion
 
-Users can pause capture at any time in the extension popup or options page. They can avoid TradingView access and use the explicit copy-to-clipboard workflow instead. Optional site access can be removed in Chrome's extension settings.
+Users can pause capture at any time in the extension popup or options page. They can avoid TradingView access and use the explicit copy-to-clipboard workflow instead. Optional site access can be removed in the browser's extension settings.
 
-Removing the extension deletes its Chrome-managed local and session storage. Removing local RS Levels service data deletes data held by that separate local component.
+Removing the extension deletes its browser-managed local and session storage. Removing local RS Levels service data deletes data held by that separate local component.
 
 ## Security
 
@@ -52,7 +54,7 @@ The default extension-to-service connection remains on the user's computer. Priv
 
 ## Limited Use
 
-Use of information received through Chrome extension permissions complies with the Chrome Web Store User Data Policy, including the Limited Use requirements. Data is used only to provide or improve the extension's disclosed, user-facing single purpose.
+For Chrome distribution, use of information received through extension permissions complies with the Chrome Web Store User Data Policy, including the Limited Use requirements. Across supported browsers, data is used only to provide or improve the extension's disclosed, user-facing single purpose.
 
 ## Children
 

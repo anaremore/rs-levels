@@ -1,4 +1,8 @@
-importScripts('shared.js');
+if (typeof importScripts === 'function') {
+  importScripts('shared.js');
+}
+
+const webext = globalThis.browser ?? globalThis.chrome;
 
 const TRADINGVIEW_SESSION_KEY = 'rsLevelsTradingViewSession';
 const TRADINGVIEW_SESSION_VERSION = 1;
@@ -35,12 +39,12 @@ const state = {
 let tradingViewHydration = null;
 let tradingViewWrite = Promise.resolve();
 
-if (chrome.tabs.onRemoved) {
-  chrome.tabs.onRemoved.addListener((tabId) => clearDetectedTradingViewSource(tabId).catch(() => {}));
+if (webext.tabs.onRemoved) {
+  webext.tabs.onRemoved.addListener((tabId) => clearDetectedTradingViewSource(tabId).catch(() => {}));
 }
 
-if (chrome.tabs.onUpdated) {
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+if (webext.tabs.onUpdated) {
+  webext.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo && changeInfo.url && !isRocketScooterUrl(changeInfo.url)) {
       return clearDetectedTradingViewSource(tabId).catch(() => {});
     }
@@ -48,11 +52,11 @@ if (chrome.tabs.onUpdated) {
   });
 }
 
-chrome.runtime.onInstalled.addListener(async () => {
-  const stored = await chrome.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+webext.runtime.onInstalled.addListener(async () => {
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
   const settings = globalThis.RS_LEVELS.migrateSettings(stored);
-  await chrome.storage.local.set(settings);
-  const session = chrome.storage && chrome.storage.session;
+  await webext.storage.local.set(settings);
+  const session = webext.storage && webext.storage.session;
   if (session) {
     try {
       await session.remove(TRADINGVIEW_SESSION_KEY);
@@ -60,7 +64,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+webext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type === undefined) return false;
   if (message.type === 'rs-levels.capture') {
     postCapture(message.capture, sender).then((result) => sendResponse(result));
@@ -103,7 +107,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function postCapture(capture, sender = {}) {
   let settings;
   try {
-    const stored = await chrome.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+    const stored = await webext.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
     settings = globalThis.RS_LEVELS.cleanSettings(stored);
   } catch (err) {
     state.lastError = err && err.message ? err.message : 'Invalid extension settings';
@@ -216,7 +220,7 @@ async function detectedTradingViewIssue() {
   }
 
   try {
-    const stored = await chrome.storage.local.get(['captureEnabled']);
+    const stored = await webext.storage.local.get(['captureEnabled']);
     if (stored && stored.captureEnabled === false) {
       return 'Capture is paused. Enable capture and refresh RocketScooter before sending to TradingView.';
     }
@@ -234,7 +238,7 @@ async function detectedTradingViewIssue() {
   }
 
   try {
-    const tab = await chrome.tabs.get(sourceTabId);
+    const tab = await webext.tabs.get(sourceTabId);
     if (!tab || !isRocketScooterUrl(tab.url || '')) {
       return 'The RocketScooter source chart is no longer open. Refresh RocketScooter before sending to TradingView.';
     }
@@ -267,7 +271,7 @@ async function hydrateTradingViewState() {
   if (tradingViewHydration) return tradingViewHydration;
 
   tradingViewHydration = (async () => {
-    const session = chrome.storage && chrome.storage.session;
+    const session = webext.storage && webext.storage.session;
     if (!session) return;
 
     try {
@@ -291,7 +295,7 @@ async function hydrateTradingViewState() {
 }
 
 async function persistTradingViewState() {
-  const session = chrome.storage && chrome.storage.session;
+  const session = webext.storage && webext.storage.session;
   if (!session) return;
 
   const record = {
@@ -345,8 +349,8 @@ function cleanStoredSnapshot(input) {
 async function listTradingViewTabs() {
   try {
     const [tabs, activeTabs] = await Promise.all([
-      chrome.tabs.query({ url: TRADINGVIEW_CHART_MATCHES }),
-      chrome.tabs.query({ active: true, currentWindow: true })
+      webext.tabs.query({ url: TRADINGVIEW_CHART_MATCHES }),
+      webext.tabs.query({ active: true, currentWindow: true })
     ]);
     const activeId = activeTabs && activeTabs[0] && activeTabs[0].id;
     const matches = (tabs || [])
@@ -380,7 +384,7 @@ async function sendToTradingView(message) {
     const tabId = nonNegativeInteger(message.tabId);
     if (!tabId) throw new Error('Choose a TradingView chart tab first.');
 
-    const tab = await chrome.tabs.get(tabId);
+    const tab = await webext.tabs.get(tabId);
     if (!tab || !isTradingViewChartUrl(tab.url || '')) {
       throw new Error('The selected tab is no longer a TradingView chart.');
     }
@@ -390,13 +394,13 @@ async function sendToTradingView(message) {
     const scopeLabel = cleanScopeLabel(message.scopeLabel);
     const expiresAt = Date.now() + TRADINGVIEW_HANDOFF_MS;
 
-    await chrome.scripting.executeScript({
+    await webext.scripting.executeScript({
       target: { tabId, frameIds: [0] },
       files: ['src/tradingview-content.js'],
       world: 'ISOLATED'
     });
 
-    const response = await chrome.tabs.sendMessage(tabId, {
+    const response = await webext.tabs.sendMessage(tabId, {
       type: 'rs-levels.tradingview-arm-v2',
       requestId,
       payload,
@@ -409,10 +413,10 @@ async function sendToTradingView(message) {
       throw new Error(response && response.error || 'TradingView autofill did not start.');
     }
 
-    await chrome.tabs.update(tabId, { active: true });
+    await webext.tabs.update(tabId, { active: true });
     if (Number.isInteger(tab.windowId)) {
       try {
-        await chrome.windows.update(tab.windowId, { focused: true });
+        await webext.windows.update(tab.windowId, { focused: true });
       } catch (_error) {}
     }
 
@@ -481,17 +485,17 @@ function isTradingViewChartUrl(value) {
 
 async function injectActiveTab() {
   try {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tabs = await webext.tabs.query({ active: true, currentWindow: true });
     const tab = tabs && tabs[0];
     if (!tab || !tab.id) throw new Error('No active tab found');
     if (!isRocketScooterUrl(tab.url || '')) {
       throw new Error('Open a RocketScooter tab before reconnecting capture');
     }
-    await chrome.scripting.executeScript({
+    await webext.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
       files: ['src/shared.js', 'src/content-script.js']
     });
-    await chrome.scripting.executeScript({
+    await webext.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
       files: ['src/capture-rules.js', 'src/page-hook.js', 'src/page-reader.js'],
       world: 'MAIN'

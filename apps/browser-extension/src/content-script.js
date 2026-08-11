@@ -1,4 +1,6 @@
 (() => {
+  const webext = globalThis.browser ?? globalThis.chrome;
+
   if (globalThis.__RS_LEVELS_CONTENT_SCRIPT_ACTIVE__) {
     if (typeof globalThis.__RS_LEVELS_RECONNECT === 'function') {
       globalThis.__RS_LEVELS_RECONNECT();
@@ -20,11 +22,11 @@
     const data = event.data || {};
     if (data.source !== PAGE_SOURCE) return;
     if (data.type === 'capture') {
-      chrome.runtime.sendMessage({ type: 'rs-levels.capture', capture: data.capture });
+      webext.runtime.sendMessage({ type: 'rs-levels.capture', capture: data.capture });
       return;
     }
     if (data.type === 'diagnostic') {
-      chrome.runtime.sendMessage({ type: 'rs-levels.capture-diagnostic', stats: data.stats });
+      webext.runtime.sendMessage({ type: 'rs-levels.capture-diagnostic', stats: data.stats });
       const reason = data.stats && data.stats.lastReason || '';
       if (reason === 'hook-installed' || reason === 'hook-reconnected' || reason === 'reader-installed' || reason === 'reader-reconnected') {
         syncSettings();
@@ -32,7 +34,7 @@
     }
   });
 
-  chrome.storage.onChanged.addListener((changes, areaName) => {
+  webext.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
     if (changes.serviceUrl || changes.captureEnabled || changes.endpointPatterns || changes.maxCaptureBytes) {
       syncSettings();
@@ -44,10 +46,10 @@
 
   async function syncSettings() {
     try {
-      const stored = await chrome.storage.local.get(['settingsVersion', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+      const stored = await webext.storage.local.get(['settingsVersion', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
       const settings = globalThis.RS_LEVELS.migrateSettings(stored);
       if (settings.settingsVersion !== stored.settingsVersion) {
-        await chrome.storage.local.set(settings);
+        await webext.storage.local.set(settings);
       }
       window.postMessage({
         source: CONTROL_SOURCE,
@@ -63,7 +65,7 @@
   }
 
   function reportContentDiagnostic(reason, detail = '') {
-    chrome.runtime.sendMessage({
+    webext.runtime.sendMessage({
       type: 'rs-levels.content-diagnostic',
       diagnostic: {
         reason,

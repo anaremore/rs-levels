@@ -13,6 +13,7 @@
   const SEMANTIC_LABEL_SELECTOR = 'label, [role="label"], [class*="label"], [class*="title"], [data-name*="label"], [data-name*="title"]';
   const FALLBACK_LABEL_SELECTOR = 'span, div';
   const DIALOG_SELECTOR = '[role="dialog"], dialog, [aria-modal="true"], [data-name*="dialog"]';
+  const webext = globalThis.browser ?? globalThis.chrome;
 
   const api = Object.freeze({
     FIELD_LABEL,
@@ -35,9 +36,9 @@
 
   if (
     typeof document !== 'object' ||
-    typeof chrome !== 'object' ||
-    !chrome.runtime ||
-    !chrome.runtime.onMessage
+    typeof webext !== 'object' ||
+    !webext.runtime ||
+    !webext.runtime.onMessage
   ) {
     return;
   }
@@ -73,15 +74,15 @@
       bridge.stop();
     } catch (_error) {}
     try {
-      if (chrome.runtime.onMessage.removeListener) {
-        chrome.runtime.onMessage.removeListener(messageListener);
+      if (webext.runtime.onMessage.removeListener) {
+        webext.runtime.onMessage.removeListener(messageListener);
       }
     } catch (_error) {}
     if (globalThis[BRIDGE_KEY] === bridge) {
       delete globalThis[BRIDGE_KEY];
     }
   };
-  chrome.runtime.onMessage.addListener(messageListener);
+  webext.runtime.onMessage.addListener(messageListener);
   globalThis[BRIDGE_KEY] = bridge;
 
   function createBridge(doc) {
@@ -850,8 +851,8 @@
     host.style.transition = 'opacity 180ms ease-out';
 
     const shadow = host.attachShadow({ mode: 'closed' });
-    shadow.innerHTML = [
-      '<style>',
+    const style = doc.createElement('style');
+    style.textContent = [
       ':host{all:initial}',
       '.card{width:min(340px,calc(100vw - 40px));box-sizing:border-box;padding:12px 14px;',
       'background:#101720;border:1px solid #334157;color:#eef6ff;',
@@ -860,19 +861,25 @@
       '.card[data-mode="ok"]{border-color:#2baa58}',
       '.card[data-mode="error"]{border-color:#b94a4a}',
       '.title{font-weight:700;margin:0 0 4px}.body{color:#c6d6ea;margin:0}',
-      '@media(prefers-reduced-motion:reduce){:host{transition:none!important}}',
-      '</style>',
-      '<section class="card" data-mode="waiting">',
-      '<p class="title"></p><p class="body"></p>',
-      '</section>'
+      '@media(prefers-reduced-motion:reduce){:host{transition:none!important}}'
     ].join('');
+
+    const card = doc.createElement('section');
+    card.className = 'card';
+    card.dataset.mode = 'waiting';
+    const title = doc.createElement('p');
+    title.className = 'title';
+    const body = doc.createElement('p');
+    body.className = 'body';
+    card.append(title, body);
+    shadow.append(style, card);
 
     parent.appendChild(host);
     return {
       host,
-      card: shadow.querySelector('.card'),
-      title: shadow.querySelector('.title'),
-      body: shadow.querySelector('.body')
+      card,
+      title,
+      body
     };
   }
 

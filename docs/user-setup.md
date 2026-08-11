@@ -5,7 +5,7 @@ Use this guide when you want the local service, API docs, diagnostics, examples,
 ## Requirements
 
 - Node.js 20 or newer
-- A Chromium-based browser for the extension
+- Chrome/Chromium or Firefox Desktop 140+ for the extension; Firefox for Android is not currently supported
 - Your own RocketScooter browser access
 - TradingView or a supported platform plugin, depending on the display target
 
@@ -46,9 +46,14 @@ Maintainers can create a clean release directory with:
 npm run package
 ```
 
-Users can then run the service from the package root and load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
+Users can then run the service from the package root. Chrome/Chromium users can load the unpacked extension from `dist/rs-levels-0.0.0/apps/browser-extension`.
 
-The package command also writes `dist/rs-levels-browser-extension-<extension-version>.zip` and a checksum sidecar. Unzip that artifact and load the extracted folder if you want the focused extension package instead of the full source release.
+The package command also writes focused Chrome/Chromium and Firefox artifacts plus checksum sidecars:
+
+```text
+dist/rs-levels-browser-extension-<extension-version>.zip
+dist/rs-levels-browser-extension-firefox-<extension-version>.zip
+```
 
 Release packages include cross-platform service launch scripts:
 
@@ -60,11 +65,23 @@ scripts/start-local-service.sh
 
 ## 2. Load The Browser Extension
 
+### Chrome Or Chromium
+
 1. Open `chrome://extensions` or the equivalent Chromium extension page.
 2. Enable developer mode.
 3. Choose `Load unpacked`.
 4. Select `apps/browser-extension` from this repository, `dist/rs-levels-0.0.0/apps/browser-extension` from a source release, or the extracted `rs-levels-browser-extension` folder from the standalone extension zip.
 5. Pin `RS Levels Capture` if you want quick access to the popup.
+
+### Firefox
+
+1. Run `npm run package` and use Firefox Desktop 140 or newer.
+2. Open `about:debugging`.
+3. Choose `This Firefox`, then `Load Temporary Add-on`.
+4. Select `dist/rs-levels-browser-extension-firefox-<extension-version>.zip`, or extract it and select its root `manifest.json`.
+5. Pin `RS Levels Capture` if you want quick access to the popup.
+
+This development install is removed when Firefox restarts. Permanent Firefox distribution requires an add-on signed by Mozilla.
 
 Extension capture code runs only on RocketScooter host patterns. It posts allowlisted response bodies to your configured local API URL and reads display-only chart metadata from RocketScooter top-level and child-frame chart contexts. TradingView receives a one-shot helper only after an explicit send and exact site-permission grant.
 
@@ -129,9 +146,9 @@ Then open the extension options page and set the service URL to the trusted priv
 http://100.x.y.z:8765
 ```
 
-Chrome will ask for permission to reach that specific origin. The extension does not auto-discover or broadcast service locations.
+The browser will ask for permission to reach that specific origin. The extension does not auto-discover or broadcast service locations.
 
-Use `Test Service` in the options page to confirm Chrome permission and `/health` reachability for the configured private address.
+Use `Test Service` in the options page to confirm browser permission and `/health` reachability for the configured private address.
 
 ## Use Examples
 

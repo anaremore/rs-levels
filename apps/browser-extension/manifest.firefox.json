@@ -3,6 +3,18 @@
   "name": "RS Levels Capture",
   "description": "Capture RocketScooter chart levels and send them to TradingView or your local RS Levels tools.",
   "version": "0.4.3",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "rs-levels-capture@rs-levels.local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "browsingActivity",
+          "websiteContent"
+        ]
+      }
+    }
+  },
   "icons": {
     "16": "assets/icon-16.png",
     "32": "assets/icon-32.png",
@@ -27,7 +39,10 @@
     "https://*/*"
   ],
   "background": {
-    "service_worker": "src/background.js"
+    "scripts": [
+      "src/shared.js",
+      "src/background.js"
+    ]
   },
   "action": {
     "default_title": "RS Levels",

@@ -5,7 +5,11 @@ const { join } = require('node:path');
 
 const root = join(__dirname, '..', '..');
 const extensionManifest = JSON.parse(readFileSync(join(root, 'apps', 'browser-extension', 'manifest.json'), 'utf8'));
+const firefoxExtensionManifest = JSON.parse(
+  readFileSync(join(root, 'apps', 'browser-extension', 'manifest.firefox.json'), 'utf8')
+);
 const extensionVersion = extensionManifest.version || '0.0.0';
+assert.equal(firefoxExtensionManifest.version, extensionVersion);
 const packagingDoc = readFileSync(join(root, 'docs', 'packaging.md'), 'utf8');
 const ciDoc = readFileSync(join(root, 'docs', 'ci.md'), 'utf8');
 const ciWorkflow = readFileSync(join(root, '.github', 'workflows', 'ci.yml'), 'utf8');
@@ -15,9 +19,9 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /33 critical entries/);
+assert.match(checkOutput, /34 critical entries/);
 assert.match(checkOutput, /zip enabled/);
-assert.match(checkOutput, /extension zip enabled/);
+assert.match(checkOutput, /Chrome and Firefox extension zips enabled/);
 
 const packageOutput = execFileSync(process.execPath, ['tools/package-release.mjs'], {
   cwd: root,
@@ -26,11 +30,14 @@ const packageOutput = execFileSync(process.execPath, ['tools/package-release.mjs
 
 assert.match(packageOutput, /release zip written/);
 assert.match(packageOutput, /release zip checksum written/);
-assert.match(packageOutput, /browser extension zip written/);
-assert.match(packageOutput, /browser extension zip checksum written/);
+assert.match(packageOutput, /Chrome browser extension zip written/);
+assert.match(packageOutput, /Chrome browser extension zip checksum written/);
+assert.match(packageOutput, /Firefox browser extension zip written/);
+assert.match(packageOutput, /Firefox browser extension zip checksum written/);
 
 const zipPath = join(root, 'dist', 'rs-levels-0.0.0.zip');
 const extensionZipPath = join(root, 'dist', `rs-levels-browser-extension-${extensionVersion}.zip`);
+const firefoxExtensionZipPath = join(root, 'dist', `rs-levels-browser-extension-firefox-${extensionVersion}.zip`);
 const releaseRoot = join(root, 'dist', 'rs-levels-0.0.0');
 const releaseCli = join(releaseRoot, 'apps', 'local-service', 'src', 'cli.js');
 const releaseVersion = execFileSync(process.execPath, [releaseCli, '--version'], {
@@ -81,17 +88,74 @@ assert.match(extensionZipText, /src\/popup\.html/);
 assert.match(extensionZipText, /RS_LEVELS_BUILD/);
 assert.match(extensionZipText, /"source": "package"/);
 assert.doesNotMatch(extensionZipText, /test\/extension\.test\.cjs/);
+assert.deepEqual(JSON.parse(readStoredZipEntry(extensionZip, 'manifest.json')), extensionManifest);
+assert.ok(!zipEntryNames(extensionZip).includes('manifest.firefox.json'));
 
 const extensionChecksum = readFileSync(`${extensionZipPath}.sha256`, 'utf8').trim();
 assert.match(extensionChecksum, new RegExp(`^[a-f0-9]{64}  rs-levels-browser-extension-${extensionVersion.replaceAll('.', '\\.')}.zip$`));
 
+const firefoxExtensionZip = readFileSync(firefoxExtensionZipPath);
+const firefoxExtensionZipText = firefoxExtensionZip.toString('utf8');
+assert.equal(firefoxExtensionZip.readUInt32LE(0), 0x04034b50);
+assert.match(firefoxExtensionZipText, /src\/background\.js/);
+assert.match(firefoxExtensionZipText, /src\/tradingview-content\.js/);
+assert.match(firefoxExtensionZipText, /RS_LEVELS_BUILD/);
+assert.doesNotMatch(firefoxExtensionZipText, /test\/extension\.test\.cjs/);
+assert.deepEqual(
+  JSON.parse(readStoredZipEntry(firefoxExtensionZip, 'manifest.json')),
+  firefoxExtensionManifest
+);
+assert.ok(!zipEntryNames(firefoxExtensionZip).includes('manifest.firefox.json'));
+
+const firefoxExtensionChecksum = readFileSync(`${firefoxExtensionZipPath}.sha256`, 'utf8').trim();
+assert.match(
+  firefoxExtensionChecksum,
+  new RegExp(`^[a-f0-9]{64}  rs-levels-browser-extension-firefox-${extensionVersion.replaceAll('.', '\\.')}.zip$`)
+);
+
 assert.match(packagingDoc, /rs-levels-browser-extension-<extension-version>\.zip/);
+assert.match(packagingDoc, /rs-levels-browser-extension-firefox-<extension-version>\.zip/);
 assert.doesNotMatch(packagingDoc, /rs-levels-browser-extension-0\.1\.[0-9]+\.zip/);
 const installDoc = readFileSync(join(root, 'docs', 'install.md'), 'utf8');
 assert.match(installDoc, /rs-levels-browser-extension-<extension-version>\.zip/);
+assert.match(installDoc, /rs-levels-browser-extension-firefox-<extension-version>\.zip/);
 assert.doesNotMatch(installDoc, /rs-levels-browser-extension-0\.1\.[0-9]+\.zip/);
 assert.match(ciDoc, /release archive sidecars/);
 assert.match(ciWorkflow, /Upload release archives/);
 assert.match(ciWorkflow, /dist\/rs-levels-browser-extension-\*\.zip/);
 
 console.log('package release tests passed');
+
+function readStoredZipEntry(zip, expectedName) {
+  let offset = 0;
+  while (offset + 30 <= zip.length && zip.readUInt32LE(offset) === 0x04034b50) {
+    const size = zip.readUInt32LE(offset + 18);
+    const nameLength = zip.readUInt16LE(offset + 26);
+    const extraLength = zip.readUInt16LE(offset + 28);
+    const nameStart = offset + 30;
+    const dataStart = nameStart + nameLength + extraLength;
+    const name = zip.subarray(nameStart, nameStart + nameLength).toString('utf8');
+    if (name === expectedName) return zip.subarray(dataStart, dataStart + size).toString('utf8');
+    offset = dataStart + size;
+  }
+  throw new Error(`ZIP entry not found: ${expectedName}`);
+}
+
+function zipEntryNames(zip) {
+  const endSignature = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
+  const endOffset = zip.lastIndexOf(endSignature);
+  assert.notEqual(endOffset, -1, 'ZIP end record should exist');
+  const entryCount = zip.readUInt16LE(endOffset + 10);
+  let offset = zip.readUInt32LE(endOffset + 16);
+  const names = [];
+  for (let index = 0; index < entryCount; index += 1) {
+    assert.equal(zip.readUInt32LE(offset), 0x02014b50);
+    const nameLength = zip.readUInt16LE(offset + 28);
+    const extraLength = zip.readUInt16LE(offset + 30);
+    const commentLength = zip.readUInt16LE(offset + 32);
+    const nameStart = offset + 46;
+    names.push(zip.subarray(nameStart, nameStart + nameLength).toString('utf8'));
+    offset = nameStart + nameLength + extraLength + commentLength;
+  }
+  return names;
+}

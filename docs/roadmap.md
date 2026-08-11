@@ -69,7 +69,7 @@ Status: in progress.
 - Add `RELEASE-MANIFEST.json` and `SHA256SUMS.txt`.
 - Verify critical API, extension, TradingView, plugin, docs, and scan artifacts in `npm run package:check`.
 - Build source zip archive and checksum sidecar.
-- Build standalone browser-extension zip archive and checksum sidecar.
+- Build standalone Chrome/Chromium and Firefox browser-extension ZIP archives and checksum sidecars.
 - Include cross-platform local service launch scripts.
 - Run CI verification on Ubuntu, Windows, and macOS.
 - Next: native packaged app wrapper.

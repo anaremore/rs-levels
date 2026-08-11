@@ -16,7 +16,7 @@ npm run package
 Upload only:
 
 ```text
-dist/rs-levels-browser-extension-0.4.2.zip
+dist/rs-levels-browser-extension-0.4.3.zip
 ```
 
 The ZIP must contain `manifest.json` at its root. Do not upload the full `rs-levels-0.0.0.zip` source release.
@@ -183,7 +183,7 @@ Paste and complete this template:
 ```text
 Prerequisite: use the dedicated Chrome Web Store reviewer account supplied below. It contains synthetic/display-only data and no brokerage connection.
 
-1. Install RS Levels Capture 0.4.2.
+1. Install RS Levels Capture 0.4.3.
 2. Open the extension popup. Confirm capture is OFF and the disclosure is available from the info tooltip beside the toggle.
 3. Sign in to RocketScooter using the reviewer credentials below and open a supported chart.
 4. In the extension popup, enable RocketScooter capture. Refresh the RocketScooter chart so the capture hook sees startup responses.
@@ -205,7 +205,7 @@ If a compliant reviewer account cannot be provided, do not submit yet; an inacce
 2. Run the complete verification and package commands.
 3. Install the exact ZIP in a fresh Chrome profile and perform the manual test matrix.
 4. Open the RS Levels Capture item, or choose **New item** if none exists.
-5. Upload `dist/rs-levels-browser-extension-0.4.2.zip`.
+5. Upload `dist/rs-levels-browser-extension-0.4.3.zip`.
 6. Complete Store listing, Privacy practices, Distribution, and Test instructions using this guide.
 7. Upload the icon, screenshot, small promo tile, and optional marquee promo tile from `store-assets`.
 8. Choose deferred publishing, submit for review, and monitor the account email for reviewer questions.

@@ -4,9 +4,10 @@ const { join } = require('node:path');
 
 const root = join(__dirname, '..');
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
+const firefoxManifest = JSON.parse(readFileSync(join(root, 'manifest.firefox.json'), 'utf8'));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, '0.4.2');
+assert.equal(manifest.version, '0.4.3');
 assert.equal(manifest.description, 'Capture RocketScooter chart levels and send them to TradingView or your local RS Levels tools.');
 assert.deepEqual(manifest.icons, {
   16: 'assets/icon-16.png',
@@ -16,6 +17,33 @@ assert.deepEqual(manifest.icons, {
 });
 assert.deepEqual(manifest.action.default_icon, { 16: 'assets/icon-16.png', 32: 'assets/icon-32.png' });
 assert.equal(manifest.background.service_worker, 'src/background.js');
+assert.equal(firefoxManifest.manifest_version, 3);
+assert.equal(firefoxManifest.version, manifest.version);
+assert.deepEqual(firefoxManifest.background.scripts, ['src/shared.js', 'src/background.js']);
+assert.equal(firefoxManifest.background.service_worker, undefined);
+assert.deepEqual(firefoxManifest.browser_specific_settings, {
+  gecko: {
+    id: 'rs-levels-capture@rs-levels.local',
+    strict_min_version: '140.0',
+    data_collection_permissions: {
+      required: ['browsingActivity', 'websiteContent']
+    }
+  }
+});
+for (const key of [
+  'name',
+  'description',
+  'icons',
+  'permissions',
+  'host_permissions',
+  'optional_host_permissions',
+  'action',
+  'options_page',
+  'content_scripts',
+  'web_accessible_resources'
+]) {
+  assert.deepEqual(firefoxManifest[key], manifest[key], `Firefox ${key} should match Chrome`);
+}
 assert.deepEqual(manifest.permissions.sort(), ['clipboardWrite', 'scripting', 'storage']);
 assert.ok(!JSON.stringify(manifest).includes('<all_urls>'));
 assert.ok(!JSON.stringify(manifest).includes('webRequest'));
@@ -63,6 +91,11 @@ const optionsHtml = readFileSync(join(root, 'src', 'options.html'), 'utf8');
 const optionsCss = readFileSync(join(root, 'src', 'options.css'), 'utf8');
 const shared = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
 
+for (const source of [background, contentScript, tradingViewContent, popup, options]) {
+  assert.match(source, /globalThis\.browser \?\? globalThis\.chrome/);
+  assert.doesNotMatch(source, /\bchrome\./);
+}
+
 for (const match of popup.matchAll(/document\.getElementById\('([^']+)'\)/g)) {
   assert.match(popupHtml, new RegExp(`id="${match[1]}"`), `popup element #${match[1]} should exist`);
 }
@@ -99,13 +132,14 @@ assert.match(pageReader, /readScannerDisplayData/);
 assert.doesNotMatch(contentScript + pageHook + pageReader, /document\.body\.innerText/);
 assert.doesNotMatch(contentScript + pageHook + pageReader, /document\.documentElement\.innerText/);
 assert.doesNotMatch(background, /chrome\.cookies/);
+assert.match(background, /typeof importScripts === 'function'/);
 assert.match(background, /importScripts\('shared\.js'\)/);
 assert.match(background, /\/capture\/api/);
 assert.match(background, /cleanCaptureStats/);
 assert.match(background, /content-diagnostic/);
 assert.match(background, /migrateSettings/);
 assert.match(background, /injectActiveTab/);
-assert.match(background, /chrome\.scripting\.executeScript/);
+assert.match(background, /webext\.scripting\.executeScript/);
 assert.match(background, /allFrames: true/);
 assert.match(background, /world: 'MAIN'/);
 assert.match(background, /isRocketScooterUrl/);
@@ -115,16 +149,16 @@ assert.match(background, /rememberTradingViewSnapshot/);
 assert.match(background, /tradingViewPayloadResponse/);
 assert.match(background, /detectedTradingViewSnapshot/);
 assert.match(background, /detectedSymbols/);
-assert.match(background, /chrome\.storage\.session/);
+assert.match(background, /webext\.storage\.session/);
 assert.match(background, /rs-levels\.send-to-tradingview/);
 assert.match(background, /rs-levels\.tradingview-tabs/);
 assert.match(background, /detectedOnly/);
 assert.match(background, /TRADINGVIEW_DETECTED_FRESH_MS/);
-assert.match(background, /chrome\.tabs\.onRemoved/);
-assert.match(background, /chrome\.tabs\.onUpdated/);
+assert.match(background, /webext\.tabs\.onRemoved/);
+assert.match(background, /webext\.tabs\.onUpdated/);
 assert.match(background, /Capture is paused/);
 assert.match(background, /TRADINGVIEW_PERMISSION_ORIGIN/);
-assert.match(background, /chrome\.tabs\.query/);
+assert.match(background, /webext\.tabs\.query/);
 assert.match(background, /files: \['src\/tradingview-content\.js'\]/);
 assert.match(background, /frameIds: \[0\]/);
 assert.match(background, /world: 'ISOLATED'/);
@@ -162,12 +196,12 @@ assert.match(popup, /resolveTradingViewPayload/);
 assert.match(popup, /result\.state === 'filled'/);
 assert.match(popup, /RS Levels payload filled/);
 assert.match(popup, /Waiting up to 45 seconds/);
-assert.match(popup, /chrome\.permissions\.request/);
+assert.match(popup, /webext\.permissions\.request/);
 assert.match(popup, /https:\/\/\*\.tradingview\.com\/\*/);
 assert.match(popup, /rs-levels\.send-to-tradingview/);
 assert.match(popup, /rs-levels\.tradingview-tabs/);
 assert.match(popup, /detectedOnly: options\.detectedOnly === true/);
-assert.match(popup, /chrome\.tabs\.create/);
+assert.match(popup, /webext\.tabs\.create/);
 assert.match(popup, /setSending/);
 assert.match(popup, /fetchTradingViewText/);
 assert.doesNotMatch(popup, /format=json/);
@@ -257,8 +291,8 @@ assert.match(shared, /liq-map/);
 assert.match(shared, /dyn-hp/);
 assert.match(shared, /tview\/settings/);
 assert.match(shared, /tview\/indicators/);
-assert.match(options, /chrome\.permissions\.request/);
-assert.match(options, /chrome\.permissions\.contains/);
+assert.match(options, /webext\.permissions\.request/);
+assert.match(options, /webext\.permissions\.contains/);
 assert.match(options, /testService/);
 assert.match(options, /fetchHealth/);
 assert.match(options, /\/health/);

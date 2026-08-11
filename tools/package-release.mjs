@@ -17,10 +17,21 @@ const zipPath = path.join(distRoot, `${releaseName}.zip`);
 const zipShaPath = `${zipPath}.sha256`;
 const extensionRoot = path.join(root, 'apps', 'browser-extension');
 const extensionManifest = JSON.parse(await fs.readFile(path.join(extensionRoot, 'manifest.json'), 'utf8'));
+const firefoxExtensionManifest = JSON.parse(
+  await fs.readFile(path.join(extensionRoot, 'manifest.firefox.json'), 'utf8')
+);
 const extensionVersion = extensionManifest.version || packageJson.version;
+if (firefoxExtensionManifest.version !== extensionVersion) {
+  throw new Error(
+    `Browser extension manifest versions differ: Chrome ${extensionVersion}, Firefox ${firefoxExtensionManifest.version}`
+  );
+}
 const extensionReleaseName = `${packageJson.name}-browser-extension-${extensionVersion}`;
 const extensionZipPath = path.join(distRoot, `${extensionReleaseName}.zip`);
 const extensionZipShaPath = `${extensionZipPath}.sha256`;
+const firefoxExtensionReleaseName = `${packageJson.name}-browser-extension-firefox-${extensionVersion}`;
+const firefoxExtensionZipPath = path.join(distRoot, `${firefoxExtensionReleaseName}.zip`);
+const firefoxExtensionZipShaPath = `${firefoxExtensionZipPath}.sha256`;
 const gitRevision = revisionFromGit();
 const extensionBuildInfo = extensionBuildInfoSource({
   revision: gitRevision,
@@ -60,6 +71,7 @@ const requiredReleaseEntries = [
   'apps/local-service/src/build-info.js',
   'apps/local-service/src/cli.js',
   'apps/browser-extension/manifest.json',
+  'apps/browser-extension/manifest.firefox.json',
   'apps/browser-extension/assets/icon-16.png',
   'apps/browser-extension/assets/icon-32.png',
   'apps/browser-extension/assets/icon-48.png',
@@ -164,7 +176,7 @@ await assertPngDimensions();
 
 if (checkOnly) {
   console.log(
-    `release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries, zip enabled, extension zip enabled)`
+    `release package check passed (${files.length} files, ${requiredReleaseEntries.length} critical entries, zip enabled, Chrome and Firefox extension zips enabled)`
   );
   process.exit(0);
 }
@@ -174,6 +186,8 @@ await fs.rm(zipPath, { force: true });
 await fs.rm(zipShaPath, { force: true });
 await fs.rm(extensionZipPath, { force: true });
 await fs.rm(extensionZipShaPath, { force: true });
+await fs.rm(firefoxExtensionZipPath, { force: true });
+await fs.rm(firefoxExtensionZipShaPath, { force: true });
 await fs.mkdir(outDir, { recursive: true });
 
 const manifestFiles = [];
@@ -228,11 +242,29 @@ await writeZip(extensionZipPath, packagedExtensionFiles);
 const extensionZipHash = await sha256(extensionZipPath);
 await fs.writeFile(extensionZipShaPath, `${extensionZipHash}  ${path.basename(extensionZipPath)}\n`);
 
+const packagedFirefoxExtensionFiles = packagedExtensionFiles
+  .filter((file) => file.relative !== 'manifest.json');
+packagedFirefoxExtensionFiles.push({
+  absolute: path.join(outDir, 'apps', 'browser-extension', 'manifest.firefox.json'),
+  relative: 'manifest.json'
+});
+packagedFirefoxExtensionFiles.sort((a, b) => a.relative.localeCompare(b.relative));
+assertRequiredExtensionEntries(packagedFirefoxExtensionFiles);
+
+await writeZip(firefoxExtensionZipPath, packagedFirefoxExtensionFiles);
+const firefoxExtensionZipHash = await sha256(firefoxExtensionZipPath);
+await fs.writeFile(
+  firefoxExtensionZipShaPath,
+  `${firefoxExtensionZipHash}  ${path.basename(firefoxExtensionZipPath)}\n`
+);
+
 console.log(`release package written to ${path.relative(root, outDir)}`);
 console.log(`release zip written to ${path.relative(root, zipPath)}`);
 console.log(`release zip checksum written to ${path.relative(root, zipShaPath)}`);
-console.log(`browser extension zip written to ${path.relative(root, extensionZipPath)}`);
-console.log(`browser extension zip checksum written to ${path.relative(root, extensionZipShaPath)}`);
+console.log(`Chrome browser extension zip written to ${path.relative(root, extensionZipPath)}`);
+console.log(`Chrome browser extension zip checksum written to ${path.relative(root, extensionZipShaPath)}`);
+console.log(`Firefox browser extension zip written to ${path.relative(root, firefoxExtensionZipPath)}`);
+console.log(`Firefox browser extension zip checksum written to ${path.relative(root, firefoxExtensionZipShaPath)}`);
 console.log(`${manifestFiles.length} files`);
 
 async function assertPngDimensions() {

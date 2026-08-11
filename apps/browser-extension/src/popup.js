@@ -33,6 +33,7 @@ const els = {
 
 const ALL_SCOPE = 'ALL';
 const TRADINGVIEW_PERMISSION_ORIGIN = 'https://*.tradingview.com/*';
+const webext = globalThis.browser ?? globalThis.chrome;
 
 let settings = globalThis.RS_LEVELS.cleanSettings({});
 let symbols = [];
@@ -45,10 +46,10 @@ let sending = false;
 init();
 
 async function init() {
-  const stored = await chrome.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
   settings = globalThis.RS_LEVELS.migrateSettings(stored);
   if (settings.settingsVersion !== stored.settingsVersion) {
-    await chrome.storage.local.set(settings);
+    await webext.storage.local.set(settings);
   }
   els.serviceUrl.textContent = settings.serviceUrl;
   els.captureEnabled.checked = settings.captureEnabled;
@@ -60,7 +61,7 @@ async function init() {
 
 function bindEvents() {
   els.refresh.addEventListener('click', refresh);
-  els.options.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  els.options.addEventListener('click', () => webext.runtime.openOptionsPage());
   els.sendTradingView.addEventListener('click', sendTradingViewPayload);
   els.copyPayload.addEventListener('click', copyTradingViewPayload);
   els.reconnect.addEventListener('click', reconnectActiveTab);
@@ -76,7 +77,7 @@ async function refresh() {
   setMessage('Checking open RocketScooter charts');
   let extState = {};
   try {
-    const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
+    const extensionState = await webext.runtime.sendMessage({ type: 'rs-levels.state' });
     extState = extensionState && extensionState.state ? extensionState.state : {};
   } catch (_err) {}
   symbols = exportScopes(extState.detectedSymbols);
@@ -130,7 +131,7 @@ async function refresh() {
 
 async function refreshTradingViewAccess() {
   try {
-    tradingViewPermission = await chrome.permissions.contains({
+    tradingViewPermission = await webext.permissions.contains({
       origins: [TRADINGVIEW_PERMISSION_ORIGIN]
     });
     if (tradingViewPermission) await loadTradingViewTabs();
@@ -149,7 +150,7 @@ async function sendTradingViewPayload() {
   if (tradingViewOpenMode) {
     setSending(true, 'Opening…');
     try {
-      await chrome.tabs.create({ url: 'https://www.tradingview.com/chart/' });
+      await webext.tabs.create({ url: 'https://www.tradingview.com/chart/' });
       tradingViewOpenMode = false;
       tradingViewTabs = [];
       renderTradingViewTargets();
@@ -173,7 +174,7 @@ async function sendTradingViewPayload() {
 
   try {
     // This request must be the first awaited operation after the click.
-    tradingViewPermission = await chrome.permissions.request({
+    tradingViewPermission = await webext.permissions.request({
       origins: [TRADINGVIEW_PERMISSION_ORIGIN]
     });
     if (!tradingViewPermission) {
@@ -208,7 +209,7 @@ async function sendTradingViewPayload() {
       return;
     }
 
-    const result = await chrome.runtime.sendMessage({
+    const result = await webext.runtime.sendMessage({
       type: 'rs-levels.send-to-tradingview',
       tabId,
       payload: resolved.payload,
@@ -232,7 +233,7 @@ async function sendTradingViewPayload() {
 }
 
 async function loadTradingViewTabs() {
-  const result = await chrome.runtime.sendMessage({ type: 'rs-levels.tradingview-tabs' });
+  const result = await webext.runtime.sendMessage({ type: 'rs-levels.tradingview-tabs' });
   if (!result || result.ok !== true) {
     throw new Error(result && result.error || 'TradingView tabs are unavailable.');
   }
@@ -347,7 +348,7 @@ async function resolveTradingViewPayload(scope, options = {}) {
 
 async function extensionTradingViewPayloadResult(scope, options = {}) {
   try {
-    const result = await chrome.runtime.sendMessage({
+    const result = await webext.runtime.sendMessage({
       type: 'rs-levels.tradingview-payload',
       scope,
       detectedOnly: options.detectedOnly === true
@@ -374,7 +375,7 @@ async function extensionTradingViewPayloadResult(scope, options = {}) {
 async function reconnectActiveTab() {
   setMessage('Reconnecting capture hook');
   try {
-    const result = await chrome.runtime.sendMessage({ type: 'rs-levels.inject-active-tab' });
+    const result = await webext.runtime.sendMessage({ type: 'rs-levels.inject-active-tab' });
     if (!result || result.ok !== true) throw new Error(result && result.error || 'Capture reconnect failed');
     await refresh();
     setMessage('Capture hook reconnected. Refresh RocketScooter data if levels are still waiting.', 'ok');
@@ -420,7 +421,7 @@ async function responseErrorDetail(response) {
 async function copyDiagnostics() {
   try {
     const diagnostics = await getJson('/diagnostics');
-    const extensionState = await chrome.runtime.sendMessage({ type: 'rs-levels.state' });
+    const extensionState = await webext.runtime.sendMessage({ type: 'rs-levels.state' });
     const payload = {
       generatedAt: new Date().toISOString(),
       serviceUrl: settings.serviceUrl,
@@ -441,7 +442,7 @@ async function toggleCapture() {
       ...settings,
       captureEnabled: els.captureEnabled.checked
     };
-    await chrome.storage.local.set({ captureEnabled: settings.captureEnabled });
+    await webext.storage.local.set({ captureEnabled: settings.captureEnabled });
     renderOverview();
     renderPill(latestServiceStatus && latestServiceStatus.source || {});
     setMessage(
@@ -676,7 +677,7 @@ function extensionBuildInfo() {
 
 function extensionVersion() {
   try {
-    return chrome.runtime.getManifest().version || 'unknown';
+    return webext.runtime.getManifest().version || 'unknown';
   } catch (_err) {
     return 'unknown';
   }

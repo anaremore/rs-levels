@@ -7,10 +7,11 @@ Before any public release:
 - Run private-term and secret scans.
 - Build from a clean clone.
 - Run `npm run package:check`; it verifies critical API, extension, TradingView, plugin, and scan artifacts are present.
-- Run `npm run package` and publish the release zip, browser-extension zip, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and `.sha256` sidecars.
+- Run `npm run package` and publish the release ZIP, Chrome/Chromium and Firefox browser-extension ZIPs, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and `.sha256` sidecars.
 - Confirm the packaged CLI smoke checks pass from the release directory with `--help` and `--version`.
 - Test service startup on Windows, macOS, and Linux.
-- Test extension install instructions from the source package and standalone browser-extension zip from scratch.
+- Test Chrome/Chromium and Firefox extension install instructions and both standalone browser-extension ZIPs from scratch.
+- Confirm the Firefox temporary package loads in Firefox Desktop 140+ and shows the declared data consent categories; use Mozilla signing before claiming a permanent Firefox install.
 - Confirm a fresh extension install starts with capture off and requires an adjacent, plain-language opt-in.
 - Verify the public privacy-policy URL while signed out.
 - Verify the manifest and extension ZIP contain 16, 32, 48, and padded 128 pixel PNG icons.

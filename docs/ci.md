@@ -29,7 +29,11 @@ dist/rs-levels-0.0.0.zip
 dist/rs-levels-0.0.0.zip.sha256
 dist/rs-levels-browser-extension-<extension-version>.zip
 dist/rs-levels-browser-extension-<extension-version>.zip.sha256
+dist/rs-levels-browser-extension-firefox-<extension-version>.zip
+dist/rs-levels-browser-extension-firefox-<extension-version>.zip.sha256
 ```
+
+The Chrome/Chromium and Firefox archives contain the same runtime source with browser-specific root manifests. Packaging tests verify both manifests, archive contents, and checksum sidecars.
 
 The workflow uses current major versions of the official checkout, Node setup, and artifact upload actions while testing the project on Node.js 20 for user compatibility.
 

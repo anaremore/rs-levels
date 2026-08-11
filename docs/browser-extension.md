@@ -4,7 +4,8 @@ The RS Levels browser extension is the first-priority capture UX.
 
 ## What It Does
 
-- Runs as a Manifest V3 extension.
+- Runs as a Manifest V3 extension on Chrome/Chromium and Firefox Desktop 140+. Firefox for Android is not currently supported or validated.
+- Shares the same runtime source across browsers through a small `browser.*`/`chrome.*` API adapter while keeping separate manifests for Chrome's service worker and Firefox's background scripts.
 - Loads capture code only on RocketScooter app host patterns: `rocket.place` and `rocketscooter.com`; TradingView receives a one-shot helper only after an explicit send and site-permission grant.
 - Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
 - Captures only response URLs that match the configured allowlist.
@@ -28,7 +29,7 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 ## User Flow
 
 1. Start the local service.
-2. Load `apps/browser-extension` unpacked.
+2. Load `apps/browser-extension` unpacked in Chrome/Chromium, or load the packaged Firefox ZIP temporarily from `about:debugging`.
 3. Open RocketScooter.
 4. Check the popup status.
 5. Open the info tooltip beside the capture toggle, read the disclosure, and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
@@ -41,9 +42,9 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 
 The popup distinguishes ready, paused, waiting, offline, and stale states so an old capture is not presented as live data. When the local API is offline but the session snapshot can still be sent to TradingView, the popup says so explicitly instead of presenting that condition as a blocking failure.
 
-Packaged releases include a standalone extension artifact at `dist/rs-levels-browser-extension-<extension-version>.zip`. Unzip that artifact and load the extracted folder when you want a focused extension package instead of the full source tree.
+Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.zip` for Chrome/Chromium and `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` for Firefox. Unzip the Chrome artifact and use `Load unpacked`; for a temporary Firefox install, select the Firefox ZIP from `about:debugging` or select its extracted `manifest.json`. The Firefox manifest declares `browsingActivity` and `websiteContent` so Firefox can show its built-in data consent prompt; capture remains off until the separate in-product opt-in. Firefox removes temporary add-ons on restart, and permanent distribution requires Mozilla signing.
 
-The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.2+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.3+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 Nested `Technical details` include aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
@@ -102,7 +103,7 @@ db/nq
 
 Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns. Pre-v5 installs are paused once on update so the user can review the disclosure and opt in again.
 
-Capture is not limited by the popup selection. The extension keeps the latest sanitized page-reader snapshot in extension-only `chrome.storage.session`, allowing both TradingView actions to work without the local API while the browser session remains open. It stores no raw capture body, and the snapshot is cleared by a browser restart or extension update. The selector is derived from payload-capable symbols in `tvWidget.chartsCount()/chart(i)`, not from RocketScooter's watchlist table. Futures contract symbols continue to normalize to public `ES` and `NQ` families. Stock charts use their ticker, so an open `NVDA` chart with HP, MHP, or map context produces an `NVDA` choice and payload section. A watchlist row alone does not create a choice.
+Capture is not limited by the popup selection. The extension keeps the latest sanitized page-reader snapshot in extension-only `storage.session`, allowing both TradingView actions to work without the local API while the browser session remains open. It stores no raw capture body, and the snapshot is cleared by a browser restart or extension update. The selector is derived from payload-capable symbols in `tvWidget.chartsCount()/chart(i)`, not from RocketScooter's watchlist table. Futures contract symbols continue to normalize to public `ES` and `NQ` families. Stock charts use their ticker, so an open `NVDA` chart with HP, MHP, or map context produces an `NVDA` choice and payload section. A watchlist row alone does not create a choice.
 
 When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays. Futures keep their existing zone, manual-line, reference, and stat extraction. Detected stocks can add visible HP/MHP prices and a liquidity-map code from the matching scanner row. Scanner rows are consulted only for symbols already detected in the open chart grid, so the full watchlist is never turned into popup options. The reader does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
 
@@ -112,6 +113,6 @@ Because these manual lines are read from RocketScooter's visible chart state, ch
 
 For local-only use, keep the default service URL. For Tailscale or another trusted private network, start the local service with remote access explicitly enabled and then set the extension service URL to that private address.
 
-When a non-default service URL is saved, Chrome will ask for permission to reach that specific origin. The broad optional host permission exists only so the extension can support user-selected localhost, LAN, and Tailscale service URLs without granting those origins by default.
+When a non-default service URL is saved, the browser will ask for permission to reach that specific origin. The broad optional host permission exists only so the extension can support user-selected localhost, LAN, and Tailscale service URLs without granting those origins by default.
 
 The extension does not discover or broadcast service locations.

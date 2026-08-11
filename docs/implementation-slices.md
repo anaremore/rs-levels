@@ -100,8 +100,8 @@ Deliverables:
 
 - source-style release directory with manifest and file checksums
 - source zip archive with checksum sidecar
-- standalone browser-extension zip archive with checksum sidecar
+- standalone Chrome/Chromium and Firefox browser-extension ZIP archives with checksum sidecars
 - cross-platform local service launch scripts
 - package tests and release checklist updates
 - CI coverage across Windows, macOS, and Linux
-- CI release artifact uploads for source package, source zip, browser-extension zip, and checksum sidecars
+- CI release artifact uploads for source package, source ZIP, both browser-extension ZIPs, and checksum sidecars

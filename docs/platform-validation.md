@@ -69,7 +69,7 @@ Every VARIS Zones adapter must verify:
 
 ## TradingView Handoff Check
 
-Run this manual smoke test in a Chromium profile before release:
+Run this manual smoke test in both a fresh Chrome/Chromium profile and a Firefox Desktop 140+ profile before release. Use the Chrome artifact in Chromium and the Firefox artifact from `about:debugging` in Firefox:
 
 1. Decline the first `Send to TradingView` permission prompt and confirm no field changes and `Copy payload instead` still works.
 2. Grant only the requested TradingView origin and confirm a single open chart is selected automatically.

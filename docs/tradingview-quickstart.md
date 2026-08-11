@@ -11,14 +11,19 @@ The local API service is optional for this workflow. It is useful for diagnostic
 
 ## 1. Load The Extension
 
-1. Open `chrome://extensions` in a Chromium-based browser.
-2. Enable developer mode.
-3. Choose `Load unpacked`.
-4. Select one of these folders:
-   - `apps/browser-extension` from this repository
-   - `dist/rs-levels-0.0.0/apps/browser-extension` from a full release package
-   - the extracted standalone `rs-levels-browser-extension` folder
-5. Pin `RS Levels Capture` so the popup is easy to open.
+In Chrome/Chromium:
+
+1. Open `chrome://extensions`, enable developer mode, and choose `Load unpacked`.
+2. Select `apps/browser-extension`, `dist/rs-levels-0.0.0/apps/browser-extension`, or the extracted `dist/rs-levels-browser-extension-<extension-version>.zip` folder.
+3. Pin `RS Levels Capture` so the popup is easy to open.
+
+In Firefox Desktop 140 or newer:
+
+1. Run `npm run package`, open `about:debugging`, and choose `This Firefox`.
+2. Choose `Load Temporary Add-on` and select `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` or its extracted root `manifest.json`.
+3. Pin `RS Levels Capture` so the popup is easy to open.
+
+Firefox removes temporary add-ons on restart. A permanent Firefox install requires an add-on signed by Mozilla.
 
 ## 2. Open RocketScooter
 
