@@ -77,6 +77,8 @@ Only use remote binding on networks you trust. The browser extension should cont
 
 The extension supports Chrome/Chromium and Firefox Desktop 140+. Firefox for Android is not currently supported. The extension posts allowlisted RocketScooter responses to `/capture/api`, shows local service status, and provides opt-in `Send to TradingView` plus an explicit payload-copy fallback.
 
+Chrome users can [install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko).
+
 `npm run package` creates two focused artifacts:
 
 ```text
@@ -84,7 +86,7 @@ dist/rs-levels-browser-extension-<extension-version>.zip
 dist/rs-levels-browser-extension-firefox-<extension-version>.zip
 ```
 
-For Chrome/Chromium, unzip the first artifact and choose `Load unpacked` from `chrome://extensions`. For a temporary Firefox install, open `about:debugging`, choose `This Firefox` and `Load Temporary Add-on`, then select the Firefox ZIP or its extracted root `manifest.json`. Firefox removes temporary add-ons on restart; permanent distribution requires Mozilla signing.
+For Chrome/Chromium development or manual installation, unzip the first artifact and choose `Load unpacked` from `chrome://extensions`. For a temporary Firefox install, open `about:debugging`, choose `This Firefox` and `Load Temporary Add-on`, then select the Firefox ZIP or its extracted root `manifest.json`. Firefox removes temporary add-ons on restart; permanent distribution requires Mozilla signing.
 
 ## Platform Plugins
 

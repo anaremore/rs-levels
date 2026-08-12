@@ -11,11 +11,12 @@ The local API service is optional for this workflow. It is useful for diagnostic
 
 ## 1. Load The Extension
 
-In Chrome/Chromium:
+In Chrome:
 
-1. Open `chrome://extensions`, enable developer mode, and choose `Load unpacked`.
-2. Select `apps/browser-extension`, `dist/rs-levels-0.0.0/apps/browser-extension`, or the extracted `dist/rs-levels-browser-extension-<extension-version>.zip` folder.
-3. Pin `RS Levels Capture` so the popup is easy to open.
+1. [Install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko).
+2. Pin `RS Levels Capture` so the popup is easy to open.
+
+For development builds or Chromium browsers that cannot use the Chrome Web Store, open the browser's extensions page, enable developer mode, choose `Load unpacked`, and select `apps/browser-extension`, `dist/rs-levels-0.0.0/apps/browser-extension`, or the extracted `dist/rs-levels-browser-extension-<extension-version>.zip` folder.
 
 In Firefox Desktop 140 or newer:
 

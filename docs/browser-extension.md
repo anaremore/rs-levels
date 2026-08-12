@@ -29,7 +29,7 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 ## User Flow
 
 1. Start the local service.
-2. Load `apps/browser-extension` unpacked in Chrome/Chromium, or load the packaged Firefox ZIP temporarily from `about:debugging`.
+2. [Install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko), load `apps/browser-extension` unpacked for Chrome/Chromium development, or load the packaged Firefox ZIP temporarily from `about:debugging`.
 3. Open RocketScooter.
 4. Check the popup status.
 5. Open the info tooltip beside the capture toggle, read the disclosure, and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
@@ -42,7 +42,7 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 
 The popup distinguishes ready, paused, waiting, offline, and stale states so an old capture is not presented as live data. When the local API is offline but the session snapshot can still be sent to TradingView, the popup says so explicitly instead of presenting that condition as a blocking failure.
 
-Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.zip` for Chrome/Chromium and `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` for Firefox. Unzip the Chrome artifact and use `Load unpacked`; for a temporary Firefox install, select the Firefox ZIP from `about:debugging` or select its extracted `manifest.json`. The Firefox manifest declares `browsingActivity` and `websiteContent` so Firefox can show its built-in data consent prompt; capture remains off until the separate in-product opt-in. Firefox removes temporary add-ons on restart, and permanent distribution requires Mozilla signing.
+Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.zip` for Chrome/Chromium and `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` for Firefox. Normal Chrome installs should use the published Chrome Web Store listing; unzip the Chrome artifact and use `Load unpacked` for development or manual Chromium installation. For a temporary Firefox install, select the Firefox ZIP from `about:debugging` or select its extracted `manifest.json`. The Firefox manifest declares `browsingActivity` and `websiteContent` so Firefox can show its built-in data consent prompt; capture remains off until the separate in-product opt-in. Firefox removes temporary add-ons on restart, and permanent distribution requires Mozilla signing.
 
 The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.3+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 

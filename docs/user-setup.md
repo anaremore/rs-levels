@@ -67,6 +67,10 @@ scripts/start-local-service.sh
 
 ### Chrome Or Chromium
 
+For Chrome, [install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko), then pin it for quick access to the popup.
+
+For development builds or Chromium browsers that cannot use the store:
+
 1. Open `chrome://extensions` or the equivalent Chromium extension page.
 2. Enable developer mode.
 3. Choose `Load unpacked`.

@@ -16,7 +16,7 @@ This is the canonical documentation map. The README is the public front door; th
 
 | Area | Docs |
 | --- | --- |
-| Browser extension | [Browser extension](browser-extension.md), [install](install.md) |
+| Browser extension | [Chrome Web Store listing](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko), [browser extension](browser-extension.md), [install](install.md) |
 | Local levels server | [API](api.md), [OpenAPI spec](openapi.yaml), [networking and Tailscale](networking.md) |
 | Platform plugins, indicators, and studies | [Platform plugins](platform-plugins.md), [TradingView reference](tradingview.md), [display plugin contract](plugin-contract.md) |
 

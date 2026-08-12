@@ -2,6 +2,8 @@
 
 This guide is the source of truth for Chrome Web Store releases of RS Levels Capture.
 
+Published listing: [RS Levels Capture on the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko)
+
 ## Release artifacts
 
 Build and verify:

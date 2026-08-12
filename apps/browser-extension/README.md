@@ -10,6 +10,10 @@ The page hook skips clearly non-text response content types before reading a bod
 
 ## Install In Chrome Or Chromium
 
+For normal Chrome use, [install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko) and pin it for quick access.
+
+For development builds or Chromium browsers that cannot use the store:
+
 1. Open `chrome://extensions` or the equivalent Chromium extension page.
 2. Enable developer mode.
 3. Load `apps/browser-extension` as an unpacked extension.
