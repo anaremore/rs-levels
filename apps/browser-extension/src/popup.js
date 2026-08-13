@@ -5,7 +5,6 @@ const els = {
   buildId: document.getElementById('build-id'),
   symbol: document.getElementById('symbol'),
   chartHint: document.getElementById('chart-hint'),
-  captureEnabled: document.getElementById('capture-enabled'),
   sendTradingView: document.getElementById('send-tradingview'),
   copyPayload: document.getElementById('copy-payload'),
   tradingViewTargetRow: document.getElementById('tradingview-target-row'),
@@ -46,13 +45,12 @@ let sending = false;
 init();
 
 async function init() {
-  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
   settings = globalThis.RS_LEVELS.migrateSettings(stored);
   if (settings.settingsVersion !== stored.settingsVersion) {
     await webext.storage.local.set(settings);
   }
   els.serviceUrl.textContent = settings.serviceUrl;
-  els.captureEnabled.checked = settings.captureEnabled;
   renderBuildIdentity();
   renderSymbols(symbols);
   bindEvents();
@@ -70,7 +68,6 @@ function bindEvents() {
   els.openPlugins.addEventListener('click', () => window.open(`${settings.serviceUrl}/plugins`, '_blank', 'noopener'));
   els.symbol.addEventListener('change', renderTransferState);
   els.tradingViewTab.addEventListener('change', renderTransferState);
-  els.captureEnabled.addEventListener('change', toggleCapture);
 }
 
 async function refresh() {
@@ -100,9 +97,7 @@ async function refresh() {
     els.serviceVersion.textContent = serviceVersionText(health);
     renderTransferState();
     renderPill(source);
-    if (!settings.captureEnabled) {
-      setMessage(symbols.length ? 'Capture paused. The current chart snapshot remains available.' : 'Capture paused.', 'warning');
-    } else if (symbols.length) {
+    if (symbols.length) {
       setMessage('Ready to send to TradingView.', 'ok');
     } else if (extState.lastError && !globalThis.RS_LEVELS.hasAnyDisplayData(latestServiceStatus)) {
       setMessage(extState.lastError, 'error');
@@ -118,14 +113,10 @@ async function refresh() {
     els.serviceVersion.textContent = 'unknown';
     renderPill({ state: 'offline' });
     renderTransferState();
-    if (!settings.captureEnabled) {
-      setMessage(symbols.length ? 'Capture paused. The current chart snapshot remains available.' : 'Capture paused.', 'warning');
-    } else {
-      setMessage(
-        symbols.length ? 'Local API offline — TradingView send still works.' : (err && err.message ? err.message : 'Local service unavailable'),
-        symbols.length ? 'warning' : 'error'
-      );
-    }
+    setMessage(
+      symbols.length ? 'Local API offline — TradingView send still works.' : (err && err.message ? err.message : 'Local service unavailable'),
+      symbols.length ? 'warning' : 'error'
+    );
   }
 }
 
@@ -436,25 +427,6 @@ async function copyDiagnostics() {
   }
 }
 
-async function toggleCapture() {
-  try {
-    settings = {
-      ...settings,
-      captureEnabled: els.captureEnabled.checked
-    };
-    await webext.storage.local.set({ captureEnabled: settings.captureEnabled });
-    renderOverview();
-    renderPill(latestServiceStatus && latestServiceStatus.source || {});
-    setMessage(
-      settings.captureEnabled ? 'Capture enabled.' : 'Capture paused. The current chart snapshot remains available.',
-      settings.captureEnabled ? 'ok' : 'warning'
-    );
-  } catch (err) {
-    els.captureEnabled.checked = settings.captureEnabled;
-    setMessage(err && err.message ? err.message : 'Capture setting failed', 'error');
-  }
-}
-
 async function getJson(path) {
   const response = await fetch(`${settings.serviceUrl}${path}`);
   if (!response.ok) throw new Error(`Local service returned ${response.status}`);
@@ -514,10 +486,9 @@ function detectedChartCount() {
 
 function renderOverview() {
   const count = detectedChartCount();
-  const captureText = settings.captureEnabled ? 'Capture on' : 'Capture paused';
   els.headerSummary.textContent = count
-    ? `${count} chart${count === 1 ? '' : 's'} · ${captureText}`
-    : captureText;
+    ? `${count} chart${count === 1 ? '' : 's'} detected`
+    : 'Checking open charts…';
   els.chartHint.textContent = count
     ? detectedMessage()
     : 'Open a supported RocketScooter chart to begin.';
@@ -559,7 +530,6 @@ function cleanCaptureStats(stats = {}) {
   return {
     observedCount: nonNegativeInteger(stats.observedCount),
     ignoredCount: nonNegativeInteger(stats.ignoredCount),
-    skippedDisabledCount: nonNegativeInteger(stats.skippedDisabledCount),
     skippedTooLargeCount: nonNegativeInteger(stats.skippedTooLargeCount),
     skippedNonTextCount: nonNegativeInteger(stats.skippedNonTextCount),
     skippedEmptyCount: nonNegativeInteger(stats.skippedEmptyCount),
@@ -574,7 +544,7 @@ function renderCaptureStats(stats = {}) {
   const clean = cleanCaptureStats(stats);
   els.observedCount.textContent = String(clean.observedCount);
   els.ignoredCount.textContent = String(clean.ignoredCount);
-  els.skippedCount.textContent = String(clean.skippedDisabledCount + clean.skippedTooLargeCount + clean.skippedNonTextCount + clean.skippedEmptyCount + clean.readErrorCount);
+  els.skippedCount.textContent = String(clean.skippedTooLargeCount + clean.skippedNonTextCount + clean.skippedEmptyCount + clean.readErrorCount);
   els.hookReason.textContent = clean.lastReason || 'none';
 }
 
@@ -612,10 +582,6 @@ function nonNegativeInteger(value) {
 }
 
 function renderPill(source = {}) {
-  if (!settings.captureEnabled) {
-    setPill('PAUSED', 'warning');
-    return;
-  }
   if (symbols.length) {
     setPill('READY', 'live');
     return;

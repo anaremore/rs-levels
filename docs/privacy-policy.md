@@ -1,28 +1,28 @@
 # RS Levels Capture Privacy Policy
 
-Effective date: August 6, 2026
+Effective date: August 13, 2026
 
 RS Levels Capture is a local-first browser extension that transfers RocketScooter display-level data from a user's browser session to RS Levels display tools. This policy applies to the RS Levels Capture extension for Chrome/Chromium and Firefox.
 
 ## Data the extension handles
 
-Capture is off by default. If the user enables it, the extension handles:
+On the RocketScooter hosts declared during extension installation, the extension handles:
 
 - website content from RocketScooter responses whose URLs match the user's endpoint allowlist, including the response URL, endpoint path, HTTP method and status, capture time, and response body;
 - visible chart-level metadata for supported charts already open in RocketScooter, including chart symbols, level labels and prices, display colors, zones, and limited display statistics;
-- the user's extension settings, including capture status, endpoint allowlist, maximum capture size, and local or private RS Levels service URL;
+- the user's extension settings, including endpoint allowlist, maximum capture size, and local or private RS Levels service URL;
 - the addresses of supported RocketScooter pages and, only when the user starts a TradingView handoff, matching open TradingView chart tabs; and
 - aggregate operational diagnostics such as observed, ignored, skipped, and posted counts and fixed error reason codes.
 
 The extension is not designed to read or transmit cookies, authorization headers, passwords, unrelated form inputs, complete browser history, screenshots, order-entry data, positions, balances, or profit-and-loss data.
 
-The Firefox manifest declares Mozilla's `browsingActivity` and `websiteContent` categories because the extension handles supported page and response URLs plus allowlisted response/chart content. This declaration does not broaden collection: Firefox shows it during installation, capture remains off by default, and the user must still enable the in-product capture control.
+The Firefox manifest declares Mozilla's `browsingActivity` and `websiteContent` categories because the extension handles supported page and response URLs plus allowlisted response/chart content. This declaration does not broaden collection; Firefox shows the categories during installation.
 
 ## How data is used
 
 The extension uses this data only to provide its single purpose: capture display-level data from the user's RocketScooter session and make it available to the user's RS Levels displays.
 
-When capture is enabled, matching response data and sanitized chart metadata are sent only to the RS Levels service URL configured by the user. The default service URL is on the user's own computer at `http://127.0.0.1:8765`. The user may explicitly configure a trusted private-network service and must grant that exact origin when prompted.
+Matching response data and sanitized chart metadata are sent only to the RS Levels service URL configured by the user. The default service URL is on the user's own computer at `http://127.0.0.1:8765`. The user may explicitly configure a trusted private-network service and must grant that exact origin when prompted.
 
 The extension does not send captured data to the developer, an advertising service, an analytics service, or another developer-controlled server.
 
@@ -44,7 +44,7 @@ Data reaches a third-party page only when the user explicitly starts the Trading
 
 ## User choices and deletion
 
-Users can pause capture at any time in the extension popup or options page. They can avoid TradingView access and use the explicit copy-to-clipboard workflow instead. Optional site access can be removed in the browser's extension settings.
+Users can disable or remove the extension to stop capture and can manage RocketScooter site access in browser extension settings where the browser supports it. They can avoid TradingView access and use the explicit copy-to-clipboard workflow instead. Optional site access can be removed in the browser's extension settings.
 
 Removing the extension deletes its browser-managed local and session storage. Removing local RS Levels service data deletes data held by that separate local component.
 

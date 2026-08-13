@@ -174,7 +174,6 @@ for (const callback of listeners.message || []) {
     data: {
       source: 'rs-levels-content',
       type: 'settings',
-      captureEnabled: true,
       maxCaptureBytes: 1024 * 1024
     }
   });

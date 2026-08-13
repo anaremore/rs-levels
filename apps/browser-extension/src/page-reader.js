@@ -11,7 +11,6 @@
   }
 
   let settings = {
-    captureEnabled: false,
     maxCaptureBytes: 1024 * 1024
   };
   let timer = 0;
@@ -20,7 +19,6 @@
   const stats = {
     observedCount: 0,
     ignoredCount: 0,
-    skippedDisabledCount: 0,
     skippedTooLargeCount: 0,
     skippedNonTextCount: 0,
     skippedEmptyCount: 0,
@@ -37,7 +35,6 @@
     const data = event.data || {};
     if (data.source !== CONTROL_SOURCE || data.type !== 'settings') return;
     settings = {
-      captureEnabled: data.captureEnabled === true,
       maxCaptureBytes: Number.isFinite(Number(data.maxCaptureBytes)) ? Number(data.maxCaptureBytes) : 1024 * 1024
     };
     publishDiagnostic('reader-settings-synced');
@@ -81,12 +78,6 @@
 
   function poll() {
     stats.observedCount += 1;
-    if (!settings.captureEnabled) {
-      stats.skippedDisabledCount += 1;
-      publishDiagnostic('reader-disabled');
-      return;
-    }
-
     const snapshot = readDisplaySnapshot();
     const hash = stableHash(snapshot);
     if (!snapshot.levels.length && !snapshotHasStats(snapshot)) {

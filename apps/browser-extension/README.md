@@ -24,7 +24,7 @@ Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.
 
 ## Install Temporarily In Firefox
 
-Firefox Desktop requires version 140 or newer. Firefox for Android is not currently a supported or validated target. The Firefox manifest declares the `browsingActivity` and `websiteContent` data categories so Firefox can show its built-in consent disclosure during installation; capture still starts off and requires the extension's separate in-product opt-in.
+Firefox Desktop requires version 140 or newer. Firefox for Android is not currently a supported or validated target. The Firefox manifest declares the `browsingActivity` and `websiteContent` data categories so Firefox can show its built-in consent disclosure during installation.
 
 1. Run `npm run package`.
 2. Open `about:debugging` in Firefox Desktop 140 or newer.
@@ -38,18 +38,17 @@ Both standalone ZIPs contain only the correct browser manifest, icon assets, REA
 
 ## Popup
 
-The popup keeps the normal TradingView workflow visible and moves support utilities behind `Tools & diagnostics`. Its header summarizes capture readiness and detected-chart count; local service and build details stay available without competing with the primary action. The capture privacy disclosure is available from the info tooltip beside the capture toggle. The popup includes:
+The popup keeps the normal TradingView workflow visible and moves support utilities behind `Tools & diagnostics`. Its header summarizes capture readiness and detected-chart count; local service and build details stay available without competing with the primary action. The popup includes:
 
 - detected-chart selector
-- capture pause/resume toggle
 - `Send to TradingView`
 - `Copy payload instead`
 - collapsed `Tools & diagnostics` with `Reconnect Tab`, `Copy Diagnostics`, `API Docs`, `Plugins`, and the options shortcut
 - nested technical details with local service/build identity, aggregate observed, ignored, skipped, and posted counters, hook status reason, and manual status refresh
 
-Capture is off by default. The popup and options page explain which RocketScooter data is handled, where it is sent, and what is excluded; capture begins only after the user enables the adjacent checkbox. See the public [privacy policy](../../docs/privacy-policy.md).
+Capture runs automatically on the RocketScooter hosts declared by the extension. The public [privacy policy](../../docs/privacy-policy.md) explains which RocketScooter data is handled, where it is sent, and what is excluded.
 
-The capture toggle updates the same `captureEnabled` setting as the options page. The selector contains only symbols with supported data in RocketScooter charts that are currently open; it does not copy the platform watchlist into a long dropdown. When several charts are available, `All charts (N)` bundles them in one payload. `Send to TradingView` asks for `https://*.tradingview.com/*` access on first use, lets the user choose when several chart tabs are open, focuses the selected chart, and fills only the visible input identified by the exact accessible label `RS Levels Payload` or by that exact visible label in the same settings row. If settings are not open yet, the helper waits for up to 45 seconds. It never clicks `OK`; review the value and confirm it yourself. `Copy payload instead` keeps the original clipboard workflow. Both actions use the latest detected-chart capture first, including stock HP/MHP and liquidity-map context; ES/NQ can still fall back to the local `/tradingview/:symbol` endpoint. `Reconnect Tab` attaches the capture hook to the active RocketScooter tab if the extension was loaded after the page was already open. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`.
+The selector contains only symbols with supported data in RocketScooter charts that are currently open; it does not copy the platform watchlist into a long dropdown. When several charts are available, `All charts (N)` bundles them in one payload. `Send to TradingView` asks for `https://*.tradingview.com/*` access on first use, lets the user choose when several chart tabs are open, focuses the selected chart, and fills only the visible input identified by the exact accessible label `RS Levels Payload` or by that exact visible label in the same settings row. If settings are not open yet, the helper waits for up to 45 seconds. It never clicks `OK`; review the value and confirm it yourself. `Copy payload instead` keeps the original clipboard workflow. Both actions use the latest detected-chart capture first, including stock HP/MHP and liquidity-map context; ES/NQ can still fall back to the local `/tradingview/:symbol` endpoint. `Reconnect Tab` attaches the capture hook to the active RocketScooter tab if the extension was loaded after the page was already open. `Copy Diagnostics` copies a scrubbed support bundle from `/diagnostics` plus extension post timing. `API Docs` opens the local `/docs` page, and `Plugins` opens `/plugins`.
 
 If the local service is offline, both TradingView actions can still work from the extension's latest page-reader capture. The sanitized snapshot is kept only in extension `storage.session`, so it does not survive a browser restart or extension update. Refresh RocketScooter after opening, closing, or changing a chart so the detected selector and payload are fresh.
 
@@ -64,13 +63,12 @@ If the popup remains waiting, `Hook: hook-installed` or `Hook: settings-synced` 
 Options let users configure:
 
 - local service URL, default `http://127.0.0.1:8765`
-- capture enabled/paused
 - endpoint URL allowlist
 - max capture size
 - service reachability test
 - browser origin permission status for the configured service URL
 
-Pre-v5 extension settings migrate to the current display-feed allowlist and are paused once on update so the user can review the disclosure and opt in again.
+Existing extension settings migrate to the current display-feed allowlist. Version 0.4.4 removes the obsolete capture pause setting so upgraded installs resume the extension's core capture behavior automatically.
 
 For Tailscale/private-network use, point the service URL at the trusted machine after the local service has been explicitly started with remote access enabled. The browser will ask for permission to reach that specific origin.
 

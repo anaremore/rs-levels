@@ -49,36 +49,9 @@ p {
   box-shadow: inset 0 0 0 1px #223047;
 }
 
-.capture-consent {
-  box-shadow: inset 0 0 0 1px #3b5878;
-}
-
-.disclosure {
-  color: #aebdd0;
-  font-size: 13px;
-  line-height: 1.55;
-  max-width: 68ch;
-}
-
 label {
   color: #c6d6ea;
   font-weight: 700;
-}
-
-.switch {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.switch input {
-  flex: 0 0 auto;
-}
-
-.switch span {
-  line-height: 1.35;
 }
 
 .service-actions {
@@ -102,12 +75,6 @@ textarea {
   color: #eef6ff;
   box-shadow: inset 0 0 0 1px #2f405a;
   outline: none;
-}
-
-input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  padding: 0;
 }
 
 textarea {

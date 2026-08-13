@@ -12,7 +12,7 @@ Before any public release:
 - Test service startup on Windows, macOS, and Linux.
 - Test Chrome/Chromium and Firefox extension install instructions and both standalone browser-extension ZIPs from scratch.
 - Confirm the Firefox temporary package loads in Firefox Desktop 140+ and shows the declared data consent categories; use Mozilla signing before claiming a permanent Firefox install.
-- Confirm a fresh extension install starts with capture off and requires an adjacent, plain-language opt-in.
+- Confirm a fresh extension install captures supported RocketScooter data automatically and presents no redundant capture toggle.
 - Verify the public privacy-policy URL while signed out.
 - Verify the manifest and extension ZIP contain 16, 32, 48, and padded 128 pixel PNG icons.
 - Verify the 1280x800 screenshot and 440x280 small promo tile render correctly.

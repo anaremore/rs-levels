@@ -53,9 +53,10 @@ if (webext.tabs.onUpdated) {
 }
 
 webext.runtime.onInstalled.addListener(async () => {
-  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
   const settings = globalThis.RS_LEVELS.migrateSettings(stored);
   await webext.storage.local.set(settings);
+  await webext.storage.local.remove('captureEnabled');
   const session = webext.storage && webext.storage.session;
   if (session) {
     try {
@@ -107,14 +108,12 @@ webext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function postCapture(capture, sender = {}) {
   let settings;
   try {
-    const stored = await webext.storage.local.get(['serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+    const stored = await webext.storage.local.get(['serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
     settings = globalThis.RS_LEVELS.cleanSettings(stored);
   } catch (err) {
     state.lastError = err && err.message ? err.message : 'Invalid extension settings';
     return { ok: false, error: state.lastError };
   }
-
-  if (!settings.captureEnabled) return { ok: true, skipped: true };
 
   state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
   await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
@@ -218,13 +217,6 @@ async function detectedTradingViewIssue() {
   if (!state.detectedTradingViewSnapshot) {
     return 'No current detected-chart TradingView levels are available yet.';
   }
-
-  try {
-    const stored = await webext.storage.local.get(['captureEnabled']);
-    if (stored && stored.captureEnabled === false) {
-      return 'Capture is paused. Enable capture and refresh RocketScooter before sending to TradingView.';
-    }
-  } catch (_error) {}
 
   const receivedAt = new Date(state.tradingViewReceivedAt).getTime();
   const ageMs = Date.now() - receivedAt;
@@ -526,7 +518,6 @@ function emptyCaptureStats() {
   return {
     observedCount: 0,
     ignoredCount: 0,
-    skippedDisabledCount: 0,
     skippedTooLargeCount: 0,
     skippedNonTextCount: 0,
     skippedEmptyCount: 0,
@@ -549,7 +540,6 @@ function cleanCaptureStats(input = {}) {
   return {
     observedCount: nonNegativeInteger(input.observedCount),
     ignoredCount: nonNegativeInteger(input.ignoredCount),
-    skippedDisabledCount: nonNegativeInteger(input.skippedDisabledCount),
     skippedTooLargeCount: nonNegativeInteger(input.skippedTooLargeCount),
     skippedNonTextCount: nonNegativeInteger(input.skippedNonTextCount),
     skippedEmptyCount: nonNegativeInteger(input.skippedEmptyCount),

@@ -18,7 +18,7 @@ npm run package
 Upload only:
 
 ```text
-dist/rs-levels-browser-extension-0.4.3.zip
+dist/rs-levels-browser-extension-0.4.4.zip
 ```
 
 The ZIP must contain `manifest.json` at its root. Do not upload the full `rs-levels-0.0.0.zip` source release.
@@ -30,7 +30,7 @@ Dashboard artwork:
 - Small promo tile: `store-assets/small-promo-440x280.png`
 - Marquee promo tile: `store-assets/marquee-promo-1400x560.png` (optional)
 
-Before submission, install the ZIP in a fresh Chrome profile, confirm capture starts off, open and read the disclosure tooltip, opt in, and exercise every advertised flow.
+Before submission, install the ZIP in a fresh Chrome profile, confirm supported RocketScooter charts are captured automatically, and exercise every advertised flow.
 
 ## Item choice
 
@@ -84,7 +84,7 @@ Key features:
 
 TradingView integration is simple: open the RS Levels indicator settings, click “Send to TradingView” in the extension, and review the populated payload before applying it.
 
-Capture is off until you enable it. The extension does not read cookies, passwords, authorization headers, or unrelated form inputs, and captured data is not sent to the extension developer.
+Capture runs automatically on the RocketScooter hosts declared during installation. The extension does not read cookies, passwords, authorization headers, or unrelated form inputs, and captured data is not sent to the extension developer.
 
 Requirements:
 • Your own RocketScooter access
@@ -116,7 +116,7 @@ Capture display-level data from the user's RocketScooter browser session and mak
 `storage`
 
 ```text
-Stores the user's local service URL, capture opt-in state, endpoint allowlist, and maximum capture size in extension-local storage. A sanitized latest chart snapshot is kept only in session storage so explicit copy and TradingView handoff actions can use current display data.
+Stores the user's local service URL, endpoint allowlist, and maximum capture size in extension-local storage. A sanitized latest chart snapshot is kept only in session storage so explicit copy and TradingView handoff actions can use current display data.
 ```
 
 `clipboardWrite`
@@ -134,7 +134,7 @@ Injects bundled extension scripts into a user-selected supported tab for Reconne
 Required RocketScooter host access
 
 ```text
-Runs the capture hook and display-only chart reader only on rocket.place and rocketscooter.com. When the user has opted in, this access is required to read allowlisted display-data responses and chart-level metadata for the extension's single purpose.
+Runs the capture hook and display-only chart reader only on rocket.place and rocketscooter.com. This access is required to read allowlisted display-data responses and chart-level metadata for the extension's single purpose.
 ```
 
 Required localhost host access
@@ -163,7 +163,7 @@ All executable JavaScript is included in the uploaded ZIP. Response bodies and c
 
 Select:
 
-- **Website content** — allowlisted RocketScooter response bodies and visible chart-level metadata are processed after opt-in.
+- **Website content** — allowlisted RocketScooter response bodies and visible chart-level metadata are processed on the declared RocketScooter hosts.
 - **Web history** — the extension handles supported RocketScooter response URLs and, for an explicit handoff, matching currently open TradingView chart URLs. It does not read or retain the user's general browser history.
 
 Do not select financial/payment information merely because the payload contains market display levels; the extension does not handle a user's payment details, balances, positions, or transactions. If production testing proves otherwise, stop and update the code, disclosure, and privacy policy before submission.
@@ -185,13 +185,12 @@ Paste and complete this template:
 ```text
 Prerequisite: use the dedicated Chrome Web Store reviewer account supplied below. It contains synthetic/display-only data and no brokerage connection.
 
-1. Install RS Levels Capture 0.4.3.
-2. Open the extension popup. Confirm capture is OFF and the disclosure is available from the info tooltip beside the toggle.
-3. Sign in to RocketScooter using the reviewer credentials below and open a supported chart.
-4. In the extension popup, enable RocketScooter capture. Refresh the RocketScooter chart so the capture hook sees startup responses.
-5. The popup should list the detected chart. The local-service status may remain offline unless the optional local service is running.
-6. Click Copy payload instead to verify the user-initiated clipboard path.
-7. Optional TradingView test: open a TradingView chart with the RS Levels indicator settings dialog visible, click Send to TradingView, approve the exact TradingView site permission, and confirm the RS Levels Payload field is filled but the dialog is not submitted.
+1. Install RS Levels Capture 0.4.4.
+2. Sign in to RocketScooter using the reviewer credentials below and open a supported chart.
+3. Open the extension popup. The chart should be detected automatically; refresh RocketScooter if the chart was already open during installation.
+4. The popup should list the detected chart. The local-service status may remain offline unless the optional local service is running.
+5. Click Copy payload instead to verify the user-initiated clipboard path.
+6. Optional TradingView test: open a TradingView chart with the RS Levels indicator settings dialog visible, click Send to TradingView, approve the exact TradingView site permission, and confirm the RS Levels Payload field is filled but the dialog is not submitted.
 
 Reviewer username: [ENTER ONLY IN DASHBOARD]
 Reviewer password: [ENTER ONLY IN DASHBOARD]
@@ -207,7 +206,7 @@ If a compliant reviewer account cannot be provided, do not submit yet; an inacce
 2. Run the complete verification and package commands.
 3. Install the exact ZIP in a fresh Chrome profile and perform the manual test matrix.
 4. Open the RS Levels Capture item, or choose **New item** if none exists.
-5. Upload `dist/rs-levels-browser-extension-0.4.3.zip`.
+5. Upload `dist/rs-levels-browser-extension-0.4.4.zip`.
 6. Complete Store listing, Privacy practices, Distribution, and Test instructions using this guide.
 7. Upload the icon, screenshot, small promo tile, and optional marquee promo tile from `store-assets`.
 8. Choose deferred publishing, submit for review, and monitor the account email for reviewer questions.

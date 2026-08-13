@@ -26,7 +26,7 @@
   <g fill="#eaf6ff" font-family="Segoe UI,Arial,sans-serif" font-size="22">
     <circle cx="82" cy="490" r="6" fill="#62d9ff"/><text x="106" y="498">No manual retyping or rebuilding levels</text>
     <circle cx="82" cy="552" r="6" fill="#62d9ff"/><text x="106" y="560">TradingView, Sierra Chart, NinjaTrader, Quantower &amp; Bookmap</text>
-    <circle cx="82" cy="614" r="6" fill="#62d9ff"/><text x="106" y="622">Local-first and off until you opt in</text>
+    <circle cx="82" cy="614" r="6" fill="#62d9ff"/><text x="106" y="622">Local-first with no developer data collection</text>
   </g>
   <text x="72" y="724" fill="#ffd166" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="700">RS LEVELS CAPTURE</text>
   <rect x="850" y="138" width="390" height="524" rx="20" fill="#02070d" fill-opacity=".68" stroke="#9bdcff" stroke-opacity=".26" stroke-width="2"/>

@@ -36,7 +36,7 @@
 
   webext.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
-    if (changes.serviceUrl || changes.captureEnabled || changes.endpointPatterns || changes.maxCaptureBytes) {
+    if (changes.serviceUrl || changes.endpointPatterns || changes.maxCaptureBytes) {
       syncSettings();
     }
   });
@@ -46,7 +46,7 @@
 
   async function syncSettings() {
     try {
-      const stored = await webext.storage.local.get(['settingsVersion', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+      const stored = await webext.storage.local.get(['settingsVersion', 'endpointPatterns', 'maxCaptureBytes']);
       const settings = globalThis.RS_LEVELS.migrateSettings(stored);
       if (settings.settingsVersion !== stored.settingsVersion) {
         await webext.storage.local.set(settings);
@@ -54,7 +54,6 @@
       window.postMessage({
         source: CONTROL_SOURCE,
         type: 'settings',
-        captureEnabled: settings.captureEnabled,
         endpointPatterns: settings.endpointPatterns,
         maxCaptureBytes: settings.maxCaptureBytes
       }, window.location.origin);

@@ -11,7 +11,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Captures only response URLs that match the configured allowlist.
 - Falls back to a frame-aware display-only page reader for the TradingView charts currently open in RocketScooter, including futures display data and stock HP/MHP/liquidity-map data.
 - Posts capture payloads to the local service at `/capture/api`.
-- Provides a popup capture toggle plus opt-in TradingView settings-field handoff, explicit payload-copy fallback, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
+- Provides an opt-in TradingView settings-field handoff, explicit payload-copy fallback, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
 - Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in nested technical details under `Tools & diagnostics`.
 - Keeps local service and extension build identities under `Tools & diagnostics` for support without adding header clutter.
@@ -32,19 +32,18 @@ Manual chart levels are pass-through data. Users must add or keep overnight HP/M
 2. [Install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko), load `apps/browser-extension` unpacked for Chrome/Chromium development, or load the packaged Firefox ZIP temporarily from `about:debugging`.
 3. Open RocketScooter.
 4. Check the popup status.
-5. Open the info tooltip beside the capture toggle, read the disclosure, and enable capture if you agree. Capture is off by default; use the same toggle to pause it later.
-6. Choose a symbol from `Chart`. Only open charts with supported data appear; use `All charts (N)` when more than one is available.
-7. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
-8. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
-9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
-10. Expand `Technical details` when troubleshooting local API, extension, or stale-source setup.
-11. Use `Copy Diagnostics` for a scrubbed support bundle.
+5. Choose a symbol from `Chart`. Only open charts with supported data appear; use `All charts (N)` when more than one is available.
+6. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
+7. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
+8. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
+9. Expand `Technical details` when troubleshooting local API, extension, or stale-source setup.
+10. Use `Copy Diagnostics` for a scrubbed support bundle.
 
-The popup distinguishes ready, paused, waiting, offline, and stale states so an old capture is not presented as live data. When the local API is offline but the session snapshot can still be sent to TradingView, the popup says so explicitly instead of presenting that condition as a blocking failure.
+The popup distinguishes ready, waiting, offline, and stale states so an old capture is not presented as live data. When the local API is offline but the session snapshot can still be sent to TradingView, the popup says so explicitly instead of presenting that condition as a blocking failure.
 
-Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.zip` for Chrome/Chromium and `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` for Firefox. Normal Chrome installs should use the published Chrome Web Store listing; unzip the Chrome artifact and use `Load unpacked` for development or manual Chromium installation. For a temporary Firefox install, select the Firefox ZIP from `about:debugging` or select its extracted `manifest.json`. The Firefox manifest declares `browsingActivity` and `websiteContent` so Firefox can show its built-in data consent prompt; capture remains off until the separate in-product opt-in. Firefox removes temporary add-ons on restart, and permanent distribution requires Mozilla signing.
+Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.zip` for Chrome/Chromium and `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` for Firefox. Normal Chrome installs should use the published Chrome Web Store listing; unzip the Chrome artifact and use `Load unpacked` for development or manual Chromium installation. For a temporary Firefox install, select the Firefox ZIP from `about:debugging` or select its extracted `manifest.json`. The Firefox manifest declares `browsingActivity` and `websiteContent` so Firefox can show its built-in data consent prompt. Firefox removes temporary add-ons on restart, and permanent distribution requires Mozilla signing.
 
-The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.3+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.4+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 Nested `Technical details` include aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
@@ -52,7 +51,7 @@ Capture-hook counters are aggregate only:
 
 - `Observed`: fetch/XHR responses seen by the page hook.
 - `Ignored`: responses skipped because the URL did not match the allowlist.
-- `Skipped`: allowlisted responses skipped because capture is disabled, too large, empty, non-text, or unreadable.
+- `Skipped`: allowlisted responses skipped because they are too large, empty, non-text, or unreadable.
 - `Hook`: the most recent scrubbed hook reason, including `hook-installed`, `settings-synced`, `published`, or skip reasons.
 
 These counters do not include ignored URLs, response bodies, request headers, cookies, or page text.
@@ -101,7 +100,7 @@ db/sp
 db/nq
 ```
 
-Users can change these in the options page. The popup capture toggle updates the same capture-enabled setting. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns. Pre-v5 installs are paused once on update so the user can review the disclosure and opt in again.
+Users can change these in the options page. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns. Version 0.4.4 removes the obsolete capture pause setting and resumes automatic capture on the declared RocketScooter hosts.
 
 Capture is not limited by the popup selection. The extension keeps the latest sanitized page-reader snapshot in extension-only `storage.session`, allowing both TradingView actions to work without the local API while the browser session remains open. It stores no raw capture body, and the snapshot is cleared by a browser restart or extension update. The selector is derived from payload-capable symbols in `tvWidget.chartsCount()/chart(i)`, not from RocketScooter's watchlist table. Futures contract symbols continue to normalize to public `ES` and `NQ` families. Stock charts use their ticker, so an open `NVDA` chart with HP, MHP, or map context produces an `NVDA` choice and payload section. A watchlist row alone does not create a choice.
 

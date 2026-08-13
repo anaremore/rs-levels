@@ -15,14 +15,12 @@
   }
 
   let settings = {
-    captureEnabled: false,
     endpointPatterns: [],
     maxCaptureBytes: 1024 * 1024
   };
   const stats = {
     observedCount: 0,
     ignoredCount: 0,
-    skippedDisabledCount: 0,
     skippedTooLargeCount: 0,
     skippedNonTextCount: 0,
     skippedEmptyCount: 0,
@@ -42,7 +40,6 @@
     const data = event.data || {};
     if (data.source !== CONTROL_SOURCE || data.type !== 'settings') return;
     settings = {
-      captureEnabled: data.captureEnabled === true,
       endpointPatterns: Array.isArray(data.endpointPatterns) ? data.endpointPatterns : [],
       maxCaptureBytes: Number.isFinite(Number(data.maxCaptureBytes)) ? Number(data.maxCaptureBytes) : 1024 * 1024
     };
@@ -50,7 +47,6 @@
   });
 
   function skipReason(url) {
-    if (!settings.captureEnabled) return 'disabled';
     if (!rules.isAllowedCaptureUrl(url, settings.endpointPatterns)) return 'allowlist';
     return '';
   }
@@ -82,11 +78,6 @@
     const url = response.url || requestUrl;
     stats.observedCount += 1;
     const reason = skipReason(url);
-    if (reason === 'disabled') {
-      stats.skippedDisabledCount += 1;
-      publishDiagnostic(reason);
-      return;
-    }
     if (reason === 'allowlist') {
       stats.ignoredCount += 1;
       publishDiagnostic(reason);
@@ -155,11 +146,6 @@
       xhr.addEventListener('load', () => {
         stats.observedCount += 1;
         const reason = skipReason(requestUrl);
-        if (reason === 'disabled') {
-          stats.skippedDisabledCount += 1;
-          publishDiagnostic(reason);
-          return;
-        }
         if (reason === 'allowlist') {
           stats.ignoredCount += 1;
           publishDiagnostic(reason);

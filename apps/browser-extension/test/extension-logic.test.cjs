@@ -11,18 +11,17 @@ vm.runInContext(readFileSync(join(root, 'src', 'shared.js'), 'utf8'), sharedCont
 
 const settings = sharedContext.RS_LEVELS.cleanSettings({
   serviceUrl: ' http://127.0.0.1:8765/// ',
-  captureEnabled: true,
   endpointPatterns: ' level\n\nzone,ddband ',
   maxCaptureBytes: 0
 });
 
 assert.equal(settings.serviceUrl, 'http://127.0.0.1:8765');
-assert.equal(settings.captureEnabled, true);
+assert.equal(Object.hasOwn(settings, 'captureEnabled'), false);
 assert.equal(JSON.stringify(settings.endpointPatterns), JSON.stringify(['level', 'zone', 'ddband']));
 assert.equal(settings.maxCaptureBytes, 1024);
-assert.equal(sharedContext.RS_LEVELS.defaults.settingsVersion, 5);
-assert.equal(sharedContext.RS_LEVELS.defaults.captureEnabled, false);
-assert.equal(sharedContext.RS_LEVELS.cleanSettings({}).captureEnabled, false);
+assert.equal(sharedContext.RS_LEVELS.defaults.settingsVersion, 6);
+assert.equal(Object.hasOwn(sharedContext.RS_LEVELS.defaults, 'captureEnabled'), false);
+assert.equal(Object.hasOwn(sharedContext.RS_LEVELS.cleanSettings({ captureEnabled: false }), 'captureEnabled'), false);
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('chart'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('indicator'));
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('hpa'));
@@ -36,8 +35,7 @@ assert.deepEqual(
   sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 1, endpointPatterns: ['level'] }).endpointPatterns,
   sharedContext.RS_LEVELS.mergeEndpointPatterns(['level'], sharedContext.RS_LEVELS.defaults.endpointPatterns)
 );
-assert.equal(sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 4, captureEnabled: true }).captureEnabled, false);
-assert.equal(sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 5, captureEnabled: true }).captureEnabled, true);
+assert.equal(Object.hasOwn(sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 5, captureEnabled: false }), 'captureEnabled'), false);
 assert.equal(sharedContext.RS_LEVELS.cleanSettings({ maxCaptureBytes: 99999999 }).maxCaptureBytes, 5 * 1024 * 1024);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('ftp://example.test'), /http or https/);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('not a url'), /Invalid URL/);

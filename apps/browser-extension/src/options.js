@@ -1,6 +1,5 @@
 const els = {
   serviceUrl: document.getElementById('service-url'),
-  captureEnabled: document.getElementById('capture-enabled'),
   endpointPatterns: document.getElementById('endpoint-patterns'),
   maxCaptureBytes: document.getElementById('max-capture-bytes'),
   testService: document.getElementById('test-service'),
@@ -25,13 +24,12 @@ async function init() {
 }
 
 async function load() {
-  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'captureEnabled', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
   const settings = globalThis.RS_LEVELS.migrateSettings(stored);
   if (settings.settingsVersion !== stored.settingsVersion) {
     await webext.storage.local.set(settings);
   }
   els.serviceUrl.value = settings.serviceUrl;
-  els.captureEnabled.checked = settings.captureEnabled;
   els.endpointPatterns.value = settings.endpointPatterns.join('\n');
   els.maxCaptureBytes.value = String(settings.maxCaptureBytes);
 }
@@ -40,7 +38,6 @@ async function save() {
   try {
     const settings = globalThis.RS_LEVELS.cleanSettings({
       serviceUrl: els.serviceUrl.value,
-      captureEnabled: els.captureEnabled.checked,
       endpointPatterns: els.endpointPatterns.value,
       maxCaptureBytes: Number(els.maxCaptureBytes.value)
     });

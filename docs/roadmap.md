@@ -39,7 +39,7 @@ Status: public setup foundation complete; field validation planned.
 - Capture only allowlisted RocketScooter responses.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
-- Add popup capture pause/resume toggle backed by extension storage.
+- Keep capture automatic on the extension's declared RocketScooter hosts without a redundant pause/resume control.
 - Add popup `Send to TradingView` for all-symbol and selected-scope exports, plus `Copy payload instead` and scrubbed diagnostics.
 - Make the `RSLEVELS|2` payload fillable through an opt-in, fail-closed TradingView settings helper and directly pasteable through the manual fallback.
 - Add quick links to local API docs and the display-plugin manifest.

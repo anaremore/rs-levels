@@ -55,12 +55,6 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   assert.equal(recovered.ok, true);
   assert.match(recovered.payload, /HP,6000,hp/);
 
-  restarted.setCaptureEnabled(false);
-  const paused = await restarted.api.tradingViewPayloadResponse('ES', { detectedOnly: true });
-  assert.equal(paused.ok, false);
-  assert.match(paused.error, /Capture is paused/);
-  restarted.setCaptureEnabled(true);
-
   const staleSessionStore = JSON.parse(JSON.stringify(sessionStore));
   staleSessionStore.rsLevelsTradingViewSession.receivedAt = new Date(Date.now() - 180000).toISOString();
   const stale = createHarness(staleSessionStore);
@@ -175,7 +169,6 @@ function createHarness(sessionStore) {
   let urlTabs = [];
   let activeTabs = [];
   let tabForGet = null;
-  let captureEnabled = true;
   const tabRemovedListeners = [];
   const tabUpdatedListeners = [];
   const messageListeners = [];
@@ -191,8 +184,9 @@ function createHarness(sessionStore) {
     },
     storage: {
       local: {
-        async get() { return { captureEnabled }; },
-        async set() {}
+        async get() { return {}; },
+        async set() {},
+        async remove() {}
       },
       session: {
         async get(key) {
@@ -278,9 +272,6 @@ function createHarness(sessionStore) {
       urlTabs = nextUrlTabs;
       activeTabs = nextActiveTabs;
       tabForGet = null;
-    },
-    setCaptureEnabled(value) {
-      captureEnabled = value === true;
     },
     setTabForGet(tab) {
       tabForGet = tab;
