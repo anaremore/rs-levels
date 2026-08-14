@@ -1,7 +1,7 @@
 # RS Levels
 
 <p align="center">
-  <img src="store-assets/marquee-promo-1400x560.png" alt="RS Levels Capture — RocketScooter levels on the platform you trade" width="100%">
+  <img src="store-assets/marquee-promo-1400x560.png?v=0.4.4" alt="RS Levels Capture — RocketScooter levels on the platform you trade" width="100%">
 </p>
 
 <p align="center"><strong>Local-first RocketScooter level and display-context capture feeds.</strong></p>
