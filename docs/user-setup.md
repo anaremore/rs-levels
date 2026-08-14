@@ -112,7 +112,7 @@ The demo fixture includes sample DD/RI/Res/MRes/WRes and `Map BLD` context, so i
 1. Start the local API.
 2. Open RocketScooter in the browser with the extension loaded.
 3. Open the extension popup.
-4. Confirm capture is enabled in the popup.
+4. Confirm the popup detects the supported RocketScooter charts you have open. Capture starts automatically on the declared RocketScooter hosts.
 5. If RocketScooter was already open before the extension loaded or reloaded, click `Reconnect Tab`.
 6. Confirm the service status changes from waiting/offline to live once levels are captured.
 

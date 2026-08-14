@@ -11,13 +11,13 @@ RS Levels should feel like a quiet local utility: obvious status, stable feeds, 
 
 ## Extension UX
 
-The popup should answer four questions:
+The popup should answer five questions:
 
 1. Is the local service reachable?
-2. Is a RocketScooter tab being observed?
-3. When was the last recognized capture?
-4. Which endpoints have been seen recently?
-5. Can capture be paused without leaving the popup?
+2. Which supported RocketScooter charts are detected?
+3. Which chart or chart set will be sent?
+4. Is TradingView ready to receive the payload?
+5. Where can reconnect and diagnostic tools be found?
 
 Recommended states:
 
