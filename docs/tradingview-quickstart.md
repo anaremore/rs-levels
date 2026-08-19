@@ -34,18 +34,17 @@ Firefox removes temporary add-ons on restart. A permanent Firefox install requir
 
 The extension captures supported display data from open RocketScooter charts. Futures keep their complete RS Levels capture. Stock charts can provide HP, MHP, and liquidity-map context. Watchlist rows alone are ignored, as are broker panels, account data, order-entry controls, and execution data.
 
-## 3. Add Optional Manual RocketScooter Lines
+## 3. Review Automatic And Optional RocketScooter Lines
 
-RS Levels passes through display levels that RocketScooter exposes. It does not invent optional manual levels.
+RocketScooter now adds the futures overnight levels automatically as `Dyn MHP` and `Dyn HP`; RS Levels captures and preserves those names. Existing manually added `OVNMHP` and `OVNHP` lines remain supported for compatibility.
 
-If you want these items to appear in TradingView, add or keep them visible on the matching RocketScooter chart before sending the payload:
+If you want these optional manual items to appear in TradingView, add or keep them visible on the matching RocketScooter chart before sending the payload:
 
-- overnight HP labeled `OVNHP` and overnight MHP labeled `OVNMHP`
 - yellow lines
 - red lines
 - CAT lines
 
-For futures, add them on the ES/MES or NQ/MNQ chart family you care about. Multiple `OVNHP` or `OVNMHP` lines are supported when they use distinct prices; exact duplicate label-and-price captures are shown once. For a stock such as NVDA, keep its stock chart open so detected HP, MHP, and map context can be included. After changing a chart or manual line, refresh/reconnect the RocketScooter tab if needed, then send a fresh TradingView payload.
+For futures, keep `Dyn MHP` and `Dyn HP` visible on the ES/MES or NQ/MNQ chart family you care about. Legacy `OVNHP` or `OVNMHP` lines continue to pass through, including multiple distinct prices; exact duplicate label-and-price captures are shown once. For a stock such as NVDA, keep its stock chart open so detected HP, MHP, and map context can be included. After changing a chart or manual line, refresh/reconnect the RocketScooter tab if needed, then send a fresh TradingView payload.
 
 ## 4. Add The TradingView Indicator
 

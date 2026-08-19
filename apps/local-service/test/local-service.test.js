@@ -387,6 +387,8 @@ try {
         { symbol: 'F.US.EPU26', name: 'OVNHP', price: 7548.75, kind: 'hp', color: '#2962ff' },
         { symbol: 'F.US.EPU26', name: 'OVNMHP', price: 7588.5, kind: 'mhp', color: '#ff9800' },
         { symbol: 'F.US.EPU26', name: 'OVNMHP', price: 7600.25, kind: 'mhp', color: '#ff9800' },
+        { symbol: 'F.US.EPU26', name: 'Dynamic MHP', price: 7715.75, kind: 'mhp', color: '#ff9800' },
+        { symbol: 'F.US.EPU26', name: 'Dynamic HP', price: 7707.5, kind: 'hp', color: '#00ffff' },
         { symbol: 'F.US.ENQU26', name: 'CAT', price: 31232.74, kind: 'cat', color: '#7e57c2' }
       ]
     }
@@ -395,6 +397,8 @@ try {
   assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.kind === 'red-line').length, 2);
   assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.name === 'OVNHP').length, 2);
   assert.equal(manualLineCapture.snapshot.symbols.MES.levels.filter((level) => level.name === 'OVNMHP').length, 2);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.name === 'Dynamic MHP'), true);
+  assert.equal(manualLineCapture.snapshot.symbols.MES.levels.some((level) => level.name === 'Dynamic HP'), true);
   assert.equal(manualLineCapture.snapshot.symbols.MNQ.levels.some((level) => level.kind === 'cat'), true);
 
   const statsCapture = await postJson(`${baseUrl}/capture/api`, {
@@ -463,10 +467,12 @@ try {
   assert.match(sierraManualFeed, /OVNHP,7548\.75,41,98,255,hp/);
   assert.match(sierraManualFeed, /OVNMHP,7588\.50,255,152,0,mhp/);
   assert.match(sierraManualFeed, /OVNMHP,7600\.25,255,152,0,mhp/);
+  assert.match(sierraManualFeed, /Dyn MHP,7715\.75,255,152,0,mhp/);
+  assert.match(sierraManualFeed, /Dyn HP,7707\.50,0,255,255,hp/);
 
   const multiSymbolStatus = await getJson(`${baseUrl}/status`);
   assert.deepEqual(multiSymbolStatus.symbols, ['ES', 'NQ']);
-  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 11);
+  assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').levelCount, 13);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'NQ').levelCount, 3);
   assert.equal(multiSymbolStatus.symbolSummaries.find((row) => row.symbol === 'ES').stats.mapCode, 'BLD');
 
@@ -485,6 +491,8 @@ try {
   assert.match(bundledTradingViewPayload, /OVNHP,7548\.75,hp/);
   assert.match(bundledTradingViewPayload, /OVNMHP,7588\.5,mhp/);
   assert.match(bundledTradingViewPayload, /OVNMHP,7600\.25,mhp/);
+  assert.match(bundledTradingViewPayload, /Dyn MHP,7715\.75,mhp/);
+  assert.match(bundledTradingViewPayload, /Dyn HP,7707\.5,hp/);
   assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
   assert.match(bundledTradingViewPayload, /DD,0\.66,stat/);
   assert.match(bundledTradingViewPayload, /RI,266\.25,stat/);
@@ -506,6 +514,8 @@ try {
   assert.match(mesRowsWithKinds, /OVNHP,7548\.75,41,98,255,hp/);
   assert.match(mesRowsWithKinds, /OVNMHP,7588\.50,255,152,0,mhp/);
   assert.match(mesRowsWithKinds, /OVNMHP,7600\.25,255,152,0,mhp/);
+  assert.match(mesRowsWithKinds, /Dyn MHP,7715\.75,255,152,0,mhp/);
+  assert.match(mesRowsWithKinds, /Dyn HP,7707\.50,0,255,255,hp/);
 
   const mnqTradingViewPayload = await getText(`${baseUrl}/tradingview/MNQ`);
   assert.match(mnqTradingViewPayload, /^RSLEVELS\|2\|[^|]+\|NQ\|/);
@@ -520,11 +530,13 @@ try {
   assert.equal(zones.levels.some((level) => level.kind === 'zone-bear'), true);
 
   const references = await getJson(`${baseUrl}/references`);
-  assert.equal(references.levels.length, 9);
+  assert.equal(references.levels.length, 11);
   assert.equal(references.levels.filter((level) => level.kind === 'yellow-line').length, 2);
   assert.equal(references.levels.filter((level) => level.kind === 'red-line').length, 2);
-  assert.equal(references.levels.filter((level) => level.kind === 'hp').length, 2);
-  assert.equal(references.levels.filter((level) => level.kind === 'mhp').length, 2);
+  assert.equal(references.levels.filter((level) => level.kind === 'hp').length, 3);
+  assert.equal(references.levels.filter((level) => level.kind === 'mhp').length, 3);
+  assert.equal(references.levels.some((level) => level.name === 'Dynamic HP'), true);
+  assert.equal(references.levels.some((level) => level.name === 'Dynamic MHP'), true);
   assert.equal(references.levels.some((level) => level.kind === 'cat'), true);
 
   const remoteService = createService({

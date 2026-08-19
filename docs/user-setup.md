@@ -120,7 +120,7 @@ You can keep the current ES and NQ futures contracts visible in RocketScooter. C
 
 When RocketScooter exposes DD ratio, RI, Res, MRes, WRes, or liquidity-map context such as `Map BLD`, RS Levels carries those values as display stats. TradingView shows them in its stats panel, VARIS Zones can use RI for band spacing, and direct platform plugins read them from `/stats/:symbol`.
 
-RS Levels does not create optional manual levels on its own. If you want overnight HP/MHP, yellow lines, red lines, or CAT lines to appear in TradingView, Sierra Chart, NinjaTrader, Quantower, or Bookmap, add or keep those lines visible on the relevant RocketScooter futures chart first. Label overnight lines `OVNHP` or `OVNMHP`. You can add multiple lines with either label: every distinct price is preserved, while an exact duplicate label-and-price capture is shown once. After adding or changing them, refresh/reconnect RocketScooter if needed and send, copy, or poll a fresh capture.
+RocketScooter now supplies overnight levels automatically as `Dyn MHP` and `Dyn HP`. Keep those study lines visible on the relevant futures chart and RS Levels will preserve their names in TradingView, Sierra Chart, NinjaTrader, and Quantower. Existing manual `OVNMHP` and `OVNHP` lines remain supported, including multiple distinct prices; an exact duplicate label-and-price capture is shown once. Yellow, red, and CAT lines are still optional manual levels that must be present in RocketScooter. After changing the chart or a manual line, refresh/reconnect RocketScooter if needed and send, copy, or poll a fresh capture.
 
 If capture does not start, open extension options and review the endpoint allowlist.
 

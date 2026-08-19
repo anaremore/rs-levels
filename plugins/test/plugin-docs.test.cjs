@@ -125,6 +125,7 @@ assert.match(sierraSource, /OpenCloseDedupeKey/);
 assert.match(sierraSource, /ContainsText\(openCloseKeys, openCloseKey\)/);
 assert.match(sierraSource, /zone-bull/);
 assert.match(sierraSource, /zone-bear/);
+assertDynamicHpNames(sierraSource);
 assert.doesNotMatch(sierraSource, /std::(?:min|max)\s*\(/, 'Sierra headers define min/max macros, so avoid std::min/std::max call syntax');
 assertManualKinds(sierraSource);
 assertNoPlatformApiTerms(sierraSource);
@@ -184,6 +185,7 @@ assert.match(ninjaSource, /string kind = parts\.Length >= 6/);
 assert.match(ninjaSource, /Kind = kind/);
 assert.match(ninjaSource, /zone-bull/);
 assert.match(ninjaSource, /zone-bear/);
+assertDynamicHpNames(ninjaSource);
 assert.doesNotMatch(ninjaSource, /DashStyleHelper/);
 assertManualKinds(ninjaSource);
 assertNoPlatformApiTerms(ninjaSource);
@@ -225,6 +227,7 @@ assert.match(quantowerSource, /string kind = parts\.Length >= 6/);
 assert.match(quantowerSource, /Kind = kind/);
 assert.match(quantowerSource, /zone-bull/);
 assert.match(quantowerSource, /zone-bear/);
+assertDynamicHpNames(quantowerSource);
 assertManualKinds(quantowerSource);
 assertNoPlatformApiTerms(quantowerSource);
 
@@ -289,6 +292,7 @@ assertNoPlatformApiTerms(bookmapVarisSource);
 const tradingViewSource = readFileSync(join(root, 'tradingview', 'rs-levels.pine'), 'utf8');
 assert.match(tradingViewSource, /^indicator\(/m);
 assertManualKinds(tradingViewSource);
+assertDynamicHpNames(tradingViewSource);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\s*\(/i);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\./i);
 assert.doesNotMatch(tradingViewSource, /\balertcondition\s*\(/i);
@@ -309,6 +313,13 @@ function assertManualKinds(source) {
   assert.match(source, /yellow-line/);
   assert.match(source, /red-line/);
   assert.match(source, /cat/);
+}
+
+function assertDynamicHpNames(source) {
+  assert.match(source, /Dyn MHP/);
+  assert.match(source, /Dyn HP/);
+  assert.match(source, /OVNMHP/);
+  assert.match(source, /OVNHP/);
 }
 
 function assertNoPlatformApiTerms(source) {

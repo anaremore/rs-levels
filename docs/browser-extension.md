@@ -9,14 +9,14 @@ The RS Levels browser extension is the first-priority capture UX.
 - Loads capture code only on RocketScooter app host patterns: `rocket.place` and `rocketscooter.com`; TradingView receives a one-shot helper only after an explicit send and site-permission grant.
 - Injects a page hook at `document_start` so fetch/XHR responses can be observed from the page context.
 - Captures only response URLs that match the configured allowlist.
-- Falls back to a frame-aware display-only page reader for the TradingView charts currently open in RocketScooter, including futures display data and stock HP/MHP/liquidity-map data.
+- Falls back to a frame-aware display-only page reader for the TradingView charts currently open in RocketScooter, including futures `Dyn MHP`/`Dyn HP`, other display data, and stock HP/MHP/liquidity-map data.
 - Posts capture payloads to the local service at `/capture/api`.
 - Provides an opt-in TradingView settings-field handoff, explicit payload-copy fallback, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
 - Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in nested technical details under `Tools & diagnostics`.
 - Keeps local service and extension build identities under `Tools & diagnostics` for support without adding header clutter.
 
-Manual chart levels are pass-through data. Users must add or keep overnight HP/MHP, yellow lines, red lines, and CAT lines visible in RocketScooter if they want those levels exported to TradingView payloads or direct platform plugins.
+RocketScooter's automatic futures overnight levels pass through as `Dyn MHP` and `Dyn HP`. Legacy manual `OVNMHP`/`OVNHP` lines remain accepted. Yellow, red, and CAT lines are still manual pass-through data and must be visible in RocketScooter to be exported.
 
 ## What It Avoids
 
@@ -100,13 +100,13 @@ db/sp
 db/nq
 ```
 
-Users can change these in the options page. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns. Version 0.4.4 removes the obsolete capture pause setting and resumes automatic capture on the declared RocketScooter hosts.
+Users can change these in the options page. The allowlist is intentionally URL-substring based so users can adapt to harmless RocketScooter endpoint naming changes without code edits. Existing extension installs migrate older defaults to include these display-feed patterns. Version 0.4.5 adds first-class `Dyn MHP`/`Dyn HP` capture while retaining the legacy `OVNMHP`/`OVNHP` names.
 
 Capture is not limited by the popup selection. The extension keeps the latest sanitized page-reader snapshot in extension-only `storage.session`, allowing both TradingView actions to work without the local API while the browser session remains open. It stores no raw capture body, and the snapshot is cleared by a browser restart or extension update. The selector is derived from payload-capable symbols in `tvWidget.chartsCount()/chart(i)`, not from RocketScooter's watchlist table. Futures contract symbols continue to normalize to public `ES` and `NQ` families. Stock charts use their ticker, so an open `NVDA` chart with HP, MHP, or map context produces an `NVDA` choice and payload section. A watchlist row alone does not create a choice.
 
-When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays. Futures keep their existing zone, manual-line, reference, and stat extraction. Detected stocks can add visible HP/MHP prices and a liquidity-map code from the matching scanner row. Scanner rows are consulted only for symbols already detected in the open chart grid, so the full watchlist is never turned into popup options. The reader does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
+When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays. Futures keep their automatic `Dyn MHP`/`Dyn HP` study plots plus existing zone, legacy/manual-line, reference, and stat extraction. Detected stocks can add visible HP/MHP prices and a liquidity-map code from the matching scanner row. Scanner rows are consulted only for symbols already detected in the open chart grid, so the full watchlist is never turned into popup options. The reader does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
 
-Because these manual lines are read from RocketScooter's visible chart state, changing them in RocketScooter requires a fresh capture before downstream indicators/studies/plugins can update.
+Because these levels are read from RocketScooter's visible chart state, changing a study or manual line requires a fresh capture before downstream indicators/studies/plugins can update.
 
 ## Tailscale And Private Networks
 

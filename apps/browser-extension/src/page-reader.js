@@ -662,7 +662,7 @@
 
   function levelNameFromLabel(label, color) {
     const text = compact(label);
-    const direct = text.match(/\b(OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bea(?:r)?\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*|CAT|YL\d*|RL\d*|Yellow\s*Line|Red\s*Line)\b/i);
+    const direct = text.match(/\b((?:Dyn|Dynamic)\s+MHP|(?:Dyn|Dynamic)\s+HP|OVNMHP|OVNHP|MHP|HP|man_MHP|man_HP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|DD(?:\s*(?:Upper|Lower))?|Bull\s*Zone|Bea(?:r)?\s*Zone|BZT\d*|BZB\d*|BrZT\d*|BrZB\d*|CAT|YL\d*|RL\d*|Yellow\s*Line|Red\s*Line)\b/i);
     if (direct) return normalizeName(direct[1]);
     if (/\bOpen\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/\bClose\b/i.test(text)) return 'Open';
     if (/\bClose\b[^\d-]*-?[\d,]+(?:\.\d+)?/i.test(text) && !/Prev\s*Close|PrevDayClose/i.test(text)) return 'Close';
@@ -677,6 +677,8 @@
 
   function normalizeName(value) {
     const text = compact(value);
+    if (/^(?:dyn|dynamic)\s+mhp$/i.test(text)) return 'Dyn MHP';
+    if (/^(?:dyn|dynamic)\s+hp$/i.test(text)) return 'Dyn HP';
     if (/^man_mhp$/i.test(text)) return 'man_MHP';
     if (/^man_hp$/i.test(text)) return 'man_HP';
     if (/^mhp$/i.test(text)) return 'MHP';

@@ -29,6 +29,8 @@ const row = {
     { name: 'RL2', price: 7472, kind: 'reference', color: '#F23645' },
     { name: 'YL2', price: 7608, kind: 'unknown', color: '#FFEB3B' },
     { name: 'CAT', price: 7820, kind: 'cat', color: '#7E57C2' },
+    { name: 'Dynamic MHP', price: 7715.75, kind: 'mhp' },
+    { name: 'text Dyn HP : 7707.5 Liquidity Map', price: 7707.5, kind: 'hp' },
     { name: 'text SPY Open : 7,559 Liquidity Map', price: 7559, kind: 'open-close', color: '#E0E0E0' },
     { name: 'MidGap', price: 7569, kind: 'open-close' },
     { name: 'Bull Zone', price: 7566.4, kind: 'zone-bull' },
@@ -50,6 +52,8 @@ assert.match(payload, /Red Line,7480,red-line/);
 assert.match(payload, /Red Line,7472,red-line/);
 assert.match(payload, /Yellow Line,7608,yellow-line/);
 assert.match(payload, /CAT,7820,cat/);
+assert.match(payload, /Dyn MHP,7715\.75,mhp/);
+assert.match(payload, /Dyn HP,7707\.5,hp/);
 assert.match(payload, /Open,7559,open-close/);
 assert.match(payload, /Half Gap,7569,open-close/);
 assert.match(payload, /Bull Zone Top 2,7579\.75,zone-bull/);

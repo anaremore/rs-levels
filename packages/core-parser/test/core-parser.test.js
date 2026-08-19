@@ -274,6 +274,8 @@ const pageReaderCapture = normalizeCapture({
     capturedAt: '2026-06-19T14:31:57.000Z',
     levels: [
       { symbol: 'MES', name: 'OVNHP', price: 7565, kind: 'hp', source: 'rocketscooter-page' },
+      { symbol: 'MES', name: 'Dyn MHP', price: 7715.75, kind: 'mhp', source: 'rocketscooter-page' },
+      { symbol: 'MES', name: 'Dyn HP', price: 7707.5, kind: 'hp', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'BZT1', price: 30667.5, kind: 'zone-bull', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'BZB1', price: 30638, kind: 'zone-bull', source: 'rocketscooter-page' },
       { symbol: 'F.US.ENQU26', name: 'BrZT1', price: 30450, kind: 'zone-bear', source: 'rocketscooter-page' },
@@ -281,7 +283,9 @@ const pageReaderCapture = normalizeCapture({
     ]
   }
 });
-assert.equal(pageReaderCapture.symbols.MES.length, 1);
+assert.equal(pageReaderCapture.symbols.MES.length, 3);
+assert.equal(pageReaderCapture.symbols.MES.find((level) => level.name === 'Dyn MHP').kind, 'mhp');
+assert.equal(pageReaderCapture.symbols.MES.find((level) => level.name === 'Dyn HP').kind, 'hp');
 assert.equal(pageReaderCapture.symbols.MNQ.length, 3);
 assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BZT1').kind, 'zone-bull');
 assert.equal(pageReaderCapture.symbols.MNQ.find((level) => level.name === 'BrZT1').kind, 'zone-bear');

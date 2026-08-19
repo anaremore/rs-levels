@@ -23,6 +23,8 @@ assert.equal(result.ok, true, result.errors.join('\n'));
 assert.equal(Object.hasOwn(sample.source.endpoints[0], 'url'), false);
 
 assert.equal(inferLevelKind('OVNHP'), 'hp');
+assert.equal(inferLevelKind('Dyn HP'), 'hp');
+assert.equal(inferLevelKind('Dyn MHP'), 'mhp');
 assert.equal(inferLevelKind('DD Upper'), 'dd-band');
 assert.equal(inferLevelKind('QQQ Open'), 'open-close');
 assert.equal(inferLevelKind('BZT2'), 'zone-bull');

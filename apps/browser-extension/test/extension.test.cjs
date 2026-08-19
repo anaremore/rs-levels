@@ -7,7 +7,7 @@ const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 const firefoxManifest = JSON.parse(readFileSync(join(root, 'manifest.firefox.json'), 'utf8'));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, '0.4.4');
+assert.equal(manifest.version, '0.4.5');
 assert.equal(manifest.description, 'Capture RocketScooter chart levels and send them to TradingView or your local RS Levels tools.');
 assert.deepEqual(manifest.icons, {
   16: 'assets/icon-16.png',

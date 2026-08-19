@@ -447,6 +447,14 @@ namespace NinjaTrader.NinjaScript.Indicators
                 return "Open";
             if (upper.Contains("CLOSE"))
                 return "Close";
+            if (upper.Contains("OVNMHP"))
+                return "OVNMHP";
+            if (upper.Contains("OVNHP"))
+                return "OVNHP";
+            if (upper.Contains("DYN MHP") || upper.Contains("DYNAMIC MHP"))
+                return "Dyn MHP";
+            if (upper.Contains("DYN HP") || upper.Contains("DYNAMIC HP"))
+                return "Dyn HP";
             if (level.Kind == "mhp" || upper.Contains("MHP"))
                 return "MHP";
             if (level.Kind == "hp" || upper.Contains("HP"))

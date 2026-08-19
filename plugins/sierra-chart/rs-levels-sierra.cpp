@@ -548,6 +548,10 @@ std::string DisplayLabel(const RsLevel& level)
         return "OVNMHP";
     if (upper.find("OVNHP") != std::string::npos)
         return "OVNHP";
+    if (upper.find("DYN MHP") != std::string::npos || upper.find("DYNAMIC MHP") != std::string::npos)
+        return "Dyn MHP";
+    if (upper.find("DYN HP") != std::string::npos || upper.find("DYNAMIC HP") != std::string::npos)
+        return "Dyn HP";
     if (level.kind == "mhp" || upper.find("MAN_MHP") != std::string::npos || upper.find(" MHP") != std::string::npos)
         return "MHP";
     if (level.kind == "hp" || upper.find("MAN_HP") != std::string::npos || upper.find(" HP") != std::string::npos)

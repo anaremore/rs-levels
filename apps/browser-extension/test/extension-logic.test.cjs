@@ -130,7 +130,9 @@ const multiOvernightSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnaps
       { name: 'OVNHP', price: 7565, kind: 'hp' },
       { name: 'OVNHP', price: 7548.75, kind: 'hp' },
       { name: 'OVNMHP', price: 7588.5, kind: 'mhp' },
-      { name: 'OVNMHP', price: 7600.25, kind: 'mhp' }
+      { name: 'OVNMHP', price: 7600.25, kind: 'mhp' },
+      { name: 'Dynamic MHP', price: 7715.75, kind: 'mhp' },
+      { name: 'Dynamic HP', price: 7707.5, kind: 'hp' }
     ],
     chartLines: [
       { index: 'ES', text: 'OVNHP', price: 7565, kind: 'hp' },
@@ -145,6 +147,8 @@ assert.match(multiOvernightPayload, /OVNHP,7565,hp/);
 assert.match(multiOvernightPayload, /OVNHP,7548\.75,hp/);
 assert.match(multiOvernightPayload, /OVNMHP,7588\.5,mhp/);
 assert.match(multiOvernightPayload, /OVNMHP,7600\.25,mhp/);
+assert.match(multiOvernightPayload, /Dyn MHP,7715\.75,mhp/);
+assert.match(multiOvernightPayload, /Dyn HP,7707\.5,hp/);
 const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-06-21T03:47:05.860Z',
   body: JSON.stringify({

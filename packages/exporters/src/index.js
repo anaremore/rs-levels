@@ -230,11 +230,13 @@ function tradingViewLevelName(level) {
   if (kind === 'cat') return 'CAT';
   if (isHalfGapName(raw)) return 'Half Gap';
   const compact = raw.toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  if (/^(?:DYN|DYNAMIC)MHP$/.test(compact)) return 'Dyn MHP';
+  if (/^(?:DYN|DYNAMIC)HP$/.test(compact)) return 'Dyn HP';
   if (/^RL\d*$/.test(compact) || compact.includes('REDLINE')) return 'Red Line';
   if (/^YL\d*$/.test(compact) || compact.includes('YELLOWLINE')) return 'Yellow Line';
   if (!/horizontal|liquidity\s*map|\btext\b|liq-map-history/i.test(raw)) return raw;
   const upper = raw.toUpperCase();
-  const displayMatch = raw.match(/\b(BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);
+  const displayMatch = raw.match(/\b((?:Dyn|Dynamic)\s+MHP|(?:Dyn|Dynamic)\s+HP|BrZT\d*|BrZB\d*|BZT\d*|BZB\d*|OVNMHP|OVNHP|PrevDayClose|LastOpen|MidGap|HalfGap|HG|man_MHP|man_HP)\b/i);
   if (displayMatch) return normalizedDisplayMatch(displayMatch[1]);
   if (/\bOPEN\b/.test(upper) && !/\bCLOSE\b/.test(upper)) return 'Open';
   if (/\bCLOSE\b/.test(upper)) return 'Close';
@@ -331,6 +333,8 @@ function manualKindFromColor(color) {
 
 function normalizedDisplayMatch(matchText) {
   const text = field(matchText);
+  if (/^(?:dyn|dynamic)\s+mhp$/i.test(text)) return 'Dyn MHP';
+  if (/^(?:dyn|dynamic)\s+hp$/i.test(text)) return 'Dyn HP';
   if (/^man_mhp$/i.test(text)) return 'MHP';
   if (/^man_hp$/i.test(text)) return 'HP';
   if (isHalfGapName(text)) return 'Half Gap';

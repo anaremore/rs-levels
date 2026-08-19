@@ -219,6 +219,10 @@ displayLabelNameForSide(name, kind, zoneSide) =>
         "OVNMHP"
     else if str.contains(upperName, "OVNHP")
         "OVNHP"
+    else if str.contains(upperName, "DYN MHP") or str.contains(upperName, "DYNAMIC MHP")
+        "Dyn MHP"
+    else if str.contains(upperName, "DYN HP") or str.contains(upperName, "DYNAMIC HP")
+        "Dyn HP"
     else if normalizedKind == "mhp" or str.contains(upperName, "MAN_MHP") or str.contains(upperName, " MHP")
         "MHP"
     else if normalizedKind == "hp" or str.contains(upperName, "MAN_HP") or str.contains(upperName, " HP")

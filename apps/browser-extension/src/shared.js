@@ -614,6 +614,8 @@
     if (upper.includes('CLOSE')) return 'Close';
     if (upper.includes('OVNMHP')) return 'OVNMHP';
     if (upper.includes('OVNHP')) return 'OVNHP';
+    if (/\b(?:DYN|DYNAMIC)\s+MHP\b/.test(upper)) return 'Dyn MHP';
+    if (/\b(?:DYN|DYNAMIC)\s+HP\b/.test(upper)) return 'Dyn HP';
     if (upper.includes('CAT')) return 'CAT';
     if (/\bYL\d*\b/.test(upper) || upper.includes('YELLOW LINE') || compactUpper.includes('YELLOWLINE')) return 'Yellow Line';
     if (/\bRL\d*\b/.test(upper) || upper.includes('RED LINE') || compactUpper.includes('REDLINE')) return 'Red Line';
