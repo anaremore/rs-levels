@@ -34,6 +34,7 @@ plugins/
   ninjatrader/
   quantower/
   bookmap/
+  thinkorswim/
   tradingview/
 ```
 
@@ -46,6 +47,15 @@ The direct-polling adapters consume read-only symbol level feeds. Sierra Chart u
 Direct adapters draw what the local API captured from RocketScooter. Automatic overnight levels retain the `Dyn MHP` and `Dyn HP` labels; legacy manual `OVNMHP` and `OVNHP` rows remain supported. Yellow, red, and CAT lines still must be added or kept visible on the matching RocketScooter chart. The adapters do not synthesize absent levels, so let the extension/API capture a fresh snapshot after chart changes.
 
 Direct adapters also consume display context such as `DD`, `RI`, `Res`, `MRes`, `WRes`, and `Map BLD`. Sierra studies receive those values inside `/sierra/:symbol`; Sierra VARIS reads only the `RI` stat row from that same Sierra compatibility feed. NinjaTrader, Quantower, and Bookmap VARIS adapters use `GET /stats/:symbol?format=rows`. These values are display-only context from RocketScooter and are not interpreted as trading signals by this repository. Separate VARIS-style adapters use `RI` as a band-distance input while keeping it separate from the horizontal level overlay. The Sierra Chart VARIS study defaults to Auto symbol detection from the chart symbol, so ES/MES and NQ/MNQ charts can select the matching family without manual input. The Sierra Chart, NinjaTrader, Quantower, and Bookmap VARIS variants compute VWAP from local chart bars and fall back to a manual risk interval when captured `RI` is unavailable. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`; this repository's adapters are public-safe display implementations.
+
+Thinkorswim's thinkScript environment exposes Thinkorswim market/fundamental series and built-in studies but no arbitrary HTTP client. The Thinkorswim path is therefore a generated-source handoff:
+
+- select one captured chart in the browser extension;
+- click **Copy Thinkorswim study**;
+- replace the source of a custom Thinkorswim study and save it;
+- repeat after levels change.
+
+`GET /thinkorswim/:symbol` provides the same generated source for other local tools. The generated study includes category toggles, captured colors, labels, status and stats, Half Gap dashes, matched zone clouds, and a frozen capture timestamp. See `plugins/thinkorswim/README.md` for setup and freshness behavior.
 
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The TradingView path is therefore:
 
@@ -60,6 +70,8 @@ References:
 
 - https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/
 - https://www.tradingview.com/pine-script-docs/writing/limitations/
+- https://toslc.thinkorswim.com/center/reference/thinkScript/Functions/
+- https://toslc.thinkorswim.com/center/reference/thinkScript/tutorials/Advanced/Chapter-13---Referencing-Other-Data.html
 
 ## Feed Freshness
 

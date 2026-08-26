@@ -19,7 +19,7 @@ const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs',
 });
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /34 critical entries/);
+assert.match(checkOutput, /36 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /Chrome and Firefox extension zips enabled/);
 
@@ -63,6 +63,8 @@ assert.match(zipText, /rs-levels-0\.0\.0\/docs\/chrome-web-store-release\.md/);
 assert.match(zipText, /rs-levels-0\.0\.0\/store-assets\/screenshot-popup-1280x800\.png/);
 assert.match(zipText, /rs-levels-0\.0\.0\/store-assets\/marquee-promo-1400x560\.png/);
 assert.match(zipText, /rs-levels-0\.0\.0\/plugins\/manifest\.json/);
+assert.match(zipText, /rs-levels-0\.0\.0\/plugins\/thinkorswim\/rs-levels\.ts/);
+assert.match(zipText, /rs-levels-0\.0\.0\/plugins\/thinkorswim\/README\.md/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.ps1/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.sh/);

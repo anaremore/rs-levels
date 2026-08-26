@@ -29,6 +29,85 @@ export function createTradingViewBundlePayloadExport(snapshot, options = {}) {
   });
 }
 
+export function createThinkorswimStudyExport(symbolSnapshot, options = {}) {
+  const row = normalizeRow(symbolSnapshot, options);
+  const preparedLevels = prepareDisplayLevels(row.levels)
+    .map(thinkorswimDisplayLevel)
+    .filter((level) => Number.isFinite(level.price));
+  const levels = limitLevels(preparedLevels, options.maxLevels);
+  if (!levels.length) return '';
+
+  const symbol = thinkorswimText(displaySymbolFor(row.symbol) || row.symbol || 'Chart', 32);
+  const capturedAt = thinkorswimText(options.capturedAt || row.capturedAt || '', 64) || 'unknown';
+  const generatedAt = thinkorswimText(options.generatedAt || new Date().toISOString(), 64);
+  const lines = [
+    '# RS Levels for Thinkorswim',
+    '# Generated display-only study. This script does not place or manage trades.',
+    `# Symbol: ${thinkorswimComment(symbol)}`,
+    `# Captured: ${thinkorswimComment(capturedAt)}`,
+    `# Generated: ${thinkorswimComment(generatedAt)}`,
+    '# Update: RS Levels Capture > Copy Thinkorswim study, then replace this study source.',
+    '',
+    'declare upper;',
+    '',
+    'input showLabels = yes;',
+    'input showStatus = yes;',
+    'input showStats = yes;',
+    'input showDDBands = yes;',
+    'input showHP = yes;',
+    'input showMHP = yes;',
+    'input showOpenClose = yes;',
+    'input showReferences = yes;',
+    'input showYellowLines = yes;',
+    'input showRedLines = yes;',
+    'input showCAT = yes;',
+    'input showBullZones = yes;',
+    'input showBearZones = yes;',
+    'input showOtherLevels = yes;',
+    'input lineWeight = 1;',
+    '',
+    'def lastRealBar = BarNumber() == HighestAll(if !IsNaN(close) then BarNumber() else 0);',
+    ''
+  ];
+
+  levels.forEach((level, index) => {
+    const plotName = thinkorswimPlotName(index);
+    const visibility = thinkorswimVisibilityInput(level.kind);
+    const price = thinkorswimNumber(level.price);
+    const [red, green, blue] = thinkorswimRgb(level.color, level.kind);
+    const label = thinkorswimText(level.name || 'Level', 120);
+    const color = `CreateColor(${red}, ${green}, ${blue})`;
+    lines.push(`plot ${plotName} = if ${visibility} then ${price} else Double.NaN;`);
+    lines.push(`${plotName}.SetDefaultColor(${color});`);
+    lines.push(`${plotName}.SetLineWeight(lineWeight);`);
+    if (isHalfGapName(label)) lines.push(`${plotName}.SetStyle(Curve.SHORT_DASH);`);
+    lines.push(`${plotName}.HideBubble();`);
+    lines.push(`${plotName}.HideTitle();`);
+    lines.push(`AddChartBubble(showLabels and lastRealBar and ${visibility}, ${plotName}, "${label} | " + AsPrice(${plotName}), ${color}, yes);`);
+    lines.push('');
+  });
+
+  const zonePairs = thinkorswimZonePairs(levels);
+  if (zonePairs.length) {
+    lines.push('# Filled zones');
+    zonePairs.forEach(({ topIndex, bottomIndex, kind }) => {
+      const [red, green, blue] = thinkorswimRgb(levels[topIndex].color || levels[bottomIndex].color, kind);
+      const color = `CreateColor(${red}, ${green}, ${blue})`;
+      lines.push(`AddCloud(${thinkorswimPlotName(topIndex)}, ${thinkorswimPlotName(bottomIndex)}, ${color}, ${color});`);
+    });
+    lines.push('');
+  }
+
+  const levelCountLabel = levels.length === 1 ? 'level' : 'levels';
+  lines.push(`AddLabel(showStatus, "RS Levels ${symbol} | ${levels.length} ${levelCountLabel} | captured ${capturedAt}", CreateColor(145, 164, 187));`);
+  const statsText = thinkorswimStatsText(statsWithDerivedRiskInterval(row.stats, levels));
+  if (statsText) {
+    lines.push(`AddLabel(showStats, "${statsText}", CreateColor(198, 214, 234));`);
+  }
+
+  return `${lines.join('\n')}\n`;
+}
+
 function normalizeRow(symbolSnapshot, options) {
   return normalizeSymbolSnapshot(options.symbol || symbolSnapshot?.symbol, symbolSnapshot || {});
 }
@@ -346,6 +425,165 @@ function normalizedDisplayMatch(matchText) {
 function isHalfGapName(value) {
   const compact = field(value).toUpperCase().replace(/[^A-Z0-9]+/g, '');
   return compact === 'MIDGAP' || compact === 'HALFGAP' || compact === 'HG';
+}
+
+function thinkorswimDisplayLevel(level) {
+  const kind = tradingViewLevelKind(level, level?.name);
+  return {
+    ...level,
+    name: tradingViewLevelName({ ...level, kind }),
+    kind,
+    price: finiteNumber(level?.price)
+  };
+}
+
+function thinkorswimVisibilityInput(kind) {
+  switch (canonicalTradingViewKind(kind)) {
+    case 'dd-band':
+      return 'showDDBands';
+    case 'hp':
+      return 'showHP';
+    case 'mhp':
+      return 'showMHP';
+    case 'open-close':
+      return 'showOpenClose';
+    case 'reference':
+      return 'showReferences';
+    case 'yellow-line':
+      return 'showYellowLines';
+    case 'red-line':
+      return 'showRedLines';
+    case 'cat':
+      return 'showCAT';
+    case 'zone-bull':
+      return 'showBullZones';
+    case 'zone-bear':
+      return 'showBearZones';
+    default:
+      return 'showOtherLevels';
+  }
+}
+
+function thinkorswimPlotName(index) {
+  return `L${String(index + 1).padStart(3, '0')}`;
+}
+
+function thinkorswimZonePairs(levels) {
+  const groups = new Map();
+  levels.forEach((level, index) => {
+    const boundary = thinkorswimZoneBoundary(level);
+    if (!boundary) return;
+    const key = `${boundary.kind}|${boundary.ordinal}`;
+    const group = groups.get(key) || { kind: boundary.kind, topIndex: null, bottomIndex: null };
+    group[boundary.edge === 'top' ? 'topIndex' : 'bottomIndex'] = index;
+    groups.set(key, group);
+  });
+  return Array.from(groups.values()).filter((group) => group.topIndex != null && group.bottomIndex != null);
+}
+
+function thinkorswimZoneBoundary(level) {
+  const kind = canonicalTradingViewKind(level?.kind);
+  if (kind !== 'zone-bull' && kind !== 'zone-bear') return null;
+  const compact = thinkorswimText(level?.name, 120).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  const pattern = kind === 'zone-bear'
+    ? /^(?:BRZT|BEARZONETOP)(\d*)$/
+    : /^(?:BZT|BULLZONETOP)(\d*)$/;
+  const bottomPattern = kind === 'zone-bear'
+    ? /^(?:BRZB|BEARZONEBOTTOM)(\d*)$/
+    : /^(?:BZB|BULLZONEBOTTOM)(\d*)$/;
+  const top = compact.match(pattern);
+  if (top) return { kind, edge: 'top', ordinal: top[1] || '1' };
+  const bottom = compact.match(bottomPattern);
+  if (bottom) return { kind, edge: 'bottom', ordinal: bottom[1] || '1' };
+  return null;
+}
+
+function thinkorswimRgb(value, kind) {
+  const raw = String(value || '').trim();
+  const hex = raw.match(/^#?([0-9a-f]{6})$/i);
+  if (hex) {
+    return [
+      parseInt(hex[1].slice(0, 2), 16),
+      parseInt(hex[1].slice(2, 4), 16),
+      parseInt(hex[1].slice(4, 6), 16)
+    ];
+  }
+  if (Array.isArray(value) && value.length >= 3) {
+    return value.slice(0, 3).map(thinkorswimColorChannel);
+  }
+  if (value && typeof value === 'object') {
+    return [value.r ?? value.red, value.g ?? value.green, value.b ?? value.blue].map(thinkorswimColorChannel);
+  }
+  return thinkorswimKindRgb(canonicalTradingViewKind(kind));
+}
+
+function thinkorswimColorChannel(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(255, Math.max(0, Math.round(number))) : 255;
+}
+
+function thinkorswimKindRgb(kind) {
+  switch (kind) {
+    case 'dd-band':
+      return [0, 188, 212];
+    case 'hp':
+      return [41, 98, 255];
+    case 'mhp':
+      return [255, 152, 0];
+    case 'open-close':
+      return [255, 255, 255];
+    case 'reference':
+    case 'yellow-line':
+      return [255, 235, 59];
+    case 'red-line':
+      return [242, 54, 69];
+    case 'cat':
+      return [126, 87, 194];
+    case 'zone-bull':
+      return [76, 175, 80];
+    case 'zone-bear':
+      return [240, 98, 146];
+    default:
+      return [158, 158, 158];
+  }
+}
+
+function thinkorswimStatsText(stats = {}) {
+  const parts = [];
+  const values = [
+    ['DD', stats.dd],
+    ['RI', stats.riskInterval],
+    ['Res', stats.resilience],
+    ['MRes', stats.monthlyResilience],
+    ['WRes', stats.weeklyResilience]
+  ];
+  values.forEach(([name, value]) => {
+    const number = finiteNumber(value);
+    if (number != null) parts.push(`${name} ${thinkorswimNumber(number)}`);
+  });
+  const mapCode = thinkorswimText(stats.mapCode, 24);
+  if (mapCode) parts.push(`Map ${mapCode}`);
+  return parts.join(' | ');
+}
+
+function thinkorswimNumber(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '0';
+  const normalized = Object.is(number, -0) ? 0 : number;
+  return normalized.toFixed(8).replace(/\.?0+$/, '');
+}
+
+function thinkorswimText(value, maxLength = 160) {
+  return String(value ?? '')
+    .replace(/["\\\r\n\t]+/g, ' ')
+    .replace(/[^\x20-\x7E]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function thinkorswimComment(value) {
+  return thinkorswimText(value, 160).replace(/#/g, '');
 }
 
 function field(value) {

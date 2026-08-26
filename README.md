@@ -27,9 +27,9 @@ RS Levels lets a user capture level and display-context data from their own Rock
 
 RS Levels is organized around three display-only pieces:
 
-- **[Browser extension](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko)**: published for Chrome and compatible Chromium browsers, with Firefox Desktop 140+ supported from the shared runtime. It captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff with an explicit copy fallback, scrubbed diagnostics, API docs links, and extension status/debug tools.
+- **[Browser extension](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko)**: published for Chrome and compatible Chromium browsers, with Firefox Desktop 140+ supported from the shared runtime. It captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff, TradingView payload and generated Thinkorswim study copy actions, scrubbed diagnostics, API docs links, and extension status/debug tools.
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
-- **Platform plugins, indicators, and studies**: includes the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), TradingView Pine sources, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
+- **Platform plugins, indicators, and studies**: includes the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), TradingView Pine sources, generated Thinkorswim studies, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
 ## See It in Action
 
@@ -72,6 +72,7 @@ Use this table as the repo map. TradingView users can start with the extension a
 | --- | --- | --- |
 | TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [Published indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), [TradingView reference](docs/tradingview.md) |
 | TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md) | [VARIS Zones](docs/varis-zones.md) |
+| Thinkorswim levels | [Local API and extension setup](docs/user-setup.md) | [Thinkorswim study](plugins/thinkorswim/README.md) |
 | Local API, diagnostics, examples, or private-network setup | [Local API and extension setup](docs/user-setup.md) | [API](docs/api.md), [Networking](docs/networking.md) |
 | Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](docs/user-setup.md) | [Platform plugins](docs/platform-plugins.md) |
 | API clients or display adapters | [API](docs/api.md) | [Schema reference](docs/schema-reference.md), [display plugin contract](docs/plugin-contract.md) |
@@ -127,6 +128,7 @@ plugins/
   ninjatrader/
   quantower/
   bookmap/
+  thinkorswim/
   tradingview/
 examples/
   html-dashboard/
@@ -138,4 +140,4 @@ scripts/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service, browser extension, TradingView assisted handoff and paste-fallback workflow, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes, persisted service settings, and native app packaging.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes, persisted service settings, and native app packaging.

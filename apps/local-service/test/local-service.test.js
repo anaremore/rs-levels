@@ -162,6 +162,7 @@ try {
   assert.ok(root.endpoints.includes('/diagnostics'));
   assert.ok(root.endpoints.includes('/plugins'));
   assert.ok(root.endpoints.includes('/tradingview'));
+  assert.ok(root.endpoints.includes('/thinkorswim/:symbol'));
   assert.ok(root.endpoints.includes('/sierra/:symbol'));
   assert.equal(root.version, '0.0.0');
   assert.equal(root.build.source, 'source');
@@ -240,12 +241,16 @@ try {
   const emptyTradingViewResponse = await fetch(`${baseUrl}/tradingview/ES`);
   assert.equal(emptyTradingViewResponse.status, 404);
   assert.match(await emptyTradingViewResponse.text(), /no levels found/);
+  const emptyThinkorswimResponse = await fetch(`${baseUrl}/thinkorswim/ES`);
+  assert.equal(emptyThinkorswimResponse.status, 404);
+  assert.match(await emptyThinkorswimResponse.text(), /no levels found/);
   const emptyStats = await getJson(`${baseUrl}/stats`);
   assert.deepEqual(emptyStats.symbols, []);
 
   const pluginManifest = await getJson(`${baseUrl}/plugins`);
   assert.equal(pluginManifest.schemaVersion, '0.1.0');
   assert.ok(pluginManifest.plugins.some((plugin) => plugin.id === 'tradingview'));
+  assert.ok(pluginManifest.plugins.some((plugin) => plugin.id === 'thinkorswim'));
   assert.ok(pluginManifest.plugins.every((plugin) => plugin.displayOnly === true));
 
   const extensionCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'chrome-extension://abcdefghijklmnop' } });
@@ -337,6 +342,16 @@ try {
   assert.match(tradingViewPayload, /^RSLEVELS\|2\|[^|]+\|ES\|/);
   assert.match(tradingViewPayload, /OVNHP,7537,hp/);
   assert.doesNotMatch(tradingViewPayload, /tradingview-json|compactPayload|notes/);
+
+  const thinkorswimResponse = await fetch(`${baseUrl}/thinkorswim/ES`);
+  assert.equal(thinkorswimResponse.ok, true, `${baseUrl}/thinkorswim/ES returned ${thinkorswimResponse.status}`);
+  assert.match(thinkorswimResponse.headers.get('content-type'), /^text\/plain/);
+  const thinkorswimStudy = await thinkorswimResponse.text();
+  assert.match(thinkorswimStudy, /^# RS Levels for Thinkorswim/);
+  assert.match(thinkorswimStudy, /# Symbol: ES/);
+  assert.match(thinkorswimStudy, /plot L001 = if showHP then 7537 else Double\.NaN;/);
+  assert.match(thinkorswimStudy, /CreateColor\(41, 98, 255\)/);
+  assert.match(thinkorswimStudy, /captured /);
   const ddbands = await getJson(`${baseUrl}/ddbands`);
   assert.equal(ddbands.levels.length, 2);
 

@@ -81,6 +81,8 @@ const requiredReleaseEntries = [
   'scripts/start-local-service.ps1',
   'scripts/start-local-service.sh',
   'plugins/manifest.json',
+  'plugins/thinkorswim/README.md',
+  'plugins/thinkorswim/rs-levels.ts',
   'plugins/tradingview/rs-levels.pine',
   'plugins/tradingview/varis-zones.pine',
   'plugins/sierra-chart/rs-levels-sierra.cpp',

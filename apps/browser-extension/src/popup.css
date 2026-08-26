@@ -171,6 +171,13 @@ summary:focus-visible {
   gap: 4px;
 }
 
+.platform-actions {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 4px;
+}
+
 .action-hint {
   min-height: 20px;
   padding-top: 1px;

@@ -132,7 +132,13 @@ From this setup, the important detail is that `Send to TradingView` freezes one 
 
 Both TradingView actions first use the extension's latest detected-chart capture, stored as a sanitized session-only snapshot, so stock and futures handoff can work without the local API. The popup lists only open charts with supported data, never the full watchlist. ES/NQ can fall back to the local `/tradingview/:symbol` endpoint. Keep the local service running for API docs, diagnostics, examples, and direct platform plugins.
 
-## 5. Tailscale Or Trusted Private Network
+## 5. Use Thinkorswim Generated Studies
+
+ThinkScript cannot call the local API directly. Keep the local service running, select one chart in the extension popup, and click `Copy Thinkorswim study`. In Thinkorswim, replace the source of a custom chart study with the copied source and save it. The generated study shows its frozen capture timestamp; repeat the copy-and-replace workflow after refreshing RocketScooter levels.
+
+The same source is available at `GET /thinkorswim/:symbol`. See the [Thinkorswim adapter](../plugins/thinkorswim/README.md).
+
+## 6. Tailscale Or Trusted Private Network
 
 Loopback is safest. For a second machine over Tailscale or another trusted private network:
 

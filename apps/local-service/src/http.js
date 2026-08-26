@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import {
+  createThinkorswimStudyExport,
   createTradingViewBundlePayloadExport,
   createTradingViewPayloadExport
 } from '../../../packages/exporters/src/index.js';
@@ -71,6 +72,17 @@ export function createHttpApp({ store, config, onCapture }) {
         return sendText(res, 200, payload, 'text/plain; charset=utf-8');
       }
 
+      const thinkorswimMatch = pathname.match(/^\/thinkorswim\/([^/]+)$/);
+      if (req.method === 'GET' && thinkorswimMatch) {
+        const symbol = normalizeSymbol(thinkorswimMatch[1]);
+        const snapshot = store.getSnapshot();
+        const row = snapshot.symbols[symbol] || null;
+        if (!row) return sendJson(res, 404, { ok: false, error: 'symbol not found' });
+        const study = createThinkorswimStudyExport(row, { generatedAt: snapshot.generatedAt });
+        if (!study) return sendJson(res, 404, { ok: false, error: 'no levels found' });
+        return sendText(res, 200, study, 'text/plain; charset=utf-8');
+      }
+
       const symbolRowsMatch = pathname.match(/^\/levels\/([^/]+)\/rows$/);
       if (req.method === 'GET' && symbolRowsMatch) {
         const symbol = normalizeSymbol(symbolRowsMatch[1]);
@@ -137,7 +149,7 @@ export function rootInfo(config) {
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
     build: serviceBuildInfo(),
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/thinkorswim/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -527,6 +539,7 @@ GET /sierra/:symbol
 GET /zones
 GET /tradingview
 GET /tradingview/:symbol
+GET /thinkorswim/:symbol
 GET /stream</pre>
   </main>
   <script>document.getElementById("spec-url").textContent = new URL("/openapi.yaml", window.location.href).href;</script>

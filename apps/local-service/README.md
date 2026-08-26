@@ -76,11 +76,14 @@ GET  /zones
 GET  /references
 GET  /tradingview
 GET  /tradingview/:symbol
+GET  /thinkorswim/:symbol
 GET  /stream
 POST /capture/api
 ```
 
 /tradingview returns the all-symbol `RSLEVELS|2` paste payload used by the TradingView Pine indicator. /tradingview/:symbol returns a single-family payload for ES/MES or NQ/MNQ charts.
+
+/thinkorswim/:symbol returns a paste-ready, display-only ThinkScript study containing one frozen symbol snapshot. It is used by the extension's `Copy Thinkorswim study` action.
 
 Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/levels/:symbol/rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
 

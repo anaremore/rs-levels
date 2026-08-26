@@ -104,6 +104,17 @@ const singlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|
 assert.match(singlePayload, /\|NQ\|/);
 const stockPayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-07-09T20:08:23.000Z|NVDA|2026-07-09T20:08:22.000Z|HP,202.5,hp;MHP,205,mhp;Map BLD,0,stat');
 assert.match(stockPayload, /\|NVDA\|/);
+const thinkorswimStudy = sharedContext.RS_LEVELS.cleanThinkorswimStudy('# RS Levels for Thinkorswim\n\ndeclare upper;\n\nplot L001 = 123.45;\n');
+assert.match(thinkorswimStudy, /^# RS Levels for Thinkorswim/);
+assert.ok(thinkorswimStudy.endsWith('\n'));
+assert.throws(() => sharedContext.RS_LEVELS.cleanThinkorswimStudy('declare upper;'), /unsupported Thinkorswim study/);
+assert.throws(() => sharedContext.RS_LEVELS.cleanThinkorswimStudy('# RS Levels for Thinkorswim\n\nplot L001 = 123.45;'), /unsupported Thinkorswim study/);
+assert.throws(() => sharedContext.RS_LEVELS.cleanThinkorswimStudy(''), /invalid Thinkorswim study/);
+const blockedThinkorswimTerm = 'Add' + 'Ord' + 'er';
+assert.throws(
+  () => sharedContext.RS_LEVELS.cleanThinkorswimStudy(`# RS Levels for Thinkorswim\n\ndeclare upper;\n${blockedThinkorswimTerm}();`),
+  /unsupported Thinkorswim study/
+);
 const stockSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-07-09T20:08:23.000Z',
   body: JSON.stringify({

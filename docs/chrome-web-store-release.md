@@ -49,10 +49,10 @@ RS Levels Capture
 **Summary**
 
 ```text
-Capture RocketScooter chart levels and send them to TradingView or your local RS Levels tools.
+Capture RocketScooter chart levels for TradingView, Thinkorswim, and local RS Levels tools.
 ```
 
-The summary is 94 characters and matches the manifest description.
+The summary matches the manifest description.
 
 **Category**
 
@@ -76,13 +76,14 @@ Use the same levels you already follow in RocketScooter without manually recreat
 Key features:
 • Display RocketScooter levels directly on TradingView charts
 • Send levels to TradingView in a few clicks—no manual data entry
+• Copy a generated Thinkorswim study for one selected chart
 • Automatically detect supported RocketScooter charts
 • Choose a specific chart or send all detected charts
 • Use the same captured levels with Sierra Chart, NinjaTrader, Quantower, Bookmap, and other RS Levels integrations
 • Copy a validated payload whenever you prefer a manual workflow
 • Keep data local by default with the optional RS Levels service
 
-TradingView integration is simple: open the RS Levels indicator settings, click “Send to TradingView” in the extension, and review the populated payload before applying it.
+TradingView integration is simple: open the RS Levels indicator settings, click “Send to TradingView” in the extension, and review the populated payload before applying it. For Thinkorswim, select one chart, click “Copy Thinkorswim study,” and replace the source of a custom study.
 
 Capture runs automatically on the RocketScooter hosts declared during installation. The extension does not read cookies, passwords, authorization headers, or unrelated form inputs, and captured data is not sent to the extension developer.
 
@@ -122,7 +123,7 @@ Stores the user's local service URL, endpoint allowlist, and maximum capture siz
 `clipboardWrite`
 
 ```text
-Writes a levels payload or scrubbed diagnostics to the clipboard only after the user clicks Copy payload or Copy Diagnostics.
+Writes a levels payload, generated Thinkorswim study, or scrubbed diagnostics to the clipboard only after the user clicks the corresponding copy action.
 ```
 
 `scripting`
@@ -140,7 +141,7 @@ Runs the capture hook and display-only chart reader only on rocket.place and roc
 Required localhost host access
 
 ```text
-Connects to the RS Levels service on 127.0.0.1 or localhost to post captured display data, read health and status, and open local API documentation.
+Connects to the RS Levels service on 127.0.0.1 or localhost to post captured display data, read health and status, retrieve generated Thinkorswim source, and open local API documentation.
 ```
 
 Optional `http://*/*` and `https://*/*` host access

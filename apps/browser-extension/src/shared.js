@@ -215,6 +215,28 @@
     return payload;
   }
 
+  function cleanThinkorswimStudy(text) {
+    const study = String(text || '').trim();
+    const blockedTerms = [
+      'Add' + 'Ord' + 'er',
+      'Entry' + 'Price',
+      'Get' + 'AveragePrice',
+      'Get' + 'OpenPL',
+      'Get' + 'Quantity',
+      'Get' + 'NetLiq'
+    ];
+    if (!study || study.length > 250000) {
+      throw new Error('Local service returned an invalid Thinkorswim study. Restart the local service and reload the extension.');
+    }
+    if (study.includes('\0') ||
+      !study.startsWith('# RS Levels for Thinkorswim') ||
+      !/(?:^|\n)declare upper;(?:\n|$)/.test(study) ||
+      blockedTerms.some((term) => new RegExp(`\\b${term}\\b`, 'i').test(study))) {
+      throw new Error('Local service returned an unsupported Thinkorswim study. Restart the local service and reload the extension.');
+    }
+    return `${study}\n`;
+  }
+
   function validTradingViewLevelRows(text) {
     const rows = String(text || '').split(';').filter(Boolean);
     if (!rows.length) return false;
@@ -924,6 +946,7 @@
     summaryHasDisplayData,
     symbolLevelCount,
     cleanTradingViewPayload,
+    cleanThinkorswimStudy,
     captureToTradingViewSnapshot,
     tradingViewPayloadFromSnapshot,
     preferredTradingViewTabId,

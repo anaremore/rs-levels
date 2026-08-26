@@ -7,6 +7,7 @@ const els = {
   chartHint: document.getElementById('chart-hint'),
   sendTradingView: document.getElementById('send-tradingview'),
   copyPayload: document.getElementById('copy-payload'),
+  copyThinkorswim: document.getElementById('copy-thinkorswim'),
   tradingViewTargetRow: document.getElementById('tradingview-target-row'),
   tradingViewTab: document.getElementById('tradingview-tab'),
   tradingViewAccess: document.getElementById('tradingview-access'),
@@ -41,6 +42,7 @@ let tradingViewTabs = [];
 let tradingViewPermission = false;
 let tradingViewOpenMode = false;
 let sending = false;
+let copyingThinkorswim = false;
 
 init();
 
@@ -62,6 +64,7 @@ function bindEvents() {
   els.options.addEventListener('click', () => webext.runtime.openOptionsPage());
   els.sendTradingView.addEventListener('click', sendTradingViewPayload);
   els.copyPayload.addEventListener('click', copyTradingViewPayload);
+  els.copyThinkorswim.addEventListener('click', copyThinkorswimStudy);
   els.reconnect.addEventListener('click', reconnectActiveTab);
   els.copyDiagnostics.addEventListener('click', copyDiagnostics);
   els.openDocs.addEventListener('click', () => window.open(`${settings.serviceUrl}/docs`, '_blank', 'noopener'));
@@ -98,7 +101,7 @@ async function refresh() {
     renderTransferState();
     renderPill(source);
     if (symbols.length) {
-      setMessage('Ready to send to TradingView.', 'ok');
+      setMessage('Ready to export chart levels.', 'ok');
     } else if (extState.lastError && !globalThis.RS_LEVELS.hasAnyDisplayData(latestServiceStatus)) {
       setMessage(extState.lastError, 'error');
     } else if (sourceState === 'stale') {
@@ -284,6 +287,13 @@ function setSending(value, label = 'Sending…') {
   renderTransferState();
 }
 
+function setCopyingThinkorswim(value) {
+  copyingThinkorswim = value === true;
+  els.copyThinkorswim.setAttribute('aria-busy', String(copyingThinkorswim));
+  els.copyThinkorswim.textContent = copyingThinkorswim ? 'Copying…' : 'Copy Thinkorswim study';
+  renderTransferState();
+}
+
 async function copyTradingViewPayload() {
   const scope = selectedSymbol();
   if (!scope) {
@@ -302,6 +312,38 @@ async function copyTradingViewPayload() {
     setMessage(`${scopeLabel(scope)} TradingView data copied`, 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'TradingView copy failed', 'error');
+  }
+}
+
+async function copyThinkorswimStudy() {
+  const scope = selectedSymbol();
+  if (!scope) {
+    setMessage('Open a RocketScooter chart with captured levels first.', 'warning');
+    return;
+  }
+  if (scope === ALL_SCOPE) {
+    setMessage('Choose one chart before copying a Thinkorswim study.', 'warning');
+    return;
+  }
+
+  setCopyingThinkorswim(true);
+  try {
+    const response = await fetch(`${settings.serviceUrl}/thinkorswim/${encodeURIComponent(scope)}`);
+    if (!response.ok) {
+      const detail = await responseErrorDetail(response);
+      if (response.status === 404 && detail.toLowerCase() === 'not found') {
+        throw new Error('Thinkorswim export is not available in the running levels server. Restart or update the server and try again.');
+      }
+      if (response.status === 404) throw new Error(`No captured levels are available for ${scopeLabel(scope)}.`);
+      throw new Error(`Thinkorswim study unavailable (${response.status})${detail ? `: ${detail}` : ''}`);
+    }
+    const study = globalThis.RS_LEVELS.cleanThinkorswimStudy(await response.text());
+    await navigator.clipboard.writeText(study);
+    setMessage(`${scopeLabel(scope)} Thinkorswim study copied. Replace the study source and save.`, 'ok');
+  } catch (err) {
+    setMessage(err && err.message ? err.message : 'Thinkorswim study copy failed.', 'error');
+  } finally {
+    setCopyingThinkorswim(false);
   }
 }
 
@@ -551,21 +593,28 @@ function renderCaptureStats(stats = {}) {
 function renderTransferState() {
   const selected = selectedSymbol();
   const canOpenTradingView = tradingViewOpenMode && tradingViewPermission;
+  const transferBusy = sending || copyingThinkorswim;
   if (!sending) {
     els.sendTradingView.textContent = tradingViewOpenMode ? 'Open TradingView' : 'Send to TradingView';
   }
-  els.sendTradingView.disabled = sending || (!selected && !canOpenTradingView);
+  els.sendTradingView.disabled = transferBusy || (!selected && !canOpenTradingView);
   els.sendTradingView.title = tradingViewOpenMode
     ? 'Open a new TradingView chart'
     : selected
       ? `Fill ${scopeLabel(selected)} in an open RS Levels settings dialog`
       : 'Open a RocketScooter chart with supported data first';
 
-  els.copyPayload.disabled = sending || !selected;
+  els.copyPayload.disabled = transferBusy || !selected;
   els.copyPayload.title = selected
     ? `Copy ${scopeLabel(selected)} TradingView payload`
     : 'Open a RocketScooter chart with supported data first';
-  els.tradingViewTab.disabled = sending || tradingViewTabs.length <= 1;
+  els.copyThinkorswim.disabled = transferBusy || !selected;
+  els.copyThinkorswim.title = selected === ALL_SCOPE
+    ? 'Choose one chart before copying a Thinkorswim study'
+    : selected
+      ? `Copy a generated ${scopeLabel(selected)} Thinkorswim study`
+      : 'Open a RocketScooter chart with captured levels first';
+  els.tradingViewTab.disabled = transferBusy || tradingViewTabs.length <= 1;
 }
 
 function formatTime(value) {

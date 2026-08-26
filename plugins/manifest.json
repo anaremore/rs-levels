@@ -2,6 +2,22 @@
   "schemaVersion": "0.1.0",
   "plugins": [
     {
+      "id": "thinkorswim",
+      "name": "RS Levels Thinkorswim Study",
+      "platform": "Thinkorswim",
+      "kind": "generated-paste-study",
+      "status": "initial-public-source",
+      "displayOnly": true,
+      "entry": "plugins/thinkorswim/rs-levels.ts",
+      "readme": "plugins/thinkorswim/README.md",
+      "api": {
+        "mode": "manual-paste",
+        "endpoints": [
+          "GET /thinkorswim/:symbol"
+        ]
+      }
+    },
+    {
       "id": "tradingview",
       "name": "RS Levels TradingView Pine Indicator",
       "platform": "TradingView",

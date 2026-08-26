@@ -8,6 +8,7 @@ Use this page to choose the shortest path for what you want to do.
 | --- | --- | --- |
 | Show RocketScooter levels on TradingView | [TradingView quickstart](tradingview-quickstart.md) | Browser extension and the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). |
 | Show VARIS Zones on TradingView | [TradingView quickstart](tradingview-quickstart.md), then [VARIS Zones](varis-zones.md) | Same sent or copied payload, plus the `VARIS Zones` Pine indicator. |
+| Show levels on Thinkorswim | [Local API and extension setup](user-setup.md), then [Thinkorswim study](../plugins/thinkorswim/README.md) | Local API, browser extension, and a custom Thinkorswim chart study. |
 | Use Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](user-setup.md), then [Platform plugins](platform-plugins.md) | Local API, browser extension, and the platform-specific source file. |
 | Explore the local API or build a display client | [Local API and extension setup](user-setup.md), then [API](api.md) | Local API and either live capture or the demo capture. |
 | Use another machine over Tailscale or a trusted LAN | [Networking](networking.md) | Explicit remote binding and a trusted private address. |
@@ -19,6 +20,7 @@ Use this page to choose the shortest path for what you want to do.
 - RS Levels is display-only. It does not place orders, manage positions, read account data, or provide trading strategy.
 - The browser extension captures display data from RocketScooter pages the user already has open.
 - TradingView cannot poll localhost from Pine, so the extension sends an `RSLEVELS|2` payload into the visible indicator settings or copies it for manual paste.
+- ThinkScript cannot poll localhost, so the extension copies a complete single-symbol Thinkorswim study for manual source replacement.
 - Sierra Chart, NinjaTrader, Quantower, and Bookmap can use the local API when their platform runtime allows local HTTP polling.
 - ES-family captures apply to ES and MES charts. NQ-family captures apply to NQ and MNQ charts.
 - RocketScooter's automatic overnight levels are captured as `Dyn MHP` and `Dyn HP`. Legacy manually added `OVNMHP` and `OVNHP` lines remain supported. Other optional manual lines are source-owned and must be visible in RocketScooter.
@@ -57,6 +59,16 @@ See [VARIS Zones](varis-zones.md).
 
 See [Platform plugins](platform-plugins.md).
 
+### Thinkorswim Levels
+
+1. Start the local API and capture fresh RocketScooter levels.
+2. Select one chart in the extension popup.
+3. Click `Copy Thinkorswim study`.
+4. Replace the source of a custom Thinkorswim chart study and save it.
+5. Repeat the copy-and-replace step after levels change.
+
+See [Thinkorswim study](../plugins/thinkorswim/README.md).
+
 ### API Exploration
 
 1. Start the local API with `npm start`.
@@ -68,6 +80,7 @@ See [Platform plugins](platform-plugins.md).
 
 - Extension stuck waiting: open RocketScooter, click `Reconnect Tab`, then reload or refresh the RocketScooter tab.
 - TradingView shows no levels: send a fresh payload, or use `Copy payload instead`; confirm the stock ticker or futures family matches a detected RocketScooter chart, and leave `Chart family` on `Auto` for stocks. Force `ES` or `NQ` only for futures when needed.
+- Thinkorswim copy fails: keep the local API running, select one chart rather than `All charts`, and confirm `/thinkorswim/:symbol` has captured levels.
 - Dynamic HP levels missing: confirm `Dyn MHP` and `Dyn HP` are visible on the RocketScooter futures chart, then capture and send again. For other manual lines, add them in RocketScooter first.
 - Direct plugin has no data: verify `http://127.0.0.1:8765/health`, then inspect `http://127.0.0.1:8765/status`.
 - Support bundle: use `Copy Diagnostics` in the extension popup.

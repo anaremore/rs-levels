@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  createThinkorswimStudyExport,
   createTradingViewBundlePayloadExport,
   createTradingViewPayloadExport
 } from '../src/index.js';
@@ -72,6 +73,35 @@ assert.match(payload, /Map BLD,0,stat/);
 assert.doesNotMatch(payload, /compactPayload|notes|tradingview-json|tradingview-bundle-json/);
 assert.doesNotMatch(payload, /horizontal_line/);
 assert.doesNotMatch(payload, /horizontalLine/);
+
+const thinkorswimStudy = createThinkorswimStudyExport(row, { generatedAt: '2026-06-19T14:30:00.000Z' });
+assert.match(thinkorswimStudy, /^# RS Levels for Thinkorswim/);
+assert.match(thinkorswimStudy, /# Generated display-only study\. This script does not place or manage trades\./);
+assert.match(thinkorswimStudy, /# Symbol: ES/);
+assert.match(thinkorswimStudy, /# Captured: 2026-06-19T14:29:59\.500Z/);
+assert.match(thinkorswimStudy, /declare upper;/);
+assert.match(thinkorswimStudy, /input showDDBands = yes;/);
+assert.match(thinkorswimStudy, /input showBullZones = yes;/);
+assert.match(thinkorswimStudy, /plot L001 = if showHP then 7537 else Double\.NaN;/);
+assert.match(thinkorswimStudy, /L001\.SetDefaultColor\(CreateColor\(41, 98, 255\)\);/);
+assert.match(thinkorswimStudy, /AddChartBubble\(showLabels and lastRealBar and showHP, L001, "OVNHP \| " \+ AsPrice\(L001\)/);
+assert.match(thinkorswimStudy, /"Half Gap \| " \+ AsPrice/);
+assert.match(thinkorswimStudy, /\.SetStyle\(Curve\.SHORT_DASH\);/);
+assert.match(thinkorswimStudy, /AddCloud\(L\d{3}, L\d{3}, CreateColor\(76, 175, 80\), CreateColor\(76, 175, 80\)\);/);
+assert.match(thinkorswimStudy, /AddCloud\(L\d{3}, L\d{3}, CreateColor\(240, 98, 146\), CreateColor\(240, 98, 146\)\);/);
+assert.match(thinkorswimStudy, /AddLabel\(showStatus, "RS Levels ES \| \d+ levels \| captured 2026-06-19T14:29:59\.500Z"/);
+assert.match(thinkorswimStudy, /AddLabel\(showStats, "DD 0\.66 \| RI 68\.75 \| Res 73\.82 \| MRes 49\.87 \| WRes -29\.29 \| Map BLD"/);
+assert.doesNotMatch(thinkorswimStudy, /horizontal_line|horizontalLine|MidGap|Mid Gap/);
+
+const sanitizedThinkorswimStudy = createThinkorswimStudyExport({
+  symbol: 'ES#\nplot INJECTED = close;',
+  capturedAt: '2026-06-19T14:29:59.500Z\nAddOrder();',
+  levels: [{ name: 'Bad " label \\ value\nplot INJECTED = close;', price: 123.45, kind: 'unknown' }]
+}, { generatedAt: '2026-06-19T14:30:00.000Z' });
+assert.doesNotMatch(sanitizedThinkorswimStudy, /\nplot INJECTED = close;/);
+assert.doesNotMatch(sanitizedThinkorswimStudy, /Bad " label/);
+assert.match(sanitizedThinkorswimStudy, /plot L001 = if showOtherLevels then 123\.45 else Double\.NaN;/);
+assert.equal(createThinkorswimStudyExport({ symbol: 'ES', levels: [] }), '');
 
 const multiOvernightPayload = createTradingViewPayloadExport({
   symbol: 'ES',

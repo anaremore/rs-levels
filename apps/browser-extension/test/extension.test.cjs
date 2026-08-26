@@ -8,7 +8,7 @@ const firefoxManifest = JSON.parse(readFileSync(join(root, 'manifest.firefox.jso
 
 assert.equal(manifest.manifest_version, 3);
 assert.equal(manifest.version, '0.4.5');
-assert.equal(manifest.description, 'Capture RocketScooter chart levels and send them to TradingView or your local RS Levels tools.');
+assert.equal(manifest.description, 'Capture RocketScooter chart levels for TradingView, Thinkorswim, and local RS Levels tools.');
 assert.deepEqual(manifest.icons, {
   16: 'assets/icon-16.png',
   32: 'assets/icon-32.png',
@@ -192,6 +192,12 @@ assert.doesNotMatch(popup, /defaults\.symbols/);
 assert.doesNotMatch(popup, /availableFamilies/);
 assert.match(popup, /extensionTradingViewPayloadResult/);
 assert.match(popup, /TradingView data copied/);
+assert.match(popup, /copyThinkorswimStudy/);
+assert.match(popup, /\/thinkorswim\/\$\{encodeURIComponent\(scope\)\}/);
+assert.match(popup, /cleanThinkorswimStudy/);
+assert.match(popup, /Restart or update the server and try again/);
+assert.match(popup, /Choose one chart before copying a Thinkorswim study/);
+assert.match(popup, /Thinkorswim study copied/);
 assert.match(popup, /resolveTradingViewPayload/);
 assert.match(popup, /result\.state === 'filled'/);
 assert.match(popup, /RS Levels payload filled/);
@@ -234,6 +240,9 @@ assert.match(popupHtml, /copy-payload/);
 assert.match(popupHtml, /Send to TradingView/);
 assert.match(popupHtml, /id="send-tradingview"/);
 assert.match(popupHtml, /Copy payload instead/);
+assert.match(popupHtml, /id="copy-thinkorswim"/);
+assert.match(popupHtml, /Copy Thinkorswim study/);
+assert.match(popupHtml, /Thinkorswim study editor/);
 assert.match(popupHtml, /id="tradingview-tab"/);
 assert.match(popupHtml, /role="status"/);
 assert.match(popupHtml, /aria-live="polite"/);
@@ -265,6 +274,7 @@ assert.match(popupCss, /:focus-visible/);
 assert.match(popupCss, /prefers-reduced-motion/);
 assert.match(popupCss, /\[hidden\]/);
 assert.match(popupCss, /\.action-hint/);
+assert.match(popupCss, /\.platform-actions/);
 assert.match(popupCss, /button\.tertiary/);
 assert.match(popupCss, /\.tools-panel/);
 assert.match(readFileSync(join(root, 'src', 'capture-rules.js'), 'utf8'), /isTextLikeContentType/);
@@ -277,6 +287,7 @@ assert.match(shared, /publicDisplaySymbol/);
 assert.match(shared, /validPayloadSymbol/);
 assert.match(shared, /captureToTradingViewSnapshot/);
 assert.match(shared, /tradingViewPayloadFromSnapshot/);
+assert.match(shared, /cleanThinkorswimStudy/);
 assert.match(shared, /preferredTradingViewTabId/);
 assert.match(shared, /liq-map/);
 assert.match(shared, /dyn-hp/);

@@ -3,8 +3,9 @@ const { existsSync, readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const root = join(__dirname, '..');
-const platforms = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'tradingview'];
+const platforms = ['sierra-chart', 'ninjatrader', 'quantower', 'bookmap', 'thinkorswim', 'tradingview'];
 const pluginIds = [
+  'thinkorswim',
   'sierra-chart',
   'sierra-chart-varis-zones',
   'ninjatrader',
@@ -32,6 +33,9 @@ for (const plugin of manifest.plugins) {
     assert.equal(plugin.api.mode, 'manual-paste');
     assert.ok(plugin.api.endpoints.includes('GET /tradingview'));
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
+  } else if (plugin.platform === 'Thinkorswim') {
+    assert.equal(plugin.api.mode, 'manual-paste');
+    assert.deepEqual(plugin.api.endpoints, ['GET /thinkorswim/:symbol']);
   } else {
     assert.equal(plugin.api.mode, 'local-http');
     if (plugin.platform === 'Sierra Chart') {
@@ -50,6 +54,7 @@ assert.match(validationDoc, /npm run scan:secrets/);
 assert.match(validationDoc, /IAmTheLiquidity2/);
 assert.match(validationDoc, /Send to TradingView/);
 assert.match(validationDoc, /Copy payload instead/);
+assert.match(validationDoc, /Copy Thinkorswim study/);
 assert.match(validationDoc, /never clicks `OK`/);
 assert.match(validationDoc, /\/stats\/ES\?format=rows/);
 
@@ -57,7 +62,11 @@ for (const platform of platforms) {
   const text = readFileSync(join(root, platform, 'README.md'), 'utf8');
   assert.match(text, /display-only/i, `${platform} must state display-only boundary`);
   assert.match(text, /Safety Boundary/i, `${platform} must include a safety boundary`);
-  if (platform !== 'tradingview') {
+  if (platform === 'thinkorswim') {
+    assert.match(text, /GET \/thinkorswim\//, `${platform} must document generated study retrieval`);
+    assert.match(text, /frozen/i, `${platform} must document frozen snapshot behavior`);
+    assert.match(text, /capture timestamp/i, `${platform} must document the capture timestamp`);
+  } else if (platform !== 'tradingview') {
     if (platform === 'sierra-chart') {
       assert.match(text, /GET \/sierra\//, `${platform} must document Sierra feed polling`);
       assert.match(text, /VARIS Zones.*RI/s, `${platform} must document VARIS RI polling`);
@@ -82,11 +91,19 @@ assert.match(contract, /Sierra Chart VARIS Zones/);
 assert.match(contract, /NinjaTrader, Quantower, and Bookmap VARIS Zones/);
 assert.match(contract, /GET \/stats\/:symbol\?format=rows/);
 assert.match(contract, /GET \/sierra\/:symbol/);
+assert.match(contract, /GET \/thinkorswim\/:symbol/);
 assert.match(contract, /Plugin manifests, plugin docs, and plugin source must agree/);
 assert.match(contract, /Safety Tests/);
 assert.match(contract, /name,price,red,green,blue,kind/);
 assert.match(contract, /Other levels/);
 assertManualKinds(contract);
+
+const thinkorswimSource = readFileSync(join(root, 'thinkorswim', 'rs-levels.ts'), 'utf8');
+assert.match(thinkorswimSource, /^# RS Levels for Thinkorswim/);
+assert.match(thinkorswimSource, /declare upper;/);
+assert.match(thinkorswimSource, /display-only/i);
+assert.match(thinkorswimSource, /Copy Thinkorswim study/);
+assertNoPlatformApiTerms(thinkorswimSource);
 
 const sierraSource = readFileSync(join(root, 'sierra-chart', 'rs-levels-sierra.cpp'), 'utf8');
 assert.match(sierraSource, /SCSFExport scsf_RSLevelsDisplay/);

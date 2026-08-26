@@ -32,6 +32,12 @@ The browser extension must not forward:
 - Filling the field exposes the payload to the TradingView page in the same way as manual paste. The user must review the value and choose whether to confirm it.
 - Confirm that extension-assisted input is permitted by the TradingView terms that apply to your use before granting access.
 
+## Clipboard Exports
+
+- Clipboard writes occur only after the user clicks `Copy payload instead`, `Copy Thinkorswim study`, or `Copy Diagnostics`.
+- Thinkorswim source comes from the configured local/private RS Levels service and contains one frozen display-level snapshot; the extension does not connect to Thinkorswim or broker account state.
+- Returned ThinkScript is structure-validated and size-limited before it is copied.
+
 
 ## Local Service Rules
 

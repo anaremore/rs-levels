@@ -11,7 +11,7 @@ The RS Levels browser extension is the first-priority capture UX.
 - Captures only response URLs that match the configured allowlist.
 - Falls back to a frame-aware display-only page reader for the TradingView charts currently open in RocketScooter, including futures `Dyn MHP`/`Dyn HP`, other display data, and stock HP/MHP/liquidity-map data.
 - Posts capture payloads to the local service at `/capture/api`.
-- Provides an opt-in TradingView settings-field handoff, explicit payload-copy fallback, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
+- Provides an opt-in TradingView settings-field handoff, explicit TradingView payload copy, generated Thinkorswim study copy, scrubbed diagnostics, local API docs, and display-plugin manifest workflows.
 - Provides a popup `Reconnect Tab` action for the active RocketScooter tab when the extension was loaded after the page was already open.
 - Keeps scrubbed capture-hook counters for observed, ignored, skipped, and posted responses in nested technical details under `Tools & diagnostics`.
 - Keeps local service and extension build identities under `Tools & diagnostics` for support without adding header clutter.
@@ -34,10 +34,11 @@ RocketScooter's automatic futures overnight levels pass through as `Dyn MHP` and
 4. Check the popup status.
 5. Choose a symbol from `Chart`. Only open charts with supported data appear; use `All charts (N)` when more than one is available.
 6. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
-7. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
-8. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
-9. Expand `Technical details` when troubleshooting local API, extension, or stale-source setup.
-10. Use `Copy Diagnostics` for a scrubbed support bundle.
+7. For Thinkorswim, select one chart, click `Copy Thinkorswim study`, then replace the source of a custom study and save it. This action requires the local API.
+8. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
+9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
+10. Expand `Technical details` when troubleshooting local API, extension, or stale-source setup.
+11. Use `Copy Diagnostics` for a scrubbed support bundle.
 
 The popup distinguishes ready, waiting, offline, and stale states so an old capture is not presented as live data. When the local API is offline but the session snapshot can still be sent to TradingView, the popup says so explicitly instead of presenting that condition as a blocking failure.
 
@@ -106,7 +107,7 @@ Capture is not limited by the popup selection. The extension keeps the latest sa
 
 When the page reader is active, it posts a synthetic `/page-reader/display` capture through the same local `/capture/api` endpoint. That fallback is intentionally display-only: it runs in RocketScooter child frames as well as the top page, reads TradingView chart shapes and study plots, emits level names/prices/kinds/colors, and includes `chartLines`, `referenceLines`, and `zoneRectangles` arrays. Futures keep their automatic `Dyn MHP`/`Dyn HP` study plots plus existing zone, legacy/manual-line, reference, and stat extraction. Detected stocks can add visible HP/MHP prices and a liquidity-map code from the matching scanner row. Scanner rows are consulted only for symbols already detected in the open chart grid, so the full watchlist is never turned into popup options. The reader does not read whole-page text or transmit browser credentials, request headers, cookies, account data, or order/execution state.
 
-Because these levels are read from RocketScooter's visible chart state, changing a study or manual line requires a fresh capture before downstream indicators/studies/plugins can update.
+Because these levels are read from RocketScooter's visible chart state, changing a study or manual line requires a fresh capture before downstream indicators/studies/plugins can update. Thinkorswim also requires copying and replacing the generated study source after that fresh capture.
 
 ## Tailscale And Private Networks
 

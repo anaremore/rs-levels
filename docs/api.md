@@ -40,6 +40,7 @@ GET  /zones
 GET  /references
 GET  /tradingview
 GET  /tradingview/:symbol
+GET  /thinkorswim/:symbol
 GET  /stream
 POST /capture/api
 ```
@@ -60,7 +61,7 @@ Returns service metadata and endpoint hints.
     "generatedAt": "",
     "source": "source"
   },
-  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/stats", "/stats/:symbol", "/sierra/:symbol", "/zones", "/tradingview", "/tradingview/:symbol", "/stream"],
+  "endpoints": ["/docs", "/openapi.yaml", "/diagnostics", "/health", "/status", "/plugins", "/snapshot", "/levels", "/stats", "/stats/:symbol", "/sierra/:symbol", "/zones", "/tradingview", "/tradingview/:symbol", "/thinkorswim/:symbol", "/stream"],
   "network": {}
 }
 ```
@@ -333,6 +334,14 @@ RSLEVELS|2|2026-06-19T14:30:00.000Z|ES|2026-06-19T14:29:59.500Z|OVNHP,7537,hp;DD
 ```
 
 The included Pine indicator accepts this payload directly. The local API includes every finite-price level in the export unless a caller explicitly requests a smaller set. See [TradingView](tradingview.md).
+
+## GET /thinkorswim/:symbol
+
+Returns a paste-ready, display-only ThinkScript chart study containing the latest captured levels for one symbol. ThinkScript cannot poll HTTP endpoints, so this response is a frozen source snapshot intended for the browser extension's **Copy Thinkorswim study** action or another clipboard tool.
+
+The generated study includes category visibility inputs, captured colors, right-edge chart bubbles, filled bull/bear zones when matching boundaries are available, Half Gap dash styling, display-context labels, and the capture timestamp. Aliases normalize the same way as `/levels/:symbol`; `ES` and `MES` return the ES-family study, while `NQ` and `MNQ` return the NQ-family study.
+
+Unknown symbols or symbols without finite-price levels return `404`. See the [Thinkorswim adapter](../plugins/thinkorswim/README.md) for the install and refresh workflow.
 
 ## GET /ddbands
 

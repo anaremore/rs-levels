@@ -13,7 +13,7 @@ Every direct API plugin should expose:
 - line visibility by kind
 - label visibility
 
-TradingView is the exception because Pine cannot poll localhost directly. It uses the short `RSLEVELS|2` payload, either handed to the visible settings field by the opt-in extension helper or pasted manually, as documented in [TradingView](tradingview.md).
+TradingView and Thinkorswim are paste-based exceptions because their scripting environments cannot poll localhost directly. TradingView uses the short `RSLEVELS|2` payload, either handed to the visible settings field by the opt-in extension helper or pasted manually, as documented in [TradingView](tradingview.md). Thinkorswim uses complete generated source from `GET /thinkorswim/:symbol`, copied by the extension and pasted into the thinkScript Editor.
 
 ## Required API Calls
 
@@ -37,6 +37,7 @@ GET /stats/:symbol/rows
 GET /sierra/:symbol
 GET /tradingview
 GET /tradingview/:symbol
+GET /thinkorswim/:symbol
 ```
 
 The `/rows` paths return the same text bodies as `?format=rows` and exist for direct clients that prefer compact text parsing. `/sierra/:symbol` is a Sierra Chart compatibility feed that combines source state, levels, and stats in one plain-text response for ACSIL reliability.
@@ -53,6 +54,7 @@ Adapters should use the narrowest endpoint that matches the job:
 | Sierra Chart VARIS Zones | `GET /sierra/:symbol` | Sierra VARIS reads the `RI` stat row from the same ACSIL-friendly feed used by the Sierra RS Levels study. |
 | NinjaTrader, Quantower, and Bookmap VARIS Zones | `GET /stats/:symbol?format=rows` | These adapters need `RI` and can use the narrow stats feed directly. |
 | TradingView RS Levels and VARIS | `GET /tradingview` or `GET /tradingview/:symbol` | Pine cannot poll localhost; users send the short `RSLEVELS|2` payload through the opt-in extension helper or paste it manually. |
+| Thinkorswim RS Levels | `GET /thinkorswim/:symbol` | ThinkScript cannot poll localhost; users copy one generated symbol study from the extension and replace the custom study source. |
 
 Plugin manifests, plugin docs, and plugin source must agree on the endpoint family. When a plugin changes endpoint contracts, update the manifest, this contract, platform docs, and automated static tests in the same slice.
 
@@ -71,7 +73,7 @@ Plugins must show feed freshness in the chart or settings panel:
 
 The local service computes `source.ageMs` and marks the feed `stale` after `RS_LEVELS_STALE_MS` milliseconds, default `82800000` (23 hours). RocketScooter levels are expected to change around the early daily session window, so the default avoids marking valid daily levels stale minutes after capture. Plugins may apply their own visual threshold, but they should never show `source.state: "stale"` as live.
 
-A stale or offline feed should never look live.
+A stale or offline feed should never look live. Paste-based Thinkorswim studies are frozen snapshots and cannot observe later API freshness; they must show the capture timestamp and documentation must tell users to replace the source after a fresh capture.
 
 ## Rendering Rules
 

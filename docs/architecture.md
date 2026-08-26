@@ -85,7 +85,7 @@ The initial service should keep HTTP and WebSocket on one port if practical.
 4. Local service stores raw source metadata in memory for diagnostics.
 5. Local service normalizes visible levels into public schemas.
 6. API clients fetch `/snapshot` or subscribe to `/stream` / `/ws`.
-7. Platform plugins render display overlays.
+7. Platform plugins render display overlays; the extension copies generated source for scripting environments such as Thinkorswim that cannot poll HTTP.
 ```
 
 ## Failure Modes
@@ -122,4 +122,3 @@ Later releases can add:
 - signed release archives
 - browser store packaging
 - platform-specific plugin bundles
-

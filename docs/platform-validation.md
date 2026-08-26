@@ -1,6 +1,6 @@
 # Platform Validation
 
-RS Levels ships source adapters for multiple charting platforms. CI can verify the public-safe source inventory, parser/exporter behavior, package contents, and static safety rules. Platform runtimes still need manual compile/install validation because Sierra Chart, NinjaTrader, Quantower, Bookmap, and TradingView run inside separate applications.
+RS Levels ships source adapters for multiple charting platforms. CI can verify the public-safe source inventory, parser/exporter behavior, package contents, and static safety rules. Platform runtimes still need manual compile/install validation because Sierra Chart, NinjaTrader, Quantower, Bookmap, TradingView, and Thinkorswim run inside separate applications.
 
 Use this checklist for every release candidate and whenever a plugin source changes.
 
@@ -25,6 +25,7 @@ Validation notes must stay public-safe:
 ```text
 http://127.0.0.1:8765/tradingview
 http://127.0.0.1:8765/tradingview/ES
+http://127.0.0.1:8765/thinkorswim/ES
 http://127.0.0.1:8765/sierra/ES
 http://127.0.0.1:8765/levels/ES?format=rows
 http://127.0.0.1:8765/stats/ES?format=rows
@@ -41,6 +42,7 @@ Every RS Levels overlay must verify:
 - DD bands, HP, MHP, open/close, references, yellow lines, red lines, CAT lines, bull zones, bear zones, and other finite-price levels render with distinct kind-aware styling where the platform supports it.
 - Multiple yellow-line and red-line rows at different prices render as separate levels.
 - TradingView exposes a `Labels` toggle. Enabled labels are plain, color-matched, and placed at the right endpoint of each level line; disabling them preserves the lines and fills.
+- Thinkorswim generated studies expose label, category, zone, status, stats, and line-weight inputs and show their frozen capture timestamp.
 - Waiting, offline, and stale states do not look live.
 - No plugin asks for account, trade, order, position, PnL, broker, or credential access.
 
@@ -56,6 +58,7 @@ Every VARIS Zones adapter must verify:
 
 | Platform | Artifact | Input path | Required validation |
 | --- | --- | --- | --- |
+| Thinkorswim | `plugins/thinkorswim/rs-levels.ts` plus generated source | `GET /thinkorswim/:symbol` through **Copy Thinkorswim study** | Select one chart, copy and paste the generated source, verify levels, labels, category toggles, Half Gap dashes, zone fills, stats, and capture timestamp; refresh the capture and repeat replacement. |
 | TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste an all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, manual confirmation, manual lines, and stats panel. |
 | TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste the same payload, verify manual confirmation, `RI` selection, manual fallback, VWAP, half-RI bands, and full-RI bands. |
 | Sierra Chart | `plugins/sierra-chart/rs-levels-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify levels, labels, stats marker, zone fills, stale/offline marker, and hidden debug default. |
@@ -79,6 +82,17 @@ Run this manual smoke test in both a fresh Chrome/Chromium profile and a Firefox
 6. Confirm the helper never clicks `OK`, presses Enter, changes another setting, or hides a TradingView error.
 7. Reload the extension or restart the browser and confirm no earlier session payload is sent until RocketScooter produces a fresh detected-chart capture.
 8. Exercise the copy fallback after a missing-field failure so a TradingView markup change does not block the release workflow.
+
+## Thinkorswim Copy Check
+
+1. Capture fresh ES and NQ levels and confirm `GET /thinkorswim/ES` and `GET /thinkorswim/NQ` return source beginning with `# RS Levels for Thinkorswim`.
+2. Select **All charts** in the extension, click **Copy Thinkorswim study**, and confirm the popup asks for one chart without changing the clipboard.
+3. Select ES, copy the study, replace the source of a custom Thinkorswim chart study, and save it.
+4. Verify the ES/MES chart shows the capture timestamp, expected levels, label bubbles, Half Gap dashes, and matched zone clouds.
+5. Disable each category input and confirm only that category hides. Disable labels, status, and stats independently.
+6. Repeat for NQ/MNQ and confirm ES levels do not appear.
+7. Capture changed levels, copy again, replace the study source, and confirm the timestamp and plots update only after the manual replacement.
+8. Stop the local service and confirm the extension reports a recoverable Thinkorswim copy error while the existing pasted study remains unchanged.
 
 ## Live RocketScooter Field Check
 

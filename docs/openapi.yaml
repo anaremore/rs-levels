@@ -266,6 +266,21 @@ paths:
                 $ref: '#/components/schemas/TradingViewPayload'
         '404':
           $ref: '#/components/responses/NotFound'
+  /thinkorswim/{symbol}:
+    get:
+      summary: Thinkorswim generated study
+      description: Returns a paste-ready, display-only ThinkScript study containing the latest captured levels for one symbol.
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+      responses:
+        '200':
+          description: Generated ThinkScript chart study
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ThinkorswimStudy'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /stream:
     get:
       summary: Snapshot stream
@@ -646,9 +661,17 @@ components:
             $ref: '#/components/schemas/Level'
     TradingViewPayload:
       type: string
-      description: Pipe-delimited paste payload for the included Pine indicator: RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...
+      description: "Pipe-delimited paste payload for the included Pine indicator: RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;..."
       examples:
         - RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,7565,hp;DD,7643.5715,dd-band|NQ|2026-06-21T03:47:02.097Z|OVNMHP,30475,mhp
+    ThinkorswimStudy:
+      type: string
+      description: Paste-ready ThinkScript source generated from one captured symbol snapshot. The study is display-only and contains a frozen capture timestamp.
+      examples:
+        - |-
+          # RS Levels for Thinkorswim
+          declare upper;
+          plot L001 = 7565;
     CapturePayload:
       type: object
       required: [endpoint, capturedAt, body]
