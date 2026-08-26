@@ -90,4 +90,4 @@ For Chrome/Chromium development or manual installation, unzip the first artifact
 
 ## Platform Plugins
 
-Plugins are display-only and will consume the read-only API. TradingView is handled differently because Pine scripts cannot call arbitrary localhost HTTP; see [TradingView](tradingview.md).
+Plugins are display-only and will consume the read-only API. TradingView is handled differently because Pine scripts cannot call arbitrary localhost HTTP; use the [published RS Levels indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) and see [TradingView](tradingview.md).

@@ -9,6 +9,8 @@
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko">Chrome extension</a>
   &nbsp;&bull;&nbsp;
+  <a href="https://www.tradingview.com/script/u0U3v5FX-RS-Levels/">TradingView indicator</a>
+  &nbsp;&bull;&nbsp;
   <a href="docs/tradingview-quickstart.md">TradingView quickstart</a>
   &nbsp;&bull;&nbsp;
   <a href="docs/index.md">Documentation</a>
@@ -27,7 +29,7 @@ RS Levels is organized around three display-only pieces:
 
 - **[Browser extension](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko)**: published for Chrome and compatible Chromium browsers, with Firefox Desktop 140+ supported from the shared runtime. It captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff with an explicit copy fallback, scrubbed diagnostics, API docs links, and extension status/debug tools.
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
-- **Platform plugins, indicators, and studies**: includes TradingView Pine scripts, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
+- **Platform plugins, indicators, and studies**: includes the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), TradingView Pine sources, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
 ## See It in Action
 
@@ -68,7 +70,7 @@ Use this table as the repo map. TradingView users can start with the extension a
 
 | Use case | Start here | Then use |
 | --- | --- | --- |
-| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [TradingView reference](docs/tradingview.md) |
+| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [Published indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), [TradingView reference](docs/tradingview.md) |
 | TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md) | [VARIS Zones](docs/varis-zones.md) |
 | Local API, diagnostics, examples, or private-network setup | [Local API and extension setup](docs/user-setup.md) | [API](docs/api.md), [Networking](docs/networking.md) |
 | Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](docs/user-setup.md) | [Platform plugins](docs/platform-plugins.md) |

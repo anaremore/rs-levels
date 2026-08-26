@@ -5,7 +5,7 @@ This is the short path for users who only want RocketScooter levels on TradingVi
 You need two pieces:
 
 - the `RS Levels Capture` browser extension
-- the `RS Levels` TradingView indicator from `plugins/tradingview/rs-levels.pine`
+- the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) (or the source at `plugins/tradingview/rs-levels.pine` for development)
 
 The local API service is optional for this workflow. It is useful for diagnostics, API docs, and direct Sierra/NinjaTrader/Quantower/Bookmap plugins, but TradingView itself only needs an `RSLEVELS|2` payload handed off by the extension or pasted manually.
 
@@ -49,10 +49,9 @@ For futures, keep `Dyn MHP` and `Dyn HP` visible on the ES/MES or NQ/MNQ chart f
 ## 4. Add The TradingView Indicator
 
 1. In TradingView, open the matching chart, such as `NVDA`, `ES1!`, `MES1!`, `NQ1!`, or `MNQ1!`.
-2. Open Pine Editor.
-3. Paste the contents of `plugins/tradingview/rs-levels.pine`.
-4. Save the script.
-5. Add it to the chart.
+2. Open the [published RS Levels indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) and add it to the chart.
+
+For development from the repository source, open Pine Editor, paste the contents of `plugins/tradingview/rs-levels.pine`, save the script, and add it to the chart.
 
 Leave `Chart family` on `Auto`. Stock charts match their ticker section; ES/MES charts use `ES`, and NQ/MNQ charts use `NQ`. The manual ES/NQ choices are futures overrides.
 

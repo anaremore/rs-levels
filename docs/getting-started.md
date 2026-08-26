@@ -6,7 +6,7 @@ Use this page to choose the shortest path for what you want to do.
 
 | Goal | Best first doc | What you need |
 | --- | --- | --- |
-| Show RocketScooter levels on TradingView | [TradingView quickstart](tradingview-quickstart.md) | Browser extension and the `RS Levels` Pine indicator. |
+| Show RocketScooter levels on TradingView | [TradingView quickstart](tradingview-quickstart.md) | Browser extension and the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). |
 | Show VARIS Zones on TradingView | [TradingView quickstart](tradingview-quickstart.md), then [VARIS Zones](varis-zones.md) | Same sent or copied payload, plus the `VARIS Zones` Pine indicator. |
 | Use Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](user-setup.md), then [Platform plugins](platform-plugins.md) | Local API, browser extension, and the platform-specific source file. |
 | Explore the local API or build a display client | [Local API and extension setup](user-setup.md), then [API](api.md) | Local API and either live capture or the demo capture. |
@@ -31,7 +31,7 @@ Use this page to choose the shortest path for what you want to do.
 1. Load the browser extension.
 2. Open RocketScooter with the futures or stock charts you want to capture visible.
 3. Add any optional yellow, red, or CAT lines you want exported. `Dyn MHP` and `Dyn HP` are supplied automatically by RocketScooter.
-4. Add `plugins/tradingview/rs-levels.pine` to TradingView.
+4. Add the [published RS Levels indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) to TradingView. For development, you can instead paste `plugins/tradingview/rs-levels.pine` into Pine Editor.
 5. Click `Send to TradingView`, approve the exact site permission on first use, and choose a target if several chart tabs are open.
 6. Open indicator settings within 45 seconds if needed, review `RS Levels Payload`, and click `OK` yourself.
 7. Use `Copy payload instead` whenever you prefer manual paste.

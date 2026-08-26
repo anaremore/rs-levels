@@ -2,12 +2,14 @@
 
 Display-only Pine indicator for RS Levels.
 
+The RS Levels indicator is published at [TradingView](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). This directory contains its source and the separate VARIS Zones source.
+
 For the shortest extension-plus-indicator setup, see [TradingView quickstart](../../docs/tradingview-quickstart.md).
 
 TradingView Pine scripts cannot poll the local API directly. The RS Levels extension can hand the compact payload to the visible settings field, while copy/paste remains the fallback:
 
 1. Capture RocketScooter levels with the browser extension or another approved local capture client.
-2. Add `rs-levels.pine` to a TradingView chart.
+2. Add the [published RS Levels indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) to a TradingView chart, or paste `rs-levels.pine` into Pine Editor for development.
 3. Use `Send to TradingView` in the extension popup, approve the exact site permission on first use, and open indicator settings within 45 seconds if needed.
 4. Review `RS Levels Payload` and click `OK` yourself. Or use `Copy payload instead` and paste manually; the local service also exposes text at `http://127.0.0.1:8765/tradingview`.
 

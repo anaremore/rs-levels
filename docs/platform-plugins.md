@@ -47,9 +47,9 @@ Direct adapters draw what the local API captured from RocketScooter. Automatic o
 
 Direct adapters also consume display context such as `DD`, `RI`, `Res`, `MRes`, `WRes`, and `Map BLD`. Sierra studies receive those values inside `/sierra/:symbol`; Sierra VARIS reads only the `RI` stat row from that same Sierra compatibility feed. NinjaTrader, Quantower, and Bookmap VARIS adapters use `GET /stats/:symbol?format=rows`. These values are display-only context from RocketScooter and are not interpreted as trading signals by this repository. Separate VARIS-style adapters use `RI` as a band-distance input while keeping it separate from the horizontal level overlay. The Sierra Chart VARIS study defaults to Auto symbol detection from the chart symbol, so ES/MES and NQ/MNQ charts can select the matching family without manual input. The Sierra Chart, NinjaTrader, Quantower, and Bookmap VARIS variants compute VWAP from local chart bars and fall back to a manual risk interval when captured `RI` is unavailable. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`; this repository's adapters are public-safe display implementations.
 
-TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The first TradingView path is therefore:
+TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The TradingView path is therefore:
 
-- a display-only Pine indicator checked into `plugins/tradingview/`
+- the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), with its display-only Pine source checked into `plugins/tradingview/`
 - the implemented `/tradingview` local-service endpoint and extension button to copy an all-symbol `RSLEVELS|2` payload
 - the implemented `/tradingview/:symbol` export for selected-symbol users and tooling
 - an indicator input where the short payload can be pasted and drawn

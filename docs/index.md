@@ -7,7 +7,7 @@ This is the canonical documentation map. The README is the public front door; th
 | Need | Canonical doc | Notes |
 | --- | --- | --- |
 | Choose a workflow | [Getting started](getting-started.md) | Short orientation across all user paths. |
-| TradingView levels | [TradingView quickstart](tradingview-quickstart.md) | Fastest extension-plus-Pine setup. |
+| TradingView levels | [TradingView quickstart](tradingview-quickstart.md) | Fastest setup with the extension and [published indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). |
 | Local API, diagnostics, examples, or trusted private networks | [Local API and extension setup](user-setup.md) | Service-backed setup and troubleshooting. |
 | Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Platform plugins](platform-plugins.md) | Overview plus links to per-platform READMEs. |
 | VARIS Zones | [VARIS Zones](varis-zones.md) | Captured `RI` behavior and platform-specific indicators. |
@@ -18,7 +18,7 @@ This is the canonical documentation map. The README is the public front door; th
 | --- | --- |
 | Browser extension | [Chrome Web Store listing](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko), [browser extension](browser-extension.md), [install](install.md) |
 | Local levels server | [API](api.md), [OpenAPI spec](openapi.yaml), [networking and Tailscale](networking.md) |
-| Platform plugins, indicators, and studies | [Platform plugins](platform-plugins.md), [TradingView reference](tradingview.md), [display plugin contract](plugin-contract.md) |
+| Platform plugins, indicators, and studies | [Published TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), [Platform plugins](platform-plugins.md), [TradingView reference](tradingview.md), [display plugin contract](plugin-contract.md) |
 
 ## Data Contracts
 

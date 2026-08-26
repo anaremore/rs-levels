@@ -1,11 +1,11 @@
 # TradingView
 
-For the shortest TradingView-only setup, see [TradingView quickstart](tradingview-quickstart.md). It covers the browser extension plus the RS Levels Pine indicator without the direct-platform API/plugin details.
+For the shortest TradingView-only setup, see [TradingView quickstart](tradingview-quickstart.md). It covers the browser extension plus the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) without the direct-platform API/plugin details.
 
 TradingView Pine scripts cannot poll the local API directly, so RS Levels transports a compact Pine payload either through an opt-in settings-field handoff or through explicit copy/paste.
 
 1. Capture RocketScooter levels with the browser extension.
-2. Add `plugins/tradingview/rs-levels.pine` to a TradingView chart. For VARIS Zones, add `plugins/tradingview/varis-zones.pine`.
+2. Add the [published RS Levels indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) to a TradingView chart. For development, the source is `plugins/tradingview/rs-levels.pine`. For VARIS Zones, add `plugins/tradingview/varis-zones.pine`.
 3. Choose a detected scope in the extension popup and click `Send to TradingView`.
 4. Approve the exact TradingView site permission on first use and choose a target if several TradingView chart tabs are open.
 5. Open the indicator settings within 45 seconds if they are not already visible.
