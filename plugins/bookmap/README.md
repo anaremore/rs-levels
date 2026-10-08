@@ -11,7 +11,7 @@ plugins/bookmap/src/main/java/com/rslevels/bookmap/RSLevelsDisplayBookmap.java
 plugins/bookmap/src/main/java/com/rslevels/bookmap/VARISZonesBookmap.java
 ```
 
-`RSLevelsDisplayBookmap.java` registers display-only horizontal level indicators and polls the local service from a background worker. `VARISZonesBookmap.java` registers display-only primary-chart line indicators, listens to one-minute Bookmap bars, polls captured `RI`, and publishes VWAP plus half/full RI bands.
+`RSLevelsDisplayBookmap.java` registers display-only horizontal level indicators and polls the local service from a background worker. `VARISZonesBookmap.java` registers display-only primary-chart line indicators, listens to one-minute Bookmap bars, polls captured `RI`, and publishes VWAP plus three configurable upper/lower RI band pairs (defaults: 0.5, 1, and 2 RI).
 
 ## Recommended API Path
 
@@ -48,8 +48,13 @@ VARIS-specific properties:
 
 - manual Risk Interval fallback: `rslevels.varis.manualRi`, default `25.0`
 - use captured `RI`: `rslevels.varis.useCapturedRi`, default `true`
+- Level 1 multiplier: `rslevels.varis.level1Multiplier`, default `0.5`
+- Level 2 multiplier: `rslevels.varis.level2Multiplier`, default `1.0`
+- Level 3 multiplier: `rslevels.varis.level3Multiplier`, default `2.0`
 - refresh interval: `rslevels.varis.refreshMs`, default `1000`
 - request timeout: `rslevels.varis.timeoutMs`, default `1500`
+
+Each multiplier must be finite and greater than zero; invalid values use that level's default. Set JVM properties before loading the add-on, for example `-Drslevels.varis.level1Multiplier=0.75`.
 
 ## Rendering
 
@@ -61,7 +66,7 @@ VARIS-specific properties:
 - Clears displayed lines after stale/offline data exceeds the configured threshold.
 - Logs feed availability warnings through Bookmap's logging API.
 
-`VARISZonesBookmap.java` uses Bookmap's simplified `BarDataListener` at `Intervals.INTERVAL_1_MINUTE` to compute VWAP from bar VWAP/volume, then draws VWAP, upper/lower half-RI bands, and upper/lower full-RI bands as primary-chart indicators. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+`VARISZonesBookmap.java` uses Bookmap's simplified `BarDataListener` at `Intervals.INTERVAL_1_MINUTE` to compute VWAP from bar VWAP/volume, then draws VWAP, three configurable upper/lower RI band pairs as primary-chart indicators. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
 ## Safety Boundary
 

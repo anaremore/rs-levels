@@ -23,11 +23,13 @@ The script reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. RS
 VARIS Zones draws:
 
 - VWAP from the current 18:00 ET futures session reset.
-- Upper/lower half-risk-interval bands at `VWAP +/- RI * 0.5`.
-- Upper/lower full-risk-interval bands at `VWAP +/- RI`.
+- Three configurable upper/lower band pairs at `VWAP +/- RI * multiplier`.
+- Level 1 defaults to `0.5` RI, Level 2 to `1` RI, and Level 3 to `2` RI.
 - Optional fills between VWAP and each band.
 
 The default visual controls follow the original script shape: separate visibility toggles, line colors/widths, and fill colors/transparency for the VWAP and each band.
+
+Set **Level 1 RI Multiplier**, **Level 2 RI Multiplier**, and **Level 3 RI Multiplier** to positive values in TradingView's VARIS settings. Each level can be adjusted independently. With RI `40`, the default bands sit `20`, `40`, and `80` points above and below VWAP; setting Level 1 to `0.75` moves its bands to `30` points above and below VWAP.
 
 ## Direct Platform Studies
 
@@ -41,3 +43,5 @@ Direct platform adapters include separate display-only VARIS sources:
 These variants read captured `RI` from the local API and compute VWAP from local chart bars. Sierra VARIS uses `GET /sierra/:symbol`, matching the proven Sierra compatibility feed used by the RS Levels study; it reads only the `RI` stat row from that response. NinjaTrader, Quantower, and Bookmap VARIS use `GET /stats/:symbol?format=rows`; non-Sierra adapters also poll `GET /status` for source freshness. Sierra VARIS defaults to Auto symbol detection from the Sierra chart symbol. When explicit `RI` is not available but both DD bands are present, the local API can expose a display-derived RI equal to half the DD-band distance. Each direct-platform variant falls back to a manual risk interval when API RI is unavailable.
 
 Bookmap's public simplified API provides one-minute bars through its bar listener, so its VARIS source publishes the VWAP and risk bands as display-only indicators rather than filled chart regions. TradingView remains payload-based because Pine has no arbitrary localhost HTTP polling; the extension can fill the visible payload setting, with manual paste as the fallback.
+
+All direct-platform variants use the same three configurable multipliers and defaults. Sierra Chart, NinjaTrader, and Quantower expose multiplier inputs in study or indicator settings. Bookmap uses JVM properties `rslevels.varis.level1Multiplier`, `rslevels.varis.level2Multiplier`, and `rslevels.varis.level3Multiplier`, set before loading the add-on. For example, `-Drslevels.varis.level1Multiplier=0.75` changes the first Bookmap pair to `0.75` RI.

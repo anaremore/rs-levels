@@ -12,7 +12,7 @@ SCDLLName("VARIS Zones")
 
 namespace
 {
-constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.11";
+constexpr const char* VARIS_BUILD = "varis-sierra-2026-06-22.12";
 constexpr int REQUEST_NONE = 0;
 constexpr int REQUEST_FEED = 1;
 constexpr int STATUS_LINE = 736000;
@@ -365,21 +365,28 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     SCInputRef StaleSeconds = sc.Input[6];
     SCInputRef ShowStatus = sc.Input[7];
     SCInputRef ShowVwap = sc.Input[8];
-    SCInputRef ShowHalfBands = sc.Input[9];
-    SCInputRef ShowFullBands = sc.Input[10];
+    SCInputRef ShowLevel1Bands = sc.Input[9];
+    SCInputRef ShowLevel2Bands = sc.Input[10];
     SCInputRef VwapColor = sc.Input[11];
-    SCInputRef HalfBandColor = sc.Input[12];
-    SCInputRef FullBandColor = sc.Input[13];
+    SCInputRef Level1BandColor = sc.Input[12];
+    SCInputRef Level2BandColor = sc.Input[13];
     SCInputRef VwapWidth = sc.Input[14];
     SCInputRef BandWidth = sc.Input[15];
     SCInputRef FollowChartSymbol = sc.Input[16];
     SCInputRef ShowDebugStatus = sc.Input[17];
+    SCInputRef Level1Multiplier = sc.Input[18];
+    SCInputRef Level2Multiplier = sc.Input[19];
+    SCInputRef Level3Multiplier = sc.Input[20];
+    SCInputRef ShowLevel3Bands = sc.Input[21];
+    SCInputRef Level3BandColor = sc.Input[22];
 
     SCSubgraphRef Vwap = sc.Subgraph[0];
-    SCSubgraphRef UpperHalf = sc.Subgraph[1];
-    SCSubgraphRef LowerHalf = sc.Subgraph[2];
-    SCSubgraphRef UpperFull = sc.Subgraph[3];
-    SCSubgraphRef LowerFull = sc.Subgraph[4];
+    SCSubgraphRef UpperLevel1 = sc.Subgraph[1];
+    SCSubgraphRef LowerLevel1 = sc.Subgraph[2];
+    SCSubgraphRef UpperLevel2 = sc.Subgraph[3];
+    SCSubgraphRef LowerLevel2 = sc.Subgraph[4];
+    SCSubgraphRef UpperLevel3 = sc.Subgraph[5];
+    SCSubgraphRef LowerLevel3 = sc.Subgraph[6];
 
     if (sc.SetDefaults)
     {
@@ -425,20 +432,38 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         ShowVwap.Name = "Show VWAP";
         ShowVwap.SetYesNo(1);
 
-        ShowHalfBands.Name = "Show half RI bands";
-        ShowHalfBands.SetYesNo(1);
+        ShowLevel1Bands.Name = "Show Level 1 RI bands";
+        ShowLevel1Bands.SetYesNo(1);
 
-        ShowFullBands.Name = "Show full RI bands";
-        ShowFullBands.SetYesNo(1);
+        ShowLevel2Bands.Name = "Show Level 2 RI bands";
+        ShowLevel2Bands.SetYesNo(1);
+
+        ShowLevel3Bands.Name = "Show Level 3 RI bands";
+        ShowLevel3Bands.SetYesNo(1);
 
         VwapColor.Name = "VWAP color";
         VwapColor.SetColor(RGB(255, 0, 0));
 
-        HalfBandColor.Name = "Half RI band color";
-        HalfBandColor.SetColor(RGB(220, 220, 220));
+        Level1BandColor.Name = "Level 1 RI band color";
+        Level1BandColor.SetColor(RGB(220, 220, 220));
 
-        FullBandColor.Name = "Full RI band color";
-        FullBandColor.SetColor(RGB(120, 120, 120));
+        Level2BandColor.Name = "Level 2 RI band color";
+        Level2BandColor.SetColor(RGB(120, 120, 120));
+
+        Level3BandColor.Name = "Level 3 RI band color";
+        Level3BandColor.SetColor(RGB(80, 80, 80));
+
+        Level1Multiplier.Name = "Level 1 RI multiplier";
+        Level1Multiplier.SetFloat(0.5f);
+        Level1Multiplier.SetFloatLimits(0.001f, 10000.0f);
+
+        Level2Multiplier.Name = "Level 2 RI multiplier";
+        Level2Multiplier.SetFloat(1.0f);
+        Level2Multiplier.SetFloatLimits(0.001f, 10000.0f);
+
+        Level3Multiplier.Name = "Level 3 RI multiplier";
+        Level3Multiplier.SetFloat(2.0f);
+        Level3Multiplier.SetFloatLimits(0.001f, 10000.0f);
 
         VwapWidth.Name = "VWAP line width";
         VwapWidth.SetInt(1);
@@ -452,11 +477,13 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
         ShowDebugStatus.SetYesNo(0);
 
         Vwap.Name = "VWAP";
-        UpperHalf.Name = "Upper Half RI";
-        LowerHalf.Name = "Lower Half RI";
-        UpperFull.Name = "Upper Full RI";
-        LowerFull.Name = "Lower Full RI";
-        for (int i = 0; i < 5; ++i)
+        UpperLevel1.Name = "Upper Level 1 RI";
+        LowerLevel1.Name = "Lower Level 1 RI";
+        UpperLevel2.Name = "Upper Level 2 RI";
+        LowerLevel2.Name = "Lower Level 2 RI";
+        UpperLevel3.Name = "Upper Level 3 RI";
+        LowerLevel3.Name = "Lower Level 3 RI";
+        for (int i = 0; i < 7; ++i)
         {
             sc.Subgraph[i].DrawStyle = DRAWSTYLE_LINE;
             sc.Subgraph[i].DrawZeros = 0;
@@ -564,16 +591,20 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
     const double riskInterval = apiEnabled
         ? PositiveOr(capturedRiskInterval, ManualRiskInterval.GetFloat())
         : ManualRiskInterval.GetFloat();
-    const double halfRisk = riskInterval * 0.5;
+    const double level1Risk = riskInterval * PositiveOr(Level1Multiplier.GetFloat(), 0.5);
+    const double level2Risk = riskInterval * PositiveOr(Level2Multiplier.GetFloat(), 1.0);
+    const double level3Risk = riskInterval * PositiveOr(Level3Multiplier.GetFloat(), 2.0);
     const int resetHour = ResetHourEt.GetInt();
 
     Vwap.PrimaryColor = VwapColor.GetColor();
-    UpperHalf.PrimaryColor = HalfBandColor.GetColor();
-    LowerHalf.PrimaryColor = HalfBandColor.GetColor();
-    UpperFull.PrimaryColor = FullBandColor.GetColor();
-    LowerFull.PrimaryColor = FullBandColor.GetColor();
+    UpperLevel1.PrimaryColor = Level1BandColor.GetColor();
+    LowerLevel1.PrimaryColor = Level1BandColor.GetColor();
+    UpperLevel2.PrimaryColor = Level2BandColor.GetColor();
+    LowerLevel2.PrimaryColor = Level2BandColor.GetColor();
+    UpperLevel3.PrimaryColor = Level3BandColor.GetColor();
+    LowerLevel3.PrimaryColor = Level3BandColor.GetColor();
     Vwap.LineWidth = static_cast<unsigned short>(VwapWidth.GetInt());
-    for (int i = 1; i < 5; ++i)
+    for (int i = 1; i < 7; ++i)
         sc.Subgraph[i].LineWidth = static_cast<unsigned short>(BandWidth.GetInt());
 
     double cumulativeTpv = 0.0;
@@ -597,10 +628,12 @@ SCSFExport scsf_VARISZones(SCStudyInterfaceRef sc)
 
         const double value = cumulativeVolume > 0.0 ? cumulativeTpv / cumulativeVolume : 0.0;
         Vwap[i] = ShowVwap.GetYesNo() != 0 ? static_cast<float>(value) : 0.0f;
-        UpperHalf[i] = ShowHalfBands.GetYesNo() != 0 ? static_cast<float>(value + halfRisk) : 0.0f;
-        LowerHalf[i] = ShowHalfBands.GetYesNo() != 0 ? static_cast<float>(value - halfRisk) : 0.0f;
-        UpperFull[i] = ShowFullBands.GetYesNo() != 0 ? static_cast<float>(value + riskInterval) : 0.0f;
-        LowerFull[i] = ShowFullBands.GetYesNo() != 0 ? static_cast<float>(value - riskInterval) : 0.0f;
+        UpperLevel1[i] = ShowLevel1Bands.GetYesNo() != 0 ? static_cast<float>(value + level1Risk) : 0.0f;
+        LowerLevel1[i] = ShowLevel1Bands.GetYesNo() != 0 ? static_cast<float>(value - level1Risk) : 0.0f;
+        UpperLevel2[i] = ShowLevel2Bands.GetYesNo() != 0 ? static_cast<float>(value + level2Risk) : 0.0f;
+        LowerLevel2[i] = ShowLevel2Bands.GetYesNo() != 0 ? static_cast<float>(value - level2Risk) : 0.0f;
+        UpperLevel3[i] = ShowLevel3Bands.GetYesNo() != 0 ? static_cast<float>(value + level3Risk) : 0.0f;
+        LowerLevel3[i] = ShowLevel3Bands.GetYesNo() != 0 ? static_cast<float>(value - level3Risk) : 0.0f;
     }
 
     if (ShowStatus.GetYesNo() != 0)

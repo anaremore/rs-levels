@@ -250,13 +250,37 @@ assert.match(varis, /statValue\(levelText, "RI"\)/);
 assert.match(varis, /float out = na/);
 assert.doesNotMatch(varis, /^\s*out = na$/m);
 assert.match(varis, /riskInterval = usePayloadRi and not na\(payloadRiskInterval\) \? payloadRiskInterval : manualRiskInterval/);
-assert.match(varis, /band1Points = riskInterval \* 0\.5/);
-assert.match(varis, /band2Points = riskInterval/);
+const multiplierDefaults = [1, 2, 3].map((level) => {
+  const setting = varis.match(new RegExp(`^level${level}Multiplier = input\\.float\\(([^,]+), "Level ${level} RI Multiplier", step = 0\\.25, minval = 0\\.001\\)$`, 'm'));
+  assert.ok(setting, `VARIS level ${level} exposes a positive configurable RI multiplier`);
+  assert.match(varis, new RegExp(`upper${level}Plot = plot\\(showUpper${level} \\? upperBand${level} : na`));
+  assert.match(varis, new RegExp(`lower${level}Plot = plot\\(showLower${level} \\? lowerBand${level} : na`));
+  return Number(setting[1]);
+});
+assert.deepEqual(multiplierDefaults, [0.5, 1, 2]);
+
+function varisBandValues(riskInterval, vwapValue, multipliers = multiplierDefaults) {
+  const values = { riskInterval, vwapValue };
+  multipliers.forEach((multiplier, index) => { values[`level${index + 1}Multiplier`] = multiplier; });
+  for (const prefix of ['band', 'upperBand', 'lowerBand']) {
+    for (const level of [1, 2, 3]) {
+      const name = prefix === 'band' ? `band${level}Points` : `${prefix}${level}`;
+      const expression = varis.match(new RegExp(`^${name} = ([^\\r\\n]+)$`, 'm'));
+      assert.ok(expression, `VARIS defines ${name}`);
+      values[name] = Function(...Object.keys(values), `return ${expression[1]};`)(...Object.values(values));
+    }
+  }
+  return [1, 2, 3].map((level) => [values[`upperBand${level}`], values[`lowerBand${level}`]]);
+}
+assert.deepEqual(varisBandValues(100, 5000), [[5050, 4950], [5100, 4900], [5200, 4800]]);
+assert.deepEqual(varisBandValues(40, 5000, [0.75, 1.5, 3]), [[5030, 4970], [5060, 4940], [5120, 4880]]);
 assert.match(varis, /hour\(time, "America\/New_York"\) == 18/);
 assert.match(varis, /cumTPV/);
 assert.match(varis, /vwapValue/);
 assert.match(varis, /fill\(vwapPlot, upper1Plot/);
 assert.match(varis, /fill\(vwapPlot, lower2Plot/);
+assert.match(varis, /fill\(vwapPlot, upper3Plot, color = showFill3 and showUpper3/);
+assert.match(varis, /fill\(vwapPlot, lower3Plot, color = showFill3 and showLower3/);
 assert.match(varis, /RSLEVELS/);
 assert.match(varis, /array\.get\(parts, 1\) == "2"/);
 assert.match(varis, /syminfo\.root/);

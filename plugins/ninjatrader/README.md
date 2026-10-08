@@ -19,7 +19,7 @@ GET /stats/:symbol?format=rows
 
 The indicator uses generic text row feeds to avoid adding a JSON dependency inside NinjaTrader. `/levels/:symbol?format=rows` provides horizontal display levels. `/stats/:symbol?format=rows` provides chart-corner display context such as `DD`, `Res`, `MRes`, `WRes`, and `Map`. `/status` provides source freshness.
 
-`VARISZones.cs` polls `/status` and `/stats/:symbol?format=rows`, reads the `RI` row, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input when captured `RI` is unavailable.
+`VARISZones.cs` polls `/status` and `/stats/:symbol?format=rows`, reads the `RI` row, then computes VWAP and three configurable upper/lower RI band pairs (defaults: 0.5, 1, and 2 RI) from local chart bars. It falls back to a manual risk interval input when captured `RI` is unavailable.
 
 ## Indicator Settings
 
@@ -35,8 +35,9 @@ The indicator uses generic text row feeds to avoid adding a JSON dependency insi
 `VARIS Zones` adds:
 
 - manual Risk Interval fallback
+- positive Level 1, Level 2, and Level 3 RI multipliers, default `0.5`, `1`, and `2`
 - use captured `RI` when available
-- show/hide VWAP, half-RI bands, full-RI bands, and status
+- show/hide VWAP, Level 1, Level 2, and Level 3 bands, and status
 - plot colors/widths through NinjaTrader plot styling
 
 ## Install

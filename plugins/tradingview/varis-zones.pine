@@ -6,12 +6,17 @@ payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
 usePayloadRi = input.bool(true, "Use pasted RI when available")
 manualRiskInterval = input.float(25.0, "Manual Risk Interval (Points)", step = 0.25, minval = 0.001)
+level1Multiplier = input.float(0.5, "Level 1 RI Multiplier", step = 0.25, minval = 0.001)
+level2Multiplier = input.float(1.0, "Level 2 RI Multiplier", step = 0.25, minval = 0.001)
+level3Multiplier = input.float(2.0, "Level 3 RI Multiplier", step = 0.25, minval = 0.001)
 
 showVWAP = input.bool(true, "Show VWAP")
 showUpper1 = input.bool(true, "Show Upper Band 1")
 showLower1 = input.bool(true, "Show Lower Band 1")
 showUpper2 = input.bool(true, "Show Upper Band 2")
 showLower2 = input.bool(true, "Show Lower Band 2")
+showUpper3 = input.bool(true, "Show Upper Band 3")
+showLower3 = input.bool(true, "Show Lower Band 3")
 
 vwapColor = input.color(color.rgb(255, 0, 0), "VWAP Line Color")
 vwapWidth = input.int(1, "VWAP Line Width", minval = 1, maxval = 5)
@@ -26,6 +31,11 @@ upper2Width = input.int(1, "Upper Band 2 Width", minval = 1, maxval = 5)
 lower2Color = input.color(color.rgb(0, 0, 0), "Lower Band 2 Color")
 lower2Width = input.int(1, "Lower Band 2 Width", minval = 1, maxval = 5)
 
+upper3Color = input.color(color.rgb(0, 0, 0), "Upper Band 3 Color")
+upper3Width = input.int(1, "Upper Band 3 Width", minval = 1, maxval = 5)
+lower3Color = input.color(color.rgb(0, 0, 0), "Lower Band 3 Color")
+lower3Width = input.int(1, "Lower Band 3 Width", minval = 1, maxval = 5)
+
 showFill1 = input.bool(true, "Show Fill Band 1")
 fill1Color = input.color(color.rgb(255, 255, 255), "Band 1 Fill Color")
 fill1Trans = input.int(75, "Band 1 Fill Transparency", minval = 0, maxval = 100)
@@ -33,6 +43,10 @@ fill1Trans = input.int(75, "Band 1 Fill Transparency", minval = 0, maxval = 100)
 showFill2 = input.bool(true, "Show Fill Band 2")
 fill2Color = input.color(color.rgb(0, 0, 0), "Band 2 Fill Color")
 fill2Trans = input.int(90, "Band 2 Fill Transparency", minval = 0, maxval = 100)
+
+showFill3 = input.bool(true, "Show Fill Band 3")
+fill3Color = input.color(color.rgb(0, 0, 0), "Band 3 Fill Color")
+fill3Trans = input.int(95, "Band 3 Fill Transparency", minval = 0, maxval = 100)
 
 payloadCompact(payloadText) =>
     cleaned = str.replace_all(payloadText, "\r", "")
@@ -90,8 +104,9 @@ statValue(levelText, statName) =>
 levelText = levelTextForChart(payload)
 payloadRiskInterval = statValue(levelText, "RI")
 riskInterval = usePayloadRi and not na(payloadRiskInterval) ? payloadRiskInterval : manualRiskInterval
-band1Points = riskInterval * 0.5
-band2Points = riskInterval
+band1Points = riskInterval * level1Multiplier
+band2Points = riskInterval * level2Multiplier
+band3Points = riskInterval * level3Multiplier
 
 isNewSession = hour(time, "America/New_York") == 18 and minute(time, "America/New_York") == 0
 tp = (high + low + close) / 3
@@ -112,14 +127,20 @@ upperBand1 = vwapValue + band1Points
 lowerBand1 = vwapValue - band1Points
 upperBand2 = vwapValue + band2Points
 lowerBand2 = vwapValue - band2Points
+upperBand3 = vwapValue + band3Points
+lowerBand3 = vwapValue - band3Points
 
 vwapPlot = plot(showVWAP ? vwapValue : na, title = "VWAP", color = vwapColor, linewidth = vwapWidth)
 upper1Plot = plot(showUpper1 ? upperBand1 : na, title = "Upper Band 1", color = upper1Color, linewidth = upper1Width)
 lower1Plot = plot(showLower1 ? lowerBand1 : na, title = "Lower Band 1", color = lower1Color, linewidth = lower1Width)
 upper2Plot = plot(showUpper2 ? upperBand2 : na, title = "Upper Band 2", color = upper2Color, linewidth = upper2Width)
 lower2Plot = plot(showLower2 ? lowerBand2 : na, title = "Lower Band 2", color = lower2Color, linewidth = lower2Width)
+upper3Plot = plot(showUpper3 ? upperBand3 : na, title = "Upper Band 3", color = upper3Color, linewidth = upper3Width)
+lower3Plot = plot(showLower3 ? lowerBand3 : na, title = "Lower Band 3", color = lower3Color, linewidth = lower3Width)
 
 fill(vwapPlot, upper1Plot, color = showFill1 and showUpper1 ? color.new(fill1Color, fill1Trans) : na, title = "Upper Fill 1")
 fill(vwapPlot, lower1Plot, color = showFill1 and showLower1 ? color.new(fill1Color, fill1Trans) : na, title = "Lower Fill 1")
 fill(vwapPlot, upper2Plot, color = showFill2 and showUpper2 ? color.new(fill2Color, fill2Trans) : na, title = "Upper Fill 2")
 fill(vwapPlot, lower2Plot, color = showFill2 and showLower2 ? color.new(fill2Color, fill2Trans) : na, title = "Lower Fill 2")
+fill(vwapPlot, upper3Plot, color = showFill3 and showUpper3 ? color.new(fill3Color, fill3Trans) : na, title = "Upper Fill 3")
+fill(vwapPlot, lower3Plot, color = showFill3 and showLower3 ? color.new(fill3Color, fill3Trans) : na, title = "Lower Fill 3")

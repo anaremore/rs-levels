@@ -37,7 +37,7 @@ The `STATE` row provides source freshness. The level `kind` lets the study disti
 GET /sierra/:symbol
 ```
 
-Sierra Chart studies use the single Sierra compatibility feed for reliability. The RS Levels study draws the level rows from that response; the VARIS Zones study reads only the `RI` stat row from the same response, then computes VWAP, half-RI bands, and full-RI bands from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands. ES and MES resolve to the same ES-family stats, and NQ and MNQ resolve to the same NQ-family stats.
+Sierra Chart studies use the single Sierra compatibility feed for reliability. The RS Levels study draws the level rows from that response; the VARIS Zones study reads only the `RI` stat row from the same response, then computes VWAP and three configurable upper/lower RI band pairs (defaults: 0.5, 1, and 2 RI) from local chart bars. It falls back to a manual risk interval input only until the API provides explicit `RI` or a display-derived RI from the captured DD bands. ES and MES resolve to the same ES-family stats, and NQ and MNQ resolve to the same NQ-family stats.
 
 ## Study Inputs
 
@@ -56,12 +56,13 @@ Sierra Chart studies use the single Sierra compatibility feed for reliability. T
 `VARIS Zones` adds:
 
 - manual Risk Interval fallback
+- positive Level 1, Level 2, and Level 3 RI multipliers, default `0.5`, `1`, and `2`
 - use captured `RI` when available
 - symbol override, default `Auto` from the Sierra chart symbol with ES/MES and NQ/MNQ family detection
 - follow chart symbol, default on, so existing studies do not keep a stale manual symbol after rebuild
 - session reset hour, default 18 ET
-- show/hide VWAP, half-RI bands, full-RI bands, and status
-- colors and line widths for VWAP, half-RI bands, and full-RI bands
+- show/hide VWAP, Level 1, Level 2, and Level 3 bands, and status
+- colors and line widths for VWAP, Level 1, Level 2, and Level 3 bands
 - show debug status, default off, for the latest local request path, response length, response shape, row count, detected stat keys, parsed RI, and build tag
 
 ## Install

@@ -44,16 +44,22 @@ namespace NinjaTrader.NinjaScript.Indicators
                 StaleSeconds = 82800;
                 ManualRiskInterval = 25.0;
                 UseCapturedRiskInterval = true;
+                Level1RiskMultiplier = 0.5;
+                Level2RiskMultiplier = 1.0;
+                Level3RiskMultiplier = 2.0;
                 ShowVWAP = true;
                 ShowHalfRiskBands = true;
                 ShowFullRiskBands = true;
+                ShowLevel3RiskBands = true;
                 ShowStatus = true;
 
                 AddPlot(Brushes.Red, "VWAP");
-                AddPlot(Brushes.DarkGray, "Upper Half RI");
-                AddPlot(Brushes.DarkGray, "Lower Half RI");
-                AddPlot(Brushes.Gray, "Upper Full RI");
-                AddPlot(Brushes.Gray, "Lower Full RI");
+                AddPlot(Brushes.DarkGray, "Upper Level 1");
+                AddPlot(Brushes.DarkGray, "Lower Level 1");
+                AddPlot(Brushes.Gray, "Upper Level 2");
+                AddPlot(Brushes.Gray, "Lower Level 2");
+                AddPlot(Brushes.Gray, "Upper Level 3");
+                AddPlot(Brushes.Gray, "Lower Level 3");
             }
             else if (State == State.DataLoaded)
             {
@@ -131,13 +137,17 @@ namespace NinjaTrader.NinjaScript.Indicators
 
             double vwap = cumulativeVolume > 0.0 ? cumulativeTpv / cumulativeVolume : double.NaN;
             double ri = ResolveRiskInterval();
-            double half = ri * 0.5;
+            double level1 = ri * ResolveRiskMultiplier(Level1RiskMultiplier, 0.5);
+            double level2 = ri * ResolveRiskMultiplier(Level2RiskMultiplier, 1.0);
+            double level3 = ri * ResolveRiskMultiplier(Level3RiskMultiplier, 2.0);
 
             Values[0][0] = ShowVWAP ? vwap : double.NaN;
-            Values[1][0] = ShowHalfRiskBands ? vwap + half : double.NaN;
-            Values[2][0] = ShowHalfRiskBands ? vwap - half : double.NaN;
-            Values[3][0] = ShowFullRiskBands ? vwap + ri : double.NaN;
-            Values[4][0] = ShowFullRiskBands ? vwap - ri : double.NaN;
+            Values[1][0] = ShowHalfRiskBands ? vwap + level1 : double.NaN;
+            Values[2][0] = ShowHalfRiskBands ? vwap - level1 : double.NaN;
+            Values[3][0] = ShowFullRiskBands ? vwap + level2 : double.NaN;
+            Values[4][0] = ShowFullRiskBands ? vwap - level2 : double.NaN;
+            Values[5][0] = ShowLevel3RiskBands ? vwap + level3 : double.NaN;
+            Values[6][0] = ShowLevel3RiskBands ? vwap - level3 : double.NaN;
         }
 
         private void DrawStatusText()
@@ -189,6 +199,11 @@ namespace NinjaTrader.NinjaScript.Indicators
             if (UseCapturedRiskInterval && value.HasValue && value.Value > 0.0)
                 return value.Value;
             return Math.Max(0.001, ManualRiskInterval);
+        }
+
+        private static double ResolveRiskMultiplier(double value, double fallback)
+        {
+            return value > 0.0 && !double.IsInfinity(value) ? value : fallback;
         }
 
         private int SessionKey(DateTime barTime)
@@ -316,16 +331,35 @@ namespace NinjaTrader.NinjaScript.Indicators
         public bool UseCapturedRiskInterval { get; set; }
 
         [NinjaScriptProperty]
+        [Range(0.001, double.MaxValue)]
+        [Display(Name = "Level 1 RI multiplier", GroupName = "VARIS Zones")]
+        public double Level1RiskMultiplier { get; set; }
+
+        [NinjaScriptProperty]
+        [Range(0.001, double.MaxValue)]
+        [Display(Name = "Level 2 RI multiplier", GroupName = "VARIS Zones")]
+        public double Level2RiskMultiplier { get; set; }
+
+        [NinjaScriptProperty]
+        [Range(0.001, double.MaxValue)]
+        [Display(Name = "Level 3 RI multiplier", GroupName = "VARIS Zones")]
+        public double Level3RiskMultiplier { get; set; }
+
+        [NinjaScriptProperty]
         [Display(Name = "Show VWAP", GroupName = "VARIS Zones")]
         public bool ShowVWAP { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Show half RI bands", GroupName = "VARIS Zones")]
+        [Display(Name = "Show level 1 bands", GroupName = "VARIS Zones")]
         public bool ShowHalfRiskBands { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Show full RI bands", GroupName = "VARIS Zones")]
+        [Display(Name = "Show level 2 bands", GroupName = "VARIS Zones")]
         public bool ShowFullRiskBands { get; set; }
+
+        [NinjaScriptProperty]
+        [Display(Name = "Show level 3 bands", GroupName = "VARIS Zones")]
+        public bool ShowLevel3RiskBands { get; set; }
 
         [NinjaScriptProperty]
         [Display(Name = "Show status", GroupName = "VARIS Zones")]

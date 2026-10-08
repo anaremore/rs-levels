@@ -51,7 +51,8 @@ Every VARIS Zones adapter must verify:
 - Captured or display-derived `RI` is read from the RS Levels stats feed or pasted TradingView payload.
 - Manual risk interval fallback works when no captured `RI` is present.
 - VWAP resets on the configured 18:00 ET futures session boundary.
-- Half-risk and full-risk bands are drawn around VWAP.
+- Three upper/lower band pairs are drawn around VWAP, with default RI multipliers `0.5`, `1`, and `2`.
+- Changing each level multiplier moves only that pair by `RI * multiplier`; band visibility and manual RI fallback still work.
 - The VARIS Zones concept credit for RocketScooter community member `IAmTheLiquidity2` remains visible in docs or source comments.
 
 ## Platform Matrix
@@ -60,7 +61,7 @@ Every VARIS Zones adapter must verify:
 | --- | --- | --- | --- |
 | Thinkorswim | `plugins/thinkorswim/rs-levels.ts` plus generated source | `GET /thinkorswim/:symbol` through **Copy Thinkorswim study** | Select one chart, copy and paste the generated source, verify levels, labels, category toggles, Half Gap dashes, zone fills, stats, and capture timestamp; refresh the capture and repeat replacement. |
 | TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste an all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, manual confirmation, manual lines, and stats panel. |
-| TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste the same payload, verify manual confirmation, `RI` selection, manual fallback, VWAP, half-RI bands, and full-RI bands. |
+| TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste the same payload, verify manual confirmation, `RI` selection, manual fallback, VWAP, all three configurable RI band pairs, and visibility/fill controls. |
 | Sierra Chart | `plugins/sierra-chart/rs-levels-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify levels, labels, stats marker, zone fills, stale/offline marker, and hidden debug default. |
 | Sierra Chart | `plugins/sierra-chart/varis-zones-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify the status build tag changed, `Follow chart symbol` is on, Auto symbol detection works on ES/MES and NQ/MNQ charts, `API RI` status comes from the Sierra compatibility feed, manual fallback works before RI is available, and VWAP/RI bands render. |
 | NinjaTrader | `plugins/ninjatrader/RSLevelsDisplay.cs` | `GET /levels/:symbol?format=rows`, `GET /stats/:symbol?format=rows` | Compile NinjaScript, add indicator, verify levels, stats, zone fills, label controls, and stale/offline state. |

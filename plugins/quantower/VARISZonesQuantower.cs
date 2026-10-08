@@ -35,10 +35,12 @@ namespace RSLevelsQuantower
             this.OnBackGround = false;
             this.AllowFitAuto = false;
             this.AddLineSeries("VWAP", Color.Red, 1, LineStyle.Solid);
-            this.AddLineSeries("Upper Half RI", Color.DimGray, 1, LineStyle.Solid);
-            this.AddLineSeries("Lower Half RI", Color.DimGray, 1, LineStyle.Solid);
-            this.AddLineSeries("Upper Full RI", Color.Gray, 1, LineStyle.Solid);
-            this.AddLineSeries("Lower Full RI", Color.Gray, 1, LineStyle.Solid);
+            this.AddLineSeries("Upper Level 1", Color.DimGray, 1, LineStyle.Solid);
+            this.AddLineSeries("Lower Level 1", Color.DimGray, 1, LineStyle.Solid);
+            this.AddLineSeries("Upper Level 2", Color.Gray, 1, LineStyle.Solid);
+            this.AddLineSeries("Lower Level 2", Color.Gray, 1, LineStyle.Solid);
+            this.AddLineSeries("Upper Level 3", Color.Gray, 1, LineStyle.Solid);
+            this.AddLineSeries("Lower Level 3", Color.Gray, 1, LineStyle.Solid);
         }
 
         [InputParameter("Service URL", 0)]
@@ -69,10 +71,10 @@ namespace RSLevelsQuantower
         [InputParameter("Show VWAP", 6)]
         public bool ShowVWAP = true;
 
-        [InputParameter("Show half RI bands", 7)]
+        [InputParameter("Show level 1 bands", 7)]
         public bool ShowHalfRiskBands = true;
 
-        [InputParameter("Show full RI bands", 8)]
+        [InputParameter("Show level 2 bands", 8)]
         public bool ShowFullRiskBands = true;
 
         [InputParameter("Show fills", 9)]
@@ -86,6 +88,18 @@ namespace RSLevelsQuantower
 
         [InputParameter("Status panel bottom offset pixels", 12, 0, 200, 1, 0)]
         public int StatusPanelBottomOffsetPixels = 44;
+
+        [InputParameter("Level 1 RI multiplier", 13, 0.001, double.MaxValue, 0.05, 3)]
+        public double Level1RiskMultiplier = 0.5;
+
+        [InputParameter("Level 2 RI multiplier", 14, 0.001, double.MaxValue, 0.05, 3)]
+        public double Level2RiskMultiplier = 1.0;
+
+        [InputParameter("Level 3 RI multiplier", 15, 0.001, double.MaxValue, 0.05, 3)]
+        public double Level3RiskMultiplier = 2.0;
+
+        [InputParameter("Show level 3 bands", 16)]
+        public bool ShowLevel3RiskBands = true;
 
         protected override void OnInit()
         {
@@ -211,23 +225,29 @@ namespace RSLevelsQuantower
 
             double vwap = cumulativeVolume > 0.0 ? cumulativeTpv / cumulativeVolume : double.NaN;
             double ri = ResolveRiskInterval();
-            double half = ri * 0.5;
+            double level1 = ri * ResolveRiskMultiplier(Level1RiskMultiplier, 0.5);
+            double level2 = ri * ResolveRiskMultiplier(Level2RiskMultiplier, 1.0);
+            double level3 = ri * ResolveRiskMultiplier(Level3RiskMultiplier, 2.0);
 
             this.SetValue(ShowVWAP ? vwap : double.NaN, 0);
-            this.SetValue(ShowHalfRiskBands ? vwap + half : double.NaN, 1);
-            this.SetValue(ShowHalfRiskBands ? vwap - half : double.NaN, 2);
-            this.SetValue(ShowFullRiskBands ? vwap + ri : double.NaN, 3);
-            this.SetValue(ShowFullRiskBands ? vwap - ri : double.NaN, 4);
+            this.SetValue(ShowHalfRiskBands ? vwap + level1 : double.NaN, 1);
+            this.SetValue(ShowHalfRiskBands ? vwap - level1 : double.NaN, 2);
+            this.SetValue(ShowFullRiskBands ? vwap + level2 : double.NaN, 3);
+            this.SetValue(ShowFullRiskBands ? vwap - level2 : double.NaN, 4);
+            this.SetValue(ShowLevel3RiskBands ? vwap + level3 : double.NaN, 5);
+            this.SetValue(ShowLevel3RiskBands ? vwap - level3 : double.NaN, 6);
 
             if (ShowFills)
             {
                 int alpha = Math.Max(0, Math.Min(128, (int)Math.Round(255 * Math.Max(0, Math.Min(50, FillOpacity)) / 100.0)));
-                Color halfFill = Color.FromArgb(alpha, 255, 255, 255);
-                Color fullFill = Color.FromArgb(Math.Max(0, alpha / 2), 0, 0, 0);
-                this.BeginCloud(0, 1, halfFill);
-                this.BeginCloud(0, 2, halfFill);
-                this.BeginCloud(0, 3, fullFill);
-                this.BeginCloud(0, 4, fullFill);
+                Color level1Fill = Color.FromArgb(alpha, 255, 255, 255);
+                Color outerFill = Color.FromArgb(Math.Max(0, alpha / 2), 0, 0, 0);
+                this.BeginCloud(0, 1, level1Fill);
+                this.BeginCloud(0, 2, level1Fill);
+                this.BeginCloud(0, 3, outerFill);
+                this.BeginCloud(0, 4, outerFill);
+                this.BeginCloud(0, 5, outerFill);
+                this.BeginCloud(0, 6, outerFill);
             }
         }
 
@@ -241,6 +261,11 @@ namespace RSLevelsQuantower
             if (UseCapturedRiskInterval && value.HasValue && value.Value > 0.0)
                 return value.Value;
             return Math.Max(0.001, ManualRiskInterval);
+        }
+
+        private static double ResolveRiskMultiplier(double value, double fallback)
+        {
+            return value > 0.0 && !double.IsInfinity(value) ? value : fallback;
         }
 
         private int SessionKey(DateTime barTime)

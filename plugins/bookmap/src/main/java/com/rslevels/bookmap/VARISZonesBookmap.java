@@ -50,15 +50,20 @@ public class VARISZonesBookmap implements CustomModule, BarDataListener {
     private int timeoutMs = 1500;
     private boolean useCapturedRiskInterval = true;
     private double manualRiskInterval = 25.0;
+    private double level1Multiplier = 0.5;
+    private double level2Multiplier = 1.0;
+    private double level3Multiplier = 2.0;
     private volatile double capturedRiskInterval = 0.0;
     private volatile String sourceState = "waiting";
     private volatile String lastIssue = "";
     private ScheduledExecutorService worker;
     private Indicator vwapLine;
-    private Indicator upperHalfLine;
-    private Indicator lowerHalfLine;
-    private Indicator upperFullLine;
-    private Indicator lowerFullLine;
+    private Indicator upperLevel1Line;
+    private Indicator lowerLevel1Line;
+    private Indicator upperLevel2Line;
+    private Indicator lowerLevel2Line;
+    private Indicator upperLevel3Line;
+    private Indicator lowerLevel3Line;
     private double cumulativeTpv;
     private double cumulativeVolume;
     private int currentSessionKey = Integer.MIN_VALUE;
@@ -71,6 +76,9 @@ public class VARISZonesBookmap implements CustomModule, BarDataListener {
         this.refreshMs = clampInt(readIntProperty("rslevels.varis.refreshMs", 1000), 250, 60000);
         this.timeoutMs = clampInt(readIntProperty("rslevels.varis.timeoutMs", 1500), 250, 10000);
         this.manualRiskInterval = readDoubleProperty("rslevels.varis.manualRi", 25.0);
+        this.level1Multiplier = readPositiveDoubleProperty("rslevels.varis.level1Multiplier", 0.5);
+        this.level2Multiplier = readPositiveDoubleProperty("rslevels.varis.level2Multiplier", 1.0);
+        this.level3Multiplier = readPositiveDoubleProperty("rslevels.varis.level3Multiplier", 2.0);
         this.useCapturedRiskInterval = readBooleanProperty("rslevels.varis.useCapturedRi", true);
         this.symbol = resolveSymbol(System.getProperty("rslevels.symbol", ""), this.alias, info);
 
@@ -122,8 +130,10 @@ public class VARISZonesBookmap implements CustomModule, BarDataListener {
 
         double vwap = cumulativeTpv / cumulativeVolume;
         double riskInterval = riskInterval();
-        double half = riskInterval * 0.5;
-        publish(vwap, vwap + half, vwap - half, vwap + riskInterval, vwap - riskInterval);
+        double level1 = riskInterval * level1Multiplier;
+        double level2 = riskInterval * level2Multiplier;
+        double level3 = riskInterval * level3Multiplier;
+        publish(vwap, vwap + level1, vwap - level1, vwap + level2, vwap - level2, vwap + level3, vwap - level3);
     }
 
     @Override
@@ -133,10 +143,12 @@ public class VARISZonesBookmap implements CustomModule, BarDataListener {
 
     private void registerIndicators() {
         vwapLine = registerLine("VARIS VWAP", new Color(255, 0, 0));
-        upperHalfLine = registerLine("VARIS Upper Half RI", new Color(96, 96, 96));
-        lowerHalfLine = registerLine("VARIS Lower Half RI", new Color(96, 96, 96));
-        upperFullLine = registerLine("VARIS Upper Full RI", new Color(150, 150, 150));
-        lowerFullLine = registerLine("VARIS Lower Full RI", new Color(150, 150, 150));
+        upperLevel1Line = registerLine("VARIS Upper Level 1", new Color(96, 96, 96));
+        lowerLevel1Line = registerLine("VARIS Lower Level 1", new Color(96, 96, 96));
+        upperLevel2Line = registerLine("VARIS Upper Level 2", new Color(150, 150, 150));
+        lowerLevel2Line = registerLine("VARIS Lower Level 2", new Color(150, 150, 150));
+        upperLevel3Line = registerLine("VARIS Upper Level 3", new Color(192, 192, 192));
+        lowerLevel3Line = registerLine("VARIS Lower Level 3", new Color(192, 192, 192));
     }
 
     private Indicator registerLine(String name, Color color) {
@@ -170,25 +182,31 @@ public class VARISZonesBookmap implements CustomModule, BarDataListener {
         return Math.max(0.001, manualRiskInterval);
     }
 
-    private void publish(double vwap, double upperHalf, double lowerHalf, double upperFull, double lowerFull) {
+    private void publish(double vwap, double upperLevel1, double lowerLevel1, double upperLevel2, double lowerLevel2, double upperLevel3, double lowerLevel3) {
         vwapLine.addPoint(vwap);
-        upperHalfLine.addPoint(upperHalf);
-        lowerHalfLine.addPoint(lowerHalf);
-        upperFullLine.addPoint(upperFull);
-        lowerFullLine.addPoint(lowerFull);
+        upperLevel1Line.addPoint(upperLevel1);
+        lowerLevel1Line.addPoint(lowerLevel1);
+        upperLevel2Line.addPoint(upperLevel2);
+        lowerLevel2Line.addPoint(lowerLevel2);
+        upperLevel3Line.addPoint(upperLevel3);
+        lowerLevel3Line.addPoint(lowerLevel3);
     }
 
     private void publishMissing() {
         if (vwapLine != null)
             vwapLine.addPoint(Double.NaN);
-        if (upperHalfLine != null)
-            upperHalfLine.addPoint(Double.NaN);
-        if (lowerHalfLine != null)
-            lowerHalfLine.addPoint(Double.NaN);
-        if (upperFullLine != null)
-            upperFullLine.addPoint(Double.NaN);
-        if (lowerFullLine != null)
-            lowerFullLine.addPoint(Double.NaN);
+        if (upperLevel1Line != null)
+            upperLevel1Line.addPoint(Double.NaN);
+        if (lowerLevel1Line != null)
+            lowerLevel1Line.addPoint(Double.NaN);
+        if (upperLevel2Line != null)
+            upperLevel2Line.addPoint(Double.NaN);
+        if (lowerLevel2Line != null)
+            lowerLevel2Line.addPoint(Double.NaN);
+        if (upperLevel3Line != null)
+            upperLevel3Line.addPoint(Double.NaN);
+        if (lowerLevel3Line != null)
+            lowerLevel3Line.addPoint(Double.NaN);
     }
 
     private void resetVwap() {
@@ -311,6 +329,11 @@ public class VARISZonesBookmap implements CustomModule, BarDataListener {
         } catch (NumberFormatException ex) {
             return fallback;
         }
+    }
+
+    private static double readPositiveDoubleProperty(String key, double fallback) {
+        double value = readDoubleProperty(key, fallback);
+        return isFinitePositive(value) ? value : fallback;
     }
 
     private static boolean readBooleanProperty(String key, boolean fallback) {
