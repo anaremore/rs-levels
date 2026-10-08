@@ -131,8 +131,9 @@ namespace NinjaTrader.NinjaScript.Indicators
                 LevelRow level = copy[i];
                 Brush brush = BrushFromLevel(level);
                 Draw.HorizontalLine(this, Tag("line", i), level.Price, brush);
-                if (ShowLabels)
-                    Draw.Text(this, Tag("label", i), DisplayLabel(level) + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture), 0, LabelPrice(level), brush);
+                string label = DisplayLabel(level);
+                if (ShowLabels && label.Length > 0)
+                    Draw.Text(this, Tag("label", i), label + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture), 0, LabelPrice(level), brush);
                 else
                     RemoveDrawObject(Tag("label", i));
             }
@@ -441,6 +442,10 @@ namespace NinjaTrader.NinjaScript.Indicators
         {
             string name = level.Name ?? "Level";
             string upper = name.ToUpperInvariant();
+            if (level.Kind == "zone-bull")
+                return ZoneBoundarySide(name) > 0 ? "" : "Bull Zone";
+            if (level.Kind == "zone-bear")
+                return ZoneBoundarySide(name) < 0 ? "" : "Bear Zone";
             if (upper.Contains("PREVDAYCLOSE") || upper.Contains("PREV DAY CLOSE"))
                 return "Prev Close";
             if (upper.Contains("LASTOPEN") || (upper.Contains("OPEN") && !upper.Contains("CLOSE")))

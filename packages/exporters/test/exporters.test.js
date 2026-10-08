@@ -93,6 +93,37 @@ assert.match(thinkorswimStudy, /AddLabel\(showStatus, "RS Levels ES \| \d+ level
 assert.match(thinkorswimStudy, /AddLabel\(showStats, "DD 0\.66 \| RI 68\.75 \| Res 73\.82 \| MRes 49\.87 \| WRes -29\.29 \| Map BLD"/);
 assert.doesNotMatch(thinkorswimStudy, /horizontal_line|horizontalLine|MidGap|Mid Gap/);
 
+const zoneLabelRow = {
+  symbol: 'ES',
+  levels: [
+    { name: 'BZT1', price: 110, kind: 'zone-bull' },
+    { name: 'BZB1', price: 100, kind: 'zone-bull' },
+    { name: 'BrZT1', price: 130, kind: 'zone-bear' },
+    { name: 'BrZB1', price: 120, kind: 'zone-bear' },
+    { name: 'Bull Zone Top 2', price: 210, kind: 'zone-bull' },
+    { name: 'Bull Zone Bottom 2', price: 200, kind: 'zone-bull' },
+    { name: 'Bear Zone Top 2', price: 230, kind: 'zone-bear' },
+    { name: 'Bear Zone Bottom 2', price: 220, kind: 'zone-bear' },
+    { name: 'Demand', price: 300, kind: 'zone-bull' },
+    { name: 'Supply', price: 310, kind: 'zone-bear' },
+    { name: 'MidGap', price: 320, kind: 'open-close' }
+  ]
+};
+{
+  const study = createThinkorswimStudyExport(zoneLabelRow);
+  const plotPrices = new Map(Array.from(study.matchAll(/^plot (L\d{3}) = if \w+ then ([\d.]+) else Double.NaN;/gm),
+    ([, plotName, price]) => [plotName, Number(price)]));
+  const labels = Array.from(study.matchAll(/^AddChartBubble\([^,]+, (L\d{3}), "([^"]+) \| "/gm),
+    ([, plotName, name]) => [plotPrices.get(plotName), name]);
+  assert.equal(plotPrices.size, zoneLabelRow.levels.length, 'every zone boundary keeps its price line');
+  assert.equal(Array.from(study.matchAll(/^AddCloud\(/gm)).length, 4, 'repeated zone pairs keep their fills');
+  assert.deepEqual(labels, [
+    [100, 'Bull Zone'], [130, 'Bear Zone'],
+    [200, 'Bull Zone'], [230, 'Bear Zone'],
+    [300, 'Bull Zone'], [310, 'Bear Zone'], [320, 'Half Gap']
+  ], 'zone labels appear only at bull bottoms and bear tops, with standalone labels preserved');
+}
+
 const sanitizedThinkorswimStudy = createThinkorswimStudyExport({
   symbol: 'ES#\nplot INJECTED = close;',
   capturedAt: '2026-06-19T14:29:59.500Z\nAddOrder();',

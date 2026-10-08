@@ -195,7 +195,10 @@ namespace RSLevelsQuantower
                     if (!ShowLabels)
                         continue;
 
-                    string label = DisplayLabel(level) + " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture);
+                    string label = DisplayLabel(level);
+                    if (label.Length == 0)
+                        continue;
+                    label += " " + level.Price.ToString("0.00", CultureInfo.InvariantCulture);
                     SizeF size = graphics.MeasureString(label, font);
                     float x = Math.Max(rect.Left + 6, rect.Right - size.Width - 6);
                     float labelY = y - LabelDirection(level) * Math.Max(0, LabelVerticalOffsetPixels) - size.Height / 2f;
@@ -475,6 +478,10 @@ namespace RSLevelsQuantower
         {
             string name = level.Name ?? "Level";
             string upper = name.ToUpperInvariant();
+            if (level.Kind == "zone-bull")
+                return ZoneBoundarySide(name) > 0 ? "" : "Bull Zone";
+            if (level.Kind == "zone-bear")
+                return ZoneBoundarySide(name) < 0 ? "" : "Bear Zone";
             if (IsHalfGap(level))
                 return "Half Gap";
             if (upper.Contains("PREVDAYCLOSE") || upper.Contains("PREV DAY CLOSE"))

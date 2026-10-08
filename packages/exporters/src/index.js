@@ -75,7 +75,7 @@ export function createThinkorswimStudyExport(symbolSnapshot, options = {}) {
     const visibility = thinkorswimVisibilityInput(level.kind);
     const price = thinkorswimNumber(level.price);
     const [red, green, blue] = thinkorswimRgb(level.color, level.kind);
-    const label = thinkorswimText(level.name || 'Level', 120);
+    const label = thinkorswimLabelName(level);
     const color = `CreateColor(${red}, ${green}, ${blue})`;
     lines.push(`plot ${plotName} = if ${visibility} then ${price} else Double.NaN;`);
     lines.push(`${plotName}.SetDefaultColor(${color});`);
@@ -83,7 +83,7 @@ export function createThinkorswimStudyExport(symbolSnapshot, options = {}) {
     if (isHalfGapName(label)) lines.push(`${plotName}.SetStyle(Curve.SHORT_DASH);`);
     lines.push(`${plotName}.HideBubble();`);
     lines.push(`${plotName}.HideTitle();`);
-    lines.push(`AddChartBubble(showLabels and lastRealBar and ${visibility}, ${plotName}, "${label} | " + AsPrice(${plotName}), ${color}, yes);`);
+    if (label) lines.push(`AddChartBubble(showLabels and lastRealBar and ${visibility}, ${plotName}, "${label} | " + AsPrice(${plotName}), ${color}, yes);`);
     lines.push('');
   });
 
@@ -496,6 +496,16 @@ function thinkorswimZoneBoundary(level) {
   const bottom = compact.match(bottomPattern);
   if (bottom) return { kind, edge: 'bottom', ordinal: bottom[1] || '1' };
   return null;
+}
+
+function thinkorswimLabelName(level) {
+  const kind = canonicalTradingViewKind(level?.kind);
+  if (kind === 'zone-bull' || kind === 'zone-bear') {
+    const boundary = thinkorswimZoneBoundary(level);
+    if (boundary && boundary.edge !== (kind === 'zone-bull' ? 'bottom' : 'top')) return '';
+    return kind === 'zone-bull' ? 'Bull Zone' : 'Bear Zone';
+  }
+  return thinkorswimText(level.name || 'Level', 120);
 }
 
 function thinkorswimRgb(value, kind) {

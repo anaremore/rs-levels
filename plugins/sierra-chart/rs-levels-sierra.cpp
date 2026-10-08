@@ -535,6 +535,11 @@ bool IsHalfGap(const RsLevel& level)
 
 std::string DisplayLabel(const RsLevel& level)
 {
+    if (level.kind == "zone-bull")
+        return ZoneBoundarySide(level.name) > 0 ? "" : "Bull Zone";
+    if (level.kind == "zone-bear")
+        return ZoneBoundarySide(level.name) < 0 ? "" : "Bear Zone";
+
     const std::string upper = Upper(level.name);
     if (upper.find("PREVDAYCLOSE") != std::string::npos || upper.find("PREV DAY CLOSE") != std::string::npos)
         return "Prev Close";
@@ -600,14 +605,15 @@ void DrawLevel(SCStudyInterfaceRef sc, const RsLevel& level, int index, int line
     DisableToolAutoLabels(lineTool);
     sc.UseTool(lineTool);
 
-    if (!showLabels)
+    const std::string displayLabel = DisplayLabel(level);
+    if (!showLabels || displayLabel.empty())
     {
         sc.DeleteACSChartDrawing(sc.ChartNumber, TOOL_DELETE_CHARTDRAWING, RS_LABEL_BASE + index);
         return;
     }
 
     SCString label;
-    label.Format("%s %.2f", DisplayLabel(level).c_str(), level.price);
+    label.Format("%s %.2f", displayLabel.c_str(), level.price);
     const float tick = sc.TickSize > 0.0f ? sc.TickSize : 0.01f;
     const float labelOffset = tick * static_cast<float>(AtLeast(1, labelOffsetTicks)) * static_cast<float>(LabelDirection(level));
 

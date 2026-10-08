@@ -171,9 +171,9 @@ zoneBoundarySide(name) =>
 zoneBoundaryLabel(kind, side) =>
     normalizedKind = cleanKind(kind)
     if normalizedKind == "zone-bull"
-        side == 1 ? "Bull Zone Top" : side == -1 ? "Bull Zone Bottom" : "Bull Zone"
+        side == 1 ? "" : "Bull Zone"
     else if normalizedKind == "zone-bear"
-        side == 1 ? "Bear Zone Top" : side == -1 ? "Bear Zone Bottom" : "Bear Zone"
+        side == -1 ? "" : "Bear Zone"
     else
         "Zone"
 
@@ -378,7 +378,7 @@ drawLevel(name, priceText, kind, zoneSide) =>
             labelName = displayLabelNameForSide(name, effectiveKind, zoneSide)
             labelText = labelName + " · " + str.tostring(price, format.mintick)
             labelKey = cleanKind(effectiveKind) + "|" + labelName + "|" + str.tostring(price, format.mintick)
-            if not labelAlreadyDrawn(labelKey)
+            if labelName != "" and not labelAlreadyDrawn(labelKey)
                 newLabel = label.new(labelX, price, labelText, style = label.style_label_left, textcolor = levelColor, color = color.new(color.black, 100), size = labelSize(), textalign = text.align_left)
                 array.push(rsLabels, newLabel)
                 array.push(rsLabelKeys, labelKey)
