@@ -3,7 +3,7 @@ import { createHttpApp } from './http.js';
 import { createLevelStore } from './store.js';
 
 export function createService(options = {}) {
-  const config = loadConfig(options.env || process.env, options.config || {});
+  const config = loadConfig(options.env || process.env, options.config || {}, options.savedConfig ?? {});
   const store = options.store || createLevelStore({ staleMs: config.staleMs });
   const app = createHttpApp({ store, config, onCapture: options.onCapture });
   return {

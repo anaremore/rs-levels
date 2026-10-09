@@ -29,7 +29,8 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 - API responses report the local service version and use `Cache-Control: no-store`.
 - `/status` and diagnostics expose scrubbed per-symbol summaries for plugin and extension readiness checks.
 - Service CLI includes non-binding `--help` and `--version` smoke paths.
-- Next: persisted settings and native packaged app wrapper.
+- Explicit `--config` JSON settings persist across restarts, with environment/programmatic overrides and loopback safeguards.
+- Next: native packaged app wrapper.
 
 ## Milestone 3: Browser Extension
 

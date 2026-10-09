@@ -120,6 +120,8 @@ Public source endpoint summaries intentionally omit raw captured URLs. Endpoint 
 
 Health includes network posture, source state, symbol count, and level count. Source freshness is computed on each read, so `ageMs`, `state`, and `connected` reflect current service-side freshness instead of the ingest-time snapshot only.
 
+Service settings can be saved in an explicitly selected `--config` JSON file; see the [configuration reference](../apps/local-service/README.md#configuration). `/health` reports the effective network posture and warnings after defaults, saved settings, environment variables, and programmatic overrides are resolved. It does not expose the configuration file path or contents. Changes require a restart; there is no settings-write API or live reload.
+
 ```json
 {
   "ok": true,
@@ -407,4 +409,4 @@ chrome-extension://*
 moz-extension://*
 ```
 
-Use `RS_LEVELS_CORS_ORIGINS` for explicit additional origins, separated by commas. Remote binding remains opt-in through `RS_LEVELS_ALLOW_REMOTE=1`; see [networking](networking.md).
+Use saved `corsOrigins` or comma-separated `RS_LEVELS_CORS_ORIGINS` to replace the default list. Include any default origins you still need, particularly browser-extension origins for capture. An empty saved array restores defaults. File entries accept exact HTTP/HTTPS and browser-extension origins, `"null"`, and the default patterns above; unrestricted wildcards and credential-bearing URLs are rejected. CORS does not enable remote binding, which still requires both an explicit non-loopback host and effective remote permission; see [networking](networking.md).

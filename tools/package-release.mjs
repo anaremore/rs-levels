@@ -80,6 +80,7 @@ const requiredReleaseEntries = [
   'scripts/start-local-service.cmd',
   'scripts/start-local-service.ps1',
   'scripts/start-local-service.sh',
+  'examples/local-service.config.example.json',
   'plugins/manifest.json',
   'plugins/thinkorswim/README.md',
   'plugins/thinkorswim/rs-levels.ts',
@@ -148,6 +149,7 @@ const excludedNames = new Set([
 ]);
 
 const excludedExtensions = new Set(['.db', '.sqlite', '.sqlite3', '.har', '.log', '.jsonl']);
+const runtimeConfigName = 'rs-levels.config.json';
 
 const CRC32_TABLE = Array.from({ length: 256 }, (_value, index) => {
   let crc = index;
@@ -298,7 +300,7 @@ async function assertExists(filePath) {
 async function collectFiles(absolute, relative, output) {
   const stat = await fs.stat(absolute);
   const name = path.basename(absolute);
-  if (excludedNames.has(name) || excludedExtensions.has(path.extname(name).toLowerCase())) return;
+  if (name.toLowerCase() === runtimeConfigName || excludedNames.has(name) || excludedExtensions.has(path.extname(name).toLowerCase())) return;
 
   if (stat.isDirectory()) {
     const entries = await fs.readdir(absolute);

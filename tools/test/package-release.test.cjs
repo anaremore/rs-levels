@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
-const { execFileSync } = require('node:child_process');
-const { readFileSync } = require('node:fs');
-const { join } = require('node:path');
+const { execFileSync, spawnSync } = require('node:child_process');
+const { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
+const { basename, dirname, isAbsolute, join, relative, resolve, sep } = require('node:path');
 
 const root = join(__dirname, '..', '..');
 const extensionManifest = JSON.parse(readFileSync(join(root, 'apps', 'browser-extension', 'manifest.json'), 'utf8'));
@@ -13,20 +13,56 @@ assert.equal(firefoxExtensionManifest.version, extensionVersion);
 const packagingDoc = readFileSync(join(root, 'docs', 'packaging.md'), 'utf8');
 const ciDoc = readFileSync(join(root, 'docs', 'ci.md'), 'utf8');
 const ciWorkflow = readFileSync(join(root, '.github', 'workflows', 'ci.yml'), 'utf8');
-const checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs', '--check'], {
-  cwd: root,
-  encoding: 'utf8'
-});
+const runtimeFixtures = [];
+let checkOutput;
+let packageOutput;
+try {
+  for (const [parent, filename] of [
+    [join(root, 'examples'), 'rs-levels.config.json'],
+    [join(root, 'apps', 'browser-extension', 'src'), 'Rs-LeVeLs.CoNfIg.JsOn']
+  ]) {
+    const directory = mkdtempSync(join(parent, '.package-config-test-'));
+    runtimeFixtures.push({ directory, parent, filename });
+    writeFileSync(join(directory, filename), '{"host":"127.0.0.1","port":9876}\n', { flag: 'wx' });
+  }
+
+  const runtimePaths = runtimeFixtures.map(({ directory, filename }) => slash(relative(root, join(directory, filename))));
+  // Source-style releases contain neither Git metadata nor the checkout's ignore file.
+  if (existsSync(join(root, '.git')) && existsSync(join(root, '.gitignore'))) {
+    const gitVersion = spawnSync('git', ['--version'], { windowsHide: true, stdio: 'ignore' });
+    if (gitVersion.error?.code !== 'ENOENT') {
+      const ignoredPaths = execFileSync('git', ['-c', 'core.ignoreCase=false', 'check-ignore', '--no-index', '--stdin'], {
+        cwd: root,
+        encoding: 'utf8',
+        input: [...runtimePaths, 'rs-levels.config.json', 'RS-LEVELS.CONFIG.JSON', 'examples/local-service.config.example.json'].join('\n') + '\n'
+      }).trim().split(/\r?\n/);
+      assert.deepEqual(ignoredPaths, [...runtimePaths, 'rs-levels.config.json', 'RS-LEVELS.CONFIG.JSON']);
+    }
+  }
+
+  checkOutput = execFileSync(process.execPath, ['tools/package-release.mjs', '--check'], {
+    cwd: root,
+    encoding: 'utf8'
+  });
+  packageOutput = execFileSync(process.execPath, ['tools/package-release.mjs'], {
+    cwd: root,
+    encoding: 'utf8'
+  });
+} finally {
+  for (const { directory, parent } of runtimeFixtures) {
+    const target = resolve(directory);
+    const targetRelative = relative(resolve(root), target);
+    assert.ok(targetRelative && !isAbsolute(targetRelative) && targetRelative !== '..' && !targetRelative.startsWith(`..${sep}`));
+    assert.equal(dirname(target), resolve(parent));
+    assert.ok(basename(target).startsWith('.package-config-test-'));
+    rmSync(target, { recursive: true, force: true });
+  }
+}
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /36 critical entries/);
+assert.match(checkOutput, /37 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /Chrome and Firefox extension zips enabled/);
-
-const packageOutput = execFileSync(process.execPath, ['tools/package-release.mjs'], {
-  cwd: root,
-  encoding: 'utf8'
-});
 
 assert.match(packageOutput, /release zip written/);
 assert.match(packageOutput, /release zip checksum written/);
@@ -51,6 +87,14 @@ const releaseHelp = execFileSync(process.execPath, [releaseCli, '--help'], {
 });
 assert.match(releaseHelp, /RS_LEVELS_HOST/);
 assert.match(releaseHelp, /trusted private networks/);
+const releaseManifest = JSON.parse(readFileSync(join(releaseRoot, 'RELEASE-MANIFEST.json'), 'utf8'));
+const examplePath = 'examples/local-service.config.example.json';
+assert.ok(releaseManifest.files.some((file) => file.path === examplePath));
+assertNoRuntimeConfig(releaseManifest.files.map((file) => file.path));
+assert.deepEqual(
+  JSON.parse(readFileSync(join(releaseRoot, examplePath), 'utf8')),
+  JSON.parse(readFileSync(join(root, examplePath), 'utf8'))
+);
 
 const zip = readFileSync(zipPath);
 const zipText = zip.toString('utf8');
@@ -69,6 +113,9 @@ assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.cmd/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.ps1/);
 assert.match(zipText, /rs-levels-0\.0\.0\/scripts\/start-local-service\.sh/);
 assert.match(zipText, /SERVICE_BUILD/);
+const sourceZipNames = zipEntryNames(zip);
+assert.ok(sourceZipNames.includes(`rs-levels-0.0.0/${examplePath}`));
+assertNoRuntimeConfig(sourceZipNames);
 
 const checksum = readFileSync(`${zipPath}.sha256`, 'utf8').trim();
 assert.match(checksum, /^[a-f0-9]{64}  rs-levels-0\.0\.0\.zip$/);
@@ -92,6 +139,7 @@ assert.match(extensionZipText, /"source": "package"/);
 assert.doesNotMatch(extensionZipText, /test\/extension\.test\.cjs/);
 assert.deepEqual(JSON.parse(readStoredZipEntry(extensionZip, 'manifest.json')), extensionManifest);
 assert.ok(!zipEntryNames(extensionZip).includes('manifest.firefox.json'));
+assertNoRuntimeConfig(zipEntryNames(extensionZip));
 
 const extensionChecksum = readFileSync(`${extensionZipPath}.sha256`, 'utf8').trim();
 assert.match(extensionChecksum, new RegExp(`^[a-f0-9]{64}  rs-levels-browser-extension-${extensionVersion.replaceAll('.', '\\.')}.zip$`));
@@ -108,6 +156,7 @@ assert.deepEqual(
   firefoxExtensionManifest
 );
 assert.ok(!zipEntryNames(firefoxExtensionZip).includes('manifest.firefox.json'));
+assertNoRuntimeConfig(zipEntryNames(firefoxExtensionZip));
 
 const firefoxExtensionChecksum = readFileSync(`${firefoxExtensionZipPath}.sha256`, 'utf8').trim();
 assert.match(
@@ -127,6 +176,15 @@ assert.match(ciWorkflow, /Upload release archives/);
 assert.match(ciWorkflow, /dist\/rs-levels-browser-extension-\*\.zip/);
 
 console.log('package release tests passed');
+
+function assertNoRuntimeConfig(paths) {
+  assert.ok(paths.every((entry) => entry.split('/').at(-1).toLowerCase() !== 'rs-levels.config.json'),
+    'Saved service settings must not be included in release files');
+}
+
+function slash(value) {
+  return value.replace(/\\/g, '/');
+}
 
 function readStoredZipEntry(zip, expectedName) {
   let offset = 0;

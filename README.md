@@ -101,7 +101,7 @@ npm run package
 
 The release output includes a source-style directory, a source ZIP archive, standalone Chrome/Chromium and Firefox extension ZIPs, `RELEASE-MANIFEST.json`, `SHA256SUMS.txt`, and checksum sidecars.
 
-Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`.
+Packaged users can start the local API with `npm start` or the wrappers in `scripts/start-local-service.*`. To reuse settings across restarts, pass an explicit JSON file with `npm start -- --config "path/to/rs-levels.config.json"`; see [saved service settings](apps/local-service/README.md#configuration) and the [setup guide](docs/user-setup.md#save-service-settings).
 
 OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml), also served at `http://127.0.0.1:8765/openapi.yaml` after startup. Local API docs: `http://127.0.0.1:8765/docs`.
 
@@ -140,4 +140,4 @@ scripts/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes, persisted service settings, and native app packaging.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service with saved settings, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes and native app packaging.

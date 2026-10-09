@@ -11,6 +11,8 @@ obj/
 # Local runtime state
 .env
 .env.*
+# Saved service settings, at any depth and regardless of filename case
+[rR][sS]-[lL][eE][vV][eE][lL][sS].[cC][oO][nN][fF][iI][gG].[jJ][sS][oO][nN]
 *.db
 *.db-shm
 *.db-wal

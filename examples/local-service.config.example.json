@@ -1,0 +1,16 @@
+{
+  "host": "127.0.0.1",
+  "port": 8765,
+  "allowRemote": false,
+  "corsOrigins": [
+    "http://127.0.0.1",
+    "http://127.0.0.1:*",
+    "http://localhost",
+    "http://localhost:*",
+    "http://[::1]:*",
+    "null",
+    "chrome-extension://*",
+    "moz-extension://*"
+  ],
+  "staleMs": 82800000
+}

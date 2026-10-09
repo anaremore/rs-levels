@@ -38,6 +38,38 @@ http://127.0.0.1:8765/docs
 
 The OpenAPI/Swagger-compatible spec is served at `http://127.0.0.1:8765/openapi.yaml` and checked into [openapi.yaml](openapi.yaml). It can be opened with Swagger UI, Redoc, Postman, Insomnia, or other OpenAPI-compatible client tooling.
 
+### Save Service Settings
+
+To reuse service settings after a restart, copy the safe example to a stable location outside the repository or extracted release. On Windows, run this once from the checkout/package root:
+
+```powershell
+$configDir = Join-Path $env:APPDATA "RS Levels"
+New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+Copy-Item -LiteralPath "examples/local-service.config.example.json" -Destination (Join-Path $configDir "rs-levels.config.json")
+notepad (Join-Path $configDir "rs-levels.config.json")
+```
+
+Keep this copy when upgrading; do not copy the example over your edited file. The example keeps localhost-only access with port `8765` and a 23-hour freshness threshold. Edit only the settings you need, save it, and launch with:
+
+```powershell
+npm start -- --config "$env:APPDATA\RS Levels\rs-levels.config.json"
+```
+
+Save that command in your usual startup shortcut or script. Direct CLI and wrapper commands accept the same argument:
+
+```powershell
+node apps/local-service/src/cli.js --config "$env:APPDATA\RS Levels\rs-levels.config.json"
+scripts/start-local-service.ps1 --config "$env:APPDATA\RS Levels\rs-levels.config.json"
+```
+
+On macOS/Linux, copy the example to a private location such as `~/.config/rs-levels/rs-levels.config.json` and use `npm start -- --config "$HOME/.config/rs-levels/rs-levels.config.json"`. `--config=path` is also supported. Relative paths use the current working directory; wrappers first change to the package root, so absolute paths are easiest to reuse.
+
+Restart with the same command after changing the file. The service reads it only at startup and does not discover config files automatically. Existing `npm start` and environment-only commands continue to work. For each setting, defaults are overridden by the saved file, then environment variables, then programmatic `options.config`. A defined blank environment variable resets that setting to its default; remove the variable if you want to inherit the file.
+
+The file supports only `host`, `port`, `allowRemote`, `corsOrigins`, and `staleMs`. Missing/unreadable files, malformed JSON, unknown keys, and invalid values stop startup with a useful error. See the [configuration reference](../apps/local-service/README.md#configuration) for defaults, validation, CORS replacement rules, and safety details. Keep credentials and captures out of the file; the safe example needs neither. The conventional actual filename is ignored by Git and excluded from releases, but other private filenames must remain outside the checkout/package.
+
+The browser extension already saves its own URL and capture options independently. Changing the service host or port does not update extension settings: set the matching service URL in extension options, grant permission for that origin if requested, and click `Test Service`. Update any direct plugin/client URL too.
+
 ## Packaged Release
 
 Maintainers can create a clean release directory with:
@@ -150,6 +182,8 @@ $env:RS_LEVELS_ALLOW_REMOTE = "1"
 npm start
 ```
 
+To save that choice, set `"host": "0.0.0.0"` and `"allowRemote": true` together in your JSON file and start with `--config` as above. Prefer a specific trusted private interface address when available. A non-loopback host without effective remote permission falls back to `127.0.0.1` with a warning; CORS changes alone never enable remote binding.
+
 Then open the extension options page and set the service URL to the trusted private address, for example:
 
 ```text
@@ -177,4 +211,5 @@ All examples default to `http://127.0.0.1:8765`. Set `RS_LEVELS_URL` or edit the
 - `OFFLINE` in the popup: start the API or check the service URL. Use `Copy Diagnostics` for a scrubbed setup bundle.
 - No symbols in the popup: open RocketScooter and wait for allowlisted level responses. If `Observed` stays at 0 after RocketScooter data is visible, click `Reconnect Tab`, then reload the RocketScooter tab or refresh chart data so startup requests run with the hook installed. If `Hook` stays `none`, reload the extension and the RocketScooter tab. If `Observed` rises but `Ignored` also rises, review the endpoint allowlist in extension options. If `Skipped` rises, check max capture bytes or whether the endpoint returns empty/non-text responses.
 - TradingView lines do not update: send a fresh TradingView payload, open the settings within 45 seconds if needed, review `RS Levels Payload`, and click `OK`. Use `Copy payload instead` if assisted fill cannot find the field, and force `Chart family` to `ES` or `NQ` if the chart still does not draw.
-- Remote URL fails: confirm the API was started with `RS_LEVELS_ALLOW_REMOTE=1`, firewall rules allow the port, and `Test Service` succeeds in the extension options page.
+- Saved settings do not apply: confirm startup uses the intended `--config` path, restart after editing, and check for environment variables overriding the file.
+- Remote URL fails: confirm the effective host and remote permission in `/health`, firewall rules allow the port, and `Test Service` succeeds in the extension options page.
