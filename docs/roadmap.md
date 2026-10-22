@@ -58,7 +58,7 @@ Status: public source artifacts complete; platform compile/install validation pl
 - Bookmap display add-on with local polling and kind-aware value-line colors.
 - TradingView Pine indicator with settings-field handoff or paste-based level input, kind toggles, color controls, line controls, zone fills, stats panel, label controls, and max-level display control.
 - Direct platform adapters display DD/RI/Res/MRes/WRes/liquidity-map context from the platform's display feed: `/sierra/:symbol` for Sierra Chart and `/stats/:symbol?format=rows` for NinjaTrader, Quantower, and Bookmap.
-- Separate VARIS Zones indicators consume the same RI context for VWAP band spacing across TradingView, Sierra Chart, NinjaTrader, Quantower, and Bookmap.
+- VARIS Zones consume the same RI context for VWAP band spacing: built into the TradingView indicator, and as separate indicators for Sierra Chart, NinjaTrader, Quantower, and Bookmap.
 - Public `plugins/manifest.json` inventory with static display-only validation.
 - Public platform validation checklist for compile/install and live RocketScooter field checks.
 

@@ -6,17 +6,17 @@ The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiq
 
 ## TradingView
 
-TradingView Pine cannot poll localhost directly, so the VARIS TradingView workflow uses the same `RSLEVELS|2` payload as the RS Levels overlay:
+On TradingView, VARIS Zones are built into the RS Levels indicator (`plugins/tradingview/rs-levels.pine`) and use the same `RSLEVELS|2` payload as the level overlay, because Pine cannot poll localhost directly:
 
 1. Capture RocketScooter display data with the browser extension.
-2. Add `plugins/tradingview/varis-zones.pine` to a TradingView chart.
+2. Add the RS Levels indicator to an ES/MES or NQ/MNQ TradingView chart.
 3. Click `Send to TradingView`; approve the exact site permission on first use and choose a target if several chart tabs are open.
-4. Open VARIS settings within 45 seconds if needed, review the filled `RS Levels Payload`, and click `OK` yourself.
+4. Open the indicator settings within 45 seconds if needed, review the filled `RS Levels Payload`, and click `OK` yourself.
 5. Leave `Chart family` on `Auto`, or force `ES`/`NQ` if TradingView does not expose enough chart symbol context.
 
-`Copy payload instead` retains the manual copy/paste route.
+`Copy payload instead` retains the manual copy/paste route. All VARIS settings live in the indicator's `VARIS Zones` group; turn off `Show VARIS zones` to hide them.
 
-The script reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. RS Levels prefers explicit `RI` captured from RocketScooter display data. If explicit `RI` is missing but DD bands are available, the TradingView exporter can include a derived display fallback from the outer DD-band pair. If no pasted `RI` is available, the script uses `Manual Risk Interval (Points)`.
+The indicator reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. RS Levels prefers explicit `RI` captured from RocketScooter display data. If explicit `RI` is missing but DD bands are available, the TradingView exporter can include a derived display fallback from the outer DD-band pair. If no pasted `RI` is available on a futures chart, the indicator uses `Manual RI (points)`. Stock charts without `RI` skip VARIS Zones. VARIS input and plot values are kept out of TradingView's chart status line; plot values remain in the Data Window.
 
 ## Bands
 
@@ -27,9 +27,9 @@ VARIS Zones draws:
 - Level 1 defaults to `0.5` RI, Level 2 to `1` RI, and Level 3 to `2` RI.
 - Optional fills between VWAP and each band.
 
-The default visual controls follow the original script shape: separate visibility toggles, line colors/widths, and fill colors/transparency for the VWAP and each band.
+The default visual controls follow the original script shape: separate visibility toggles and line colors/widths for the VWAP and each band, plus a toggle and color for each level fill. On TradingView, fill transparency is set in each fill's color picker.
 
-Set **Level 1 RI Multiplier**, **Level 2 RI Multiplier**, and **Level 3 RI Multiplier** to positive values in TradingView's VARIS settings. Each level can be adjusted independently. With RI `40`, the default bands sit `20`, `40`, and `80` points above and below VWAP; setting Level 1 to `0.75` moves its bands to `30` points above and below VWAP.
+Set **Level 1 RI multiplier**, **Level 2 RI multiplier**, and **Level 3 RI multiplier** to positive values in the indicator's `VARIS Zones` settings group. Each level can be adjusted independently. With RI `40`, the default bands sit `20`, `40`, and `80` points above and below VWAP; setting Level 1 to `0.75` moves its bands to `30` points above and below VWAP.
 
 ## Direct Platform Studies
 

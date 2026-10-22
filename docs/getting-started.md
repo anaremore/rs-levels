@@ -7,7 +7,7 @@ Use this page to choose the shortest path for what you want to do.
 | Goal | Best first doc | What you need |
 | --- | --- | --- |
 | Show RocketScooter levels on TradingView | [TradingView quickstart](tradingview-quickstart.md) | Browser extension and the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). |
-| Show VARIS Zones on TradingView | [TradingView quickstart](tradingview-quickstart.md), then [VARIS Zones](varis-zones.md) | Same sent or copied payload, plus the `VARIS Zones` Pine indicator. |
+| Show VARIS Zones on TradingView | [TradingView quickstart](tradingview-quickstart.md), then [VARIS Zones](varis-zones.md) | Same sent or copied payload; VARIS Zones are built into the RS Levels indicator. |
 | Show levels on Thinkorswim | [Local API and extension setup](user-setup.md), then [Thinkorswim study](../plugins/thinkorswim/README.md) | Local API, browser extension, and a custom Thinkorswim chart study. |
 | Use Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](user-setup.md), then [Platform plugins](platform-plugins.md) | Local API, browser extension, and the platform-specific source file. |
 | Explore the local API or build a display client | [Local API and extension setup](user-setup.md), then [API](api.md) | Local API and either live capture or the demo capture. |
@@ -42,10 +42,9 @@ See [TradingView quickstart](tradingview-quickstart.md).
 
 ### TradingView Levels Plus VARIS Zones
 
-1. Complete the TradingView levels workflow.
-2. Add `plugins/tradingview/varis-zones.pine` to the same chart.
-3. Send or paste the same `RSLEVELS|2` payload into the VARIS indicator.
-4. Confirm the indicator is using the expected chart family and `RI`.
+1. Complete the TradingView levels workflow on an ES/MES or NQ/MNQ chart.
+2. VARIS Zones draw from the same RS Levels indicator and payload; use the `VARIS Zones` settings group to adjust or hide them.
+3. Confirm the stats panel shows the expected chart family and `RI`.
 
 See [VARIS Zones](varis-zones.md).
 

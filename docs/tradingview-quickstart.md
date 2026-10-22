@@ -88,6 +88,7 @@ The indicator can draw:
 - user-added yellow lines, red lines, and CAT lines
 - bull and bear zone boundaries and fills
 - a small stats panel with liquidity map and RI when RocketScooter exposes them
+- VARIS Zones on ES/MES and NQ/MNQ charts: a session VWAP with three RI-sized upper/lower band pairs (see [VARIS Zones](varis-zones.md))
 
 User-added lines appear only when they were added in RocketScooter and included in the latest capture.
 

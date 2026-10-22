@@ -60,8 +60,7 @@ Every VARIS Zones adapter must verify:
 | Platform | Artifact | Input path | Required validation |
 | --- | --- | --- | --- |
 | Thinkorswim | `plugins/thinkorswim/rs-levels.ts` plus generated source | `GET /thinkorswim/:symbol` through **Copy Thinkorswim study** | Select one chart, copy and paste the generated source, verify levels, labels, category toggles, Half Gap dashes, zone fills, stats, and capture timestamp; refresh the capture and repeat replacement. |
-| TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste an all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, manual confirmation, manual lines, and stats panel. |
-| TradingView | `plugins/tradingview/varis-zones.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste the same payload, verify manual confirmation, `RI` selection, manual fallback, VWAP, all three configurable RI band pairs, and visibility/fill controls. |
+| TradingView | `plugins/tradingview/rs-levels.pine` | `RSLEVELS|2` assisted handoff or paste payload | Send and paste an all-symbol payload, verify Auto family selection on ES/MES and NQ/MNQ charts, manual confirmation, manual lines, and stats panel. For VARIS Zones, verify `RI` selection, manual fallback, VWAP, all three configurable RI band pairs, visibility/fill controls, no VARIS bands on stock charts without `RI`, and no input or plot values in the chart status line. |
 | Sierra Chart | `plugins/sierra-chart/rs-levels-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify levels, labels, stats marker, zone fills, stale/offline marker, and hidden debug default. |
 | Sierra Chart | `plugins/sierra-chart/varis-zones-sierra.cpp` | `GET /sierra/:symbol` | Build ACSIL DLL, add study, verify the status build tag changed, `Follow chart symbol` is on, Auto symbol detection works on ES/MES and NQ/MNQ charts, `API RI` status comes from the Sierra compatibility feed, manual fallback works before RI is available, and VWAP/RI bands render. |
 | NinjaTrader | `plugins/ninjatrader/RSLevelsDisplay.cs` | `GET /levels/:symbol?format=rows`, `GET /stats/:symbol?format=rows` | Compile NinjaScript, add indicator, verify levels, stats, zone fills, label controls, and stale/offline state. |
@@ -78,7 +77,7 @@ Run this manual smoke test in both a fresh Chrome/Chromium profile and a Firefox
 1. Decline the first `Send to TradingView` permission prompt and confirm no field changes and `Copy payload instead` still works.
 2. Grant only the requested TradingView origin and confirm a single open chart is selected automatically.
 3. Open two TradingView chart tabs and confirm the popup shows a target chooser and does not guess on the first multi-tab send.
-4. With settings already open, send to both `rs-levels.pine` and `varis-zones.pine`; confirm only the exact `RS Levels Payload` field changes.
+4. With settings already open, send to `rs-levels.pine`; confirm only the exact `RS Levels Payload` field changes.
 5. With settings closed, send, open settings within 45 seconds, and confirm the field fills. Repeat after 45 seconds and confirm it does not fill.
 6. Confirm the helper never clicks `OK`, presses Enter, changes another setting, or hides a TradingView error.
 7. Reload the extension or restart the browser and confirm no earlier session payload is sent until RocketScooter produces a fresh detected-chart capture.

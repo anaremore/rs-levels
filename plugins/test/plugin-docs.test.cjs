@@ -14,8 +14,7 @@ const pluginIds = [
   'quantower-varis-zones',
   'bookmap',
   'bookmap-varis-zones',
-  'tradingview',
-  'tradingview-varis-zones'
+  'tradingview'
 ];
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 const validationDoc = readFileSync(join(root, '..', 'docs', 'platform-validation.md'), 'utf8');
@@ -313,16 +312,9 @@ assertDynamicHpNames(tradingViewSource);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\s*\(/i);
 assert.doesNotMatch(tradingViewSource, /\bstrategy\./i);
 assert.doesNotMatch(tradingViewSource, /\balertcondition\s*\(/i);
-
-const varisTradingViewSource = readFileSync(join(root, 'tradingview', 'varis-zones.pine'), 'utf8');
-assert.match(varisTradingViewSource, /indicator\("VARIS Zones"/);
-assert.match(varisTradingViewSource, /IAmTheLiquidity2/);
-assert.match(varisTradingViewSource, /RSLEVELS/);
-assert.match(varisTradingViewSource, /statValue\(levelText, "RI"\)/);
-assert.doesNotMatch(varisTradingViewSource, /\bstrategy\s*\(/i);
-assert.doesNotMatch(varisTradingViewSource, /\bstrategy\./i);
-assert.doesNotMatch(varisTradingViewSource, /\balertcondition\s*\(/i);
-assert.doesNotMatch(varisTradingViewSource, /\brequest\./i);
+assert.doesNotMatch(tradingViewSource, /\brequest\./i);
+assert.match(tradingViewSource, /IAmTheLiquidity2/);
+assert.match(tradingViewSource, /statValue\(levelTextForChart\(payload\), "RI"\)/);
 
 console.log('plugin documentation tests passed');
 

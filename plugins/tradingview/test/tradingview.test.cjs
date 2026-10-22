@@ -1,11 +1,11 @@
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const pine = readFileSync(join(__dirname, '..', 'rs-levels.pine'), 'utf8');
-const varis = readFileSync(join(__dirname, '..', 'varis-zones.pine'), 'utf8');
 
-assert.match(pine, /indicator\("RS Levels v2026\.08\.10\.3"/);
+assert.match(pine, /indicator\("RS Levels v2026\.10\.22\.1"/);
+assert.equal(existsSync(join(__dirname, '..', 'varis-zones.pine')), false, 'VARIS lives inside rs-levels.pine');
 assert.doesNotMatch(pine, /\bstrategy\s*\(/i);
 assert.doesNotMatch(pine, /\bstrategy\./i);
 assert.doesNotMatch(pine, new RegExp('\\b' + 'ord' + 'er' + '\\b', 'i'));
@@ -239,55 +239,64 @@ assert.match(pine, /maxval = 500/);
 assert.match(pine, /drawStatsPanel\(levelText\)/);
 assert.doesNotMatch(pine, /label\.style_label_down/);
 
-assert.match(varis, /indicator\("VARIS Zones"/);
-assert.match(varis, /IAmTheLiquidity2/);
-assert.match(varis, /payload = input\.string\("", "RS Levels Payload", display = display\.none\)/);
-assert.match(varis, /chartFamilyInput = input\.string\("Auto", "Chart family"/);
-assert.match(varis, /options = \["Auto", "ES", "NQ"\]/);
-assert.match(varis, /manualRiskInterval = input\.float\(25\.0, "Manual Risk Interval \(Points\)"/);
-assert.match(varis, /usePayloadRi = input\.bool\(true, "Use pasted RI when available"\)/);
-assert.match(varis, /statValue\(levelText, "RI"\)/);
-assert.match(varis, /float out = na/);
-assert.doesNotMatch(varis, /^\s*out = na$/m);
-assert.match(varis, /riskInterval = usePayloadRi and not na\(payloadRiskInterval\) \? payloadRiskInterval : manualRiskInterval/);
+// TradingView puts int/float/string inputs and plot values in the chart status line unless told not to.
+const sourceLines = pine.split(/\r?\n/);
+const valueInputLines = sourceLines.filter((line) => /= input\.(?:int|float|string|source|symbol|timeframe|price|time|session|text_area)\(/.test(line));
+assert.ok(valueInputLines.length > 0);
+for (const line of valueInputLines) {
+  assert.match(line, /display = display\.none/, `value inputs stay out of the chart status line: ${line}`);
+}
+assert.doesNotMatch(pine, /input\.(?:bool|color)\([^\r\n]*display = display\.(?:all|status_line)/);
+const plotLines = sourceLines.filter((line) => /\bplot\(/.test(line));
+assert.equal(plotLines.length, 7, 'VARIS draws VWAP plus three upper/lower band pairs');
+for (const line of plotLines) {
+  assert.match(line, /display = display\.all - display\.status_line\)$/, `plot values stay out of the chart status line: ${line}`);
+}
+
+assert.match(pine, /IAmTheLiquidity2/);
+assert.match(pine, /varisGroup = "VARIS Zones"/);
+assert.match(pine, /showVaris = input\.bool\(true, "Show VARIS zones", group = varisGroup\)/);
+assert.match(pine, /usePayloadRi = input\.bool\(true, "Use pasted RI", inline = "varisRi", group = varisGroup\)/);
+assert.match(pine, /manualRiskInterval = input\.float\(25\.0, "Manual RI \(points\)", step = 0\.25, minval = 0\.001, inline = "varisRi"/);
+assert.match(pine, /showVwap = input\.bool\(true, "VWAP", inline = "varisVwap", group = varisGroup\)/);
+assert.match(pine, /var float varisPayloadRi = str\.tonumber\(statValue\(levelTextForChart\(payload\), "RI"\)\)/);
+assert.match(pine, /varisRiskInterval = usePayloadRi and not na\(varisPayloadRi\) \? varisPayloadRi : manualRiskInterval/);
+assert.match(pine, /varisVisible = showVaris and \(varisChartSymbol == "ES" or varisChartSymbol == "NQ" or not na\(varisPayloadRi\)\)/);
 const multiplierDefaults = [1, 2, 3].map((level) => {
-  const setting = varis.match(new RegExp(`^level${level}Multiplier = input\\.float\\(([^,]+), "Level ${level} RI Multiplier", step = 0\\.25, minval = 0\\.001\\)$`, 'm'));
+  const setting = pine.match(new RegExp(`^level${level}Multiplier = input\\.float\\(([^,]+), "Level ${level} RI multiplier", step = 0\\.25, minval = 0\\.001, group = varisGroup, display = display\\.none\\)$`, 'm'));
   assert.ok(setting, `VARIS level ${level} exposes a positive configurable RI multiplier`);
-  assert.match(varis, new RegExp(`upper${level}Plot = plot\\(showUpper${level} \\? upperBand${level} : na`));
-  assert.match(varis, new RegExp(`lower${level}Plot = plot\\(showLower${level} \\? lowerBand${level} : na`));
+  assert.match(pine, new RegExp(`showUpper${level} = input\\.bool\\(true, "Upper ${level}", inline = "varisUpper${level}", group = varisGroup\\)`));
+  assert.match(pine, new RegExp(`showLower${level} = input\\.bool\\(true, "Lower ${level}", inline = "varisLower${level}", group = varisGroup\\)`));
+  assert.match(pine, new RegExp(`showFill${level} = input\\.bool\\(true, "Fill ${level}", inline = "varisFill${level}", group = varisGroup\\)`));
+  assert.match(pine, new RegExp(`upper${level}Plot = plot\\(varisVisible and showUpper${level} \\? varisUpper${level} : na`));
+  assert.match(pine, new RegExp(`lower${level}Plot = plot\\(varisVisible and showLower${level} \\? varisLower${level} : na`));
+  assert.match(pine, new RegExp(`fill\\(vwapPlot, upper${level}Plot, color = showFill${level} and showUpper${level} \\? fill${level}Color : na`));
+  assert.match(pine, new RegExp(`fill\\(vwapPlot, lower${level}Plot, color = showFill${level} and showLower${level} \\? fill${level}Color : na`));
   return Number(setting[1]);
 });
 assert.deepEqual(multiplierDefaults, [0.5, 1, 2]);
+assert.match(pine, /fill1Color = input\.color\(color\.new\(color\.rgb\(255, 255, 255\), 75\), ""/);
+assert.match(pine, /fill2Color = input\.color\(color\.new\(color\.rgb\(0, 0, 0\), 90\), ""/);
+assert.match(pine, /fill3Color = input\.color\(color\.new\(color\.rgb\(0, 0, 0\), 95\), ""/);
 
-function varisBandValues(riskInterval, vwapValue, multipliers = multiplierDefaults) {
-  const values = { riskInterval, vwapValue };
+function varisBandValues(varisRiskInterval, varisVwap, multipliers = multiplierDefaults) {
+  const values = { varisRiskInterval, varisVwap };
   multipliers.forEach((multiplier, index) => { values[`level${index + 1}Multiplier`] = multiplier; });
-  for (const prefix of ['band', 'upperBand', 'lowerBand']) {
+  for (const prefix of ['Band', 'Upper', 'Lower']) {
     for (const level of [1, 2, 3]) {
-      const name = prefix === 'band' ? `band${level}Points` : `${prefix}${level}`;
-      const expression = varis.match(new RegExp(`^${name} = ([^\\r\\n]+)$`, 'm'));
+      const name = prefix === 'Band' ? `varisBand${level}Points` : `varis${prefix}${level}`;
+      const expression = pine.match(new RegExp(`^${name} = ([^\\r\\n]+)$`, 'm'));
       assert.ok(expression, `VARIS defines ${name}`);
       values[name] = Function(...Object.keys(values), `return ${expression[1]};`)(...Object.values(values));
     }
   }
-  return [1, 2, 3].map((level) => [values[`upperBand${level}`], values[`lowerBand${level}`]]);
+  return [1, 2, 3].map((level) => [values[`varisUpper${level}`], values[`varisLower${level}`]]);
 }
 assert.deepEqual(varisBandValues(100, 5000), [[5050, 4950], [5100, 4900], [5200, 4800]]);
 assert.deepEqual(varisBandValues(40, 5000, [0.75, 1.5, 3]), [[5030, 4970], [5060, 4940], [5120, 4880]]);
-assert.match(varis, /hour\(time, "America\/New_York"\) == 18/);
-assert.match(varis, /cumTPV/);
-assert.match(varis, /vwapValue/);
-assert.match(varis, /fill\(vwapPlot, upper1Plot/);
-assert.match(varis, /fill\(vwapPlot, lower2Plot/);
-assert.match(varis, /fill\(vwapPlot, upper3Plot, color = showFill3 and showUpper3/);
-assert.match(varis, /fill\(vwapPlot, lower3Plot, color = showFill3 and showLower3/);
-assert.match(varis, /RSLEVELS/);
-assert.match(varis, /array\.get\(parts, 1\) == "2"/);
-assert.match(varis, /syminfo\.root/);
-assert.match(varis, /syminfo\.tickerid/);
-assert.doesNotMatch(varis, /\bstrategy\s*\(/i);
-assert.doesNotMatch(varis, /\bstrategy\./i);
-assert.doesNotMatch(varis, /\balertcondition\s*\(/i);
-assert.doesNotMatch(varis, /\brequest\./i);
+assert.match(pine, /varisNewSession = hour\(time, "America\/New_York"\) == 18 and minute\(time, "America\/New_York"\) == 0/);
+assert.match(pine, /varisCumTpv/);
+assert.match(pine, /varisVwap = varisCumVolume != 0 \? varisCumTpv \/ varisCumVolume : na/);
+assert.match(pine, /vwapPlot = plot\(varisVisible and showVwap \? varisVwap : na/);
 
 console.log('TradingView plugin tests passed');

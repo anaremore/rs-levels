@@ -2,7 +2,7 @@
 
 Display-only Pine indicator for RS Levels.
 
-The RS Levels indicator is published at [TradingView](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). This directory contains its source and the separate VARIS Zones source.
+The RS Levels indicator is published at [TradingView](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/). This directory contains its source, which also draws VARIS Zones.
 
 For the shortest extension-plus-indicator setup, see [TradingView quickstart](../../docs/tradingview-quickstart.md).
 
@@ -13,7 +13,7 @@ TradingView Pine scripts cannot poll the local API directly. The RS Levels exten
 3. Use `Send to TradingView` in the extension popup, approve the exact site permission on first use, and open indicator settings within 45 seconds if needed.
 4. Review `RS Levels Payload` and click `OK` yourself. Or use `Copy payload instead` and paste manually; the local service also exposes text at `http://127.0.0.1:8765/tradingview`.
 
-`varis-zones.pine` is a separate display-only VARIS Zones indicator. It uses the same sent or copied payload, reads the `RI` stat row for the matching chart family, and falls back to a manual risk interval input when no payload RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+`rs-levels.pine` also draws display-only VARIS Zones. They use the same sent or copied payload, read the `RI` stat row for the matching chart family, and fall back to a manual risk interval input on ES/NQ charts when no payload RI is present. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
 
 The extension payload can carry every supported symbol detected in the open RocketScooter chart grid. In `Auto`, the indicator maps futures charts to `ES` or `NQ` and matches stock charts by ticker, such as `NVDA`. The manual `Chart family` override remains available for futures.
 
@@ -25,11 +25,11 @@ RocketScooter's automatic futures overnight levels are exported as `Dyn MHP` and
 RSLEVELS|2|2026-08-19T23:00:00.000Z|ES|2026-08-19T22:59:59.500Z|Dyn MHP,7715.75,mhp;Dyn HP,7707.5,hp;RI,68.75,stat|NVDA|2026-08-19T22:59:59.500Z|HP,202.5,hp;MHP,205,mhp;Map BLD,0,stat
 ```
 
-The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. Bull and bear zones use `zone-bull` and `zone-bear`; current TradingView exports name boundaries as `Bull Zone Top`, `Bull Zone Bottom`, `Bear Zone Top`, and `Bear Zone Bottom`, with optional occurrence numbers so repeated pairs remain distinct for fills. Pine labels only the bottom bull boundary as `Bull Zone` and the top bear boundary as `Bear Zone`; the opposite boundaries remain unlabeled. When RocketScooter exposes zone rectangles separately from text labels, the extension and API prefer the exact rectangle top/bottom boundaries and consume the matched generic zone label. DD-bounded reconstruction remains only as a compatibility fallback for older captures that expose generic horizontal `Bull Zone` or `Bear Zone` rows without rectangle geometry. Compact `BZT`/`BZB` and `BrZT`/`BrZB` names remain accepted for older pasted payloads and platform adapter feeds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders Map and RI in its stats panel and does not draw stats as price lines. VARIS-style Pine indicators can read `RI` from the same pasted payload.
+The payload shape is `RSLEVELS|2|generatedAt|symbol|capturedAt|name,price,kind;...`. Additional symbols repeat the last three fields. User-added RocketScooter yellow, red, and purple CAT lines use `yellow-line`, `red-line`, and `cat` kinds, and multiple yellow/red rows are drawn independently when their prices differ. Bull and bear zones use `zone-bull` and `zone-bear`; current TradingView exports name boundaries as `Bull Zone Top`, `Bull Zone Bottom`, `Bear Zone Top`, and `Bear Zone Bottom`, with optional occurrence numbers so repeated pairs remain distinct for fills. Pine labels only the bottom bull boundary as `Bull Zone` and the top bear boundary as `Bear Zone`; the opposite boundaries remain unlabeled. When RocketScooter exposes zone rectangles separately from text labels, the extension and API prefer the exact rectangle top/bottom boundaries and consume the matched generic zone label. DD-bounded reconstruction remains only as a compatibility fallback for older captures that expose generic horizontal `Bull Zone` or `Bear Zone` rows without rectangle geometry. Compact `BZT`/`BZB` and `BrZT`/`BrZB` names remain accepted for older pasted payloads and platform adapter feeds. DD/RI/Res/MRes/WRes/Map context uses `stat` rows; the RS Levels indicator renders Map and RI in its stats panel and does not draw stats as price lines. The built-in VARIS Zones read `RI` from the same pasted payload.
 
 ## VARIS Zones
 
-`varis-zones.pine` reads RI from the same payload and draws three configurable upper/lower band pairs around VWAP. Set **Level 1 RI Multiplier**, **Level 2 RI Multiplier**, and **Level 3 RI Multiplier** to positive values; defaults are `0.5`, `1`, and `2`. Each pair is drawn at `VWAP +/- RI * multiplier`. Each upper/lower line and each level fill has its own visibility, color, and width or transparency settings.
+The `VARIS Zones` settings group reads RI from the same payload and draws three configurable upper/lower band pairs around a session VWAP that resets at 18:00 ET. Set **Level 1 RI multiplier**, **Level 2 RI multiplier**, and **Level 3 RI multiplier** to positive values; defaults are `0.5`, `1`, and `2`. Each pair is drawn at `VWAP +/- RI * multiplier`. Each upper/lower line has its own visibility, color, and width; each level fill has its own visibility and color, with transparency set in the color picker. `Show VARIS zones` hides them all. They draw on ES/MES and NQ/MNQ charts, or wherever the payload section carries `RI`; stock charts without `RI` skip them.
 
 ## Safety Boundary
 
@@ -46,6 +46,6 @@ These indicators only draw overlays. They do not contain strategy logic, alerts,
 - `Zone fills` and `Zone fill opacity %`: fill matched explicit top/bottom pairs with a low-opacity version of the bull or bear zone color.
 - `Line width`, `Font size`, `Label offset (bars)`, `Max levels`, and `Line style`: display-only drawing preferences. Labels use the consistent `Name · Price` format, inherit their level color, and trim RocketScooter drawing metadata such as `horizontal`, `text`, and `Liquidity Map`. `MidGap`, `Mid Gap`, `HalfGap`, and `HG` rows display as `Half Gap`; Half Gap lines are always dashed.
 
-The pasted payload input is hidden from TradingView's status line to avoid chart-header clutter. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limits.
+The pasted payload, numeric settings, and VARIS plot values are hidden from TradingView's status line to avoid chart-header clutter; VARIS values remain in the Data Window. The local API export includes all returned levels; the Pine indicator draws up to TradingView's drawing limits.
 
 `Other levels` is the fallback display category for parsed levels whose kind is not one of the recognized DD, HP, MHP, open/close, reference, manual line, bull zone, or bear zone kinds.

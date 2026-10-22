@@ -60,7 +60,7 @@ try {
 }
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /37 critical entries/);
+assert.match(checkOutput, /36 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /Chrome and Firefox extension zips enabled/);
 

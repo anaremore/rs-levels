@@ -1,5 +1,6 @@
 //@version=6
-indicator("RS Levels v2026.08.10.3", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+// VARIS Zones concept credited to RocketScooter community member IAmTheLiquidity2.
+indicator("RS Levels v2026.10.22.1", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -36,6 +37,41 @@ labelBarsOffset = input.int(1, "Label offset (bars)", minval = 0, maxval = 100, 
 zoneFillOpacityInput = input.int(12, "Zone fill opacity %", minval = 0, maxval = 50, display = display.none)
 maxLevelsInput = input.int(200, "Max levels", minval = 1, maxval = 500, display = display.none)
 lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"], display = display.none)
+
+varisGroup = "VARIS Zones"
+showVaris = input.bool(true, "Show VARIS zones", group = varisGroup)
+usePayloadRi = input.bool(true, "Use pasted RI", inline = "varisRi", group = varisGroup)
+manualRiskInterval = input.float(25.0, "Manual RI (points)", step = 0.25, minval = 0.001, inline = "varisRi", group = varisGroup, display = display.none)
+showVwap = input.bool(true, "VWAP", inline = "varisVwap", group = varisGroup)
+vwapColor = input.color(color.rgb(255, 0, 0), "", inline = "varisVwap", group = varisGroup)
+vwapWidth = input.int(1, "", minval = 1, maxval = 5, inline = "varisVwap", group = varisGroup, display = display.none)
+level1Multiplier = input.float(0.5, "Level 1 RI multiplier", step = 0.25, minval = 0.001, group = varisGroup, display = display.none)
+showUpper1 = input.bool(true, "Upper 1", inline = "varisUpper1", group = varisGroup)
+upper1Color = input.color(color.rgb(0, 0, 0), "", inline = "varisUpper1", group = varisGroup)
+upper1Width = input.int(1, "", minval = 1, maxval = 5, inline = "varisUpper1", group = varisGroup, display = display.none)
+showLower1 = input.bool(true, "Lower 1", inline = "varisLower1", group = varisGroup)
+lower1Color = input.color(color.rgb(0, 0, 0), "", inline = "varisLower1", group = varisGroup)
+lower1Width = input.int(1, "", minval = 1, maxval = 5, inline = "varisLower1", group = varisGroup, display = display.none)
+showFill1 = input.bool(true, "Fill 1", inline = "varisFill1", group = varisGroup)
+fill1Color = input.color(color.new(color.rgb(255, 255, 255), 75), "", inline = "varisFill1", group = varisGroup)
+level2Multiplier = input.float(1.0, "Level 2 RI multiplier", step = 0.25, minval = 0.001, group = varisGroup, display = display.none)
+showUpper2 = input.bool(true, "Upper 2", inline = "varisUpper2", group = varisGroup)
+upper2Color = input.color(color.rgb(0, 0, 0), "", inline = "varisUpper2", group = varisGroup)
+upper2Width = input.int(1, "", minval = 1, maxval = 5, inline = "varisUpper2", group = varisGroup, display = display.none)
+showLower2 = input.bool(true, "Lower 2", inline = "varisLower2", group = varisGroup)
+lower2Color = input.color(color.rgb(0, 0, 0), "", inline = "varisLower2", group = varisGroup)
+lower2Width = input.int(1, "", minval = 1, maxval = 5, inline = "varisLower2", group = varisGroup, display = display.none)
+showFill2 = input.bool(true, "Fill 2", inline = "varisFill2", group = varisGroup)
+fill2Color = input.color(color.new(color.rgb(0, 0, 0), 90), "", inline = "varisFill2", group = varisGroup)
+level3Multiplier = input.float(2.0, "Level 3 RI multiplier", step = 0.25, minval = 0.001, group = varisGroup, display = display.none)
+showUpper3 = input.bool(true, "Upper 3", inline = "varisUpper3", group = varisGroup)
+upper3Color = input.color(color.rgb(0, 0, 0), "", inline = "varisUpper3", group = varisGroup)
+upper3Width = input.int(1, "", minval = 1, maxval = 5, inline = "varisUpper3", group = varisGroup, display = display.none)
+showLower3 = input.bool(true, "Lower 3", inline = "varisLower3", group = varisGroup)
+lower3Color = input.color(color.rgb(0, 0, 0), "", inline = "varisLower3", group = varisGroup)
+lower3Width = input.int(1, "", minval = 1, maxval = 5, inline = "varisLower3", group = varisGroup, display = display.none)
+showFill3 = input.bool(true, "Fill 3", inline = "varisFill3", group = varisGroup)
+fill3Color = input.color(color.new(color.rgb(0, 0, 0), 95), "", inline = "varisFill3", group = varisGroup)
 
 statsPanelPosition() =>
     switch statsPanelPositionInput
@@ -452,3 +488,49 @@ if barstate.islast
     drawStatsPanel(levelText)
     if levelText != ""
         [drawnCount, totalCount] = drawLevelText(levelText, maxLevelsInput)
+
+var string varisChartSymbol = chartPayloadSymbol()
+var float varisPayloadRi = str.tonumber(statValue(levelTextForChart(payload), "RI"))
+varisRiskInterval = usePayloadRi and not na(varisPayloadRi) ? varisPayloadRi : manualRiskInterval
+varisVisible = showVaris and (varisChartSymbol == "ES" or varisChartSymbol == "NQ" or not na(varisPayloadRi))
+varisBand1Points = varisRiskInterval * level1Multiplier
+varisBand2Points = varisRiskInterval * level2Multiplier
+varisBand3Points = varisRiskInterval * level3Multiplier
+
+varisNewSession = hour(time, "America/New_York") == 18 and minute(time, "America/New_York") == 0
+varisTypicalPrice = (high + low + close) / 3
+
+var float varisCumTpv = 0.0
+var float varisCumVolume = 0.0
+
+if varisNewSession
+    varisCumTpv := varisTypicalPrice * volume
+    varisCumVolume := volume
+else
+    varisCumTpv += varisTypicalPrice * volume
+    varisCumVolume += volume
+
+varisVwap = varisCumVolume != 0 ? varisCumTpv / varisCumVolume : na
+
+varisUpper1 = varisVwap + varisBand1Points
+varisLower1 = varisVwap - varisBand1Points
+varisUpper2 = varisVwap + varisBand2Points
+varisLower2 = varisVwap - varisBand2Points
+varisUpper3 = varisVwap + varisBand3Points
+varisLower3 = varisVwap - varisBand3Points
+
+// Plot values stay in the data window and price scale but out of the chart status line.
+vwapPlot = plot(varisVisible and showVwap ? varisVwap : na, title = "VARIS VWAP", color = vwapColor, linewidth = vwapWidth, display = display.all - display.status_line)
+upper1Plot = plot(varisVisible and showUpper1 ? varisUpper1 : na, title = "VARIS Upper 1", color = upper1Color, linewidth = upper1Width, display = display.all - display.status_line)
+lower1Plot = plot(varisVisible and showLower1 ? varisLower1 : na, title = "VARIS Lower 1", color = lower1Color, linewidth = lower1Width, display = display.all - display.status_line)
+upper2Plot = plot(varisVisible and showUpper2 ? varisUpper2 : na, title = "VARIS Upper 2", color = upper2Color, linewidth = upper2Width, display = display.all - display.status_line)
+lower2Plot = plot(varisVisible and showLower2 ? varisLower2 : na, title = "VARIS Lower 2", color = lower2Color, linewidth = lower2Width, display = display.all - display.status_line)
+upper3Plot = plot(varisVisible and showUpper3 ? varisUpper3 : na, title = "VARIS Upper 3", color = upper3Color, linewidth = upper3Width, display = display.all - display.status_line)
+lower3Plot = plot(varisVisible and showLower3 ? varisLower3 : na, title = "VARIS Lower 3", color = lower3Color, linewidth = lower3Width, display = display.all - display.status_line)
+
+fill(vwapPlot, upper1Plot, color = showFill1 and showUpper1 ? fill1Color : na, title = "VARIS Upper Fill 1")
+fill(vwapPlot, lower1Plot, color = showFill1 and showLower1 ? fill1Color : na, title = "VARIS Lower Fill 1")
+fill(vwapPlot, upper2Plot, color = showFill2 and showUpper2 ? fill2Color : na, title = "VARIS Upper Fill 2")
+fill(vwapPlot, lower2Plot, color = showFill2 and showLower2 ? fill2Color : na, title = "VARIS Lower Fill 2")
+fill(vwapPlot, upper3Plot, color = showFill3 and showUpper3 ? fill3Color : na, title = "VARIS Upper Fill 3")
+fill(vwapPlot, lower3Plot, color = showFill3 and showLower3 ? fill3Color : na, title = "VARIS Lower Fill 3")
