@@ -339,9 +339,9 @@ The included Pine indicator accepts this payload directly. The local API include
 
 ## GET /thinkorswim/:symbol
 
-Returns a paste-ready, display-only ThinkScript chart study containing the latest captured levels for one symbol. ThinkScript cannot poll HTTP endpoints, so this response is a frozen source snapshot intended for the browser extension's **Copy Thinkorswim study** action or another clipboard tool.
+Returns a paste-ready, display-only ThinkScript chart study containing the latest stored levels for one symbol. ThinkScript cannot poll HTTP endpoints, so this response is a frozen source snapshot for direct tools and compatibility workflows. The browser extension normally generates equivalent source locally from its current selected-chart capture and does not call this endpoint.
 
-The generated study includes category visibility inputs, captured colors, right-edge chart bubbles, filled bull/bear zones when matching boundaries are available, Half Gap dash styling, display-context labels, and the capture timestamp. Aliases normalize the same way as `/levels/:symbol`; `ES` and `MES` return the ES-family study, while `NQ` and `MNQ` return the NQ-family study.
+The generated study includes category visibility inputs, captured colors, right-edge chart bubbles, filled bull/bear zones when matching boundaries are available, Half Gap dash styling, RI/Map context labels, and the capture timestamp. DD bands remain price levels, but DD ratio, Res, MRes, and WRes are intentionally omitted from the Thinkorswim header. Aliases normalize the same way as `/levels/:symbol`; `ES` and `MES` return the ES-family study, while `NQ` and `MNQ` return the NQ-family study.
 
 Unknown symbols or symbols without finite-price levels return `404`. See the [Thinkorswim adapter](../plugins/thinkorswim/README.md) for the install and refresh workflow.
 

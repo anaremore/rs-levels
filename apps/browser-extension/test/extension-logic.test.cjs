@@ -104,6 +104,16 @@ const singlePayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|
 assert.match(singlePayload, /\|NQ\|/);
 const stockPayload = sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-07-09T20:08:23.000Z|NVDA|2026-07-09T20:08:22.000Z|HP,202.5,hp;MHP,205,mhp;Map BLD,0,stat');
 assert.match(stockPayload, /\|NVDA\|/);
+const generatedNqStudy = sharedContext.RS_LEVELS.createThinkorswimStudy(bundlePayload, 'NQ', {
+  generatedAt: '2026-08-26T23:41:00.000Z'
+});
+assert.match(generatedNqStudy, /^# RS Levels for Thinkorswim/);
+assert.match(generatedNqStudy, /# Symbol: NQ/);
+assert.match(generatedNqStudy, /# Generated: 2026-08-26T23:41:00\.000Z/);
+assert.match(generatedNqStudy, /plot L001 = if showMHP then 30475 else Double\.NaN;/);
+assert.match(generatedNqStudy, /AddLabel\(showStats, "Map BLD"/);
+assert.doesNotMatch(generatedNqStudy, /AddLabel\(showStats, "[^"]*(?:DD|Res|MRes|WRes)/);
+assert.throws(() => sharedContext.RS_LEVELS.createThinkorswimStudy(bundlePayload, 'ALL'), /No current chart levels/);
 const thinkorswimStudy = sharedContext.RS_LEVELS.cleanThinkorswimStudy('# RS Levels for Thinkorswim\n\ndeclare upper;\n\nplot L001 = 123.45;\n');
 assert.match(thinkorswimStudy, /^# RS Levels for Thinkorswim/);
 assert.ok(thinkorswimStudy.endsWith('\n'));
@@ -223,6 +233,14 @@ assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /MidGap|Mid Gap/);
 assert.match(localPayload, /\|SPY\|[^|]+\|Open,740,open-close/);
 assert.match(sharedContext.RS_LEVELS.tradingViewPayloadFromSnapshot(localSnapshot, 'NQ'), /^RSLEVELS\|2\|[^|]+\|NQ\|/);
+const generatedEsStudy = sharedContext.RS_LEVELS.createThinkorswimStudy(localPayload, 'ES', {
+  generatedAt: '2026-08-26T23:42:00.000Z'
+});
+assert.match(generatedEsStudy, /plot L001 = if showOpenClose then 7559 else Double\.NaN;/);
+assert.match(generatedEsStudy, /\.SetStyle\(Curve\.SHORT_DASH\);/);
+assert.match(generatedEsStudy, /AddCloud\(L\d{3}, L\d{3}, CreateColor\(76, 175, 80\), CreateColor\(76, 175, 80\)\);/);
+assert.match(generatedEsStudy, /AddCloud\(L\d{3}, L\d{3}, CreateColor\(240, 98, 146\), CreateColor\(240, 98, 146\)\);/);
+assert.match(generatedEsStudy, /AddLabel\(showStats, "RI 68\.75 \| Map BLD"/);
 
 const mismatchedZoneSideSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
   capturedAt: '2026-06-22T14:35:00.000Z',
@@ -319,7 +337,7 @@ assert.match(chartLineOnlyPayload, /\|SPY\|[^|]+\|Prev Close,722\.51,open-close/
 
 assert.throws(
   () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RS' + 'LEVELS|1|MES|2026-06-21T03:12:03.127Z|OVNHP,7565.00,hp'),
-  /unsupported TradingView payload/
+  /unsupported export format/
 );
 assert.throws(
   () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|NASDAQ:NVDA|2026-06-21T03:47:02.097Z|HP,202.5,hp'),
@@ -327,11 +345,11 @@ assert.throws(
 );
 assert.throws(
   () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP,not-a-price,hp'),
-  /invalid TradingView payload/
+  /invalid level rows/
 );
 assert.throws(
   () => sharedContext.RS_LEVELS.cleanTradingViewPayload('RSLEVELS|2|2026-06-21T03:47:05.860Z|ES|2026-06-21T03:47:02.097Z|OVNHP 7565 hp'),
-  /invalid TradingView payload/
+  /invalid level rows/
 );
 
 const rulesContext = { URL };

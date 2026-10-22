@@ -11,7 +11,7 @@
       "entry": "plugins/thinkorswim/rs-levels.ts",
       "readme": "plugins/thinkorswim/README.md",
       "api": {
-        "mode": "manual-paste",
+        "mode": "extension-generated-paste",
         "endpoints": [
           "GET /thinkorswim/:symbol"
         ]

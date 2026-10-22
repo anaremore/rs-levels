@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import {
   createThinkorswimStudyExport,
   createTradingViewBundlePayloadExport,
@@ -90,8 +92,20 @@ assert.match(thinkorswimStudy, /\.SetStyle\(Curve\.SHORT_DASH\);/);
 assert.match(thinkorswimStudy, /AddCloud\(L\d{3}, L\d{3}, CreateColor\(76, 175, 80\), CreateColor\(76, 175, 80\)\);/);
 assert.match(thinkorswimStudy, /AddCloud\(L\d{3}, L\d{3}, CreateColor\(240, 98, 146\), CreateColor\(240, 98, 146\)\);/);
 assert.match(thinkorswimStudy, /AddLabel\(showStatus, "RS Levels ES \| \d+ levels \| captured 2026-06-19T14:29:59\.500Z"/);
-assert.match(thinkorswimStudy, /AddLabel\(showStats, "DD 0\.66 \| RI 68\.75 \| Res 73\.82 \| MRes 49\.87 \| WRes -29\.29 \| Map BLD"/);
+assert.match(thinkorswimStudy, /AddLabel\(showStats, "RI 68\.75 \| Map BLD"/);
+assert.doesNotMatch(thinkorswimStudy, /AddLabel\(showStats, "[^"]*(?:DD|Res|MRes|WRes)/);
 assert.doesNotMatch(thinkorswimStudy, /horizontal_line|horizontalLine|MidGap|Mid Gap/);
+
+const extensionContext = { URL };
+vm.createContext(extensionContext);
+vm.runInContext(readFileSync(new URL('../../../apps/browser-extension/src/shared.js', import.meta.url), 'utf8'), extensionContext);
+const extensionThinkorswimStudy = extensionContext.RS_LEVELS.createThinkorswimStudy(payload, 'ES', {
+  generatedAt: '2026-06-19T14:30:00.000Z'
+});
+const thinkorswimStructure = (source) => source.split('\n').filter((line) =>
+  /^(?:plot L\d{3} =|AddCloud\(|AddLabel\(showStatus|AddLabel\(showStats)/.test(line)
+);
+assert.deepEqual(thinkorswimStructure(extensionThinkorswimStudy), thinkorswimStructure(thinkorswimStudy));
 
 const zoneLabelRow = {
   symbol: 'ES',
@@ -109,8 +123,10 @@ const zoneLabelRow = {
     { name: 'MidGap', price: 320, kind: 'open-close' }
   ]
 };
-{
-  const study = createThinkorswimStudyExport(zoneLabelRow);
+for (const study of [
+  createThinkorswimStudyExport(zoneLabelRow),
+  extensionContext.RS_LEVELS.createThinkorswimStudy(createTradingViewPayloadExport(zoneLabelRow), 'ES')
+]) {
   const plotPrices = new Map(Array.from(study.matchAll(/^plot (L\d{3}) = if \w+ then ([\d.]+) else Double.NaN;/gm),
     ([, plotName, price]) => [plotName, Number(price)]));
   const labels = Array.from(study.matchAll(/^AddChartBubble\([^,]+, (L\d{3}), "([^"]+) \| "/gm),

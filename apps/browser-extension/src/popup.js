@@ -117,7 +117,7 @@ async function refresh() {
     renderPill({ state: 'offline' });
     renderTransferState();
     setMessage(
-      symbols.length ? 'Local API offline — TradingView send still works.' : (err && err.message ? err.message : 'Local service unavailable'),
+      symbols.length ? 'Local API offline — chart exports still work.' : (err && err.message ? err.message : 'Local service unavailable'),
       symbols.length ? 'warning' : 'error'
     );
   }
@@ -328,16 +328,9 @@ async function copyThinkorswimStudy() {
 
   setCopyingThinkorswim(true);
   try {
-    const response = await fetch(`${settings.serviceUrl}/thinkorswim/${encodeURIComponent(scope)}`);
-    if (!response.ok) {
-      const detail = await responseErrorDetail(response);
-      if (response.status === 404 && detail.toLowerCase() === 'not found') {
-        throw new Error('Thinkorswim export is not available in the running levels server. Restart or update the server and try again.');
-      }
-      if (response.status === 404) throw new Error(`No captured levels are available for ${scopeLabel(scope)}.`);
-      throw new Error(`Thinkorswim study unavailable (${response.status})${detail ? `: ${detail}` : ''}`);
-    }
-    const study = globalThis.RS_LEVELS.cleanThinkorswimStudy(await response.text());
+    const captured = await extensionTradingViewPayloadResult(scope, { detectedOnly: true });
+    if (!captured.ok) throw new Error(captured.error || `No current chart levels are available for ${scopeLabel(scope)}.`);
+    const study = globalThis.RS_LEVELS.createThinkorswimStudy(captured.payload, scope);
     await navigator.clipboard.writeText(study);
     setMessage(`${scopeLabel(scope)} Thinkorswim study copied. Replace the study source and save.`, 'ok');
   } catch (err) {

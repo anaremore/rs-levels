@@ -35,8 +35,8 @@ The browser extension must not forward:
 ## Clipboard Exports
 
 - Clipboard writes occur only after the user clicks `Copy payload instead`, `Copy Thinkorswim study`, or `Copy Diagnostics`.
-- Thinkorswim source comes from the configured local/private RS Levels service and contains one frozen display-level snapshot; the extension does not connect to Thinkorswim or broker account state.
-- Returned ThinkScript is structure-validated and size-limited before it is copied.
+- Thinkorswim source is generated locally from one selected extension-captured chart and contains one frozen display-level snapshot; the copy action works without the local service and does not connect to Thinkorswim or broker account state.
+- Generated ThinkScript is structure-validated and size-limited before it is copied.
 
 
 ## Local Service Rules

@@ -141,7 +141,7 @@ Runs the capture hook and display-only chart reader only on rocket.place and roc
 Required localhost host access
 
 ```text
-Connects to the RS Levels service on 127.0.0.1 or localhost to post captured display data, read health and status, retrieve generated Thinkorswim source, and open local API documentation.
+Connects to the optional RS Levels service on 127.0.0.1 or localhost to post captured display data, read health and status, and open local API documentation. Thinkorswim source is generated inside the extension from the selected captured chart.
 ```
 
 Optional `http://*/*` and `https://*/*` host access

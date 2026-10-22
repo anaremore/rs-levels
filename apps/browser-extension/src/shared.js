@@ -202,14 +202,14 @@
     const payload = String(text || '').trim();
     const parts = payload.split('|');
     if (parts.length < 6 || parts[0] !== 'RSLEVELS' || parts[1] !== '2' || (parts.length - 3) % 3 !== 0) {
-      throw new Error('Local service returned an unsupported TradingView payload. Restart the local service and reload the extension.');
+      throw new Error('The captured chart data uses an unsupported export format. Reload the extension and refresh RocketScooter.');
     }
     for (let index = 3; index < parts.length; index += 3) {
       if (!validPayloadSymbol(parts[index])) {
-        throw new Error('Local service returned a TradingView payload for an unsupported symbol.');
+        throw new Error('The captured chart data contains an unsupported symbol.');
       }
       if (!validTradingViewLevelRows(parts[index + 2])) {
-        throw new Error('Local service returned an invalid TradingView payload.');
+        throw new Error('The captured chart data contains invalid level rows.');
       }
     }
     return payload;
@@ -226,15 +226,223 @@
       'Get' + 'NetLiq'
     ];
     if (!study || study.length > 250000) {
-      throw new Error('Local service returned an invalid Thinkorswim study. Restart the local service and reload the extension.');
+      throw new Error('The generated output is an invalid Thinkorswim study. Reload the extension and try again.');
     }
     if (study.includes('\0') ||
       !study.startsWith('# RS Levels for Thinkorswim') ||
       !/(?:^|\n)declare upper;(?:\n|$)/.test(study) ||
       blockedTerms.some((term) => new RegExp(`\\b${term}\\b`, 'i').test(study))) {
-      throw new Error('Local service returned an unsupported Thinkorswim study. Restart the local service and reload the extension.');
+      throw new Error('The generated output is an unsupported Thinkorswim study. Reload the extension and try again.');
     }
     return `${study}\n`;
+  }
+
+  function createThinkorswimStudy(payload, scope, options = {}) {
+    const section = thinkorswimPayloadSection(cleanTradingViewPayload(payload), scope);
+    if (!section || !section.levels.length) {
+      throw new Error(`No current ${publicDisplaySymbol(scope) || 'chart'} levels are available for Thinkorswim.`);
+    }
+
+    const symbol = thinkorswimText(section.symbol, 32) || 'Chart';
+    const capturedAt = thinkorswimText(section.capturedAt, 64) || 'unknown';
+    const generatedAt = thinkorswimText(options.generatedAt || new Date().toISOString(), 64);
+    const lines = [
+      '# RS Levels for Thinkorswim',
+      '# Generated display-only study. This script does not place or manage trades.',
+      `# Symbol: ${thinkorswimComment(symbol)}`,
+      `# Captured: ${thinkorswimComment(capturedAt)}`,
+      `# Generated: ${thinkorswimComment(generatedAt)}`,
+      '# Update: RS Levels Capture > Copy Thinkorswim study, then replace this study source.',
+      '',
+      'declare upper;',
+      '',
+      'input showLabels = yes;',
+      'input showStatus = yes;',
+      'input showStats = yes;',
+      'input showDDBands = yes;',
+      'input showHP = yes;',
+      'input showMHP = yes;',
+      'input showOpenClose = yes;',
+      'input showReferences = yes;',
+      'input showYellowLines = yes;',
+      'input showRedLines = yes;',
+      'input showCAT = yes;',
+      'input showBullZones = yes;',
+      'input showBearZones = yes;',
+      'input showOtherLevels = yes;',
+      'input lineWeight = 1;',
+      '',
+      'def lastRealBar = BarNumber() == HighestAll(if !IsNaN(close) then BarNumber() else 0);',
+      ''
+    ];
+
+    section.levels.forEach((level, index) => {
+      const plotName = thinkorswimPlotName(index);
+      const visibility = thinkorswimVisibilityInput(level.kind);
+      const price = thinkorswimNumber(level.price);
+      const color = thinkorswimColor(level.kind);
+      const label = thinkorswimLabelName(level);
+      lines.push(`plot ${plotName} = if ${visibility} then ${price} else Double.NaN;`);
+      lines.push(`${plotName}.SetDefaultColor(${color});`);
+      lines.push(`${plotName}.SetLineWeight(lineWeight);`);
+      if (isHalfGapName(label)) lines.push(`${plotName}.SetStyle(Curve.SHORT_DASH);`);
+      lines.push(`${plotName}.HideBubble();`);
+      lines.push(`${plotName}.HideTitle();`);
+      if (label) lines.push(`AddChartBubble(showLabels and lastRealBar and ${visibility}, ${plotName}, "${label} | " + AsPrice(${plotName}), ${color}, yes);`);
+      lines.push('');
+    });
+
+    const zonePairs = thinkorswimZonePairs(section.levels);
+    if (zonePairs.length) {
+      lines.push('# Filled zones');
+      zonePairs.forEach(({ topIndex, bottomIndex, kind }) => {
+        const color = thinkorswimColor(kind);
+        lines.push(`AddCloud(${thinkorswimPlotName(topIndex)}, ${thinkorswimPlotName(bottomIndex)}, ${color}, ${color});`);
+      });
+      lines.push('');
+    }
+
+    const levelWord = section.levels.length === 1 ? 'level' : 'levels';
+    lines.push(`AddLabel(showStatus, "RS Levels ${symbol} | ${section.levels.length} ${levelWord} | captured ${capturedAt}", CreateColor(145, 164, 187));`);
+    const statsText = thinkorswimStatsText(section.stats);
+    if (statsText) lines.push(`AddLabel(showStats, "${statsText}", CreateColor(198, 214, 234));`);
+
+    return cleanThinkorswimStudy(lines.join('\n'));
+  }
+
+  function thinkorswimPayloadSection(payload, scope) {
+    const parts = String(payload || '').split('|');
+    const selected = publicDisplaySymbol(scope);
+    if (!selected || selected === 'ALL') return null;
+
+    for (let index = 3; index + 2 < parts.length; index += 3) {
+      const symbol = publicDisplaySymbol(parts[index]);
+      if (symbol !== selected) continue;
+      const levels = [];
+      const stats = {};
+      String(parts[index + 2] || '').split(';').forEach((row) => {
+        const fields = row.split(',');
+        if (fields.length !== 3) return;
+        const name = tradingViewField(fields[0]);
+        const price = Number(fields[1]);
+        const kind = canonicalTradingViewKind(fields[2]);
+        if (!name || !Number.isFinite(price) || !kind) return;
+        if (kind === 'stat') {
+          if (name === 'RI') stats.riskInterval = price;
+          else if (/^Map\s+/i.test(name)) stats.mapCode = name.replace(/^Map\s+/i, '');
+          return;
+        }
+        levels.push({ name, price, kind });
+      });
+      return {
+        symbol,
+        capturedAt: thinkorswimText(parts[index + 1], 64),
+        levels,
+        stats
+      };
+    }
+    return null;
+  }
+
+  function thinkorswimVisibilityInput(kind) {
+    switch (canonicalTradingViewKind(kind)) {
+      case 'dd-band': return 'showDDBands';
+      case 'hp': return 'showHP';
+      case 'mhp': return 'showMHP';
+      case 'open-close': return 'showOpenClose';
+      case 'reference': return 'showReferences';
+      case 'yellow-line': return 'showYellowLines';
+      case 'red-line': return 'showRedLines';
+      case 'cat': return 'showCAT';
+      case 'zone-bull': return 'showBullZones';
+      case 'zone-bear': return 'showBearZones';
+      default: return 'showOtherLevels';
+    }
+  }
+
+  function thinkorswimPlotName(index) {
+    return `L${String(index + 1).padStart(3, '0')}`;
+  }
+
+  function thinkorswimZonePairs(levels) {
+    const groups = new Map();
+    levels.forEach((level, index) => {
+      const boundary = thinkorswimZoneBoundary(level);
+      if (!boundary) return;
+      const key = `${boundary.kind}|${boundary.ordinal}`;
+      const group = groups.get(key) || { kind: boundary.kind, topIndex: null, bottomIndex: null };
+      group[boundary.edge === 'top' ? 'topIndex' : 'bottomIndex'] = index;
+      groups.set(key, group);
+    });
+    return Array.from(groups.values()).filter((group) => group.topIndex != null && group.bottomIndex != null);
+  }
+
+  function thinkorswimZoneBoundary(level) {
+    const kind = canonicalTradingViewKind(level && level.kind);
+    if (kind !== 'zone-bull' && kind !== 'zone-bear') return null;
+    const compact = thinkorswimText(level && level.name, 120).toUpperCase().replace(/[^A-Z0-9]+/g, '');
+    const topPattern = kind === 'zone-bear' ? /^(?:BRZT|BEARZONETOP)(\d*)$/ : /^(?:BZT|BULLZONETOP)(\d*)$/;
+    const bottomPattern = kind === 'zone-bear' ? /^(?:BRZB|BEARZONEBOTTOM)(\d*)$/ : /^(?:BZB|BULLZONEBOTTOM)(\d*)$/;
+    const top = compact.match(topPattern);
+    if (top) return { kind, edge: 'top', ordinal: top[1] || '1' };
+    const bottom = compact.match(bottomPattern);
+    if (bottom) return { kind, edge: 'bottom', ordinal: bottom[1] || '1' };
+    return null;
+  }
+
+  function thinkorswimLabelName(level) {
+    const kind = canonicalTradingViewKind(level && level.kind);
+    if (kind === 'zone-bull' || kind === 'zone-bear') {
+      const boundary = thinkorswimZoneBoundary(level);
+      if (boundary && boundary.edge !== (kind === 'zone-bull' ? 'bottom' : 'top')) return '';
+      return kind === 'zone-bull' ? 'Bull Zone' : 'Bear Zone';
+    }
+    return thinkorswimText(level.name || 'Level', 120);
+  }
+
+  function thinkorswimColor(kind) {
+    const rgb = {
+      'dd-band': [0, 188, 212],
+      hp: [41, 98, 255],
+      mhp: [255, 152, 0],
+      'open-close': [255, 255, 255],
+      reference: [255, 235, 59],
+      'yellow-line': [255, 235, 59],
+      'red-line': [242, 54, 69],
+      cat: [126, 87, 194],
+      'zone-bull': [76, 175, 80],
+      'zone-bear': [240, 98, 146]
+    }[canonicalTradingViewKind(kind)] || [158, 158, 158];
+    return `CreateColor(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
+
+  function thinkorswimStatsText(stats = {}) {
+    const parts = [];
+    const riskInterval = Number(stats.riskInterval);
+    if (Number.isFinite(riskInterval)) parts.push(`RI ${thinkorswimNumber(riskInterval)}`);
+    const mapCode = thinkorswimText(stats.mapCode, 24);
+    if (mapCode) parts.push(`Map ${mapCode}`);
+    return parts.join(' | ');
+  }
+
+  function thinkorswimNumber(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '0';
+    const normalized = Object.is(number, -0) ? 0 : number;
+    return normalized.toFixed(8).replace(/\.?0+$/, '');
+  }
+
+  function thinkorswimText(value, maxLength = 160) {
+    return String(value == null ? '' : value)
+      .replace(/["\\\r\n\t]+/g, ' ')
+      .replace(/[^\x20-\x7E]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, maxLength);
+  }
+
+  function thinkorswimComment(value) {
+    return thinkorswimText(value, 160).replace(/#/g, '');
   }
 
   function validTradingViewLevelRows(text) {
@@ -947,6 +1155,7 @@
     symbolLevelCount,
     cleanTradingViewPayload,
     cleanThinkorswimStudy,
+    createThinkorswimStudy,
     captureToTradingViewSnapshot,
     tradingViewPayloadFromSnapshot,
     preferredTradingViewTabId,

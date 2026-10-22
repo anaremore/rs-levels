@@ -51,11 +51,11 @@ Direct adapters also consume display context such as `DD`, `RI`, `Res`, `MRes`, 
 Thinkorswim's thinkScript environment exposes Thinkorswim market/fundamental series and built-in studies but no arbitrary HTTP client. The Thinkorswim path is therefore a generated-source handoff:
 
 - select one captured chart in the browser extension;
-- click **Copy Thinkorswim study**;
+- click **Copy Thinkorswim study** to generate the source inside the extension;
 - replace the source of a custom Thinkorswim study and save it;
 - repeat after levels change.
 
-`GET /thinkorswim/:symbol` provides the same generated source for other local tools. The generated study includes category toggles, captured colors, labels, status and stats, Half Gap dashes, matched zone clouds, and a frozen capture timestamp. See `plugins/thinkorswim/README.md` for setup and freshness behavior.
+The extension copy path uses its session-captured `RSLEVELS|2` data and continues to work when the local service is offline. `GET /thinkorswim/:symbol` provides equivalent generated source from the service's stored snapshot for other local tools. Generated studies include category toggles, standard category colors, labels, status, RI/Map context, Half Gap dashes, matched zone clouds, and a frozen capture timestamp. DD ratio, Res, MRes, and WRes are omitted from the header while DD band price levels remain available. See `plugins/thinkorswim/README.md` for setup and freshness behavior.
 
 TradingView Pine scripts run inside TradingView's Pine environment. The official Pine documentation lists `request.*` data sources such as other symbols, financial/economic data, footprint data, and Pine Seeds via GitHub; it does not provide arbitrary HTTP calls to localhost. The TradingView path is therefore:
 

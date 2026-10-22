@@ -72,7 +72,7 @@ Use this table as the repo map. TradingView users can start with the extension a
 | --- | --- | --- |
 | TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [Published indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), [TradingView reference](docs/tradingview.md) |
 | TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md) | [VARIS Zones](docs/varis-zones.md) |
-| Thinkorswim levels | [Local API and extension setup](docs/user-setup.md) | [Thinkorswim study](plugins/thinkorswim/README.md) |
+| Thinkorswim levels | [Browser extension setup](docs/user-setup.md) | [Thinkorswim study](plugins/thinkorswim/README.md) |
 | Local API, diagnostics, examples, or private-network setup | [Local API and extension setup](docs/user-setup.md) | [API](docs/api.md), [Networking](docs/networking.md) |
 | Sierra Chart, NinjaTrader, Quantower, or Bookmap | [Local API and extension setup](docs/user-setup.md) | [Platform plugins](docs/platform-plugins.md) |
 | API clients or display adapters | [API](docs/api.md) | [Schema reference](docs/schema-reference.md), [display plugin contract](docs/plugin-contract.md) |

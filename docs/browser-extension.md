@@ -34,7 +34,7 @@ RocketScooter's automatic futures overnight levels pass through as `Dyn MHP` and
 4. Check the popup status.
 5. Choose a symbol from `Chart`. Only open charts with supported data appear; use `All charts (N)` when more than one is available.
 6. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
-7. For Thinkorswim, select one chart, click `Copy Thinkorswim study`, then replace the source of a custom study and save it. This action requires the local API.
+7. For Thinkorswim, select one chart, click `Copy Thinkorswim study`, then replace the source of a custom study and save it. The extension generates this source locally and does not require the local API.
 8. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
 9. Use `Reconnect Tab` if the popup is waiting and the RocketScooter page was already open when the extension was loaded or reloaded.
 10. Expand `Technical details` when troubleshooting local API, extension, or stale-source setup.

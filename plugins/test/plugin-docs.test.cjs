@@ -33,7 +33,7 @@ for (const plugin of manifest.plugins) {
     assert.ok(plugin.api.endpoints.includes('GET /tradingview'));
     assert.ok(plugin.api.endpoints.some((endpoint) => endpoint.includes('/tradingview/:symbol')));
   } else if (plugin.platform === 'Thinkorswim') {
-    assert.equal(plugin.api.mode, 'manual-paste');
+    assert.equal(plugin.api.mode, 'extension-generated-paste');
     assert.deepEqual(plugin.api.endpoints, ['GET /thinkorswim/:symbol']);
   } else {
     assert.equal(plugin.api.mode, 'local-http');

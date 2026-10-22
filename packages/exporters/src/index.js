@@ -560,17 +560,8 @@ function thinkorswimKindRgb(kind) {
 
 function thinkorswimStatsText(stats = {}) {
   const parts = [];
-  const values = [
-    ['DD', stats.dd],
-    ['RI', stats.riskInterval],
-    ['Res', stats.resilience],
-    ['MRes', stats.monthlyResilience],
-    ['WRes', stats.weeklyResilience]
-  ];
-  values.forEach(([name, value]) => {
-    const number = finiteNumber(value);
-    if (number != null) parts.push(`${name} ${thinkorswimNumber(number)}`);
-  });
+  const riskInterval = finiteNumber(stats.riskInterval);
+  if (riskInterval != null) parts.push(`RI ${thinkorswimNumber(riskInterval)}`);
   const mapCode = thinkorswimText(stats.mapCode, 24);
   if (mapCode) parts.push(`Map ${mapCode}`);
   return parts.join(' | ');

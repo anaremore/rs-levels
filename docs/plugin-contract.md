@@ -13,7 +13,7 @@ Every direct API plugin should expose:
 - line visibility by kind
 - label visibility
 
-TradingView and Thinkorswim are paste-based exceptions because their scripting environments cannot poll localhost directly. TradingView uses the short `RSLEVELS|2` payload, either handed to the visible settings field by the opt-in extension helper or pasted manually, as documented in [TradingView](tradingview.md). Thinkorswim uses complete generated source from `GET /thinkorswim/:symbol`, copied by the extension and pasted into the thinkScript Editor.
+TradingView and Thinkorswim are paste-based exceptions because their scripting environments cannot poll localhost directly. TradingView uses the short `RSLEVELS|2` payload, either handed to the visible settings field by the opt-in extension helper or pasted manually, as documented in [TradingView](tradingview.md). Thinkorswim uses complete source generated inside the extension from the selected `RSLEVELS|2` section and pasted into the thinkScript Editor; `GET /thinkorswim/:symbol` remains an optional direct-tool equivalent.
 
 ## Required API Calls
 
@@ -54,7 +54,7 @@ Adapters should use the narrowest endpoint that matches the job:
 | Sierra Chart VARIS Zones | `GET /sierra/:symbol` | Sierra VARIS reads the `RI` stat row from the same ACSIL-friendly feed used by the Sierra RS Levels study. |
 | NinjaTrader, Quantower, and Bookmap VARIS Zones | `GET /stats/:symbol?format=rows` | These adapters need `RI` and can use the narrow stats feed directly. |
 | TradingView RS Levels and VARIS | `GET /tradingview` or `GET /tradingview/:symbol` | Pine cannot poll localhost; users send the short `RSLEVELS|2` payload through the opt-in extension helper or paste it manually. |
-| Thinkorswim RS Levels | `GET /thinkorswim/:symbol` | ThinkScript cannot poll localhost; users copy one generated symbol study from the extension and replace the custom study source. |
+| Thinkorswim RS Levels | Extension-selected `RSLEVELS|2` section; optional `GET /thinkorswim/:symbol` | ThinkScript cannot poll localhost; the extension generates one symbol study locally and users replace the custom study source. |
 
 Plugin manifests, plugin docs, and plugin source must agree on the endpoint family. When a plugin changes endpoint contracts, update the manifest, this contract, platform docs, and automated static tests in the same slice.
 

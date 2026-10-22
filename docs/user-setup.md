@@ -166,9 +166,9 @@ Both TradingView actions first use the extension's latest detected-chart capture
 
 ## 5. Use Thinkorswim Generated Studies
 
-ThinkScript cannot call the local API directly. Keep the local service running, select one chart in the extension popup, and click `Copy Thinkorswim study`. In Thinkorswim, replace the source of a custom chart study with the copied source and save it. The generated study shows its frozen capture timestamp; repeat the copy-and-replace workflow after refreshing RocketScooter levels.
+ThinkScript cannot call the local API directly. Select one freshly detected chart in the extension popup and click `Copy Thinkorswim study`; the extension generates the source locally, so the service may be offline. In Thinkorswim, replace the source of a custom chart study with the copied source and save it. The generated study shows its frozen capture timestamp; repeat the copy-and-replace workflow after refreshing RocketScooter levels.
 
-The same source is available at `GET /thinkorswim/:symbol`. See the [Thinkorswim adapter](../plugins/thinkorswim/README.md).
+When the local service is running, an equivalent source remains available to direct tools at `GET /thinkorswim/:symbol`. See the [Thinkorswim adapter](../plugins/thinkorswim/README.md).
 
 ## 6. Tailscale Or Trusted Private Network
 
