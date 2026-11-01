@@ -20,6 +20,7 @@ This is the canonical documentation map. The README is the public front door; th
 | Browser extension | [Chrome Web Store listing](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko), [browser extension](browser-extension.md), [install](install.md) |
 | Local levels server | [API](api.md), [OpenAPI spec](openapi.yaml), [networking and Tailscale](networking.md) |
 | Platform plugins, indicators, and studies | [Published TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), [Platform plugins](platform-plugins.md), [Thinkorswim study](../plugins/thinkorswim/README.md), [TradingView reference](tradingview.md), [display plugin contract](plugin-contract.md) |
+| RocketScooter page userscripts | [Userscripts](../apps/userscripts/README.md) |
 
 ## Data Contracts
 
