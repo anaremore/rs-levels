@@ -28,6 +28,7 @@ screenshots/
 *.har
 *.log
 *.jsonl
+rocket-scooter-backup-*.json
 
 .vs/
 *.suo
