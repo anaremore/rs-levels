@@ -12,7 +12,7 @@ The scripts work independently and can run together.
 
 ## RI label behavior
 
-- The value comes from the RI column of the RI/DD table, matched on the exact ticker shown in the pane's legend.
+- The value comes from the RI column of the RI/DD table, matched on the exact ticker of the pane's chart.
 - A pane has no label when its ticker has no table row, for example QQQ and SPY, or when a row's month selector is on a different contract than the pane.
 - The label is drawn in the page only. It is not a chart shape, so it is not written to the saved layout and is not picked up by the RS Levels extension.
 - The script depends on RocketScooter's current page structure. If the labels disappear after a site update, check the `.risk-interval-table` and legend selectors first.

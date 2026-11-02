@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rocket Scooter RI Label
 // @namespace    local.rocket-scooter-fix
-// @version      1.0.0
+// @version      1.0.1
 // @description  Shows each futures pane's Risk Interval (RI) in its chart legend, read from the RI/DD table.
 // @match        https://rocket.place/pro-plus*
 // @grant        unsafeWindow
@@ -17,7 +17,8 @@
   const LABEL_CLASS = "rs-ri-label";
   const LABEL_STYLE =
     'font: 600 13px/20px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;' +
-    "color: #d1d4dc; padding-left: 4px;";
+    "color: #d1d4dc; padding: 0 4px; width: fit-content; border-radius: 3px;" +
+    "background: rgba(19, 23, 34, 0.7);";
   const REFRESH_INTERVAL = 1_000;
 
   const cellText = (cell) => cell.textContent.trim();
@@ -75,25 +76,37 @@
     }
   }
 
-  // Each pane is matched by the ticker in its own legend, so a label can only
-  // ever show that pane's contract. Panes without a table row get no label.
+  // Each pane's ticker comes from the chart API because the legend title turns
+  // into a product description once market data loads. Chart containers line up
+  // with chart indexes; a count mismatch skips the update rather than risk
+  // showing a value on the wrong pane. Panes without a table row get no label.
   // The label is page-only: unlike a chart shape, it cannot reach Rocket's
   // saved layout.
   function refreshLabels(page) {
+    const widget = page.tvWidget;
     const chartDocument = page.document.querySelector(
       'iframe[id^="tradingview_"]',
     )?.contentDocument;
 
-    if (!chartDocument) {
+    if (!chartDocument || !widget?._ready || typeof widget.chartsCount !== "function") {
+      return;
+    }
+
+    const containers = chartDocument.querySelectorAll(".chart-container");
+
+    if (containers.length !== widget.chartsCount()) {
       return;
     }
 
     const intervals = riskIntervalsByTicker(page.document);
 
-    for (const legend of chartDocument.querySelectorAll('.chart-container [data-name="legend"]')) {
-      const title = legend.querySelector('[data-name="legend-source-title"]');
-      renderLabel(chartDocument, legend, title && intervals.get(cellText(title)));
-    }
+    containers.forEach((container, paneIndex) => {
+      const legend = container.querySelector('[data-name="legend"]');
+
+      if (legend) {
+        renderLabel(chartDocument, legend, intervals.get(widget.chart(paneIndex).symbol()));
+      }
+    });
   }
 
   // Allow the table and label logic to be verified with Node without starting

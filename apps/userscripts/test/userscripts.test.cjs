@@ -63,7 +63,8 @@ function fakeLegend(symbol) {
     children: [mainRow, studies],
     symbol,
     querySelector(selector) {
-      if (selector === '[data-name="legend-source-title"]') return { textContent: this.symbol };
+      // With market data loaded, the legend title is a description rather than the ticker.
+      if (selector === '[data-name="legend-source-title"]') return { textContent: 'E-Mini S&P 500: December 2026' };
       return this.children.find((child) => `.${child.className}` === selector) || null;
     },
     insertBefore(node, before) {
@@ -74,12 +75,21 @@ function fakeLegend(symbol) {
   return legend;
 }
 
-function fakePage(legends, table) {
+function fakePage(legends, table, widgetOverrides = {}) {
+  const containers = legends.map((legend) => ({
+    querySelector: (selector) => (selector === '[data-name="legend"]' ? legend : null)
+  }));
   const chartDocument = {
     createElement: () => ({ style: {} }),
-    querySelectorAll: () => legends
+    querySelectorAll: (selector) => (selector === '.chart-container' ? containers : [])
   };
   return {
+    tvWidget: {
+      _ready: true,
+      chartsCount: () => legends.length,
+      chart: (index) => ({ symbol: () => legends[index].symbol }),
+      ...widgetOverrides
+    },
     document: {
       querySelector: (selector) => (selector.startsWith('iframe') ? { contentDocument: chartDocument } : table.querySelector(selector))
     }
@@ -90,7 +100,16 @@ const labelOf = (legend) => legend.children.find((child) => child.className === 
 const esLegend = fakeLegend('F.US.EPZ26');
 const nqLegend = fakeLegend('F.US.ENQZ26');
 const qqqLegend = fakeLegend('QQQ');
-const page = fakePage([esLegend, nqLegend, qqqLegend], fakeRiskTable([esRow, nqRow]));
+const riskTable = fakeRiskTable([esRow, nqRow]);
+const page = fakePage([esLegend, nqLegend, qqqLegend], riskTable);
+
+const unreadyLegend = fakeLegend('F.US.EPZ26');
+riLabel.exports.refreshLabels(fakePage([unreadyLegend], riskTable, { _ready: false }));
+assert.equal(labelOf(unreadyLegend), undefined, 'no label before the chart widget is ready');
+
+const mismatchedLegend = fakeLegend('F.US.EPZ26');
+riLabel.exports.refreshLabels(fakePage([mismatchedLegend], riskTable, { chartsCount: () => 2 }));
+assert.equal(labelOf(mismatchedLegend), undefined, 'no label when panes and charts cannot be paired');
 
 riLabel.exports.refreshLabels(page);
 assert.equal(labelOf(esLegend).textContent, 'RI 72.00');
