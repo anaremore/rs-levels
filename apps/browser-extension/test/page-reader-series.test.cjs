@@ -263,6 +263,29 @@ function settle() {
     assert.equal(page.series().length, 0, 'nothing stored from a chart with a failed export');
     assert.equal(page.lastDiagnostic().seriesErrorCount, 1);
   })
+  // One study's rows show the broken clock while the other's export fails: still the warning,
+  // still nothing stored.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [
+        [NOW_S - MIN_S, 0, 0, 0, 0],
+        [NOW_S + 3600, 0, 0, 0, 0]
+      ]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0, 0]])
+    ]);
+    const exportData = nq.exportData;
+    nq.exportData = async (options) => {
+      if (options.includedStudies[0] === 'arb-nq') throw new Error('timed out');
+      return exportData(options);
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-chart-clock');
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ');
+    assert.equal(page.series().length, 0);
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ', 'no flicker on the next read');
+  })
   // A missing widget: counted, nothing posted, and level capture carries on.
   .then(async () => {
     const page = load(undefined);

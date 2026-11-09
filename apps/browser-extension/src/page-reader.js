@@ -206,15 +206,17 @@
           failed = true;
         }
       }
-      // A study that failed may have been the one showing the clock fault: nothing from this
-      // chart this read; it is tried again next minute.
-      if (failed) continue;
+      // The clock first, from whatever the studies that answered returned: a sibling's timeout
+      // (likely on a broken chart) never hides the fault.
       if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
         // Nothing from this chart is stored, and its full reads stay due for when it's right.
         skewed.push(displayIndex(symbol));
         skewS = Math.max(skewS, newestS - nowS);
         continue;
       }
+      // A study that failed may have been the one showing the fault: nothing from this chart
+      // this read; it is tried again next minute.
+      if (failed) continue;
       fullDone.forEach((key) => seriesFullAt.set(key, nowMs));
       const points = bySymbol.get(symbol) || new Map();
       chartRows.forEach((rows) => rows.forEach((values, seconds) => {
