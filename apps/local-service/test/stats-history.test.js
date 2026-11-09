@@ -402,6 +402,36 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.deepEqual(body.points.map((point) => point.values.dd), [7]);
 }
 
+// Review round 3: an old file that can't be removed (held open) never costs a value. Here a
+// directory named like an expired day stands in for it.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  const history = open(dataDir, now, { retentionDays: 1 });
+  history.record('ES', { resilience: 7 }, T0);
+  mkdirSync(join(dataDir, 'history', 'stats-2026-06-01.jsonl'));
+  const nextDay = Date.parse('2026-06-21T00:00:30.000Z');
+  now.ms = nextDay;
+  history.record('ES', { resilience: 7 }, now.ms);
+  now.ms = nextDay + 10000;
+  history.record('ES', { dd: 1 }, now.ms);
+  const body = await history.query('ES', range(nextDay, now.ms, ['resilience']));
+  assert.equal(body.ok, true, 'a directory among the files is skipped');
+  assert.deepEqual(body.points.map((point) => point.values.resilience), [7], 'the value after the gap is written');
+}
+
+// Review round 3: retention runs when only batches arrive.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  const history = open(dataDir, now, { retentionDays: 1 });
+  for (let day = 0; day < 5; day += 1) {
+    now.ms = T0 + day * 24 * 60 * MIN;
+    history.recordPoints('NQ', [{ t: iso(now.ms), values: { resilience: day } }]);
+  }
+  assert.ok(readdirSync(join(dataDir, 'history')).length <= 2, 'days past retention are deleted');
+}
+
 // Review round 1: an unreadable history directory answers with a code, never its path.
 {
   const dataDir = tempDir();

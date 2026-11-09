@@ -50,18 +50,31 @@ export function createStatsHistory(options = {}) {
     return toMs(clock());
   }
 
+  // Each step on its own: one unreadable file never stops the rest from loading.
   function restore() {
     try {
       mkdirSync(dir, { recursive: true });
-      prune(nowMs());
-      for (const name of historyFiles(dir)) {
+    } catch (error) {
+      counters.lastError = errorCode(error);
+    }
+    prune(nowMs());
+    let names = [];
+    try {
+      names = historyFiles(dir);
+    } catch (error) {
+      counters.lastError = errorCode(error);
+    }
+    for (const name of names) {
+      try {
         const text = readFileSync(join(dir, name), 'utf8');
         for (const line of parseLines(text, counters)) applyToState(line);
         // A crash can leave a partial last line: the next append must not join it.
         if (text && !text.endsWith('\n')) partialFiles.add(name);
+      } catch (error) {
+        counters.lastError = errorCode(error);
+        // Unread, so its ending is unknown: start a new line to be safe.
+        partialFiles.add(name);
       }
-    } catch (error) {
-      counters.lastError = errorCode(error);
     }
   }
 
@@ -102,6 +115,12 @@ export function createStatsHistory(options = {}) {
       const symbol = normalizeSymbol(symbolInput);
       if (!symbol || !Array.isArray(points)) return 0;
       const now = nowMs();
+      // Retention runs on day change here too, for a symbol that only sends batches.
+      const today = dayOf(now);
+      if (today !== currentDay) {
+        currentDay = today;
+        prune(now);
+      }
       const oldest = now - retentionDays * DAY_MS;
       const clean = points
         .map((point) => ({ ms: Date.parse(point?.t), values: reportedValues(point?.values) }))
@@ -146,13 +165,14 @@ export function createStatsHistory(options = {}) {
   }
 
   function record(symbolInput, stats, atInput) {
+    let state = null;
     try {
       const symbol = normalizeSymbol(symbolInput);
       const atMs = toMs(atInput ?? clock());
       const reported = reportedValues(stats);
       const keys = Object.keys(reported);
       if (!symbol || !keys.length || !Number.isFinite(atMs)) return;
-      const state = symbolState(symbol);
+      state = symbolState(symbol);
       state.lastSampleMs = Math.max(state.lastSampleMs, atMs);
       // Field -> when it was last reported, until a line is written.
       keys.forEach((key) => state.pending.set(key, atMs));
@@ -182,7 +202,8 @@ export function createStatsHistory(options = {}) {
       state.pending.clear();
       counters.lastWriteAtMs = atMs;
     } catch (error) {
-      // Anything that throws here (a prune that can't read the directory, say) loses this sample.
+      // Anything that throws here loses this sample, and the reports queued with it: a gap.
+      if (state) state.pending.clear();
       counters.droppedWrites += 1;
       counters.lastError = errorCode(error);
     }
@@ -227,14 +248,29 @@ export function createStatsHistory(options = {}) {
   }
 
   /** Deletes only this store's own day files: past retention, then oldest first over the size limit. */
+  /** Never throws: a file that can't be removed (held open, say) stays, and is counted. */
   function prune(atMs, incoming = 0) {
+    try {
+      pruneFiles(atMs, incoming);
+    } catch (error) {
+      counters.lastError = errorCode(error);
+    }
+  }
+
+  function pruneFiles(atMs, incoming) {
     const cutoff = dayOf(atMs - retentionDays * DAY_MS);
     const today = dayOf(atMs);
     let names = historyFiles(dir);
     const sizes = new Map(names.map((name) => [name, fileSize(join(dir, name))]));
     const remove = (name) => {
-      rmSync(join(dir, name), { force: true });
-      sizes.delete(name);
+      try {
+        rmSync(join(dir, name), { force: true });
+        sizes.delete(name);
+        return true;
+      } catch (error) {
+        counters.lastError = errorCode(error);
+        return false;
+      }
     };
     for (const name of names) {
       if (name.match(FILE_NAME)[1] < cutoff) remove(name);
@@ -244,8 +280,8 @@ export function createStatsHistory(options = {}) {
     for (const name of names) {
       if (total + incoming <= maxBytes) break;
       if (name === `stats-${today}.jsonl`) break;
-      total -= sizes.get(name);
-      remove(name);
+      const size = sizes.get(name);
+      if (remove(name)) total -= size;
     }
     totalBytes = total;
     const left = Array.from(sizes.keys());
@@ -455,7 +491,8 @@ async function readLines(dir, symbol, lastDay, oldestMs) {
     try {
       text = await readFile(join(dir, name), 'utf8');
     } catch (error) {
-      if (error.code === 'ENOENT') continue;
+      // Gone since listing, or not a file: nothing known from it.
+      if (error.code === 'ENOENT' || error.code === 'EISDIR') continue;
       throw error;
     }
     for (const line of parseLines(text, counters)) {
