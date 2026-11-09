@@ -122,7 +122,7 @@ export function createHttpApp({ store, config, history, onCapture }) {
         const range = historyRange(url.searchParams);
         if (range.error) return sendJson(res, 400, { ok: false, error: range.error });
         const body = history ? await history.query(historyMatch[1], range) : { ok: true, enabled: false };
-        return sendJson(res, 200, body);
+        return sendJson(res, body.ok === false ? 503 : 200, body);
       }
 
       if (req.method === 'POST' && pathname === '/capture/api') {
@@ -153,9 +153,13 @@ function historyRange(params) {
   return { fromMs: fromMs ?? undefined, toMs: toMs ?? undefined, fields };
 }
 
+// From 1970 through 9999: a time a day either side of these can still be written as ISO 8601.
+const HISTORY_LATEST_MS = Date.parse('9999-12-30T00:00:00.000Z');
+
 function historyTime(value) {
   if (value == null || value === '') return null;
-  return Date.parse(value);
+  const ms = Date.parse(value);
+  return ms >= 0 && ms <= HISTORY_LATEST_MS ? ms : Number.NaN;
 }
 
 function notifyCapture(onCapture, snapshot) {

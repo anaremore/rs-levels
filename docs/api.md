@@ -307,7 +307,7 @@ Stats over time for one symbol, from a local file. Read-only. It is off until a 
 
 Query parameters, all optional:
 
-- `from`, `to`: ISO 8601 times. Defaults: the last 24 hours, ending now. A bad time, or `from` after `to`, returns `400`.
+- `from`, `to`: ISO 8601 times from 1970 through 9999. Defaults: the last 24 hours, ending now. A bad time, or `from` after `to`, returns `400`. If the history files can't be read, the answer is `503` with an error code, never a path.
 - `fields`: comma-separated field names. Default: every known stats field.
 
 ```json

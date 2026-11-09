@@ -345,6 +345,69 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.equal(createStatsHistory({ dataDir: '' }).recordPoints('NQ', batch), 0, 'off: nothing');
 }
 
+// Review round 1: a field reported every 10 s is never a gap between its once-a-minute lines.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  const history = open(dataDir, now);
+  for (let at = T0; at <= T0 + 2 * MIN + 30000; at += 10000) {
+    now.ms = at;
+    history.record('ES', { dd: 5 }, at);
+  }
+  // Between two heartbeat lines.
+  let body = await history.query('ES', range(T0 + 20000, T0 + 40000, ['dd']));
+  assert.deepEqual(body.absentFields, []);
+  assert.deepEqual(body.segments.dd, [{ from: iso(T0 + 20000), to: iso(T0 + 40000) }]);
+  assert.deepEqual(body.opening.dd, { t: iso(T0), value: 5 });
+  // Ending between lines: the span runs to `to`.
+  body = await history.query('ES', range(T0, T0 + 90000, ['dd']));
+  assert.deepEqual(body.segments.dd, [{ from: iso(T0), to: iso(T0 + 90000) }]);
+  // The tail since the last line: up to the latest report, and no further.
+  body = await history.query('ES', range(T0, T0 + 10 * MIN, ['dd']));
+  assert.deepEqual(body.segments.dd, [{ from: iso(T0), to: iso(T0 + 2 * MIN + 30000) }]);
+  // A real gap is still a gap.
+  now.ms = T0 + 20 * MIN;
+  history.record('ES', { dd: 5 }, now.ms);
+  body = await history.query('ES', range(T0, now.ms, ['dd']));
+  assert.equal(body.segments.dd.length, 2);
+}
+
+// Review round 1: an unreadable history directory answers with a code, never its path.
+{
+  const dataDir = tempDir();
+  const history = open(dataDir, { ms: T0 });
+  rmSync(join(dataDir, 'history'), { recursive: true, force: true });
+  writeFileSync(join(dataDir, 'history'), 'a file where the directory should be');
+  const body = await history.query('NQ', range(T0, T0 + MIN));
+  assert.equal(body.ok, false);
+  assert.ok(body.error);
+  assert.ok(!JSON.stringify(body).includes(dataDir), 'no path in the answer');
+}
+
+// Review round 1: limits have defaults even when a caller passes none.
+{
+  const dataDir = tempDir();
+  const history = createStatsHistory({ dataDir, clock: () => new Date(T0) });
+  history.record('NQ', { resilience: 1 }, T0);
+  const report = history.status();
+  assert.equal(report.retentionDays, 10);
+  assert.equal(report.maxBytes, 64 * 1024 * 1024);
+  assert.equal(report.droppedWrites, 0);
+}
+
+// Review round 1: a crash-cut line on an earlier day is not joined by a backfilled point.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  open(dataDir, now).record('NQ', { resilience: 1 }, T0 - 24 * 60 * MIN);
+  const yesterdayFile = join(dataDir, 'history', `stats-${iso(T0 - 24 * 60 * MIN).slice(0, 10)}.jsonl`);
+  appendFileSync(yesterdayFile, '{"t":"cut off');
+  const history = open(dataDir, now);
+  assert.equal(history.recordPoints('NQ', [{ t: iso(T0 - 23 * 60 * MIN), values: { resilience: 2 } }]), 1);
+  const lines = readFileSync(yesterdayFile, 'utf8').split('\n').filter(Boolean);
+  assert.equal(JSON.parse(lines[lines.length - 1]).v.resilience, 2, 'the new line stands alone');
+}
+
 // Through the service: capture in, read back over HTTP, across a restart, on a temporary port.
 {
   const dataDir = tempDir();
@@ -397,6 +460,7 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.equal((await fetch(`${base}/history/NQ?from=yesterday`)).status, 400);
   assert.equal((await fetch(`${base}/history/NQ?to=nope`)).status, 400);
   assert.equal((await fetch(`${base}/history/NQ?from=${iso(T0 + 1000)}&to=${iso(T0)}`)).status, 400);
+  assert.equal((await fetch(`${base}/history/NQ?to=-271821-04-20T00:00:00Z`)).status, 400, 'out of range, not a 500');
   assert.equal((await fetch(`${base}/history/NQ`, { method: 'POST' })).status, 404, 'read-only');
   const unknownSymbol = await (await fetch(`${base}/history/ZZZ`)).json();
   assert.deepEqual(unknownSymbol.points, []);

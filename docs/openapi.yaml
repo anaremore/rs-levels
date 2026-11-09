@@ -197,7 +197,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatsHistory'
         '400':
-          description: A bad time, or `from` after `to`
+          description: A bad time (before 1970 or after 9999), or `from` after `to`
+        '503':
+          description: The history files could not be read. `error` is a code, never a path.
   /stats/{symbol}:
     get:
       summary: Symbol display context stats

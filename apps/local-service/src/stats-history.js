@@ -27,8 +27,9 @@ export const HISTORY_MAX_FIELDS = 32;
  */
 export function createStatsHistory(options = {}) {
   const dataDir = String(options.dataDir || '');
-  const retentionDays = options.retentionDays;
-  const maxBytes = options.maxBytes;
+  // The service passes checked settings; anyone else gets the same defaults and ranges.
+  const retentionDays = integerIn(options.retentionDays, 1, 365, 10);
+  const maxBytes = integerIn(options.maxBytes, 1, 1024 * 1024 * 1024, 64 * 1024 * 1024);
   const clock = typeof options.clock === 'function' ? options.clock : () => new Date();
   if (!dataDir) return disabledHistory();
 
@@ -38,7 +39,8 @@ export function createStatsHistory(options = {}) {
   let totalBytes = 0;
   let oldestDay = '';
   let currentDay = '';
-  let startNewLine = false;
+  // Files a crash left ending mid-line: the next append there starts a new line first.
+  const partialFiles = new Set();
 
   restore();
 
@@ -56,7 +58,7 @@ export function createStatsHistory(options = {}) {
         const text = readFileSync(join(dir, name), 'utf8');
         for (const line of parseLines(text, counters)) applyToState(line);
         // A crash can leave a partial last line: the next append must not join it.
-        if (text && !text.endsWith('\n')) startNewLine = name === `stats-${dayOf(nowMs())}.jsonl`;
+        if (text && !text.endsWith('\n')) partialFiles.add(name);
       }
     } catch (error) {
       counters.lastError = errorCode(error);
@@ -193,7 +195,8 @@ export function createStatsHistory(options = {}) {
   /** Into the file of the line's own day. `pruneAt`: the time retention and the size limit go by. */
   function write(line, atMs, pruneAt) {
     const day = dayOf(atMs);
-    const text = `${startNewLine ? '\n' : ''}${JSON.stringify(line)}\n`;
+    const name = `stats-${day}.jsonl`;
+    const text = `${partialFiles.has(name) ? '\n' : ''}${JSON.stringify(line)}\n`;
     const size = Buffer.byteLength(text);
     if (totalBytes + size > maxBytes) {
       prune(pruneAt, size);
@@ -205,13 +208,13 @@ export function createStatsHistory(options = {}) {
     }
     try {
       mkdirSync(dir, { recursive: true });
-      appendFileSync(join(dir, `stats-${day}.jsonl`), text, { encoding: 'utf8', mode: 0o600 });
+      appendFileSync(join(dir, name), text, { encoding: 'utf8', mode: 0o600 });
     } catch (error) {
       counters.droppedWrites += 1;
       counters.lastError = errorCode(error);
       return false;
     }
-    startNewLine = false;
+    partialFiles.delete(name);
     totalBytes += size;
     if (!oldestDay || day < oldestDay) oldestDay = day;
     counters.lastError = '';
@@ -253,12 +256,23 @@ export function createStatsHistory(options = {}) {
    * A field with none of these, including one this version has never heard of, is in `absentFields`.
    */
   async function query(symbolInput, range = {}) {
+    try {
+      return await runQuery(symbolInput, range);
+    } catch (error) {
+      // A code, never the message: a file system message carries the data directory's path.
+      return { ok: false, enabled: true, error: errorCode(error) };
+    }
+  }
+
+  async function runQuery(symbolInput, range) {
     const symbol = normalizeSymbol(symbolInput);
+    const state = symbols.get(symbol);
     const now = nowMs();
     const toMsValue = Number.isFinite(range.toMs) ? range.toMs : now;
     const fromMsValue = Number.isFinite(range.fromMs) ? range.fromMs : toMsValue - HISTORY_DEFAULT_RANGE_MS;
     const fields = requestedFields(range.fields);
-    const lines = await readLines(dir, symbol, dayOf(toMsValue), now - retentionDays * DAY_MS);
+    // Through `to` plus one gap: the first report after `to` says whether a span ran on to `to`.
+    const lines = await readLines(dir, symbol, dayOf(toMsValue + HISTORY_GAP_MS), now - retentionDays * DAY_MS);
 
     const segments = {};
     const opening = {};
@@ -267,10 +281,16 @@ export function createStatsHistory(options = {}) {
       let current = null;
       let held = null;
       const spans = [];
+      let pastTo = false;
       for (const line of lines) {
-        if (line.ms > toMsValue) break;
         const hasValue = Object.hasOwn(line.v, field);
         if (!hasValue && !line.r.includes(field)) continue;
+        if (line.ms > toMsValue) {
+          // Unchanged values are written once a minute: the span runs on between those lines.
+          if (current && line.ms - current.to <= HISTORY_GAP_MS) current.to = line.ms;
+          pastTo = true;
+          break;
+        }
         if (!current || line.ms - current.to > HISTORY_GAP_MS) {
           current = { from: line.ms, to: line.ms };
           spans.push(current);
@@ -290,6 +310,11 @@ export function createStatsHistory(options = {}) {
           opening[field] = { t: iso(held.t), value: held.value };
           held = null;
         }
+      }
+      // Reported since the last line was written: the span runs on to the latest report.
+      if (!pastTo && current && state && state.pending.has(field) &&
+        state.lastSampleMs > current.to && state.lastSampleMs - current.to <= HISTORY_GAP_MS) {
+        current.to = state.lastSampleMs;
       }
       // Still running at `from` with no later line in range: its value is in force only if the
       // segment reaches `from`.
@@ -475,6 +500,11 @@ function toMs(value) {
 }
 
 /** Only a system code: a message could carry the private data directory's path. */
+function integerIn(value, min, max, fallback) {
+  const number = Number(value);
+  return Number.isInteger(number) && number >= min && number <= max ? number : fallback;
+}
+
 function errorCode(error) {
   return String(error?.code || 'history-error');
 }
