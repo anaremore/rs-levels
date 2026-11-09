@@ -82,9 +82,8 @@ function settle() {
       [NOW_S - 3 * MIN_S, null, null, null, 0],
       [NOW_S - 2 * MIN_S, 1.25, 2.5, 3.75, 0],
       [NOW_S - MIN_S, 1.5, 2.5, 3.75, 0],
-      // The chart holds the last value flat about three days ahead: never data.
-      [NOW_S + MIN_S, 1.5, 2.5, 3.75, 0],
-      [NOW_S + 3 * 24 * 60 * MIN_S, 1.5, 2.5, 3.75, 0]
+      // The bar now forming, a minute ahead (within the clock allowance): never data.
+      [NOW_S + MIN_S, 1.5, 2.5, 3.75, 0]
     ]),
     study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [
       [NOW_S - 2 * MIN_S, -0.5, 0],
@@ -136,6 +135,7 @@ function settle() {
   const esPoints = points(bodies.find((body) => body.series.MES).series.MES);
   assert.deepEqual(esPoints[0].values, { 'res.hg': 9, 'res.mhp': 8, 'res.hp': 7, 'arb.speed': 0.25 });
   assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
+  assert.equal(page.lastDiagnostic().seriesClockSymbol, '', 'no chart clock is off');
   assert.ok(!/^series-/.test(page.lastDiagnostic().lastReason), 'the level reader keeps its own reason');
 
   // The next minute reads only the recent past.
@@ -174,6 +174,51 @@ function settle() {
     rows.push([NOW_S - MIN_S, 1, 2, 3, 0]);
     await page.reader.pollSeries();
     assert.deepEqual(nq.calls.map((options) => options.from), [undefined, undefined, undefined, undefined], 'both reads full');
+  })
+  // A chart whose clock runs 3 days and 1 hour ahead (the page logs `putToCacheNewBar: time
+  // violation`): its past rows are the studies' zero placeholders. Nothing from it is stored;
+  // the other chart's are; the reason, symbol and skew say why; its full read stays due.
+  .then(async () => {
+    const skewS = (3 * 24 + 1) * 60 * MIN_S;
+    const zeros = (from, to) => {
+      const rows = [];
+      for (let t = from; t <= to; t += MIN_S) rows.push([t, 0, 0, 0, 0]);
+      return rows;
+    };
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], zeros(NOW_S - 30 * MIN_S, NOW_S + skewS)),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S + skewS, 0.5, 0]])
+    ]);
+    const es = chart('F.US.EPZ26', '1', [
+      study('res-es', 'SP500 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 9, 8, 7, 0]]),
+      study('arb-es', 'SP500 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.25, 0]])
+    ]);
+    const charts = [nq, es];
+    const page = load({ chartsCount: () => charts.length, chart: (index) => charts[index] });
+    await settle();
+    const stats = page.lastDiagnostic();
+    assert.equal(stats.seriesLastReason, 'series-chart-clock');
+    assert.equal(stats.seriesClockSymbol, 'NQ');
+    assert.ok(Math.abs(stats.seriesClockSkewS - skewS) <= 2, `skew ${stats.seriesClockSkewS}`);
+    const bodies = page.series().map((post) => JSON.parse(post.capture.body));
+    assert.ok(bodies.every((body) => !body.series.MNQ), 'nothing stored from the NQ chart');
+    assert.ok(bodies.some((body) => body.series.MES), 'the ES chart is still read');
+    // Still off a minute later: the full read is tried again, still nothing stored.
+    await page.reader.pollSeries();
+    assert.ok(nq.calls.slice(2).every((options) => options.from === undefined), 'its full read stays due');
+    assert.ok(page.series().every((post) => !JSON.parse(post.capture.body).series.MNQ));
+    // A bar 2 minutes ahead is still within the allowance: not a clock fault.
+    const near = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [
+        [NOW_S - MIN_S, 1, 2, 3, 0],
+        [NOW_S + 2 * MIN_S - 5, 1, 2, 3, 0]
+      ]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ]);
+    const ok = load({ chartsCount: () => 1, chart: () => near });
+    await settle();
+    assert.equal(ok.lastDiagnostic().seriesLastReason, 'series-published');
+    assert.equal(ok.lastDiagnostic().seriesClockSymbol, '');
   })
   // A missing widget: counted, nothing posted, and level capture carries on.
   .then(async () => {

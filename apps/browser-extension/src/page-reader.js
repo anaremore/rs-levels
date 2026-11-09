@@ -10,6 +10,9 @@
   const SERIES_FULL_EVERY_MS = 30 * 60000;
   const SERIES_POINTS_PER_POST = 2000;
   const SERIES_EXPORT_TIMEOUT_MS = 10000;
+  // A chart whose newest bar is further ahead of now than this has a broken clock (the page logs
+  // `putToCacheNewBar: time violation`): its studies' past rows are placeholders, not data.
+  const SERIES_CLOCK_SKEW_S = 120;
   // Each index's studies, on that index's own minute chart only.
   const SERIES_STUDIES = {
     MNQ: [
@@ -47,6 +50,9 @@
     seriesMissingCount: 0,
     seriesErrorCount: 0,
     seriesTooLargeCount: 0,
+    // The charts whose clock is off (`NQ`, `NQ, ES`) and the largest skew seen, in seconds.
+    seriesClockSymbol: '',
+    seriesClockSkewS: 0,
     seriesLastReason: '',
     seriesLastPublishedAt: '',
     lastReason: '',
@@ -158,6 +164,8 @@
     let charts = 0;
     let missing = false;
     let tooLarge = false;
+    const skewed = [];
+    let skewS = 0;
     const chartCount = chartCountFromWidget(widget);
     for (let index = 0; index < chartCount; index += 1) {
       const chart = safeChart(widget, index);
@@ -168,6 +176,10 @@
       if (!SERIES_STUDIES[symbol] || safeString(call(chart, 'resolution')).trim() !== '1') continue;
       charts += 1;
       const studies = safeArray(call(chart, 'getAllStudies'));
+      // This chart's rows wait here until its clock is known to be right.
+      const chartRows = new Map();
+      let newestS = 0;
+      const fullDone = [];
       for (const kind of SERIES_STUDIES[symbol]) {
         const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
         if (!study || typeof chart.exportData !== 'function') {
@@ -180,14 +192,29 @@
         try {
           const options = { includeTime: true, includeSeries: false, includedStudies: [study.id] };
           if (!full) options.from = nowS - SERIES_RECENT_S;
-          const found = addSeriesRows(bySymbol, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          const read = addSeriesRows(chartRows, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          newestS = Math.max(newestS, read.newest);
           // Studies can be empty just after load: a full read counts once it brought rows.
-          if (full && found) seriesFullAt.set(key, nowMs);
+          if (full && read.found) fullDone.push(key);
         } catch (_err) {
           stats.seriesErrorCount += 1;
         }
       }
+      if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
+        // Nothing from this chart is stored, and its full reads stay due for when it's right.
+        skewed.push(displayIndex(symbol));
+        skewS = Math.max(skewS, newestS - nowS);
+        continue;
+      }
+      fullDone.forEach((key) => seriesFullAt.set(key, nowMs));
+      const points = bySymbol.get(symbol) || new Map();
+      chartRows.forEach((rows) => rows.forEach((values, seconds) => {
+        points.set(seconds, Object.assign(points.get(seconds) || {}, values));
+      }));
+      if (points.size) bySymbol.set(symbol, points);
     }
+    stats.seriesClockSymbol = skewed.join(', ');
+    stats.seriesClockSkewS = Math.round(skewS);
     if (missing || !charts) stats.seriesMissingCount += 1;
     if (!charts) return 'series-no-chart';
     let posted = 0;
@@ -200,6 +227,7 @@
         else tooLarge = true;
       }
     });
+    if (skewed.length) return 'series-chart-clock';
     if (tooLarge) return 'series-too-large';
     if (!posted) return missing ? 'series-missing-study' : 'series-empty';
     return missing ? 'series-partial' : 'series-published';
@@ -215,8 +243,9 @@
   }
 
   /**
-   * Plot columns by title; plot `0` is the zero line. Rows after now are held flat, not data.
-   * Returns how many rows had a value.
+   * Plot columns by title; plot `0` is the zero line. Rows after now are never data. Returns how
+   * many rows had a value, and the newest row's time (seconds; also a row after now), which says
+   * whether the chart's clock can be trusted.
    */
   function addSeriesRows(bySymbol, symbol, prefix, exported, nowS) {
     const schema = safeArray(exported && exported.schema);
@@ -225,14 +254,17 @@
       const field = seriesFieldName(prefix, schema[column] && schema[column].plotTitle);
       if (field) columns.push([column, field]);
     }
-    if (!columns.length) return 0;
     let found = 0;
+    let newest = 0;
+    if (!columns.length) return { found, newest };
     const points = bySymbol.get(symbol) || new Map();
     bySymbol.set(symbol, points);
     for (const row of safeArray(exported.data)) {
       if (!row || typeof row.length !== 'number') continue;
       const seconds = Number(row[0]);
-      if (!Number.isFinite(seconds) || seconds <= 0 || seconds > nowS) continue;
+      if (!Number.isFinite(seconds) || seconds <= 0) continue;
+      newest = Math.max(newest, seconds);
+      if (seconds > nowS) continue;
       const values = {};
       for (const [column, field] of columns) {
         const value = row[column];
@@ -242,7 +274,7 @@
       points.set(seconds, Object.assign(points.get(seconds) || {}, values));
       found += 1;
     }
-    return found;
+    return { found, newest };
   }
 
   function seriesFieldName(prefix, title) {

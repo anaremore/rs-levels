@@ -27,6 +27,8 @@ const els = {
   ignoredCount: document.getElementById('ignored-count'),
   skippedCount: document.getElementById('skipped-count'),
   hookReason: document.getElementById('hook-reason'),
+  seriesClockRow: document.getElementById('series-clock-row'),
+  seriesClock: document.getElementById('series-clock'),
   refresh: document.getElementById('refresh'),
   options: document.getElementById('options')
 };
@@ -570,6 +572,8 @@ function cleanCaptureStats(stats = {}) {
     skippedEmptyCount: nonNegativeInteger(stats.skippedEmptyCount),
     readErrorCount: nonNegativeInteger(stats.readErrorCount),
     publishedCount: nonNegativeInteger(stats.publishedCount),
+    seriesClockSymbol: String(stats.seriesClockSymbol || '').slice(0, 20),
+    seriesClockSkewS: nonNegativeInteger(stats.seriesClockSkewS),
     lastReason: String(stats.lastReason || ''),
     lastDiagnosticAt: String(stats.lastDiagnosticAt || '')
   };
@@ -581,6 +585,16 @@ function renderCaptureStats(stats = {}) {
   els.ignoredCount.textContent = String(clean.ignoredCount);
   els.skippedCount.textContent = String(clean.skippedTooLargeCount + clean.skippedNonTextCount + clean.skippedEmptyCount + clean.readErrorCount);
   els.hookReason.textContent = clean.lastReason || 'none';
+  // A chart with a broken clock stores nothing (page reader, `series-chart-clock`).
+  els.seriesClockRow.hidden = !clean.seriesClockSymbol;
+  els.seriesClock.textContent = seriesClockText(clean);
+  els.seriesClock.title = clean.seriesClockSymbol
+    ? `Its newest bar is ${clean.seriesClockSkewS} s ahead of this computer's clock`
+    : '';
+}
+
+function seriesClockText(clean) {
+  return clean.seriesClockSymbol ? `${clean.seriesClockSymbol} chart clock is off; reload the page` : '';
 }
 
 function renderTransferState() {
