@@ -47,7 +47,7 @@ export function createStatsHistory(options = {}) {
 
   restore();
 
-  return { enabled: true, record, recordPoints, query, status };
+  return { enabled: true, record, recordPoints, recordSeries, query, status };
 
   function nowMs() {
     return toMs(clock());
@@ -153,6 +153,15 @@ export function createStatsHistory(options = {}) {
       counters.lastError = errorCode(error);
     }
     return written;
+  }
+
+  /** Study series from the page: only `source.plot` names, never a stats field. */
+  function recordSeries(symbolInput, points) {
+    if (!Array.isArray(points)) return 0;
+    return recordPoints(symbolInput, points.map((point) => ({
+      t: point?.t,
+      values: Object.fromEntries(Object.entries(point?.values || {}).filter(([key]) => SERIES_FIELD.test(key)))
+    })));
   }
 
   /** The latest stored value of each time and field for a symbol, on the given days. */
@@ -423,6 +432,9 @@ function disabledHistory() {
   return {
     enabled: false,
     record() {},
+    recordSeries() {
+      return 0;
+    },
     recordPoints() {
       return 0;
     },

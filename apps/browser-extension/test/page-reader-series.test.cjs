@@ -136,6 +136,7 @@ function settle() {
   const esPoints = points(bodies.find((body) => body.series.MES).series.MES);
   assert.deepEqual(esPoints[0].values, { 'res.hg': 9, 'res.mhp': 8, 'res.hp': 7, 'arb.speed': 0.25 });
   assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
+  assert.ok(!/^series-/.test(page.lastDiagnostic().lastReason), 'the level reader keeps its own reason');
 
   // The next minute reads only the recent past.
   await page.reader.pollSeries();
@@ -157,6 +158,9 @@ function settle() {
     const columns = JSON.parse(page.series()[0].capture.body).series.MNQ;
     assert.ok(!columns.fields.includes('arb.speed'));
     assert.equal(page.lastDiagnostic().seriesLastReason, 'series-partial', 'NQ100 Arb is missing');
+    // The missing Arb never makes Resilience re-send everything.
+    await page.reader.pollSeries();
+    assert.ok(Number.isFinite(nq.calls[1].from), 'the next read is recent only');
   })
   // Studies still empty just after load: the full read is tried again next minute.
   .then(async () => {

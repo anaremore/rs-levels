@@ -136,8 +136,11 @@ async function postCapture(capture, sender = {}) {
       })
     });
     if (!response.ok) throw new Error(`Local service returned ${response.status}`);
-    state.postedCount += 1;
-    state.lastPostAt = new Date().toISOString();
+    // The popup's post count and time are about level capture.
+    if (!(capture && capture.endpoint === '/page-reader/series')) {
+      state.postedCount += 1;
+      state.lastPostAt = new Date().toISOString();
+    }
     state.lastError = '';
     return { ok: true };
   } catch (err) {
@@ -554,6 +557,7 @@ function cleanCaptureStats(input = {}) {
     seriesPointCount: nonNegativeInteger(input.seriesPointCount),
     seriesMissingCount: nonNegativeInteger(input.seriesMissingCount),
     seriesErrorCount: nonNegativeInteger(input.seriesErrorCount),
+    seriesTooLargeCount: nonNegativeInteger(input.seriesTooLargeCount),
     seriesLastReason: String(input.seriesLastReason || '').slice(0, 40),
     seriesLastPublishedAt: String(input.seriesLastPublishedAt || '').slice(0, 40),
     lastReason: String(input.lastReason || ''),

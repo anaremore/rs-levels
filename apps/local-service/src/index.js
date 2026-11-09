@@ -15,7 +15,7 @@ export function createService(options = {}) {
     staleMs: config.staleMs,
     clock: options.clock,
     onStats: history.record,
-    onSeries: history.recordPoints
+    onSeries: history.recordSeries
   });
   const app = createHttpApp({ store, config, history, onCapture: options.onCapture });
   return {

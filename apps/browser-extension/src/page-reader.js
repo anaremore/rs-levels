@@ -46,6 +46,7 @@
     seriesPointCount: 0,
     seriesMissingCount: 0,
     seriesErrorCount: 0,
+    seriesTooLargeCount: 0,
     seriesLastReason: '',
     seriesLastPublishedAt: '',
     lastReason: '',
@@ -143,7 +144,8 @@
     } finally {
       seriesBusy = false;
     }
-    publishDiagnostic(stats.seriesLastReason);
+    // Series keep their own reason: the level reader's `lastReason` is left as it was.
+    postToContent({ type: 'diagnostic', stats: { ...stats } });
   }
 
   async function readAndPublishSeries() {
@@ -165,28 +167,26 @@
       // NQ chart at 5 minutes must not overwrite the minute values.
       if (!SERIES_STUDIES[symbol] || safeString(call(chart, 'resolution')).trim() !== '1') continue;
       charts += 1;
-      const full = nowMs - (seriesFullAt.get(symbol) || 0) >= SERIES_FULL_EVERY_MS;
       const studies = safeArray(call(chart, 'getAllStudies'));
-      let complete = true;
-      let found = 0;
       for (const kind of SERIES_STUDIES[symbol]) {
         const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
         if (!study || typeof chart.exportData !== 'function') {
           missing = true;
-          complete = false;
           continue;
         }
+        // Each study's own full read: one missing or still-empty study never holds back another.
+        const key = `${symbol}|${kind.prefix}`;
+        const full = nowMs - (seriesFullAt.get(key) || 0) >= SERIES_FULL_EVERY_MS;
         try {
           const options = { includeTime: true, includeSeries: false, includedStudies: [study.id] };
           if (!full) options.from = nowS - SERIES_RECENT_S;
-          found += addSeriesRows(bySymbol, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          const found = addSeriesRows(bySymbol, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          // Studies can be empty just after load: a full read counts once it brought rows.
+          if (full && found) seriesFullAt.set(key, nowMs);
         } catch (_err) {
           stats.seriesErrorCount += 1;
-          complete = false;
         }
       }
-      // A full read counts only once it brought everything: studies can be empty just after load.
-      if (full && complete && found) seriesFullAt.set(symbol, nowMs);
     }
     if (missing || !charts) stats.seriesMissingCount += 1;
     if (!charts) return 'series-no-chart';
@@ -261,7 +261,7 @@
     const rows = points.map((point) => [point.seconds, ...fields.map((field) => point.values[field] ?? null)]);
     const body = JSON.stringify({ type: 'rs_series', source: 'page-reader', capturedAt, series: { [symbol]: { fields, rows } } });
     if (body.length > settings.maxCaptureBytes) {
-      stats.skippedTooLargeCount += 1;
+      stats.seriesTooLargeCount += 1;
       return false;
     }
     stats.seriesPublishedCount += 1;

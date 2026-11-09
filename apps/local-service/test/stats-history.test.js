@@ -584,12 +584,12 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
       source: 'page-reader',
       series: {
         MNQ: {
-          fields: ['arb.speed', 'res.hg', 'res.hp', 'Not A Field'],
+          fields: ['arb.speed', 'res.hg', 'res.hp', 'Not A Field', 'dd'],
           rows: [
-            [T0 / 1000, -0.5, 1.25, 3.75, null],
-            [(T0 + MIN) / 1000, 0.75, 1.5, 3.75, null],
-            // Not a series name, and text: dropped, never stored.
-            [(T0 + 2 * MIN) / 1000, null, 'text', null, 1]
+            [T0 / 1000, -0.5, 1.25, 3.75, null, null],
+            [(T0 + MIN) / 1000, 0.75, 1.5, 3.75, null, null],
+            // Not a series name, text, and a stats field: dropped, never stored.
+            [(T0 + 2 * MIN) / 1000, null, 'text', null, 1, 4]
           ]
         }
       }
@@ -609,6 +609,7 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
     { 'arb.speed': 0.75, 'res.hg': 1.5, 'res.hp': 3.75 }
   ], 'each point once');
   assert.ok(!body.fields.includes('Not A Field'));
+  assert.ok(body.absentFields.includes('dd'), 'a series post never writes a stats field');
   const lines = fileLines(dataDir);
   assert.equal(lines.length, 2, 'the repeat wrote nothing');
 
