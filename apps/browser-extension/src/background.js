@@ -117,7 +117,8 @@ async function postCapture(capture, sender = {}) {
 
   // Study series carry no levels: they go to the service's history only, and don't make level
   // capture look fresh.
-  if (!(capture && capture.endpoint === '/page-reader/series')) {
+  const isSeries = Boolean(capture && capture.endpoint === '/page-reader/series');
+  if (!isSeries) {
     state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
     await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
   }
@@ -136,16 +137,17 @@ async function postCapture(capture, sender = {}) {
       })
     });
     if (!response.ok) throw new Error(`Local service returned ${response.status}`);
-    // The popup's post count and time are about level capture.
-    if (!(capture && capture.endpoint === '/page-reader/series')) {
+    // The popup's post count, time and error are about level capture.
+    if (!isSeries) {
       state.postedCount += 1;
       state.lastPostAt = new Date().toISOString();
+      state.lastError = '';
     }
-    state.lastError = '';
     return { ok: true };
   } catch (err) {
-    state.lastError = err && err.message ? err.message : 'Local service unavailable';
-    return { ok: false, error: state.lastError };
+    const error = err && err.message ? err.message : 'Local service unavailable';
+    if (!isSeries) state.lastError = error;
+    return { ok: false, error };
   }
 }
 

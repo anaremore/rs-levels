@@ -200,7 +200,8 @@ function seriesPoints(columns) {
   const rows = Array.isArray(columns?.rows) ? columns.rows : [];
   const points = [];
   for (const row of rows) {
-    if (!Array.isArray(row) || !Number.isFinite(row[0])) continue;
+    // A time a Date can hold; one bad row never costs the rest of the post.
+    if (!Array.isArray(row) || !Number.isFinite(row[0]) || Math.abs(row[0]) > 8.64e12) continue;
     const values = {};
     fields.forEach((field, index) => {
       if (Number.isFinite(row[index + 1])) values[field] = row[index + 1];
