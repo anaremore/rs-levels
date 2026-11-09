@@ -123,6 +123,7 @@ export function createStatsHistory(options = {}) {
         written += 1;
       }
     } catch (error) {
+      counters.droppedWrites += 1;
       counters.lastError = errorCode(error);
     }
     return written;
@@ -174,6 +175,8 @@ export function createStatsHistory(options = {}) {
       state.pending.clear();
       counters.lastWriteAtMs = atMs;
     } catch (error) {
+      // Anything that throws here (a prune that can't read the directory, say) loses this sample.
+      counters.droppedWrites += 1;
       counters.lastError = errorCode(error);
     }
   }
