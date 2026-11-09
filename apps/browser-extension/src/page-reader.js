@@ -4,6 +4,15 @@
   const TARGET_ORIGIN = window.location.origin;
   const READER_KEY = '__RS_LEVELS_PAGE_READER__';
   const POLL_MS = 2000;
+  // Study series (Resilience, Arb): read-only, numbers only, on their own slower cycle.
+  const SERIES_MS = 60000;
+  const SERIES_RECENT_S = 15 * 60;
+  const SERIES_FULL_EVERY_MS = 30 * 60000;
+  const SERIES_POINTS_PER_POST = 2000;
+  const SERIES_STUDIES = [
+    { name: /^(?:NQ100|SP500) Resilience$/i, prefix: 'res' },
+    { name: /^(?:NQ100|SP500) Arb$/i, prefix: 'arb' }
+  ];
 
   if (globalThis[READER_KEY]) {
     globalThis[READER_KEY].publishDiagnostic('reader-reconnected');
@@ -24,11 +33,21 @@
     skippedEmptyCount: 0,
     readErrorCount: 0,
     publishedCount: 0,
+    seriesReadCount: 0,
+    seriesPublishedCount: 0,
+    seriesPointCount: 0,
+    seriesMissingCount: 0,
+    seriesErrorCount: 0,
+    seriesLastReason: '',
+    seriesLastPublishedAt: '',
     lastReason: '',
     lastDiagnosticAt: ''
   };
 
-  globalThis[READER_KEY] = { publishDiagnostic };
+  let seriesBusy = false;
+  const seriesFullAt = new Map();
+
+  globalThis[READER_KEY] = { publishDiagnostic, pollSeries };
 
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.origin !== TARGET_ORIGIN) return;
@@ -98,6 +117,128 @@
     }
     lastHash = hash;
     publishSnapshot(snapshot);
+  }
+
+  /**
+   * Every minute: the Resilience and Arb studies on the minute futures charts, as timestamped
+   * points. The first read, and one every half hour, sends everything loaded so the day backfills;
+   * the service stores each point once. A missing widget or study is only counted.
+   */
+  async function pollSeries() {
+    if (seriesBusy) return;
+    seriesBusy = true;
+    try {
+      stats.seriesLastReason = await readAndPublishSeries();
+    } catch (_err) {
+      stats.seriesErrorCount += 1;
+      stats.seriesLastReason = 'series-error';
+    } finally {
+      seriesBusy = false;
+    }
+    publishDiagnostic(stats.seriesLastReason);
+  }
+
+  async function readAndPublishSeries() {
+    stats.seriesReadCount += 1;
+    const widget = globalThis.tvWidget;
+    if (!widget) return 'series-waiting';
+    const nowMs = Date.now();
+    const nowS = Math.floor(nowMs / 1000);
+    const bySymbol = new Map();
+    let charts = 0;
+    let missing = false;
+    const chartCount = chartCountFromWidget(widget);
+    for (let index = 0; index < chartCount; index += 1) {
+      const chart = safeChart(widget, index);
+      if (!chart) continue;
+      const symbol = futuresSymbol(call(chart, 'symbol'));
+      // Daily charts carry an all-zero Resilience study: only minute charts are read.
+      if (!symbol || !/^\d+$/.test(safeString(call(chart, 'resolution')).trim())) continue;
+      charts += 1;
+      const full = nowMs - (seriesFullAt.get(symbol) || 0) >= SERIES_FULL_EVERY_MS;
+      const studies = safeArray(call(chart, 'getAllStudies'));
+      for (const kind of SERIES_STUDIES) {
+        const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
+        if (!study || typeof chart.exportData !== 'function') {
+          missing = true;
+          continue;
+        }
+        try {
+          const options = { includeTime: true, includeSeries: false, includedStudies: [study.id] };
+          if (!full) options.from = nowS - SERIES_RECENT_S;
+          addSeriesRows(bySymbol, symbol, kind.prefix, await chart.exportData(options), nowS);
+        } catch (_err) {
+          stats.seriesErrorCount += 1;
+        }
+      }
+      if (full) seriesFullAt.set(symbol, nowMs);
+    }
+    if (missing || !charts) stats.seriesMissingCount += 1;
+    if (!charts) return 'series-no-chart';
+    let posted = 0;
+    bySymbol.forEach((points, symbol) => {
+      const rows = Array.from(points.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([seconds, values]) => ({ t: new Date(seconds * 1000).toISOString(), values }));
+      for (let start = 0; start < rows.length; start += SERIES_POINTS_PER_POST) {
+        posted += publishSeries(symbol, rows.slice(start, start + SERIES_POINTS_PER_POST)) ? 1 : 0;
+      }
+    });
+    if (!posted) return missing ? 'series-missing-study' : 'series-empty';
+    return missing ? 'series-partial' : 'series-published';
+  }
+
+  /** Plot columns by title; plot `0` is the zero line. Rows after now are held flat, not data. */
+  function addSeriesRows(bySymbol, symbol, prefix, exported, nowS) {
+    const schema = safeArray(exported && exported.schema);
+    const columns = [];
+    for (let column = 1; column < schema.length; column += 1) {
+      const field = seriesFieldName(prefix, schema[column] && schema[column].plotTitle);
+      if (field) columns.push([column, field]);
+    }
+    if (!columns.length) return;
+    const points = bySymbol.get(symbol) || new Map();
+    bySymbol.set(symbol, points);
+    for (const row of safeArray(exported.data)) {
+      if (!row || typeof row.length !== 'number') continue;
+      const seconds = Number(row[0]);
+      if (!Number.isFinite(seconds) || seconds <= 0 || seconds > nowS) continue;
+      const values = {};
+      for (const [column, field] of columns) {
+        const value = row[column];
+        if (typeof value === 'number' && Number.isFinite(value)) values[field] = value;
+      }
+      if (Object.keys(values).length) points.set(seconds, Object.assign(points.get(seconds) || {}, values));
+    }
+  }
+
+  function seriesFieldName(prefix, title) {
+    const clean = safeString(title).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+    if (!clean || /^\d+$/.test(clean)) return '';
+    return `${prefix}.${clean}`;
+  }
+
+  function publishSeries(symbol, points) {
+    const capturedAt = new Date().toISOString();
+    const body = JSON.stringify({ type: 'rs_series', source: 'page-reader', capturedAt, series: { [symbol]: points } });
+    if (body.length > settings.maxCaptureBytes) {
+      stats.skippedTooLargeCount += 1;
+      return false;
+    }
+    stats.seriesPublishedCount += 1;
+    stats.seriesPointCount += points.length;
+    stats.seriesLastPublishedAt = capturedAt;
+    postToContent({
+      type: 'capture',
+      capture: {
+        endpoint: '/page-reader/series',
+        method: 'PAGE_READER',
+        status: 200,
+        capturedAt,
+        body
+      }
+    });
+    return true;
   }
 
   function readDisplaySnapshot() {
@@ -924,7 +1065,10 @@
   publishDiagnostic('reader-installed');
   poll();
   timer = window.setInterval(poll, POLL_MS);
+  pollSeries();
+  const seriesTimer = window.setInterval(pollSeries, SERIES_MS);
   window.addEventListener('beforeunload', () => {
     if (timer) window.clearInterval(timer);
+    if (seriesTimer) window.clearInterval(seriesTimer);
   });
 })();

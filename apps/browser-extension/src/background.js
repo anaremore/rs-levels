@@ -116,7 +116,10 @@ async function postCapture(capture, sender = {}) {
   }
 
   state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
-  await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
+  // Study series carry no levels: they go to the service's history only.
+  if (!(capture && capture.endpoint === '/page-reader/series')) {
+    await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
+  }
 
   try {
     const response = await fetch(`${settings.serviceUrl}/capture/api`, {
@@ -545,6 +548,13 @@ function cleanCaptureStats(input = {}) {
     skippedEmptyCount: nonNegativeInteger(input.skippedEmptyCount),
     readErrorCount: nonNegativeInteger(input.readErrorCount),
     publishedCount: nonNegativeInteger(input.publishedCount),
+    seriesReadCount: nonNegativeInteger(input.seriesReadCount),
+    seriesPublishedCount: nonNegativeInteger(input.seriesPublishedCount),
+    seriesPointCount: nonNegativeInteger(input.seriesPointCount),
+    seriesMissingCount: nonNegativeInteger(input.seriesMissingCount),
+    seriesErrorCount: nonNegativeInteger(input.seriesErrorCount),
+    seriesLastReason: String(input.seriesLastReason || '').slice(0, 40),
+    seriesLastPublishedAt: String(input.seriesLastPublishedAt || '').slice(0, 40),
     lastReason: String(input.lastReason || ''),
     lastDiagnosticAt: String(input.lastDiagnosticAt || '')
   };

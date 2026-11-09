@@ -5,6 +5,8 @@ import { STATS_FIELDS, displaySymbolFor, normalizeSymbol } from '../../../packag
 
 const FILE_NAME = /^stats-(\d{4}-\d{2}-\d{2})\.jsonl$/;
 const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_.]{0,63}$/;
+/** A study plot read from the page, named by source and plot: `res.hg`, `arb.speed`. Numbers only. */
+const SERIES_FIELD = /^[a-z][a-z0-9]{0,15}\.[a-z0-9_]{1,40}$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** While captures keep arriving, a line is written at least this often, even with nothing new. */
@@ -123,7 +125,7 @@ export function createStatsHistory(options = {}) {
       }
       const oldest = now - retentionDays * DAY_MS;
       const clean = points
-        .map((point) => ({ ms: Date.parse(point?.t), values: reportedValues(point?.values) }))
+        .map((point) => ({ ms: Date.parse(point?.t), values: pointValues(point?.values) }))
         .filter((point) => point.ms >= oldest && point.ms <= now && Object.keys(point.values).length)
         .sort((a, b) => a.ms - b.ms);
       if (!clean.length) return 0;
@@ -311,7 +313,7 @@ export function createStatsHistory(options = {}) {
     const now = nowMs();
     const toMsValue = Number.isFinite(range.toMs) ? range.toMs : now;
     const fromMsValue = Number.isFinite(range.fromMs) ? range.fromMs : toMsValue - HISTORY_DEFAULT_RANGE_MS;
-    const fields = requestedFields(range.fields);
+    const fields = requestedFields(range.fields, state);
     // Through `to` plus one gap: the first report after `to` says whether a span ran on to `to`.
     const lines = await readLines(dir, symbol, dayOf(toMsValue + HISTORY_GAP_MS), now - retentionDays * DAY_MS);
 
@@ -430,11 +432,28 @@ function disabledHistory() {
   };
 }
 
-/** The fields to return: those asked for, else every known one. An unknown name reads as absent. */
-function requestedFields(fields) {
+/**
+ * The fields to return: those asked for, else every stats field plus the series fields this
+ * symbol has stored. An unknown name reads as absent.
+ */
+function requestedFields(fields, state) {
   const asked = Array.isArray(fields) ? fields : [];
   const clean = Array.from(new Set(asked.filter((field) => FIELD_NAME.test(field)))).slice(0, HISTORY_MAX_FIELDS);
-  return clean.length ? clean : STATS_FIELDS.map((field) => field.key);
+  if (clean.length) return clean;
+  const series = Object.keys(state?.fieldAt || {}).filter((field) => SERIES_FIELD.test(field)).sort();
+  return [...STATS_FIELDS.map((field) => field.key), ...series].slice(0, HISTORY_MAX_FIELDS);
+}
+
+/** A batch point's values: the stats fields, plus series fields with a finite number. */
+function pointValues(values) {
+  const reported = reportedValues(values || {});
+  if (!values || typeof values !== 'object') return reported;
+  for (const [key, value] of Object.entries(values)) {
+    if (Object.keys(reported).length >= HISTORY_MAX_FIELDS) break;
+    if (!SERIES_FIELD.test(key) || typeof value !== 'number' || !Number.isFinite(value)) continue;
+    reported[key] = value;
+  }
+  return reported;
 }
 
 /** What a capture actually reported. A field it didn't report isn't a value, and is never written. */

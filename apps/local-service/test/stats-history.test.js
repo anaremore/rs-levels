@@ -553,5 +553,62 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.deepEqual(status(off.store, off.config).history, { enabled: false });
 }
 
+// Study series from the page reader: history only, idempotent, served under their own names,
+// and the levels snapshot is untouched.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 + 10 * MIN };
+  const service = createService({
+    env: {},
+    config: { host: '127.0.0.1', port: 0, dataDir },
+    clock: () => new Date(now.ms)
+  });
+  const address = await listen(service);
+  const base = `http://127.0.0.1:${address.port}`;
+  const post = (body) => fetch(`${base}/capture/api`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: body.endpoint, method: 'PAGE_READER', status: 200, capturedAt: iso(now.ms), body: JSON.stringify(body.body) })
+  });
+  assert.equal((await post({
+    endpoint: '/page-reader/display',
+    body: { type: 'rs_snapshot', levels: [{ symbol: 'MNQ', name: 'HP', kind: 'hp', price: 30000 }], stats: {} }
+  })).status, 200);
+  const before = await (await fetch(`${base}/snapshot`)).json();
+
+  const series = {
+    endpoint: '/page-reader/series',
+    body: {
+      type: 'rs_series',
+      source: 'page-reader',
+      series: {
+        MNQ: [
+          { t: iso(T0), values: { 'res.hg': 1.25, 'res.hp': 3.75, 'arb.speed': -0.5 } },
+          { t: iso(T0 + MIN), values: { 'res.hg': 1.5, 'res.hp': 3.75, 'arb.speed': 0.75 } },
+          // Not a series name: dropped, never stored.
+          { t: iso(T0 + 2 * MIN), values: { 'Not A Field': 1, 'res.hg': 'text' } }
+        ]
+      }
+    }
+  };
+  assert.equal((await post(series)).status, 200);
+  assert.equal((await post(series)).status, 200, 'the same batch again');
+
+  const after = await (await fetch(`${base}/snapshot`)).json();
+  assert.deepEqual(after.symbols, before.symbols, 'the snapshot is untouched');
+  assert.equal(after.source.state, before.source.state);
+
+  const body = await (await fetch(`${base}/history/NQ?from=${iso(T0)}&to=${iso(now.ms)}`)).json();
+  assert.ok(body.fields.includes('res.hg') && body.fields.includes('arb.speed'), 'stored series fields are listed by default');
+  assert.deepEqual(body.points.map((point) => point.values), [
+    { 'arb.speed': -0.5, 'res.hg': 1.25, 'res.hp': 3.75 },
+    { 'arb.speed': 0.75, 'res.hg': 1.5, 'res.hp': 3.75 }
+  ], 'each point once');
+  assert.ok(!body.fields.includes('Not A Field'));
+  const lines = fileLines(dataDir);
+  assert.equal(lines.length, 2, 'the repeat wrote nothing');
+  await new Promise((resolve) => service.server.close(resolve));
+}
+
 for (const dir of dirs) rmSync(dir, { recursive: true, force: true });
 console.log('Stats history tests passed');
