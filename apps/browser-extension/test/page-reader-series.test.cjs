@@ -286,6 +286,39 @@ function settle() {
     await page.reader.pollSeries();
     assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ', 'no flicker on the next read');
   })
+  // The study that showed the fault fails on the next read (or both do): the warning holds,
+  // nothing is stored; a read where every study answers with no skew clears it.
+  .then(async () => {
+    const res = study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [
+      [NOW_S - MIN_S, 0, 0, 0, 0],
+      [NOW_S + 3600, 0, 0, 0, 0]
+    ]);
+    const arb = study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0, 0]]);
+    const nq = chart('F.US.ENQZ26', '1', [res, arb]);
+    const exportData = nq.exportData;
+    let failing = [];
+    nq.exportData = async (options) => {
+      if (failing.includes(options.includedStudies[0])) throw new Error('timed out');
+      return exportData(options);
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ');
+    failing = ['res-nq'];
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ', 'the skewed study failed: still warned');
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-chart-clock');
+    failing = ['res-nq', 'arb-nq'];
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ', 'both failed: still warned');
+    assert.equal(page.series().length, 0, 'nothing stored throughout');
+    failing = [];
+    res.rows = [[NOW_S - MIN_S, 1, 2, 3, 0]];
+    arb.rows = [[NOW_S - MIN_S, 0.5, 0]];
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '', 'cleared once every study answers right');
+    assert.ok(page.series().length > 0, 'and NQ is stored again');
+  })
   // A missing widget: counted, nothing posted, and level capture carries on.
   .then(async () => {
     const page = load(undefined);

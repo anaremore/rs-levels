@@ -61,6 +61,9 @@
 
   let seriesBusy = false;
   const seriesFullAt = new Map();
+  // Each chart's last clock verdict (symbol -> skew seconds): a read that fails before it can
+  // judge keeps it, so a broken chart's timeouts never hide its warning.
+  const seriesSkew = new Map();
 
   globalThis[READER_KEY] = { publishDiagnostic, pollSeries };
 
@@ -209,9 +212,15 @@
       // The clock first, from whatever the studies that answered returned: a sibling's timeout
       // (likely on a broken chart) never hides the fault.
       if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
+        seriesSkew.set(symbol, newestS - nowS);
+      } else if (!failed) {
+        // Every study answered and none is ahead: the clock is right.
+        seriesSkew.delete(symbol);
+      }
+      if (seriesSkew.has(symbol)) {
         // Nothing from this chart is stored, and its full reads stay due for when it's right.
         skewed.push(displayIndex(symbol));
-        skewS = Math.max(skewS, newestS - nowS);
+        skewS = Math.max(skewS, seriesSkew.get(symbol));
         continue;
       }
       // A study that failed may have been the one showing the fault: nothing from this chart
@@ -275,15 +284,18 @@
     }
     let found = 0;
     let newest = 0;
+    // The newest row's time from every row, whatever its columns: it judges the clock.
+    for (const row of safeArray(exported && exported.data)) {
+      const seconds = row && typeof row.length === 'number' ? Number(row[0]) : NaN;
+      if (Number.isFinite(seconds) && seconds > newest) newest = seconds;
+    }
     if (!columns.length) return { found, newest };
     const points = bySymbol.get(symbol) || new Map();
     bySymbol.set(symbol, points);
     for (const row of safeArray(exported.data)) {
       if (!row || typeof row.length !== 'number') continue;
       const seconds = Number(row[0]);
-      if (!Number.isFinite(seconds) || seconds <= 0) continue;
-      newest = Math.max(newest, seconds);
-      if (seconds > nowS) continue;
+      if (!Number.isFinite(seconds) || seconds <= 0 || seconds > nowS) continue;
       const values = {};
       for (const [column, field] of columns) {
         const value = row[column];
