@@ -72,7 +72,7 @@ webext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.type === 'rs-levels.capture-diagnostic') {
-    state.captureStats = cleanCaptureStats(message.stats);
+    state.captureStats = mergeCaptureStats(state.captureStats, message.stats);
     sendResponse({ ok: true });
     return false;
   }
@@ -561,10 +561,36 @@ function cleanCaptureStats(input = {}) {
     seriesErrorCount: nonNegativeInteger(input.seriesErrorCount),
     seriesTooLargeCount: nonNegativeInteger(input.seriesTooLargeCount),
     seriesLastReason: String(input.seriesLastReason || '').slice(0, 40),
+    seriesClockSymbol: String(input.seriesClockSymbol || '').slice(0, 20),
+    seriesClockSkewS: nonNegativeInteger(input.seriesClockSkewS),
     seriesLastPublishedAt: String(input.seriesLastPublishedAt || '').slice(0, 40),
     lastReason: String(input.lastReason || ''),
     lastDiagnosticAt: String(input.lastDiagnosticAt || '')
   };
+}
+
+const SERIES_DIAGNOSTIC_FRESH_MS = 3 * 60 * 1000;
+
+/**
+ * A frame's diagnostic over the last one. The series fields (a chart clock warning among them)
+ * come only from a frame whose reader has the chart widget: the page hook, and frames without
+ * charts, send diagnostics every few seconds and must not erase them.
+ */
+function mergeCaptureStats(previous = {}, input = {}, nowMs = Date.now()) {
+  const next = cleanCaptureStats(input);
+  if (input && input.seriesWidget) {
+    next.seriesSeenAtMs = nowMs;
+    return next;
+  }
+  // Kept only while the chart frame is reporting: closed or navigated away, nothing it said
+  // lingers (it reads every minute, and diagnoses every 2 s).
+  const seen = Number(previous.seriesSeenAtMs) || 0;
+  if (!seen || nowMs - seen > SERIES_DIAGNOSTIC_FRESH_MS) return next;
+  for (const key of Object.keys(next)) {
+    if (key.startsWith('series') && previous[key] !== undefined) next[key] = previous[key];
+  }
+  next.seriesSeenAtMs = seen;
+  return next;
 }
 
 function nonNegativeInteger(value) {

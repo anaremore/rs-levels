@@ -10,6 +10,9 @@
   const SERIES_FULL_EVERY_MS = 30 * 60000;
   const SERIES_POINTS_PER_POST = 2000;
   const SERIES_EXPORT_TIMEOUT_MS = 10000;
+  // A chart whose newest bar is further ahead of now than this has a broken clock (the page logs
+  // `putToCacheNewBar: time violation`): its studies' past rows are placeholders, not data.
+  const SERIES_CLOCK_SKEW_S = 120;
   // Each index's studies, on that index's own minute chart only.
   const SERIES_STUDIES = {
     MNQ: [
@@ -47,6 +50,9 @@
     seriesMissingCount: 0,
     seriesErrorCount: 0,
     seriesTooLargeCount: 0,
+    // The charts whose clock is off (`NQ`, `NQ, ES`) and the largest skew seen, in seconds.
+    seriesClockSymbol: '',
+    seriesClockSkewS: 0,
     seriesLastReason: '',
     seriesLastPublishedAt: '',
     lastReason: '',
@@ -55,6 +61,9 @@
 
   let seriesBusy = false;
   const seriesFullAt = new Map();
+  // Each chart's last clock verdict (symbol -> skew seconds): a read that fails before it can
+  // judge keeps it, so a broken chart's timeouts never hide its warning.
+  const seriesSkew = new Map();
 
   globalThis[READER_KEY] = { publishDiagnostic, pollSeries };
 
@@ -151,13 +160,19 @@
   async function readAndPublishSeries() {
     stats.seriesReadCount += 1;
     const widget = globalThis.tvWidget;
-    if (!widget) return 'series-waiting';
+    if (!widget) {
+      // A widget that went away leaves no old warning behind.
+      setSeriesClock(false, [], 0);
+      return 'series-waiting';
+    }
     const nowMs = Date.now();
     const nowS = Math.floor(nowMs / 1000);
     const bySymbol = new Map();
     let charts = 0;
     let missing = false;
     let tooLarge = false;
+    const skewed = [];
+    let skewS = 0;
     const chartCount = chartCountFromWidget(widget);
     for (let index = 0; index < chartCount; index += 1) {
       const chart = safeChart(widget, index);
@@ -168,6 +183,11 @@
       if (!SERIES_STUDIES[symbol] || safeString(call(chart, 'resolution')).trim() !== '1') continue;
       charts += 1;
       const studies = safeArray(call(chart, 'getAllStudies'));
+      // This chart's rows wait here until its clock is known to be right.
+      const chartRows = new Map();
+      let newestS = 0;
+      const fullDone = [];
+      let failed = false;
       for (const kind of SERIES_STUDIES[symbol]) {
         const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
         if (!study || typeof chart.exportData !== 'function') {
@@ -180,14 +200,42 @@
         try {
           const options = { includeTime: true, includeSeries: false, includedStudies: [study.id] };
           if (!full) options.from = nowS - SERIES_RECENT_S;
-          const found = addSeriesRows(bySymbol, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          const read = addSeriesRows(chartRows, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          newestS = Math.max(newestS, read.newest);
           // Studies can be empty just after load: a full read counts once it brought rows.
-          if (full && found) seriesFullAt.set(key, nowMs);
+          if (full && read.found) fullDone.push(key);
         } catch (_err) {
           stats.seriesErrorCount += 1;
+          failed = true;
         }
       }
+      // The clock first, from whatever the studies that answered returned: a sibling's timeout
+      // (likely on a broken chart) never hides the fault.
+      if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
+        seriesSkew.set(symbol, newestS - nowS);
+      } else if (!failed) {
+        // Every study answered and none is ahead: the clock is right.
+        seriesSkew.delete(symbol);
+      }
+      if (seriesSkew.has(symbol)) {
+        // Nothing from this chart is stored, and its full reads stay due for when it's right.
+        skewed.push(displayIndex(symbol));
+        skewS = Math.max(skewS, seriesSkew.get(symbol));
+        continue;
+      }
+      // A study that failed may have been the one showing the fault: nothing from this chart
+      // this read; it is tried again next minute.
+      if (failed) continue;
+      fullDone.forEach((key) => seriesFullAt.set(key, nowMs));
+      const points = bySymbol.get(symbol) || new Map();
+      chartRows.forEach((rows) => rows.forEach((values, seconds) => {
+        points.set(seconds, Object.assign(points.get(seconds) || {}, values));
+      }));
+      if (points.size) bySymbol.set(symbol, points);
     }
+    // Set together once the read is done: diagnostics posted while exports are pending keep the
+    // last read's warning.
+    setSeriesClock(charts > 0, skewed, skewS);
     if (missing || !charts) stats.seriesMissingCount += 1;
     if (!charts) return 'series-no-chart';
     let posted = 0;
@@ -200,9 +248,17 @@
         else tooLarge = true;
       }
     });
+    if (skewed.length) return 'series-chart-clock';
     if (tooLarge) return 'series-too-large';
     if (!posted) return missing ? 'series-missing-study' : 'series-empty';
     return missing ? 'series-partial' : 'series-published';
+  }
+
+  /** `widget`: this frame read the charts, so its series fields are the ones the popup shows. */
+  function setSeriesClock(widget, skewed, skewS) {
+    stats.seriesWidget = widget;
+    stats.seriesClockSymbol = skewed.join(', ');
+    stats.seriesClockSkewS = Math.round(skewS);
   }
 
   function withTimeout(promise) {
@@ -215,8 +271,9 @@
   }
 
   /**
-   * Plot columns by title; plot `0` is the zero line. Rows after now are held flat, not data.
-   * Returns how many rows had a value.
+   * Plot columns by title; plot `0` is the zero line. Rows after now are never data. Returns how
+   * many rows had a value, and the newest row's time (seconds; also a row after now), which says
+   * whether the chart's clock can be trusted.
    */
   function addSeriesRows(bySymbol, symbol, prefix, exported, nowS) {
     const schema = safeArray(exported && exported.schema);
@@ -225,8 +282,14 @@
       const field = seriesFieldName(prefix, schema[column] && schema[column].plotTitle);
       if (field) columns.push([column, field]);
     }
-    if (!columns.length) return 0;
     let found = 0;
+    let newest = 0;
+    // The newest row's time from every row, whatever its columns: it judges the clock.
+    for (const row of safeArray(exported && exported.data)) {
+      const seconds = row && typeof row.length === 'number' ? Number(row[0]) : NaN;
+      if (Number.isFinite(seconds) && seconds > newest) newest = seconds;
+    }
+    if (!columns.length) return { found, newest };
     const points = bySymbol.get(symbol) || new Map();
     bySymbol.set(symbol, points);
     for (const row of safeArray(exported.data)) {
@@ -242,7 +305,7 @@
       points.set(seconds, Object.assign(points.get(seconds) || {}, values));
       found += 1;
     }
-    return found;
+    return { found, newest };
   }
 
   function seriesFieldName(prefix, title) {
