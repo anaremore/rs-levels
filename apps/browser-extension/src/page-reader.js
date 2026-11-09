@@ -158,6 +158,8 @@
     stats.seriesReadCount += 1;
     const widget = globalThis.tvWidget;
     if (!widget) return 'series-waiting';
+    // This frame has the charts: its series fields are the ones the popup shows.
+    stats.seriesWidget = true;
     const nowMs = Date.now();
     const nowS = Math.floor(nowMs / 1000);
     const bySymbol = new Map();

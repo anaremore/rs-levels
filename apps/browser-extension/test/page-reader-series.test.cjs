@@ -185,10 +185,9 @@ function settle() {
       for (let t = from; t <= to; t += MIN_S) rows.push([t, 0, 0, 0, 0]);
       return rows;
     };
-    const nq = chart('F.US.ENQZ26', '1', [
-      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], zeros(NOW_S - 30 * MIN_S, NOW_S + skewS)),
-      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S + skewS, 0.5, 0]])
-    ]);
+    const resNq = study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], zeros(NOW_S - 30 * MIN_S, NOW_S + skewS));
+    const arbNq = study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S + skewS, 0.5, 0]]);
+    const nq = chart('F.US.ENQZ26', '1', [resNq, arbNq]);
     const es = chart('F.US.EPZ26', '1', [
       study('res-es', 'SP500 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 9, 8, 7, 0]]),
       study('arb-es', 'SP500 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.25, 0]])
@@ -207,6 +206,25 @@ function settle() {
     await page.reader.pollSeries();
     assert.ok(nq.calls.slice(2).every((options) => options.from === undefined), 'its full read stays due');
     assert.ok(page.series().every((post) => !JSON.parse(post.capture.body).series.MNQ));
+    assert.equal(page.lastDiagnostic().seriesWidget, true, 'from the frame with the charts');
+    // The page is reloaded and the clock is right: the warning clears, the day backfills.
+    resNq.rows = [[NOW_S - 2 * MIN_S, 1.25, 2.5, 3.75, 0], [NOW_S - MIN_S, 1.5, 2.5, 3.75, 0]];
+    arbNq.rows = [[NOW_S - MIN_S, 0.75, 0]];
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '');
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
+    const recovered = page.series().map((post) => JSON.parse(post.capture.body)).find((body) => body.series.MNQ);
+    assert.ok(recovered, 'NQ is stored again');
+    // Both charts off: both named.
+    const both = [nq, chart('F.US.EPZ26', '1', [
+      study('res-es', 'SP500 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S + skewS, 0, 0, 0, 0]]),
+      study('arb-es', 'SP500 Arb', ['Speed', '0'], [[NOW_S + skewS, 0, 0]])
+    ])];
+    resNq.rows = [[NOW_S + 3 * MIN_S, 0, 0, 0, 0]];
+    const twice = load({ chartsCount: () => both.length, chart: (index) => both[index] });
+    await settle();
+    assert.equal(twice.lastDiagnostic().seriesClockSymbol, 'NQ, ES');
+    assert.equal(twice.series().length, 0);
     // A bar 2 minutes ahead is still within the allowance: not a clock fault.
     const near = chart('F.US.ENQZ26', '1', [
       study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [

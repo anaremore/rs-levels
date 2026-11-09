@@ -72,7 +72,7 @@ webext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.type === 'rs-levels.capture-diagnostic') {
-    state.captureStats = cleanCaptureStats(message.stats);
+    state.captureStats = mergeCaptureStats(state.captureStats, message.stats);
     sendResponse({ ok: true });
     return false;
   }
@@ -567,6 +567,20 @@ function cleanCaptureStats(input = {}) {
     lastReason: String(input.lastReason || ''),
     lastDiagnosticAt: String(input.lastDiagnosticAt || '')
   };
+}
+
+/**
+ * A frame's diagnostic over the last one. The series fields (a chart clock warning among them)
+ * come only from a frame whose reader has the chart widget: the page hook, and frames without
+ * charts, send diagnostics every few seconds and must not erase them.
+ */
+function mergeCaptureStats(previous = {}, input = {}) {
+  const next = cleanCaptureStats(input);
+  if (input && input.seriesWidget) return next;
+  for (const key of Object.keys(next)) {
+    if (key.startsWith('series') && previous[key] !== undefined) next[key] = previous[key];
+  }
+  return next;
 }
 
 function nonNegativeInteger(value) {

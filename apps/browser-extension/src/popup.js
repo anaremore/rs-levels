@@ -594,7 +594,11 @@ function renderCaptureStats(stats = {}) {
 }
 
 function seriesClockText(clean) {
-  return clean.seriesClockSymbol ? `${clean.seriesClockSymbol} chart clock is off; reload the page` : '';
+  const symbol = clean.seriesClockSymbol;
+  if (!symbol) return '';
+  return symbol.includes(',')
+    ? `${symbol} chart clocks are off; reload the page`
+    : `${symbol} chart clock is off; reload the page`;
 }
 
 function renderTransferState() {
