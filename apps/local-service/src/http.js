@@ -156,8 +156,12 @@ function historyRange(params) {
 // From 1970 through 9999: a time a day either side of these can still be written as ISO 8601.
 const HISTORY_LATEST_MS = Date.parse('9999-12-30T00:00:00.000Z');
 
+// A date, or a date and time with `Z` or an offset: never a local time this machine would guess.
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+
 function historyTime(value) {
   if (value == null || value === '') return null;
+  if (!ISO_TIME.test(value)) return Number.NaN;
   const ms = Date.parse(value);
   return ms >= 0 && ms <= HISTORY_LATEST_MS ? ms : Number.NaN;
 }

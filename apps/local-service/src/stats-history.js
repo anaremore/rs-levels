@@ -68,7 +68,7 @@ export function createStatsHistory(options = {}) {
   function symbolState(symbol) {
     let state = symbols.get(symbol);
     if (!state) {
-      state = { values: {}, valueAt: {}, fieldAt: {}, lastWriteMs: 0, lastChangeMs: 0, lastSampleMs: 0, pending: new Set() };
+      state = { values: {}, valueAt: {}, fieldAt: {}, lastWriteMs: 0, lastChangeMs: 0, lastSampleMs: 0, pending: new Map() };
       symbols.set(symbol, state);
     }
     return state;
@@ -154,7 +154,8 @@ export function createStatsHistory(options = {}) {
       if (!symbol || !keys.length || !Number.isFinite(atMs)) return;
       const state = symbolState(symbol);
       state.lastSampleMs = Math.max(state.lastSampleMs, atMs);
-      keys.forEach((key) => state.pending.add(key));
+      // Field -> when it was last reported, until a line is written.
+      keys.forEach((key) => state.pending.set(key, atMs));
 
       // After a field's gap its value is written again: a value never carries across a gap.
       const values = {};
@@ -165,9 +166,13 @@ export function createStatsHistory(options = {}) {
       const changed = Object.keys(values).length > 0;
       if (!changed && atMs - state.lastWriteMs < HISTORY_HEARTBEAT_MS) return;
 
-      const line = { t: new Date(atMs).toISOString(), s: symbol, r: Array.from(state.pending).sort() };
+      const line = { t: new Date(atMs).toISOString(), s: symbol, r: Array.from(state.pending.keys()).sort() };
       if (changed) line.v = values;
-      if (!append(line, atMs)) return;
+      if (!append(line, atMs)) {
+        // Lost reports are a gap: no later line may claim them, and a returning value is written.
+        state.pending.clear();
+        return;
+      }
 
       for (const key of line.r) state.fieldAt[key] = atMs;
       Object.assign(state.values, values);
@@ -312,9 +317,9 @@ export function createStatsHistory(options = {}) {
         }
       }
       // Reported since the last line was written: the span runs on to the latest report.
-      if (!pastTo && current && state && state.pending.has(field) &&
-        state.lastSampleMs > current.to && state.lastSampleMs - current.to <= HISTORY_GAP_MS) {
-        current.to = state.lastSampleMs;
+      const reportedAt = state ? state.pending.get(field) : undefined;
+      if (!pastTo && current && reportedAt > current.to && reportedAt - current.to <= HISTORY_GAP_MS) {
+        current.to = reportedAt;
       }
       // Still running at `from` with no later line in range: its value is in force only if the
       // segment reaches `from`.

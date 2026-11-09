@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { appendFileSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createService, listen } from '../src/index.js';
@@ -372,6 +372,36 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.equal(body.segments.dd.length, 2);
 }
 
+// Review round 2: reports lost to a failed write are a gap. No later line claims them, and a value
+// that comes back is written, not assumed.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  const history = open(dataDir, now);
+  history.record('ES', { dd: 7, resilience: 1 }, T0);
+  // The directory turns into a file: every write fails for a while.
+  const dir = join(dataDir, 'history');
+  const saved = readFileSync(join(dir, `stats-${iso(T0).slice(0, 10)}.jsonl`), 'utf8');
+  rmSync(dir, { recursive: true, force: true });
+  writeFileSync(dir, 'blocked');
+  now.ms = T0 + 6 * MIN;
+  history.record('ES', { dd: 7, resilience: 1 }, now.ms);
+  assert.ok(history.status().droppedWrites > 0);
+  // Writes work again; only resilience is reported.
+  rmSync(dir, { force: true });
+  mkdirSync(dir);
+  writeFileSync(join(dir, `stats-${iso(T0).slice(0, 10)}.jsonl`), saved);
+  now.ms = T0 + 7 * MIN;
+  history.record('ES', { resilience: 1 }, now.ms);
+  const lastLine = fileLines(dataDir).pop();
+  assert.deepEqual(lastLine.r, ['resilience'], 'dd was not reported: no line says so');
+  // dd comes back with the same value: it is written, after its gap.
+  now.ms = T0 + 8 * MIN;
+  history.record('ES', { dd: 7, resilience: 1 }, now.ms);
+  const body = await history.query('ES', range(T0 + 7 * MIN, now.ms, ['dd']));
+  assert.deepEqual(body.points.map((point) => point.values.dd), [7]);
+}
+
 // Review round 1: an unreadable history directory answers with a code, never its path.
 {
   const dataDir = tempDir();
@@ -461,6 +491,8 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.equal((await fetch(`${base}/history/NQ?to=nope`)).status, 400);
   assert.equal((await fetch(`${base}/history/NQ?from=${iso(T0 + 1000)}&to=${iso(T0)}`)).status, 400);
   assert.equal((await fetch(`${base}/history/NQ?to=-271821-04-20T00:00:00Z`)).status, 400, 'out of range, not a 500');
+  assert.equal((await fetch(`${base}/history/NQ?to=2026-06-20T10:00`)).status, 400, 'no local time guessed');
+  assert.equal((await fetch(`${base}/history/NQ?to=2026-06-20T10:00:00%2B02:00`)).status, 200, 'an offset is fine');
   assert.equal((await fetch(`${base}/history/NQ`, { method: 'POST' })).status, 404, 'read-only');
   const unknownSymbol = await (await fetch(`${base}/history/ZZZ`)).json();
   assert.deepEqual(unknownSymbol.points, []);

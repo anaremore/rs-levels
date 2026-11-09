@@ -307,7 +307,7 @@ Stats over time for one symbol, from a local file. Read-only. It is off until a 
 
 Query parameters, all optional:
 
-- `from`, `to`: ISO 8601 times from 1970 through 9999. Defaults: the last 24 hours, ending now. A bad time, or `from` after `to`, returns `400`. If the history files can't be read, the answer is `503` with an error code, never a path.
+- `from`, `to`: ISO 8601 dates, or times with `Z` or an offset (`2026-11-09T14:30:00Z`), from 1970 through 9999-12-29. Defaults: the last 24 hours, ending now. A bad time, or `from` after `to`, returns `400`. If the history files can't be read, the answer is `503` with an error code, never a path.
 - `fields`: comma-separated field names. Default: every known stats field.
 
 ```json
@@ -345,7 +345,7 @@ How to read it, per field:
 
 Stats are stored by field name in `<dataDir>/history/stats-YYYY-MM-DD.jsonl`, one UTC day per file, with no capture bodies, URLs, or levels. Days older than `historyRetentionDays` are deleted, and over `historyMaxBytes` the oldest days go first. If today's file alone reaches the limit, new values are dropped and counted in `/status`, which shows as a gap. The list of fields is `STATS_FIELDS` in `packages/schemas`.
 
-`/status` reports `history`: `enabled`, `retentionDays`, `maxBytes`, `bytes`, `gapMs`, `oldestDay`, `lastWriteAt`, `droppedWrites`, `skippedLines`, `lastError` (a code, never a path), and per symbol `lastSampleAt`, `lastChangeAt`, `ageMs`, `fresh`, and `freshFields`.
+`/status` reports `history`. A symbol's `fresh` means any of its fields was reported in the last `gapMs`; `freshFields` names which. `droppedWrites` and `lastError` say whether reports are reaching the disk. The keys: `enabled`, `retentionDays`, `maxBytes`, `bytes`, `gapMs`, `oldestDay`, `lastWriteAt`, `droppedWrites`, `skippedLines`, `lastError` (a code, never a path), and per symbol `lastSampleAt`, `lastChangeAt`, `ageMs`, `fresh`, and `freshFields`.
 
 ## GET /sierra/:symbol
 
