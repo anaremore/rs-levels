@@ -4,7 +4,7 @@ Cross-platform localhost API service for RS Levels.
 
 For help choosing between TradingView copy/paste, direct platform plugins, API clients, and private-network use, see [Getting started](../../docs/getting-started.md).
 
-The service receives browser-extension captures, normalizes display levels, keeps the latest snapshot in memory, and exposes read-only REST plus Server-Sent Events feeds for charting tools.
+The service receives browser-extension captures, normalizes display levels, keeps the latest snapshot in memory (and, if you choose a data directory, a short local history of stats), and exposes read-only REST plus Server-Sent Events feeds for charting tools.
 
 ## Start
 
@@ -33,7 +33,7 @@ The service is plain Node.js and is intended to run on Windows, macOS, and Linux
 
 ## Configuration
 
-Save the five service settings in a UTF-8 JSON object and select it explicitly at startup:
+Save the service settings in a UTF-8 JSON object and select it explicitly at startup:
 
 ```powershell
 npm start -- --config "$env:APPDATA\RS Levels\rs-levels.config.json"
@@ -48,6 +48,9 @@ The CLI also accepts `--config=path`. The [example configuration](../../examples
 | `allowRemote` | `false` | JSON boolean. A non-loopback host also requires `true` to enable remote binding. |
 | `corsOrigins` | The list below | JSON array of valid origins or supported patterns. A nonempty list replaces the defaults; `[]` restores defaults. |
 | `staleMs` | `82800000` (23 hours) | JSON integer from `1000` through `86400000`. |
+| `dataDir` | `""` (no history) | Directory for local stats history. Empty keeps stats in memory only. |
+| `historyRetentionDays` | `10` | JSON integer from `1` through `365`. |
+| `historyMaxBytes` | `67108864` (64 MiB) | JSON integer from `1048576` through `1073741824`. |
 
 Default `corsOrigins`:
 
@@ -74,7 +77,12 @@ RS_LEVELS_PORT=8765
 RS_LEVELS_ALLOW_REMOTE=0
 RS_LEVELS_CORS_ORIGINS=
 RS_LEVELS_STALE_MS=82800000
+RS_LEVELS_DATA_DIR=
+RS_LEVELS_HISTORY_RETENTION_DAYS=10
+RS_LEVELS_HISTORY_MAX_BYTES=67108864
 ```
+
+Stats history is off until `dataDir` is set. With it set, the service appends each symbol's changed stats to `<dataDir>/history/` on this machine, keeps them across restarts, and serves them at `/history/:symbol`. Nothing is sent anywhere. To turn it off, clear the setting; to erase it, delete that folder. Choose a directory outside any git checkout.
 
 A defined blank environment variable resets its setting to the default (`false` for `RS_LEVELS_ALLOW_REMOTE`) instead of inheriting the file. Existing permissive environment/programmatic numeric and boolean parsing remains compatible; invalid values fall back as before and report a warning. In the JSON file, types and ranges are strict even when a higher-priority override would replace the value.
 
@@ -114,6 +122,7 @@ GET  /stats
 GET  /stats/:symbol
 GET  /stats/:symbol?format=rows
 GET  /stats/:symbol/rows
+GET  /history/:symbol
 GET  /ddbands
 GET  /zones
 GET  /references

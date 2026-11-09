@@ -1,14 +1,26 @@
 import { loadConfig } from './config.js';
 import { createHttpApp } from './http.js';
+import { createStatsHistory } from './stats-history.js';
 import { createLevelStore } from './store.js';
 
 export function createService(options = {}) {
   const config = loadConfig(options.env || process.env, options.config || {}, options.savedConfig ?? {});
-  const store = options.store || createLevelStore({ staleMs: config.staleMs });
-  const app = createHttpApp({ store, config, onCapture: options.onCapture });
+  const history = options.history || createStatsHistory({
+    dataDir: config.dataDir,
+    retentionDays: config.historyRetentionDays,
+    maxBytes: config.historyMaxBytes,
+    clock: options.clock
+  });
+  const store = options.store || createLevelStore({
+    staleMs: config.staleMs,
+    clock: options.clock,
+    onStats: history.record
+  });
+  const app = createHttpApp({ store, config, history, onCapture: options.onCapture });
   return {
     config,
     store,
+    history,
     server: app.server,
     clients: app.clients
   };

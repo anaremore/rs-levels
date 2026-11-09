@@ -2,7 +2,13 @@ import { readFileSync, statSync } from 'node:fs';
 import { isIP } from 'node:net';
 import { resolve } from 'node:path';
 
-const KEYS = new Set(['host', 'port', 'allowRemote', 'corsOrigins', 'staleMs']);
+const KEYS = new Set(['host', 'port', 'allowRemote', 'corsOrigins', 'staleMs', 'dataDir', 'historyRetentionDays', 'historyMaxBytes']);
+const INTEGER_RANGES = {
+  port: [1, 65535],
+  staleMs: [1000, 86400000],
+  historyRetentionDays: [1, 365],
+  historyMaxBytes: [1048576, 1073741824]
+};
 const ORIGIN_PATTERNS = new Set([
   'null',
   'http://127.0.0.1:*',
@@ -49,9 +55,13 @@ export function validateSavedConfig(saved, context = 'saved settings') {
     if (key === 'host') {
       if (!validHost(value)) throw configError(context, 'host must be a bare IP address or hostname without whitespace, URL, or port');
       clean.host = value;
-    } else if (key === 'port' || key === 'staleMs') {
-      const min = key === 'port' ? 1 : 1000;
-      const max = key === 'port' ? 65535 : 86400000;
+    } else if (key === 'dataDir') {
+      if (typeof value !== 'string' || /[\u0000-\u001f\u007f]/.test(value)) {
+        throw configError(context, 'dataDir must be a directory path string, or empty for no stats history');
+      }
+      clean.dataDir = value;
+    } else if (INTEGER_RANGES[key]) {
+      const [min, max] = INTEGER_RANGES[key];
       if (!Number.isInteger(value) || value < min || value > max) {
         throw configError(context, `${key} must be an integer from ${min} to ${max}`);
       }

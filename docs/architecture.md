@@ -37,7 +37,7 @@ Responsibilities:
 - expose ingest endpoint for the extension
 - expose read-only REST, Server-Sent Events, and WebSocket feeds
 - store latest snapshot in memory
-- optionally persist short local history later
+- optionally persist a short local history of stats, once the user chooses a data directory
 - report source freshness and parser health
 
 The first implementation should use Node.js and TypeScript because it is cross-platform, easy to package later, and matches browser-extension tooling.

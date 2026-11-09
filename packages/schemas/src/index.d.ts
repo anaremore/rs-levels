@@ -90,3 +90,5 @@ export function validateLevel(level: unknown): string[];
 export function normalizeSymbol(value: unknown): string;
 export function inferLevelKind(name: unknown): LevelKind;
 export function stableLevelId(symbol: string, level?: Partial<Level>): string;
+
+export const STATS_FIELDS: ReadonlyArray<{ readonly key: string; readonly label: string; readonly kind: 'number' | 'text' }>;

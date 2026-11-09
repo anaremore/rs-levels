@@ -17,7 +17,7 @@ const PLUGIN_MANIFEST = JSON.parse(readFileSync(new URL('../../../plugins/manife
 const PACKAGE_JSON = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const SERVICE_VERSION = String(PACKAGE_JSON.version || '0.0.0');
 
-export function createHttpApp({ store, config, onCapture }) {
+export function createHttpApp({ store, config, history, onCapture }) {
   const clients = new Set();
 
   const server = http.createServer(async (req, res) => {
@@ -37,7 +37,7 @@ export function createHttpApp({ store, config, onCapture }) {
       if (req.method === 'GET' && (pathname === '/openapi.yaml' || pathname === '/swagger.yaml')) return sendText(res, 200, OPENAPI_YAML, 'application/yaml; charset=utf-8');
       if (req.method === 'GET' && pathname === '/diagnostics') return sendJson(res, 200, diagnostics(store, config));
       if (req.method === 'GET' && pathname === '/health') return sendJson(res, 200, health(store, config));
-      if (req.method === 'GET' && pathname === '/status') return sendJson(res, 200, status(store, config));
+      if (req.method === 'GET' && pathname === '/status') return sendJson(res, 200, status(store, config, history));
       if (req.method === 'GET' && pathname === '/plugins') return sendJson(res, 200, pluginManifest());
       if (req.method === 'GET' && pathname === '/snapshot') return sendJson(res, 200, store.getSnapshot());
       if (req.method === 'GET' && pathname === '/levels') return sendJson(res, 200, { levels: store.flatLevels() });
@@ -117,6 +117,14 @@ export function createHttpApp({ store, config, onCapture }) {
         return sendJson(res, row ? 200 : 404, row ? publicStatsRow(row) : { ok: false, error: 'symbol not found' });
       }
 
+      const historyMatch = pathname.match(/^\/history\/([^/]+)$/);
+      if (req.method === 'GET' && historyMatch) {
+        const range = historyRange(url.searchParams);
+        if (range.error) return sendJson(res, 400, { ok: false, error: range.error });
+        const body = history ? await history.query(historyMatch[1], range) : { ok: true, enabled: false };
+        return sendJson(res, body.ok === false ? 503 : 200, body);
+      }
+
       if (req.method === 'POST' && pathname === '/capture/api') {
         const payload = await readJson(req);
         const snapshot = store.applyCapture(payload);
@@ -134,6 +142,30 @@ export function createHttpApp({ store, config, onCapture }) {
   return { server, clients };
 }
 
+/** from and to as ISO times, and a comma-separated field list. A bad time is refused, never guessed. */
+function historyRange(params) {
+  const fromMs = historyTime(params.get('from'));
+  const toMs = historyTime(params.get('to'));
+  if (Number.isNaN(fromMs)) return { error: 'from must be an ISO 8601 time' };
+  if (Number.isNaN(toMs)) return { error: 'to must be an ISO 8601 time' };
+  if (fromMs != null && toMs != null && fromMs > toMs) return { error: 'from must not be after to' };
+  const fields = String(params.get('fields') || '').split(',').map((field) => field.trim()).filter(Boolean);
+  return { fromMs: fromMs ?? undefined, toMs: toMs ?? undefined, fields };
+}
+
+// From 1970 through 9999: a time a day either side of these can still be written as ISO 8601.
+const HISTORY_LATEST_MS = Date.parse('9999-12-30T00:00:00.000Z');
+
+// A date, or a date and time with `Z` or an offset: never a local time this machine would guess.
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+
+function historyTime(value) {
+  if (value == null || value === '') return null;
+  if (!ISO_TIME.test(value)) return Number.NaN;
+  const ms = Date.parse(value);
+  return ms >= 0 && ms <= HISTORY_LATEST_MS ? ms : Number.NaN;
+}
+
 function notifyCapture(onCapture, snapshot) {
   if (typeof onCapture !== 'function') return;
   try {
@@ -149,7 +181,7 @@ export function rootInfo(config) {
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
     build: serviceBuildInfo(),
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/thinkorswim/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/history/:symbol', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/thinkorswim/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -177,7 +209,7 @@ export function health(store, config) {
   };
 }
 
-export function status(store, config) {
+export function status(store, config, history) {
   const snapshot = store.getSnapshot();
   const summaries = symbolSummaries(snapshot);
   return {
@@ -189,7 +221,8 @@ export function status(store, config) {
     symbolCount: summaries.length,
     levelCount: summaries.reduce((sum, summary) => sum + summary.levelCount, 0),
     symbols: summaries.map((summary) => summary.symbol),
-    symbolSummaries: summaries
+    symbolSummaries: summaries,
+    history: history ? history.status() : { enabled: false }
   };
 }
 
@@ -535,6 +568,7 @@ GET /levels/:symbol/rows
 GET /stats
 GET /stats/:symbol
 GET /stats/:symbol/rows
+GET /history/:symbol
 GET /sierra/:symbol
 GET /zones
 GET /tradingview

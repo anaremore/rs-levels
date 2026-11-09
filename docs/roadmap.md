@@ -30,6 +30,7 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 - `/status` and diagnostics expose scrubbed per-symbol summaries for plugin and extension readiness checks.
 - Service CLI includes non-binding `--help` and `--version` smoke paths.
 - Explicit `--config` JSON settings persist across restarts, with environment/programmatic overrides and loopback safeguards.
+- Optional local stats history: changed values per symbol, per-field coverage so gaps stay gaps, and age and size limits, served at `/history/:symbol`.
 - Next: native packaged app wrapper.
 
 ## Milestone 3: Browser Extension

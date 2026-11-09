@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { validateSavedConfig } from './config-file.js';
 
 const DEFAULT_CORS_ORIGINS = Object.freeze([
@@ -11,6 +12,11 @@ const DEFAULT_CORS_ORIGINS = Object.freeze([
   'moz-extension://*'
 ]);
 const DEFAULT_STALE_MS = 23 * 60 * 60 * 1000;
+const DEFAULT_HISTORY_RETENTION_DAYS = 10;
+const DEFAULT_HISTORY_MAX_BYTES = 64 * 1024 * 1024;
+export const HISTORY_RETENTION_DAYS_MAX = 365;
+export const HISTORY_MAX_BYTES_MIN = 1024 * 1024;
+export const HISTORY_MAX_BYTES_MAX = 1024 * 1024 * 1024;
 
 export function loadConfig(env = process.env, overrides = {}, savedSettings = {}) {
   const saved = validateSavedConfig(savedSettings);
@@ -24,6 +30,11 @@ export function loadConfig(env = process.env, overrides = {}, savedSettings = {}
   const allowRemote = booleanValue(overrides.allowRemote ?? env.RS_LEVELS_ALLOW_REMOTE ?? saved.allowRemote, warnings);
   const corsOrigins = normalizeCorsOrigins(overrides.corsOrigins ?? env.RS_LEVELS_CORS_ORIGINS ?? saved.corsOrigins);
   const staleMs = numberInRange(overrides.staleMs ?? env.RS_LEVELS_STALE_MS ?? saved.staleMs, 1000, 24 * 60 * 60 * 1000, DEFAULT_STALE_MS, 'staleMs', warnings);
+  // Stats history is off until a data directory is chosen (docs/privacy-security.md).
+  const dataDirText = stringValue(overrides.dataDir ?? env.RS_LEVELS_DATA_DIR ?? saved.dataDir);
+  const dataDir = dataDirText ? resolve(dataDirText) : '';
+  const historyRetentionDays = numberInRange(overrides.historyRetentionDays ?? env.RS_LEVELS_HISTORY_RETENTION_DAYS ?? saved.historyRetentionDays, 1, HISTORY_RETENTION_DAYS_MAX, DEFAULT_HISTORY_RETENTION_DAYS, 'historyRetentionDays', warnings);
+  const historyMaxBytes = numberInRange(overrides.historyMaxBytes ?? env.RS_LEVELS_HISTORY_MAX_BYTES ?? saved.historyMaxBytes, HISTORY_MAX_BYTES_MIN, HISTORY_MAX_BYTES_MAX, DEFAULT_HISTORY_MAX_BYTES, 'historyMaxBytes', warnings);
   const isLoopback = host === '127.0.0.1' || host === 'localhost' || host === '::1';
   const effectiveHost = isLoopback || allowRemote ? host : '127.0.0.1';
   if (!isLoopback && !allowRemote) {
@@ -40,6 +51,9 @@ export function loadConfig(env = process.env, overrides = {}, savedSettings = {}
     remoteAccess: !isLoopback && allowRemote,
     corsOrigins,
     staleMs,
+    dataDir,
+    historyRetentionDays,
+    historyMaxBytes,
     warnings
   };
 }
