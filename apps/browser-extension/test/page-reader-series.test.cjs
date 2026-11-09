@@ -246,6 +246,23 @@ function settle() {
     assert.equal(ok.lastDiagnostic().seriesLastReason, 'series-published');
     assert.equal(ok.lastDiagnostic().seriesClockSymbol, '');
   })
+  // One study's export fails while the other returns only past placeholders: nothing from that
+  // chart this read (the failed one may have shown the clock fault).
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 0, 0, 0, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0, 0]])
+    ]);
+    const exportData = nq.exportData;
+    nq.exportData = async (options) => {
+      if (options.includedStudies[0] === 'arb-nq') throw new Error('timed out');
+      return exportData(options);
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.series().length, 0, 'nothing stored from a chart with a failed export');
+    assert.equal(page.lastDiagnostic().seriesErrorCount, 1);
+  })
   // A missing widget: counted, nothing posted, and level capture carries on.
   .then(async () => {
     const page = load(undefined);

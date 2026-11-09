@@ -156,14 +156,12 @@
 
   async function readAndPublishSeries() {
     stats.seriesReadCount += 1;
-    // Each read says afresh what it saw: a widget that went away leaves no old warning behind.
-    stats.seriesWidget = false;
-    stats.seriesClockSymbol = '';
-    stats.seriesClockSkewS = 0;
     const widget = globalThis.tvWidget;
-    if (!widget) return 'series-waiting';
-    // This frame has the charts: its series fields are the ones the popup shows.
-    stats.seriesWidget = true;
+    if (!widget) {
+      // A widget that went away leaves no old warning behind.
+      setSeriesClock(false, [], 0);
+      return 'series-waiting';
+    }
     const nowMs = Date.now();
     const nowS = Math.floor(nowMs / 1000);
     const bySymbol = new Map();
@@ -186,6 +184,7 @@
       const chartRows = new Map();
       let newestS = 0;
       const fullDone = [];
+      let failed = false;
       for (const kind of SERIES_STUDIES[symbol]) {
         const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
         if (!study || typeof chart.exportData !== 'function') {
@@ -204,8 +203,12 @@
           if (full && read.found) fullDone.push(key);
         } catch (_err) {
           stats.seriesErrorCount += 1;
+          failed = true;
         }
       }
+      // A study that failed may have been the one showing the clock fault: nothing from this
+      // chart this read; it is tried again next minute.
+      if (failed) continue;
       if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
         // Nothing from this chart is stored, and its full reads stay due for when it's right.
         skewed.push(displayIndex(symbol));
@@ -219,8 +222,9 @@
       }));
       if (points.size) bySymbol.set(symbol, points);
     }
-    stats.seriesClockSymbol = skewed.join(', ');
-    stats.seriesClockSkewS = Math.round(skewS);
+    // Set together once the read is done: diagnostics posted while exports are pending keep the
+    // last read's warning.
+    setSeriesClock(charts > 0, skewed, skewS);
     if (missing || !charts) stats.seriesMissingCount += 1;
     if (!charts) return 'series-no-chart';
     let posted = 0;
@@ -237,6 +241,13 @@
     if (tooLarge) return 'series-too-large';
     if (!posted) return missing ? 'series-missing-study' : 'series-empty';
     return missing ? 'series-partial' : 'series-published';
+  }
+
+  /** `widget`: this frame read the charts, so its series fields are the ones the popup shows. */
+  function setSeriesClock(widget, skewed, skewS) {
+    stats.seriesWidget = widget;
+    stats.seriesClockSymbol = skewed.join(', ');
+    stats.seriesClockSkewS = Math.round(skewS);
   }
 
   function withTimeout(promise) {
