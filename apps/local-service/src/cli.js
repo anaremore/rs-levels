@@ -93,5 +93,8 @@ Environment:
   RS_LEVELS_ALLOW_REMOTE   Set to 1 only on trusted private networks
   RS_LEVELS_CORS_ORIGINS   Replacement comma-separated CORS origins; empty restores defaults
   RS_LEVELS_STALE_MS       Source stale threshold in milliseconds, default 82800000
+  RS_LEVELS_DATA_DIR       Directory for local stats history; off when unset
+  RS_LEVELS_HISTORY_RETENTION_DAYS  Days of stats history to keep, default 10
+  RS_LEVELS_HISTORY_MAX_BYTES       Most bytes of stats history to keep, default 67108864
 `);
 }

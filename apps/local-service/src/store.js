@@ -1,5 +1,6 @@
 import {
   SCHEMA_VERSION,
+  STATS_FIELDS,
   createEmptySnapshot,
   normalizeSymbol,
   normalizeSourceState,
@@ -14,6 +15,7 @@ const DEFAULT_STALE_MS = 23 * 60 * 60 * 1000;
 export function createLevelStore(options = {}) {
   const staleMs = numberInRange(options.staleMs, 1000, 24 * 60 * 60 * 1000, DEFAULT_STALE_MS);
   const clock = typeof options.clock === 'function' ? options.clock : () => new Date();
+  const onStats = typeof options.onStats === 'function' ? options.onStats : null;
   let snapshot = createEmptySnapshot({
     generatedAt: options.now || isoNow(clock()),
     source: {
@@ -101,7 +103,20 @@ export function createLevelStore(options = {}) {
       symbols,
       warnings: parsed.warnings
     };
+    notifyStats(parsed.stats, receivedAtDate);
     return getSnapshot();
+  }
+
+  // What this capture itself reported, not the merged snapshot: a field it didn't report stays unreported.
+  function notifyStats(stats = {}, at) {
+    if (!onStats) return;
+    Object.entries(stats).forEach(([symbol, row]) => {
+      try {
+        onStats(symbol, row, at);
+      } catch (_error) {
+        // History must never turn an accepted capture into a failed request.
+      }
+    });
   }
 
   function flatLevels(symbol) {
@@ -163,10 +178,13 @@ export function createLevelStore(options = {}) {
 function mergeStats(existing = {}, next = {}) {
   const merged = normalizeStats(existing);
   const incoming = normalizeStats(next);
-  ['dd', 'riskInterval', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
-    if (incoming[key] != null && Number.isFinite(Number(incoming[key]))) merged[key] = Number(incoming[key]);
+  STATS_FIELDS.forEach(({ key, kind }) => {
+    if (kind === 'text') {
+      if (incoming[key]) merged[key] = incoming[key];
+    } else if (incoming[key] != null && Number.isFinite(Number(incoming[key]))) {
+      merged[key] = Number(incoming[key]);
+    }
   });
-  if (incoming.mapCode) merged.mapCode = incoming.mapCode;
   return merged;
 }
 

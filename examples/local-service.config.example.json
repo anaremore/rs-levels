@@ -12,5 +12,8 @@
     "chrome-extension://*",
     "moz-extension://*"
   ],
-  "staleMs": 82800000
+  "staleMs": 82800000,
+  "dataDir": "",
+  "historyRetentionDays": 10,
+  "historyMaxBytes": 67108864
 }

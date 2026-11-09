@@ -34,6 +34,7 @@ GET  /stats
 GET  /stats/:symbol
 GET  /stats/:symbol?format=rows
 GET  /stats/:symbol/rows
+GET  /history/:symbol
 GET  /sierra/:symbol
 GET  /ddbands
 GET  /zones
@@ -299,6 +300,52 @@ Map,BLD
 Aliases resolve the same way as `/levels/:symbol`. Missing stats return a blank-line text body with status `200` for row format so direct clients can observe a completed empty response.
 
 `GET /stats/:symbol/rows` returns the same body without a query string for clients that prefer compact text parsing.
+
+## GET /history/:symbol
+
+Stats over time for one symbol, from a local file. Read-only. It is off until a data directory is chosen (see the [configuration reference](../apps/local-service/README.md#configuration)); while off, the answer has `"enabled": false` and nothing is written to disk.
+
+Query parameters, all optional:
+
+- `from`, `to`: ISO 8601 times. Defaults: the last 24 hours, ending now. A bad time, or `from` after `to`, returns `400`.
+- `fields`: comma-separated field names. Default: every known stats field.
+
+```json
+{
+  "ok": true,
+  "enabled": true,
+  "symbol": "NQ",
+  "from": "2026-06-20T14:00:00.000Z",
+  "to": "2026-06-20T15:00:00.000Z",
+  "fields": ["resilience", "somethingElse"],
+  "absentFields": ["somethingElse"],
+  "gapMs": 300000,
+  "segments": {
+    "resilience": [{ "from": "2026-06-20T14:00:00.000Z", "to": "2026-06-20T14:40:00.000Z" }],
+    "somethingElse": []
+  },
+  "opening": {
+    "resilience": { "t": "2026-06-20T13:55:00.000Z", "value": 1.5 }
+  },
+  "points": [
+    { "t": "2026-06-20T14:10:00.000Z", "values": { "resilience": 1.75 } }
+  ],
+  "truncated": false,
+  "nextFrom": null
+}
+```
+
+How to read it, per field:
+
+- `segments` are the spans the field was being reported. **Outside them nothing is known: that is a gap, and nothing is interpolated across it.** Two reports more than `gapMs` apart are a gap.
+- `points` are the times a value was stored, so only changes (and the first value after a gap). A value holds from its point until the field's next point or the end of its segment, and no further.
+- `opening` is the value already in force at `from`, present only when a segment reaches `from`.
+- A field with no segment and no opening value is listed in `absentFields`. That includes a name this version has never heard of: an unknown field reads as absent, not as an error or a zero.
+- At most 20000 points are returned. If there were more, `truncated` is `true`; continue with `from` set to `nextFrom`.
+
+Stats are stored by field name in `<dataDir>/history/stats-YYYY-MM-DD.jsonl`, one UTC day per file, with no capture bodies, URLs, or levels. Days older than `historyRetentionDays` are deleted, and over `historyMaxBytes` the oldest days go first. If today's file alone reaches the limit, new values are dropped and counted in `/status`, which shows as a gap. The list of fields is `STATS_FIELDS` in `packages/schemas`.
+
+`/status` reports `history`: `enabled`, `retentionDays`, `maxBytes`, `bytes`, `gapMs`, `oldestDay`, `lastWriteAt`, `droppedWrites`, `skippedLines`, `lastError` (a code, never a path), and per symbol `lastSampleAt`, `lastChangeAt`, `ageMs`, `fresh`, and `freshFields`.
 
 ## GET /sierra/:symbol
 

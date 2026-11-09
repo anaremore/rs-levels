@@ -89,6 +89,16 @@ export function normalizeLevel(symbol, level = {}) {
   };
 }
 
+/** The stats fields, in one place: history, and merging a capture into a snapshot, follow this list. */
+export const STATS_FIELDS = Object.freeze([
+  Object.freeze({ key: 'dd', label: 'DD', kind: 'number' }),
+  Object.freeze({ key: 'riskInterval', label: 'RI', kind: 'number' }),
+  Object.freeze({ key: 'resilience', label: 'Res', kind: 'number' }),
+  Object.freeze({ key: 'weeklyResilience', label: 'WRes', kind: 'number' }),
+  Object.freeze({ key: 'monthlyResilience', label: 'MRes', kind: 'number' }),
+  Object.freeze({ key: 'mapCode', label: 'Map', kind: 'text' })
+]);
+
 export function normalizeStats(stats = {}) {
   return {
     dd: firstFiniteNumber(stats.dd, stats.ddRatio),

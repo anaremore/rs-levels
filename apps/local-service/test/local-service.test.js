@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import './config.test.js';
+import './stats-history.test.js';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createService, listen } from '../src/index.js';

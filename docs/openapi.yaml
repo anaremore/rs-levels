@@ -160,6 +160,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsSnapshot'
+  /history/{symbol}:
+    get:
+      summary: Stats over time for one symbol
+      description: >-
+        Read-only, from a local file; off until a data directory is chosen. A value holds from its
+        point until the field's next point or the end of its segment. Outside a field's segments
+        nothing is known, and nothing is interpolated. An unknown field reads as absent.
+      parameters:
+        - $ref: '#/components/parameters/Symbol'
+        - name: from
+          in: query
+          required: false
+          description: ISO 8601 time. Defaults to 24 hours before `to`.
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          description: ISO 8601 time. Defaults to now.
+          schema:
+            type: string
+            format: date-time
+        - name: fields
+          in: query
+          required: false
+          description: Comma-separated field names. Defaults to every known stats field.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: What is known in the range, or `enabled` false with history off
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsHistory'
+        '400':
+          description: A bad time, or `from` after `to`
   /stats/{symbol}:
     get:
       summary: Symbol display context stats
@@ -405,6 +443,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SymbolSummary'
+        history:
+          $ref: '#/components/schemas/StatsHistoryStatus'
     BuildInfo:
       type: object
       required: [revision, generatedAt, source]
@@ -567,6 +607,115 @@ components:
           type: array
           items:
             type: string
+    StatsHistory:
+      type: object
+      required: [ok, enabled, symbol, fields, absentFields, segments, opening, points, truncated, nextFrom]
+      properties:
+        ok:
+          type: boolean
+        enabled:
+          type: boolean
+        symbol:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        fields:
+          type: array
+          items:
+            type: string
+        absentFields:
+          type: array
+          description: Requested fields with nothing known in the range, including unknown names.
+          items:
+            type: string
+        gapMs:
+          type: integer
+          description: Reports further apart than this are a gap.
+        segments:
+          type: object
+          description: For each field, the spans it was being reported.
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+        opening:
+          type: object
+          description: For each field, the value in force at `from`, if a segment reaches it.
+          additionalProperties:
+            type: object
+            required: [t, value]
+            properties:
+              t:
+                type: string
+              value: {}
+        points:
+          type: array
+          items:
+            type: object
+            required: [t, values]
+            properties:
+              t:
+                type: string
+              values:
+                type: object
+                additionalProperties: true
+        truncated:
+          type: boolean
+        nextFrom:
+          type: [string, 'null']
+    StatsHistoryStatus:
+      type: object
+      required: [enabled]
+      description: Freshness of the local stats history. With `enabled` false, nothing else is present.
+      properties:
+        enabled:
+          type: boolean
+        retentionDays:
+          type: integer
+        maxBytes:
+          type: integer
+        bytes:
+          type: integer
+        gapMs:
+          type: integer
+        oldestDay:
+          type: string
+        lastWriteAt:
+          type: string
+        droppedWrites:
+          type: integer
+        skippedLines:
+          type: integer
+        lastError:
+          type: string
+          description: A code, never a path.
+        symbols:
+          type: array
+          items:
+            type: object
+            properties:
+              symbol:
+                type: string
+              lastSampleAt:
+                type: string
+              lastChangeAt:
+                type: string
+              ageMs:
+                type: [integer, 'null']
+              fresh:
+                type: boolean
+              freshFields:
+                type: array
+                items:
+                  type: string
     SymbolSummary:
       type: object
       description: User-facing status summary with ES/NQ family labels.
