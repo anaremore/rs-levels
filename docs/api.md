@@ -308,7 +308,7 @@ Stats over time for one symbol, from a local file. Read-only. It is off until a 
 Query parameters, all optional:
 
 - `from`, `to`: ISO 8601 dates, or times with `Z` or an offset (`2026-11-09T14:30:00Z`), from 1970 through 9999-12-29. Defaults: the last 24 hours, ending now. A bad time, or `from` after `to`, returns `400`. If the history files can't be read, the answer is `503` with an error code, never a path.
-- `fields`: comma-separated field names. Default: every known stats field.
+- `fields`: comma-separated field names. Default: every known stats field, plus the study series fields stored for that symbol (such as `res.hg`, about one point a minute each).
 
 ```json
 {
@@ -338,7 +338,7 @@ Query parameters, all optional:
 How to read it, per field:
 
 - `segments` are the spans the field was being reported. **Outside them nothing is known: that is a gap, and nothing is interpolated across it.** Two reports more than `gapMs` apart are a gap.
-- `points` are the times a value was stored, so only changes (and the first value after a gap). A value holds from its point until the field's next point or the end of its segment, and no further.
+- `points` are the times a value was stored: changes, the first value after a gap, and each point of a backfilled series batch. A value holds from its point until the field's next point or the end of its segment, and no further.
 - `opening` is the value already in force at `from`, present only when a segment reaches `from`.
 - A field with no segment and no opening value is listed in `absentFields`. That includes a name this version has never heard of: an unknown field reads as absent, not as an error or a zero.
 - At most 20000 points are returned. If there were more, `truncated` is `true`; continue with `from` set to `nextFrom`.
@@ -438,6 +438,8 @@ Accepted payload shape:
 `body` may be an object or a JSON string. The parser walks the response and keeps display levels with a recognizable name/label and finite price/value. If one response contains both ES/MES and NQ/MNQ sections, including CQG-style keys such as `F.US.EP...` and `F.US.ENQ...`, both symbols are stored from the same capture. Bull and bear zones are represented as `zone-bull` and `zone-bear` when names, keys, or range groups distinguish the side.
 
 The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, `zoneRectangles`, and `stats` data. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. User-added yellow, red, and purple CAT chart lines are captured from visible futures chart objects when they expose a finite price, and repeated same-kind manual lines stay separate by price. Zone rectangles are captured as geometry even when the rectangle itself is unlabeled; if a matching generic bull or bear zone label is visible inside the rectangle, the parser emits exact top/bottom zone boundaries from the rectangle. Header/study/scanner context such as DD, RI, Res, MRes, WRes, and liquidity-map `Map` codes is stored as stats, not price levels. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line or the source of display-only map context.
+
+The page reader also posts study series as `endpoint: "/page-reader/series"` with a body of `{ "type": "rs_series", "series": { "MNQ": { "fields": ["arb.speed", "res.hg"], "rows": [[1782136800, 0.75, 1.5]] } } }`: each row is unix seconds, then one value or `null` per field. The columns are deliberate: a service older than series support finds no named prices in them, so it can never turn them into levels. These go to the stats history only (see `GET /history/:symbol`) and never change the snapshot or its levels. Field names are the study's source and plot title, lower-cased: `res.hg`, `res.mhp`, `res.hp`, and `arb.speed` today. Only names of that shape with a finite number are stored. Writes are idempotent by symbol, field, and time, so a batch may be sent again; points in the future or past retention are dropped. With history off, series captures are accepted and dropped.
 
 ## CORS
 

@@ -16,6 +16,7 @@ export function createLevelStore(options = {}) {
   const staleMs = numberInRange(options.staleMs, 1000, 24 * 60 * 60 * 1000, DEFAULT_STALE_MS);
   const clock = typeof options.clock === 'function' ? options.clock : () => new Date();
   const onStats = typeof options.onStats === 'function' ? options.onStats : null;
+  const onSeries = typeof options.onSeries === 'function' ? options.onSeries : null;
   let snapshot = createEmptySnapshot({
     generatedAt: options.now || isoNow(clock()),
     source: {
@@ -42,6 +43,12 @@ export function createLevelStore(options = {}) {
   }
 
   function applyCapture(capture) {
+    // Study series go to history only: they carry no levels and never change the snapshot.
+    const series = seriesFromCapture(capture);
+    if (series) {
+      notifySeries(series);
+      return getSnapshot();
+    }
     const parsed = normalizeCapture(capture);
     const receivedAtDate = dateFrom(clock());
     const receivedAt = isoNow(receivedAtDate);
@@ -119,6 +126,18 @@ export function createLevelStore(options = {}) {
     });
   }
 
+  function notifySeries(series) {
+    if (!onSeries) return;
+    Object.entries(series).forEach(([symbol, columns]) => {
+      try {
+        const points = seriesPoints(columns);
+        if (points.length) onSeries(symbol, points);
+      } catch (_error) {
+        // As with stats: history never fails a capture.
+      }
+    });
+  }
+
   function flatLevels(symbol) {
     if (symbol) {
       const row = snapshot.symbols[normalizeSymbol(symbol)];
@@ -173,6 +192,39 @@ export function createLevelStore(options = {}) {
       ageMs
     });
   }
+}
+
+/** `{ fields: [name], rows: [[unixSeconds, value|null, ...]] }` as `[{ t, values }]`. */
+function seriesPoints(columns) {
+  const fields = Array.isArray(columns?.fields) ? columns.fields.map(String) : [];
+  const rows = Array.isArray(columns?.rows) ? columns.rows : [];
+  const points = [];
+  for (const row of rows) {
+    // A time a Date can hold; one bad row never costs the rest of the post.
+    if (!Array.isArray(row) || !Number.isFinite(row[0]) || Math.abs(row[0]) > 8.64e12) continue;
+    const values = {};
+    fields.forEach((field, index) => {
+      if (Number.isFinite(row[index + 1])) values[field] = row[index + 1];
+    });
+    if (Object.keys(values).length) points.push({ t: new Date(row[0] * 1000).toISOString(), values });
+  }
+  return points;
+}
+
+/** `{ SYMBOL: { fields, rows } }` from an `rs_series` capture body, else null. */
+function seriesFromCapture(capture = {}) {
+  let body = capture && capture.body;
+  if (typeof body === 'string') {
+    if (!body.includes('"rs_series"')) return null;
+    try {
+      body = JSON.parse(body);
+    } catch (_error) {
+      return null;
+    }
+  }
+  if (!body || typeof body !== 'object' || body.type !== 'rs_series') return null;
+  const series = body.series;
+  return series && typeof series === 'object' && !Array.isArray(series) ? series : null;
 }
 
 function mergeStats(existing = {}, next = {}) {

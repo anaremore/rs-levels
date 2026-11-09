@@ -115,8 +115,13 @@ async function postCapture(capture, sender = {}) {
     return { ok: false, error: state.lastError };
   }
 
-  state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
-  await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
+  // Study series carry no levels: they go to the service's history only, and don't make level
+  // capture look fresh.
+  const isSeries = Boolean(capture && capture.endpoint === '/page-reader/series');
+  if (!isSeries) {
+    state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
+    await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
+  }
 
   try {
     const response = await fetch(`${settings.serviceUrl}/capture/api`, {
@@ -132,13 +137,17 @@ async function postCapture(capture, sender = {}) {
       })
     });
     if (!response.ok) throw new Error(`Local service returned ${response.status}`);
-    state.postedCount += 1;
-    state.lastPostAt = new Date().toISOString();
-    state.lastError = '';
+    // The popup's post count, time and error are about level capture.
+    if (!isSeries) {
+      state.postedCount += 1;
+      state.lastPostAt = new Date().toISOString();
+      state.lastError = '';
+    }
     return { ok: true };
   } catch (err) {
-    state.lastError = err && err.message ? err.message : 'Local service unavailable';
-    return { ok: false, error: state.lastError };
+    const error = err && err.message ? err.message : 'Local service unavailable';
+    if (!isSeries) state.lastError = error;
+    return { ok: false, error };
   }
 }
 
@@ -545,6 +554,14 @@ function cleanCaptureStats(input = {}) {
     skippedEmptyCount: nonNegativeInteger(input.skippedEmptyCount),
     readErrorCount: nonNegativeInteger(input.readErrorCount),
     publishedCount: nonNegativeInteger(input.publishedCount),
+    seriesReadCount: nonNegativeInteger(input.seriesReadCount),
+    seriesPublishedCount: nonNegativeInteger(input.seriesPublishedCount),
+    seriesPointCount: nonNegativeInteger(input.seriesPointCount),
+    seriesMissingCount: nonNegativeInteger(input.seriesMissingCount),
+    seriesErrorCount: nonNegativeInteger(input.seriesErrorCount),
+    seriesTooLargeCount: nonNegativeInteger(input.seriesTooLargeCount),
+    seriesLastReason: String(input.seriesLastReason || '').slice(0, 40),
+    seriesLastPublishedAt: String(input.seriesLastPublishedAt || '').slice(0, 40),
     lastReason: String(input.lastReason || ''),
     lastDiagnosticAt: String(input.lastDiagnosticAt || '')
   };

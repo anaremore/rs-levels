@@ -186,7 +186,7 @@ paths:
         - name: fields
           in: query
           required: false
-          description: Comma-separated field names. Defaults to every known stats field.
+          description: Comma-separated field names. Defaults to every known stats field, plus the study series fields stored for the symbol.
           schema:
             type: string
       responses:

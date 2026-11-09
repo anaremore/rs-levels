@@ -14,7 +14,8 @@ export function createService(options = {}) {
   const store = options.store || createLevelStore({
     staleMs: config.staleMs,
     clock: options.clock,
-    onStats: history.record
+    onStats: history.record,
+    onSeries: history.recordSeries
   });
   const app = createHttpApp({ store, config, history, onCapture: options.onCapture });
   return {
