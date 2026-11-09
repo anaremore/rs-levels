@@ -141,15 +141,19 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   // A chart clock warning survives the page hook's and other frames' diagnostics; the chart
   // frame's next one replaces it.
   const merge = first.api.mergeCaptureStats;
-  let diag = merge({}, { seriesWidget: true, seriesLastReason: 'series-chart-clock', seriesClockSymbol: 'NQ', seriesClockSkewS: 262800 });
-  diag = merge(diag, { observedCount: 4, lastReason: 'published' });
-  diag = merge(diag, { lastReason: 'reader-waiting', seriesLastReason: 'series-waiting', seriesClockSymbol: '' });
+  const t0 = 1_800_000_000_000;
+  let diag = merge({}, { seriesWidget: true, seriesLastReason: 'series-chart-clock', seriesClockSymbol: 'NQ', seriesClockSkewS: 262800 }, t0);
+  diag = merge(diag, { observedCount: 4, lastReason: 'published' }, t0 + 2000);
+  diag = merge(diag, { lastReason: 'reader-waiting', seriesLastReason: 'series-waiting', seriesClockSymbol: '' }, t0 + 4000);
   assert.equal(diag.seriesClockSymbol, 'NQ');
   assert.equal(diag.seriesClockSkewS, 262800);
   assert.equal(diag.seriesLastReason, 'series-chart-clock');
   assert.equal(diag.observedCount, 0, 'the other fields are the latest message\'s');
   assert.equal(diag.lastReason, 'reader-waiting');
-  diag = merge(diag, { seriesWidget: true, seriesLastReason: 'series-published', seriesClockSymbol: '' });
+  // The chart frame gone (tab closed): after 3 minutes nothing it said lingers.
+  const gone = merge(diag, { lastReason: 'published' }, t0 + 3 * 60 * 1000 + 1);
+  assert.equal(gone.seriesClockSymbol, '', 'a closed chart frame leaves no warning');
+  diag = merge(diag, { seriesWidget: true, seriesLastReason: 'series-published', seriesClockSymbol: '' }, t0 + 6000);
   assert.equal(diag.seriesClockSymbol, '', 'cleared by the chart frame once its clock is right');
 
   console.log('TradingView background handoff tests passed');

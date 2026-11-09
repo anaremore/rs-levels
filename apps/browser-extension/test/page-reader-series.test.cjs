@@ -66,7 +66,7 @@ function load(widget) {
   const reader = context.__RS_LEVELS_PAGE_READER__;
   const series = () => posts.filter((post) => post.type === 'capture' && post.capture.endpoint === '/page-reader/series');
   const lastDiagnostic = () => posts.filter((post) => post.type === 'diagnostic').pop().stats;
-  return { posts, reader, series, lastDiagnostic };
+  return { posts, reader, series, lastDiagnostic, context };
 }
 
 // The reader starts its first read on load; let it finish.
@@ -207,6 +207,14 @@ function settle() {
     assert.ok(nq.calls.slice(2).every((options) => options.from === undefined), 'its full read stays due');
     assert.ok(page.series().every((post) => !JSON.parse(post.capture.body).series.MNQ));
     assert.equal(page.lastDiagnostic().seriesWidget, true, 'from the frame with the charts');
+    // The widget goes away in this frame: it no longer reports the old skew.
+    const widget = page.context.tvWidget;
+    delete page.context.tvWidget;
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-waiting');
+    assert.equal(page.lastDiagnostic().seriesWidget, false);
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '');
+    page.context.tvWidget = widget;
     // The page is reloaded and the clock is right: the warning clears, the day backfills.
     resNq.rows = [[NOW_S - 2 * MIN_S, 1.25, 2.5, 3.75, 0], [NOW_S - MIN_S, 1.5, 2.5, 3.75, 0]];
     arbNq.rows = [[NOW_S - MIN_S, 0.75, 0]];

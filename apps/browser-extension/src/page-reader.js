@@ -156,6 +156,10 @@
 
   async function readAndPublishSeries() {
     stats.seriesReadCount += 1;
+    // Each read says afresh what it saw: a widget that went away leaves no old warning behind.
+    stats.seriesWidget = false;
+    stats.seriesClockSymbol = '';
+    stats.seriesClockSkewS = 0;
     const widget = globalThis.tvWidget;
     if (!widget) return 'series-waiting';
     // This frame has the charts: its series fields are the ones the popup shows.
