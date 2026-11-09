@@ -7,6 +7,7 @@ const FILE_NAME = /^stats-(\d{4}-\d{2}-\d{2})\.jsonl$/;
 const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_.]{0,63}$/;
 /** A study plot read from the page, named by source and plot: `res.hg`, `arb.speed`. Numbers only. */
 const SERIES_FIELD = /^[a-z][a-z0-9]{0,15}\.[a-z0-9_]{1,40}$/;
+const STATS_KEYS = new Set(STATS_FIELDS.map((field) => field.key));
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** While captures keep arriving, a line is written at least this often, even with nothing new. */
@@ -83,6 +84,8 @@ export function createStatsHistory(options = {}) {
   function symbolState(symbol) {
     let state = symbols.get(symbol);
     if (!state) {
+      // lastWriteMs follows the stats lines only: series points arrive on their own clock and must
+      // not move the stats heartbeat.
       state = { values: {}, valueAt: {}, fieldAt: {}, lastWriteMs: 0, lastChangeMs: 0, lastSampleMs: 0, pending: new Map() };
       symbols.set(symbol, state);
     }
@@ -91,7 +94,7 @@ export function createStatsHistory(options = {}) {
 
   function applyToState(line) {
     const state = symbolState(line.s);
-    state.lastWriteMs = Math.max(state.lastWriteMs, line.ms);
+    if (line.r.some((key) => STATS_KEYS.has(key))) state.lastWriteMs = Math.max(state.lastWriteMs, line.ms);
     state.lastSampleMs = Math.max(state.lastSampleMs, line.ms);
     counters.lastWriteAtMs = Math.max(counters.lastWriteAtMs, line.ms);
     for (const key of Object.keys(line.v)) {

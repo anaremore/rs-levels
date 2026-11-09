@@ -43,7 +43,7 @@ The browser extension must not forward:
 
 - Bind to `127.0.0.1` by default.
 - Require an explicit config flag before any LAN binding is allowed.
-- Store only display data needed for current/latest snapshots unless the user enables history. Stats history is enabled by choosing a data directory: it holds timestamped stats only (no capture bodies, URLs, or levels), stays on this machine, is limited by age and size, and is deleted by deleting that folder.
+- Store only display data needed for current/latest snapshots unless the user enables history. Stats history is enabled by choosing a data directory: it holds timestamped stats and study values only (no capture bodies, URLs, or levels), stays on this machine, is limited by age and size, and is deleted by deleting that folder.
 - Keep local database, logs, and captures out of git.
 - Do not include telemetry by default.
 

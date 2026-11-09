@@ -128,10 +128,10 @@ export function createLevelStore(options = {}) {
 
   function notifySeries(series) {
     if (!onSeries) return;
-    Object.entries(series).forEach(([symbol, points]) => {
-      if (!Array.isArray(points)) return;
+    Object.entries(series).forEach(([symbol, columns]) => {
       try {
-        onSeries(symbol, points);
+        const points = seriesPoints(columns);
+        if (points.length) onSeries(symbol, points);
       } catch (_error) {
         // As with stats: history never fails a capture.
       }
@@ -194,7 +194,23 @@ export function createLevelStore(options = {}) {
   }
 }
 
-/** `{ SYMBOL: [{ t, values }] }` from an `rs_series` capture body, else null. */
+/** `{ fields: [name], rows: [[unixSeconds, value|null, ...]] }` as `[{ t, values }]`. */
+function seriesPoints(columns) {
+  const fields = Array.isArray(columns?.fields) ? columns.fields.map(String) : [];
+  const rows = Array.isArray(columns?.rows) ? columns.rows : [];
+  const points = [];
+  for (const row of rows) {
+    if (!Array.isArray(row) || !Number.isFinite(row[0])) continue;
+    const values = {};
+    fields.forEach((field, index) => {
+      if (Number.isFinite(row[index + 1])) values[field] = row[index + 1];
+    });
+    if (Object.keys(values).length) points.push({ t: new Date(row[0] * 1000).toISOString(), values });
+  }
+  return points;
+}
+
+/** `{ SYMBOL: { fields, rows } }` from an `rs_series` capture body, else null. */
 function seriesFromCapture(capture = {}) {
   let body = capture && capture.body;
   if (typeof body === 'string') {

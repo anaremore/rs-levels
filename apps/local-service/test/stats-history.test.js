@@ -6,6 +6,7 @@ import { createService, listen } from '../src/index.js';
 import { status } from '../src/http.js';
 import { HISTORY_GAP_MS, HISTORY_HEARTBEAT_MS, HISTORY_MAX_POINTS, createStatsHistory } from '../src/stats-history.js';
 import { STATS_FIELDS } from '../../../packages/schemas/src/index.js';
+import { normalizeCapture } from '../../../packages/core-parser/src/index.js';
 
 // Synthetic values only. Every directory is temporary and every clock is manual.
 const T0 = Date.parse('2026-06-20T14:00:00.000Z');
@@ -582,12 +583,15 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
       type: 'rs_series',
       source: 'page-reader',
       series: {
-        MNQ: [
-          { t: iso(T0), values: { 'res.hg': 1.25, 'res.hp': 3.75, 'arb.speed': -0.5 } },
-          { t: iso(T0 + MIN), values: { 'res.hg': 1.5, 'res.hp': 3.75, 'arb.speed': 0.75 } },
-          // Not a series name: dropped, never stored.
-          { t: iso(T0 + 2 * MIN), values: { 'Not A Field': 1, 'res.hg': 'text' } }
-        ]
+        MNQ: {
+          fields: ['arb.speed', 'res.hg', 'res.hp', 'Not A Field'],
+          rows: [
+            [T0 / 1000, -0.5, 1.25, 3.75, null],
+            [(T0 + MIN) / 1000, 0.75, 1.5, 3.75, null],
+            // Not a series name, and text: dropped, never stored.
+            [(T0 + 2 * MIN) / 1000, null, 'text', null, 1]
+          ]
+        }
       }
     }
   };
@@ -607,7 +611,31 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.ok(!body.fields.includes('Not A Field'));
   const lines = fileLines(dataDir);
   assert.equal(lines.length, 2, 'the repeat wrote nothing');
+
+  // A service older than series support runs this same parser over the body: no level, no stat.
+  const parsed = normalizeCapture({ endpoint: series.endpoint, method: 'PAGE_READER', status: 200, body: JSON.stringify(series.body) });
+  assert.deepEqual(Object.values(parsed.symbols).flat(), [], 'never a level');
+  assert.deepEqual(parsed.stats || {}, {}, 'never a stat');
   await new Promise((resolve) => service.server.close(resolve));
+}
+
+// Review round 1: series points every minute never push back the stats heartbeat.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  const history = open(dataDir, now);
+  // Stats every 15 s at 7 s past; the series poll 2 s into each minute, carrying that minute's bar.
+  for (let minute = T0; minute < T0 + 30 * MIN; minute += MIN) {
+    now.ms = minute + 2000;
+    history.recordPoints('NQ', [{ t: iso(minute), values: { 'arb.speed': (minute - T0) / MIN } }]);
+    for (let at = minute + 7000; at < minute + MIN; at += 15000) {
+      now.ms = at;
+      history.record('NQ', { dd: 5 }, at);
+    }
+  }
+  const last = T0 + 29 * MIN + 52000;
+  const body = await history.query('NQ', range(T0 + 7000, last, ['dd']));
+  assert.deepEqual(body.segments.dd, [{ from: iso(T0 + 7000), to: iso(last) }], 'one span, no false gaps');
 }
 
 for (const dir of dirs) rmSync(dir, { recursive: true, force: true });

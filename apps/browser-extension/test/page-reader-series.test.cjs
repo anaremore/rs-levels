@@ -37,6 +37,14 @@ function chart(symbol, resolution, studies) {
   };
 }
 
+// The columns a post carries, back as { t, values } points.
+function points(columns) {
+  return columns.rows.map((row) => ({
+    t: new Date(row[0] * 1000).toISOString(),
+    values: Object.fromEntries(columns.fields.map((field, index) => [field, row[index + 1]]).filter(([, value]) => value !== null))
+  }));
+}
+
 function load(widget) {
   const posts = [];
   const context = {
@@ -94,12 +102,17 @@ function settle() {
   const nqDaily = chart('F.US.ENQZ26', '1D', [
     study('res-nq-daily', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 0, 0, 0, 0]])
   ]);
-  const charts = [nq, qqqDaily, es, nqDaily];
+  // A second NQ chart at 5 minutes would overwrite the minute values: never read.
+  const nqFive = chart('F.US.ENQZ26', '5', [
+    study('res-nq-5', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 99, 99, 99, 0]])
+  ]);
+  const charts = [nq, qqqDaily, es, nqDaily, nqFive];
   const page = load({ chartsCount: () => charts.length, chart: (index) => charts[index] });
   await settle();
 
   assert.equal(qqqDaily.calls.length, 0, 'a daily chart is never read');
   assert.equal(nqDaily.calls.length, 0, 'not even on a futures symbol');
+  assert.equal(nqFive.calls.length, 0, 'nor a 5-minute chart');
   assert.equal(nq.calls.length, 2, 'Resilience and Arb only');
   for (const options of nq.calls) {
     assert.equal(options.includeTime, true);
@@ -111,12 +124,16 @@ function settle() {
   assert.equal(posts.length, 2, 'one post per symbol');
   const bodies = posts.map((post) => JSON.parse(post.capture.body));
   for (const body of bodies) assert.equal(body.type, 'rs_series');
-  const nqPoints = bodies.find((body) => body.series.MNQ).series.MNQ;
+  for (const body of bodies) {
+    const columns = Object.values(body.series)[0];
+    assert.ok(Array.isArray(columns.fields) && Array.isArray(columns.rows), 'columns, not named values');
+  }
+  const nqPoints = points(bodies.find((body) => body.series.MNQ).series.MNQ);
   assert.deepEqual(nqPoints, [
     { t: new Date((NOW_S - 2 * MIN_S) * 1000).toISOString(), values: { 'res.hg': 1.25, 'res.mhp': 2.5, 'res.hp': 3.75, 'arb.speed': -0.5 } },
     { t: new Date((NOW_S - MIN_S) * 1000).toISOString(), values: { 'res.hg': 1.5, 'res.mhp': 2.5, 'res.hp': 3.75, 'arb.speed': 0.75 } }
   ], 'no row after now, no all-null row, no zero line, no other study');
-  const esPoints = bodies.find((body) => body.series.MES).series.MES;
+  const esPoints = points(bodies.find((body) => body.series.MES).series.MES);
   assert.deepEqual(esPoints[0].values, { 'res.hg': 9, 'res.mhp': 8, 'res.hp': 7, 'arb.speed': 0.25 });
   assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
 
@@ -128,6 +145,32 @@ function settle() {
 
   for (const row of charts) assert.deepEqual(row.mutations, [], 'nothing on the page is changed');
 })()
+  // An SP500 study on the NQ chart is not NQ's: never read.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 1, 2, 3, 0]]),
+      study('arb-sp', 'SP500 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 5, 0]])
+    ]);
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.deepEqual(nq.calls.map((options) => options.includedStudies[0]), ['res-nq']);
+    const columns = JSON.parse(page.series()[0].capture.body).series.MNQ;
+    assert.ok(!columns.fields.includes('arb.speed'));
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-partial', 'NQ100 Arb is missing');
+  })
+  // Studies still empty just after load: the full read is tried again next minute.
+  .then(async () => {
+    const rows = [];
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], rows),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [])
+    ]);
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    rows.push([NOW_S - MIN_S, 1, 2, 3, 0]);
+    await page.reader.pollSeries();
+    assert.deepEqual(nq.calls.map((options) => options.from), [undefined, undefined, undefined, undefined], 'both reads full');
+  })
   // A missing widget: counted, nothing posted, and level capture carries on.
   .then(async () => {
     const page = load(undefined);

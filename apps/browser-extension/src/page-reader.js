@@ -9,10 +9,18 @@
   const SERIES_RECENT_S = 15 * 60;
   const SERIES_FULL_EVERY_MS = 30 * 60000;
   const SERIES_POINTS_PER_POST = 2000;
-  const SERIES_STUDIES = [
-    { name: /^(?:NQ100|SP500) Resilience$/i, prefix: 'res' },
-    { name: /^(?:NQ100|SP500) Arb$/i, prefix: 'arb' }
-  ];
+  const SERIES_EXPORT_TIMEOUT_MS = 10000;
+  // Each index's studies, on that index's own minute chart only.
+  const SERIES_STUDIES = {
+    MNQ: [
+      { name: /^NQ100 Resilience$/i, prefix: 'res' },
+      { name: /^NQ100 Arb$/i, prefix: 'arb' }
+    ],
+    MES: [
+      { name: /^SP500 Resilience$/i, prefix: 'res' },
+      { name: /^SP500 Arb$/i, prefix: 'arb' }
+    ]
+  };
 
   if (globalThis[READER_KEY]) {
     globalThis[READER_KEY].publishDiagnostic('reader-reconnected');
@@ -147,31 +155,38 @@
     const bySymbol = new Map();
     let charts = 0;
     let missing = false;
+    let tooLarge = false;
     const chartCount = chartCountFromWidget(widget);
     for (let index = 0; index < chartCount; index += 1) {
       const chart = safeChart(widget, index);
       if (!chart) continue;
       const symbol = futuresSymbol(call(chart, 'symbol'));
-      // Daily charts carry an all-zero Resilience study: only minute charts are read.
-      if (!symbol || !/^\d+$/.test(safeString(call(chart, 'resolution')).trim())) continue;
+      // The one-minute chart only: daily charts carry an all-zero Resilience study, and a second
+      // NQ chart at 5 minutes must not overwrite the minute values.
+      if (!SERIES_STUDIES[symbol] || safeString(call(chart, 'resolution')).trim() !== '1') continue;
       charts += 1;
       const full = nowMs - (seriesFullAt.get(symbol) || 0) >= SERIES_FULL_EVERY_MS;
       const studies = safeArray(call(chart, 'getAllStudies'));
-      for (const kind of SERIES_STUDIES) {
+      let complete = true;
+      let found = 0;
+      for (const kind of SERIES_STUDIES[symbol]) {
         const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
         if (!study || typeof chart.exportData !== 'function') {
           missing = true;
+          complete = false;
           continue;
         }
         try {
           const options = { includeTime: true, includeSeries: false, includedStudies: [study.id] };
           if (!full) options.from = nowS - SERIES_RECENT_S;
-          addSeriesRows(bySymbol, symbol, kind.prefix, await chart.exportData(options), nowS);
+          found += addSeriesRows(bySymbol, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
         } catch (_err) {
           stats.seriesErrorCount += 1;
+          complete = false;
         }
       }
-      if (full) seriesFullAt.set(symbol, nowMs);
+      // A full read counts only once it brought everything: studies can be empty just after load.
+      if (full && complete && found) seriesFullAt.set(symbol, nowMs);
     }
     if (missing || !charts) stats.seriesMissingCount += 1;
     if (!charts) return 'series-no-chart';
@@ -179,16 +194,30 @@
     bySymbol.forEach((points, symbol) => {
       const rows = Array.from(points.entries())
         .sort((a, b) => a[0] - b[0])
-        .map(([seconds, values]) => ({ t: new Date(seconds * 1000).toISOString(), values }));
+        .map(([seconds, values]) => ({ seconds, values }));
       for (let start = 0; start < rows.length; start += SERIES_POINTS_PER_POST) {
-        posted += publishSeries(symbol, rows.slice(start, start + SERIES_POINTS_PER_POST)) ? 1 : 0;
+        if (publishSeries(symbol, rows.slice(start, start + SERIES_POINTS_PER_POST))) posted += 1;
+        else tooLarge = true;
       }
     });
+    if (tooLarge) return 'series-too-large';
     if (!posted) return missing ? 'series-missing-study' : 'series-empty';
     return missing ? 'series-partial' : 'series-published';
   }
 
-  /** Plot columns by title; plot `0` is the zero line. Rows after now are held flat, not data. */
+  function withTimeout(promise) {
+    if (typeof window.setTimeout !== 'function') return promise;
+    let timer = 0;
+    const timeout = new Promise((_resolve, reject) => {
+      timer = window.setTimeout(() => reject(new Error('series-export-timeout')), SERIES_EXPORT_TIMEOUT_MS);
+    });
+    return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
+  }
+
+  /**
+   * Plot columns by title; plot `0` is the zero line. Rows after now are held flat, not data.
+   * Returns how many rows had a value.
+   */
   function addSeriesRows(bySymbol, symbol, prefix, exported, nowS) {
     const schema = safeArray(exported && exported.schema);
     const columns = [];
@@ -196,7 +225,8 @@
       const field = seriesFieldName(prefix, schema[column] && schema[column].plotTitle);
       if (field) columns.push([column, field]);
     }
-    if (!columns.length) return;
+    if (!columns.length) return 0;
+    let found = 0;
     const points = bySymbol.get(symbol) || new Map();
     bySymbol.set(symbol, points);
     for (const row of safeArray(exported.data)) {
@@ -208,8 +238,11 @@
         const value = row[column];
         if (typeof value === 'number' && Number.isFinite(value)) values[field] = value;
       }
-      if (Object.keys(values).length) points.set(seconds, Object.assign(points.get(seconds) || {}, values));
+      if (!Object.keys(values).length) continue;
+      points.set(seconds, Object.assign(points.get(seconds) || {}, values));
+      found += 1;
     }
+    return found;
   }
 
   function seriesFieldName(prefix, title) {
@@ -218,9 +251,15 @@
     return `${prefix}.${clean}`;
   }
 
+  /**
+   * Columns, not named values: `{ fields, rows: [[unixSeconds, value|null, ...]] }`. A service older
+   * than series support parses this as a capture with no levels, so it can never become one.
+   */
   function publishSeries(symbol, points) {
     const capturedAt = new Date().toISOString();
-    const body = JSON.stringify({ type: 'rs_series', source: 'page-reader', capturedAt, series: { [symbol]: points } });
+    const fields = Array.from(new Set(points.flatMap((point) => Object.keys(point.values)))).sort();
+    const rows = points.map((point) => [point.seconds, ...fields.map((field) => point.values[field] ?? null)]);
+    const body = JSON.stringify({ type: 'rs_series', source: 'page-reader', capturedAt, series: { [symbol]: { fields, rows } } });
     if (body.length > settings.maxCaptureBytes) {
       stats.skippedTooLargeCount += 1;
       return false;

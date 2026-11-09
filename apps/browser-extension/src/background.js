@@ -115,9 +115,10 @@ async function postCapture(capture, sender = {}) {
     return { ok: false, error: state.lastError };
   }
 
-  state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
-  // Study series carry no levels: they go to the service's history only.
+  // Study series carry no levels: they go to the service's history only, and don't make level
+  // capture look fresh.
   if (!(capture && capture.endpoint === '/page-reader/series')) {
+    state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
     await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);
   }
 
