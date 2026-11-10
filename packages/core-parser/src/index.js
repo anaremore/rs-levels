@@ -506,13 +506,13 @@ const CHART_READERS = new Set(['shape-line', 'study-plot']);
 
 /**
  * An ES or NQ family futures chart's symbol: CQG's `F.US.EPZ26`, `F.US.ENQZ26`, `F.US.MESZ26`,
- * `F.US.MNQZ26`; `ESZ26`, `MNQZ6`; a continuous `ES1!`; the bare root; each with an optional
- * `EXCHANGE:` prefix. Never an index or ETF name.
+ * `F.US.MNQZ26`; `ESZ26`, `MNQZ6`; a continuous `ES1!`; each with an optional
+ * `EXCHANGE:` prefix. Never an index or ETF name, nor a bare root (a stock can be named `ES`).
  */
 function isFuturesChartSymbol(value) {
   const text = stringValue(value).toUpperCase().replace(/^[A-Z_]+:/, '');
   return /^F\.US\.(EP|ENQ|MES|MNQ)[FGHJKMNQUVXZ]\d{1,2}$/.test(text) ||
-    /^M?(ES|NQ)([FGHJKMNQUVXZ]\d{1,2}|1!)?$/.test(text);
+    /^M?(ES|NQ)([FGHJKMNQUVXZ]\d{1,2}|1!)$/.test(text);
 }
 
 /** Where the page reader found a level (kept on the level's metadata). */

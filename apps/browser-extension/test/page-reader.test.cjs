@@ -114,7 +114,9 @@ const charts = [
     ])
   ]),
   makeChart('SPY', [
-    makeShape('spy-close', 'horizontal_line', [{ price: 722.51 }], { text: 'PrevDayClose' })
+    makeShape('spy-close', 'horizontal_line', [{ price: 722.51 }], { text: 'PrevDayClose' }),
+    // The ETF's own HP line on its own chart: never a futures level.
+    makeShape('spy-hp', 'horizontal_line', [{ price: 745 }], { text: 'HP: 745', linecolor: '#00ffff' })
   ]),
   makeChart('NVDA', [
     makeShape('nvda-hp', 'horizontal_line', [{ price: 202.5 }], { text: 'HP: 202.5', linecolor: '#00ffff' }),
@@ -201,7 +203,7 @@ assert.equal(body.type, 'rs_snapshot');
 assert.equal(body.source, 'page-reader');
 assert.equal(body.reader.chartCount, 4);
 assert.equal(body.reader.statCount, 4);
-assert.equal(body.chartLines.length, 20);
+assert.equal(body.chartLines.length, 21);
 assert.equal(body.referenceLines.length, 7); // incl. the NQ chart's Dyn MHP and Dyn HP
 assert.equal(body.zoneRectangles.length, 2);
 assert.equal(body.levels.filter((level) => level.symbol === 'MES' && level.name === 'OVNHP').length, 2);
@@ -271,6 +273,7 @@ for (const [symbol, hp, mhp] of [['MES', 7492.25, 7502], ['MNQ', 27843, 27957.5]
     assert.equal(one('Dyn HP').length, 1);
     assert.equal(one('Dyn MHP').length, 1);
   }
+  assert.equal((parsed.symbols.MES || []).some((level) => level.price < 1000), false, 'the SPY chart\'s HP never reaches ES');
   console.log('browser extension page reader tests passed');
 })().catch((error) => {
   console.error(error);
