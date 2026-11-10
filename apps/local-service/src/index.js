@@ -1,6 +1,7 @@
 import { loadConfig } from './config.js';
 import { createHttpApp } from './http.js';
 import { createStatsHistory } from './stats-history.js';
+import { createSeriesLive } from './series-live.js';
 import { createLevelStore } from './store.js';
 
 export function createService(options = {}) {
@@ -11,17 +12,21 @@ export function createService(options = {}) {
     maxBytes: config.historyMaxBytes,
     clock: options.clock
   });
+  // Each bar's last value goes to history when its minute ends.
+  const live = createSeriesLive({ clock: options.clock, onClosed: history.recordSeries });
   const store = options.store || createLevelStore({
     staleMs: config.staleMs,
     clock: options.clock,
     onStats: history.record,
-    onSeries: history.recordSeries
+    onSeries: history.recordSeries,
+    onLiveSeries: live.accept
   });
-  const app = createHttpApp({ store, config, history, onCapture: options.onCapture });
+  const app = createHttpApp({ store, config, history, live, onCapture: options.onCapture });
   return {
     config,
     store,
     history,
+    live,
     server: app.server,
     clients: app.clients
   };

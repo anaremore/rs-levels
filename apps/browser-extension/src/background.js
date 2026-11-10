@@ -53,7 +53,7 @@ if (webext.tabs.onUpdated) {
 }
 
 webext.runtime.onInstalled.addListener(async () => {
-  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes', 'seriesLiveMs']);
   const settings = globalThis.RS_LEVELS.migrateSettings(stored);
   await webext.storage.local.set(settings);
   await webext.storage.local.remove('captureEnabled');
@@ -108,16 +108,16 @@ webext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function postCapture(capture, sender = {}) {
   let settings;
   try {
-    const stored = await webext.storage.local.get(['serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
+    const stored = await webext.storage.local.get(['serviceUrl', 'endpointPatterns', 'maxCaptureBytes', 'seriesLiveMs']);
     settings = globalThis.RS_LEVELS.cleanSettings(stored);
   } catch (err) {
     state.lastError = err && err.message ? err.message : 'Invalid extension settings';
     return { ok: false, error: state.lastError };
   }
 
-  // Study series carry no levels: they go to the service's history only, and don't make level
-  // capture look fresh.
-  const isSeries = Boolean(capture && capture.endpoint === '/page-reader/series');
+  // Study series (the minute reads and the fast path's changes) carry no levels: they go to the
+  // service's history and live stream only, and don't make level capture look fresh.
+  const isSeries = Boolean(capture && (capture.endpoint === '/page-reader/series' || capture.endpoint === '/page-reader/series-live'));
   if (!isSeries) {
     state.lastCaptureAt = capture && capture.capturedAt || new Date().toISOString();
     await rememberTradingViewSnapshot(capture, sender && sender.tab && sender.tab.id);

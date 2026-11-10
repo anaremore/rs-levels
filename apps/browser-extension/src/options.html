@@ -34,6 +34,12 @@
       <input id="max-capture-bytes" type="number" min="1024" step="1024">
     </section>
 
+    <section class="panel">
+      <label for="series-live-ms">Resilience and Arb update interval (ms)</label>
+      <input id="series-live-ms" type="number" min="500" max="60000" step="100" aria-describedby="series-live-help">
+      <p id="series-live-help" class="hint">How often the newest Resilience and Arb bars are read on the 1-minute charts. Only changed values are sent. Default 1000, minimum 500.</p>
+    </section>
+
     <footer>
       <button id="save" type="button">Save</button>
       <button id="reset" type="button">Reset</button>

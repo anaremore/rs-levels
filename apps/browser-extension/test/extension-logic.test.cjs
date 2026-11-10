@@ -37,6 +37,12 @@ assert.deepEqual(
 );
 assert.equal(Object.hasOwn(sharedContext.RS_LEVELS.migrateSettings({ settingsVersion: 5, captureEnabled: false }), 'captureEnabled'), false);
 assert.equal(sharedContext.RS_LEVELS.cleanSettings({ maxCaptureBytes: 99999999 }).maxCaptureBytes, 5 * 1024 * 1024);
+// The series fast path: 1 s by default, never under half a second, never over a minute.
+assert.equal(sharedContext.RS_LEVELS.cleanSettings({}).seriesLiveMs, 1000);
+assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 100 }).seriesLiveMs, 500);
+assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 2500.7 }).seriesLiveMs, 2500);
+assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 1e9 }).seriesLiveMs, 60000);
+assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 'x' }).seriesLiveMs, 1000);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('ftp://example.test'), /http or https/);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('not a url'), /Invalid URL/);
 assert.equal(sharedContext.RS_LEVELS.normalizeDisplaySymbol('F.US.EPU26'), 'MES');

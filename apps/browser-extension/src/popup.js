@@ -49,7 +49,7 @@ let copyingThinkorswim = false;
 init();
 
 async function init() {
-  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes', 'seriesLiveMs']);
   settings = globalThis.RS_LEVELS.migrateSettings(stored);
   if (settings.settingsVersion !== stored.settingsVersion) {
     await webext.storage.local.set(settings);
