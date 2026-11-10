@@ -134,6 +134,12 @@ export function createHttpApp({ store, config, history, live, onCapture }) {
 
       if (req.method === 'POST' && pathname === '/capture/api') {
         const payload = await readJson(req);
+        // Study series (a minute read, or the fast path up to twice a second) change no levels:
+        // no snapshot broadcast, no capture report, a short answer.
+        if (isSeriesCapture(payload)) {
+          store.applyCapture(payload);
+          return sendJson(res, 200, { ok: true });
+        }
         const snapshot = store.applyCapture(payload);
         broadcast(clients, 'snapshot', snapshot);
         notifyCapture(onCapture, snapshot);
@@ -496,6 +502,8 @@ function streamSeries(req, res, live, symbol, params) {
     'Cache-Control': 'no-cache',
     Connection: 'keep-alive'
   });
+  // Headers and a first line at once, so a client sees the stream open before any bar.
+  res.write(': connected\n\n');
   for (const bar of live.current(symbol)) {
     const event = pick(bar);
     if (event) sendSse(res, 'bar', event);
@@ -506,10 +514,24 @@ function streamSeries(req, res, live, symbol, params) {
   });
   const keepalive = setInterval(() => res.write(': keepalive\n\n'), SERIES_KEEPALIVE_MS);
   keepalive.unref?.();
-  req.on('close', () => {
+  res.on('close', () => {
     clearInterval(keepalive);
     unsubscribe();
   });
+}
+
+/** An `rs_series` or `rs_series_live` capture (the page reader's study series). */
+function isSeriesCapture(payload = {}) {
+  let body = payload && payload.body;
+  if (typeof body === 'string') {
+    if (!body.includes('"rs_series')) return false;
+    try {
+      body = JSON.parse(body);
+    } catch (_error) {
+      return false;
+    }
+  }
+  return Boolean(body) && (body.type === 'rs_series' || body.type === 'rs_series_live');
 }
 
 function broadcast(clients, event, data) {

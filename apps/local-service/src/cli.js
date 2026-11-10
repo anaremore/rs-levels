@@ -71,6 +71,8 @@ function startupError(error) {
 
 function shutdown(code) {
   captureReporter.close();
+  // Streams (the panes' live series) stay open: end them, or close would wait forever.
+  service.server.closeAllConnections?.();
   service.server.close(() => process.exit(code));
 }
 

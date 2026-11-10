@@ -21,6 +21,9 @@
   const SERIES_LIVE_BARS_S = 2 * 60;
   // What the fast path last posted per bar is kept this long (a few bars).
   const SERIES_LIVE_KEEP_S = 5 * 60;
+  // Every so often the fast path sends its bars whole, not just the changes: a post lost on its
+  // way (a service restart) is made good within this.
+  const SERIES_LIVE_FULL_MS = 10 * 1000;
   // Each index's studies, on that index's own minute chart only.
   const SERIES_STUDIES = {
     MNQ: [
@@ -82,6 +85,7 @@
   const seriesClockOk = new Set();
   let liveBusy = false;
   let liveTimer = 0;
+  let liveFullAt = 0;
   // `${symbol}|${seconds}` -> { field: value } as last posted by the fast path.
   const livePosted = new Map();
 
@@ -167,6 +171,10 @@
   async function pollSeries() {
     if (seriesBusy) return;
     seriesBusy = true;
+    // One export at a time per chart: a fast-path read in flight finishes first.
+    for (let waited = 0; liveBusy && waited < SERIES_EXPORT_TIMEOUT_MS + 1000; waited += 50) {
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
     try {
       stats.seriesLastReason = await readAndPublishSeries();
     } catch (_err) {
@@ -312,7 +320,10 @@
     stats.seriesLiveReadCount += 1;
     const widget = globalThis.tvWidget;
     if (!widget) return 'series-waiting';
-    const nowS = Math.floor(Date.now() / 1000);
+    const nowMs = Date.now();
+    const nowS = Math.floor(nowMs / 1000);
+    // Now and then everything, not just the changes.
+    const whole = nowMs - liveFullAt >= SERIES_LIVE_FULL_MS;
     let posted = 0;
     const chartCount = chartCountFromWidget(widget);
     for (let index = 0; index < chartCount; index += 1) {
@@ -344,13 +355,16 @@
       if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
         seriesSkew.set(symbol, newestS - nowS);
         seriesClockOk.delete(symbol);
+        // Said at once, not a minute later.
+        setSeriesClock(true, [displayIndex(symbol)], newestS - nowS);
+        postToContent({ type: 'diagnostic', stats: { ...stats } });
         continue;
       }
       if (failed) continue;
       const changed = [];
       (chartRows.get(symbol) || new Map()).forEach((values, seconds) => {
         const key = `${symbol}|${seconds}`;
-        const last = livePosted.get(key) || {};
+        const last = whole ? {} : livePosted.get(key) || {};
         const fresh = {};
         for (const [field, value] of Object.entries(values)) {
           if (last[field] !== value) fresh[field] = value;
@@ -364,6 +378,7 @@
         posted += 1;
       }
     }
+    if (whole) liveFullAt = nowMs;
     for (const key of livePosted.keys()) {
       if (Number(key.split('|')[1]) < nowS - SERIES_LIVE_KEEP_S) livePosted.delete(key);
     }

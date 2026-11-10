@@ -42,7 +42,7 @@ async function save() {
       serviceUrl: els.serviceUrl.value,
       endpointPatterns: els.endpointPatterns.value,
       maxCaptureBytes: Number(els.maxCaptureBytes.value),
-      seriesLiveMs: Number(els.seriesLiveMs.value)
+      seriesLiveMs: els.seriesLiveMs.value
     });
     await ensureServiceAccess(settings.serviceUrl);
     await webext.storage.local.set(settings);

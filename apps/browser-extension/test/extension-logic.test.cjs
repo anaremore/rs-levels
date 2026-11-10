@@ -43,6 +43,7 @@ assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 100 }).series
 assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 2500.7 }).seriesLiveMs, 2500);
 assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 1e9 }).seriesLiveMs, 60000);
 assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: 'x' }).seriesLiveMs, 1000);
+assert.equal(sharedContext.RS_LEVELS.cleanSettings({ seriesLiveMs: '' }).seriesLiveMs, 1000, 'an emptied field');
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('ftp://example.test'), /http or https/);
 assert.throws(() => sharedContext.RS_LEVELS.cleanServiceUrl('not a url'), /Invalid URL/);
 assert.equal(sharedContext.RS_LEVELS.normalizeDisplaySymbol('F.US.EPU26'), 'MES');

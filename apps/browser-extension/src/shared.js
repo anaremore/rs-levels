@@ -69,6 +69,8 @@
 
   /** At least half a second (the page's cost), at most a minute (the slow read's own pace). */
   function cleanSeriesLiveMs(value) {
+    // An emptied field is the default, not the minimum.
+    if (value == null || String(value).trim() === '') return defaults.seriesLiveMs;
     const number = Number(value);
     if (!Number.isFinite(number)) return defaults.seriesLiveMs;
     return Math.min(60000, Math.max(500, Math.trunc(number)));

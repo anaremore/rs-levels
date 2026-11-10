@@ -6,6 +6,8 @@ export const SERIES_BAR_MS = 60 * 1000;
 export const SERIES_LIVE_KEEP_MS = 3 * SERIES_BAR_MS;
 /** A stream sends a comment this often with nothing else to say, so a client can tell a dead connection. */
 export const SERIES_KEEPALIVE_MS = 15 * 1000;
+/** The names history stores (`stats-history.js`): the live view takes no other. */
+const SERIES_FIELD = /^[a-z][a-z0-9]{0,15}\.[a-z0-9_]{1,40}$/;
 
 /**
  * The study series as they move: each changed value the moment it arrives, the forming minute
@@ -54,7 +56,7 @@ export function createSeriesLive(options = {}) {
       }
       const changed = {};
       for (const [field, value] of Object.entries(values)) {
-        if (!Number.isFinite(value) || bar.values[field] === value) continue;
+        if (!SERIES_FIELD.test(field) || !Number.isFinite(value) || bar.values[field] === value) continue;
         bar.values[field] = value;
         changed[field] = value;
       }
@@ -112,7 +114,8 @@ export function createSeriesLive(options = {}) {
     set.add(listener);
     return () => {
       set.delete(listener);
-      if (!set.size) listeners.delete(symbol);
+      // Only this set: a later subscriber may have made a new one.
+      if (!set.size && listeners.get(symbol) === set) listeners.delete(symbol);
     };
   }
 

@@ -398,6 +398,7 @@ function settle() {
     rows[2][1] = 2;
     await page.reader.pollSeriesLive();
     assert.equal(live().length, 2, 'a chart whose clock is off never posts');
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ', 'said at once');
     rows.pop();
     await page.reader.pollSeriesLive();
     assert.equal(live().length, 2, 'until a minute read judges it right again');

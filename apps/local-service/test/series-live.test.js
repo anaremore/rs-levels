@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createService, listen } from '../src/index.js';
 import { SERIES_BAR_MS, createSeriesLive } from '../src/series-live.js';
+import { createHttpApp } from '../src/http.js';
+import { createLevelStore } from '../src/store.js';
 
 // Synthetic values only; every clock is manual.
 const T0 = Date.parse('2026-06-20T14:00:00.000Z');
@@ -45,6 +47,8 @@ const iso = (ms) => new Date(ms).toISOString();
   assert.equal(events.at(-1).forming, false);
   assert.deepEqual(closed[1][1][0].values, { 'res.hg': 22.95, 'arb.speed': 0.5 });
 
+  // Only the names history stores.
+  assert.equal(live.accept('MNQ', [{ t: iso(T0 + MIN), values: { 'Not A Field': 7, dd: 4 } }]), 0);
   // A new subscriber starts from the bars held; old bars and future ones never enter.
   live.accept('MNQ', [{ t: iso(T0 - 10 * MIN), values: { 'res.hg': 1 } }, { t: iso(now.ms + MIN), values: { 'res.hg': 2 } }]);
   assert.deepEqual(live.current('NQ').map((bar) => [bar.t, bar.forming]), [[iso(T0), false], [iso(T0 + MIN), true]]);
@@ -74,13 +78,37 @@ const iso = (ms) => new Date(ms).toISOString();
     })
   });
   const controller = new AbortController();
+  const readUntil = async (reader, decoder, pattern) => {
+    let text = '';
+    while (!pattern.test(text)) {
+      const { value, done } = await reader.read();
+      if (done) throw new Error('stream ended');
+      text += decoder.decode(value, { stream: true });
+    }
+    return text;
+  };
   try {
-    assert.equal((await post([[T0 / 1000, 0.5, 22.8]])).status, 200);
+    // A stream opened before anything is posted answers at once.
+    const early = new AbortController();
+    const opened = await fetch(`${base}/series/ES/stream`, { signal: early.signal });
+    assert.equal(opened.status, 200);
+    await readUntil(opened.body.getReader(), new TextDecoder(), /: connected\n\n/);
+    assert.equal(service.live.listenerCount('ES'), 1);
+    early.abort();
+    for (let i = 0; i < 100 && service.live.listenerCount('ES'); i += 1) await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(service.live.listenerCount('ES'), 0, 'a client that leaves is let go');
+
+    const reply = await post([[T0 / 1000, 0.5, 22.8]]);
+    assert.equal(reply.status, 200);
+    assert.deepEqual(await reply.json(), { ok: true }, 'a series post gets a short answer, no snapshot');
     const response = await fetch(`${base}/series/NQ/stream?fields=res.hg`, { signal: controller.signal });
     assert.equal(response.headers.get('content-type'), 'text/event-stream; charset=utf-8');
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let text = '';
+    await readUntil(reader, decoder, /: connected\n\n/).then((t) => {
+      text = t.slice(t.indexOf(': connected\n\n') + ': connected\n\n'.length);
+    });
     const nextEvent = async () => {
       while (!text.includes('\n\n')) {
         const { value, done } = await reader.read();
@@ -106,9 +134,22 @@ const iso = (ms) => new Date(ms).toISOString();
     assert.deepEqual((await stored()).map((point) => [point.t, point.values['res.hg']]), [[iso(T0), 22.9]], 'its last value once the minute closed');
     assert.deepEqual(await nextEvent(), { event: 'bar', data: { symbol: 'NQ', t: iso(T0 + MIN), values: { 'res.hg': 23 }, forming: true } });
 
-    // A service without live support answers 404 for the stream: clients fall back to polling.
-    const missing = await fetch(`${base}/series/NQ/nope`);
-    assert.equal(missing.status, 404);
+    // A minute read (`rs_series`) carries the forming bar too: live only, never stored; its
+    // closed bars are stored.
+    const minute = await fetch(`${base}/capture/api`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: '/page-reader/series',
+        method: 'PAGE_READER',
+        status: 200,
+        capturedAt: iso(now.ms),
+        body: JSON.stringify({ type: 'rs_series', series: { MNQ: { fields: ['res.hg'], rows: [[(T0 - MIN) / 1000, 21], [(T0 + MIN) / 1000, 23.5]] } } })
+      })
+    });
+    assert.equal(minute.status, 200);
+    assert.deepEqual((await stored()).map((point) => [point.t, point.values['res.hg']]), [[iso(T0 - MIN), 21], [iso(T0), 22.9]], 'the forming 14:01 bar not stored');
+    assert.deepEqual(await nextEvent(), { event: 'bar', data: { symbol: 'NQ', t: iso(T0 + MIN), values: { 'res.hg': 23.5 }, forming: true } }, 'it moves live');
   } finally {
     controller.abort();
     service.server.closeAllConnections?.();
@@ -116,4 +157,17 @@ const iso = (ms) => new Date(ms).toISOString();
     rmSync(dataDir, { recursive: true, force: true });
   }
 }
+// A service without the live view (an older one) answers 404 for the stream: clients fall back
+// to the minute history reads.
+{
+  const app = createHttpApp({ store: createLevelStore({}), config: { corsOrigins: [] }, history: null, live: undefined });
+  await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
+  try {
+    const response = await fetch(`http://127.0.0.1:${app.server.address().port}/series/NQ/stream`);
+    assert.equal(response.status, 404);
+  } finally {
+    await new Promise((resolve) => app.server.close(resolve));
+  }
+}
+
 console.log('series live tests passed');
