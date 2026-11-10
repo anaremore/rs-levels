@@ -88,7 +88,11 @@ const charts = [
     makeShape('es-red-2', 'horizontal_line', [{ price: 7496 }], { linecolor: 'rgb(242, 54, 69)' }),
     makeShape('es-red-3', 'horizontal_line', [{ price: 7516 }], { text: 'RL2', linecolor: 'rgb(242, 54, 69)' }),
     makeShape('es-bull-zone-label', 'horizontal_line', [{ price: 7566.4 }], { text: 'Bull Zone', linecolor: '#4caf50' }),
-    makeShape('es-bull-zone', 'rectangle', [{ price: 7580 }, { price: 7560 }], { backgroundColor: '#555555' })
+    makeShape('es-bull-zone', 'rectangle', [{ price: 7580 }, { price: 7560 }], { backgroundColor: '#555555' }),
+    // The static HP and MHP, drawn by the page on the futures chart at its own (converted)
+    // price; the label names the ETF value (synthetic).
+    makeShape('es-static-hp', 'horizontal_line', [{ price: 7492.25 }], { text: 'SPY HP : 745 Liquidity Map', linecolor: '#00ffff' }),
+    makeShape('es-static-mhp', 'horizontal_line', [{ price: 7502 }], { text: 'SPY MHP : 746 Liquidity Map', linecolor: '#ff9800' })
   ], [
     makeStudyValues('es-dynamic-hp', 'Dynamic HP', ['Dyn MHP', 'Dyn HP'], [
       [0, 7715.75, 7707.5]
@@ -96,8 +100,13 @@ const charts = [
   ]),
   makeChart('F.US.ENQU26', [
     makeShape('nq-cat', 'horizontal_line', [{ price: 31232.74 }], { text: 'CAT', linecolor: '#7e57c2' }),
-    makeShape('nq-bear-zone', 'rectangle', [{ price: 30710 }, { price: 30680 }], { text: 'Bea Zone', backgroundColor: '#f06292' })
+    makeShape('nq-bear-zone', 'rectangle', [{ price: 30710 }, { price: 30680 }], { text: 'Bea Zone', backgroundColor: '#f06292' }),
+    makeShape('nq-static-hp', 'horizontal_line', [{ price: 27843 }], { text: 'QQQ HP : 672.5 Liquidity Map', linecolor: '#00ffff' }),
+    makeShape('nq-static-mhp', 'horizontal_line', [{ price: 27957.5 }], { text: 'QQQ MHP : 675 Liquidity Map', linecolor: '#ff9800' })
   ], [
+    makeStudyValues('nq-dynamic-hp', 'Dynamic HP', ['Dyn MHP', 'Dyn HP'], [
+      [0, 28064, 28044]
+    ]),
     makeStudy('nq-liquidity', 'Liquidity Map', 'MidGap', 30625.75),
     makeStudyValues('nq-resilience', 'NQ100 Resilience', ['Res', 'MRes', 'WRes'], [
       [0, 0, 0, 0],
@@ -105,7 +114,9 @@ const charts = [
     ])
   ]),
   makeChart('SPY', [
-    makeShape('spy-close', 'horizontal_line', [{ price: 722.51 }], { text: 'PrevDayClose' })
+    makeShape('spy-close', 'horizontal_line', [{ price: 722.51 }], { text: 'PrevDayClose' }),
+    // The ETF's own HP line on its own chart: never a futures level.
+    makeShape('spy-hp', 'horizontal_line', [{ price: 745 }], { text: 'HP: 745', linecolor: '#00ffff' })
   ]),
   makeChart('NVDA', [
     makeShape('nvda-hp', 'horizontal_line', [{ price: 202.5 }], { text: 'HP: 202.5', linecolor: '#00ffff' }),
@@ -192,8 +203,8 @@ assert.equal(body.type, 'rs_snapshot');
 assert.equal(body.source, 'page-reader');
 assert.equal(body.reader.chartCount, 4);
 assert.equal(body.reader.statCount, 4);
-assert.equal(body.chartLines.length, 16);
-assert.equal(body.referenceLines.length, 5);
+assert.equal(body.chartLines.length, 21);
+assert.equal(body.referenceLines.length, 7); // incl. the NQ chart's Dyn MHP and Dyn HP
 assert.equal(body.zoneRectangles.length, 2);
 assert.equal(body.levels.filter((level) => level.symbol === 'MES' && level.name === 'OVNHP').length, 2);
 assert.ok(body.levels.some((level) => level.symbol === 'MES' && level.name === 'OVNHP' && level.price === 7565));
@@ -235,4 +246,36 @@ assert.equal(body.stats.MNQ.monthlyResilience, 49.87);
 assert.equal(body.stats.MNQ.weeklyResilience, -29.29);
 assert.equal(body.stats.MNQ.mapCode, 'BLD');
 
-console.log('browser extension page reader tests passed');
+// The static HP and MHP: read off the futures chart at its own price (never the ETF's value),
+// next to Dyn HP and Dyn MHP.
+for (const [symbol, hp, mhp] of [['MES', 7492.25, 7502], ['MNQ', 27843, 27957.5]]) {
+  assert.ok(body.levels.some((level) => level.symbol === symbol && level.name === 'HP' && level.kind === 'hp' && level.price === hp), symbol);
+  assert.ok(body.levels.some((level) => level.symbol === symbol && level.name === 'MHP' && level.kind === 'mhp' && level.price === mhp), symbol);
+  assert.ok(body.levels.some((level) => level.symbol === symbol && level.name === 'Dyn HP'), symbol);
+  assert.ok(body.levels.some((level) => level.symbol === symbol && level.name === 'Dyn MHP'), symbol);
+  assert.equal(body.levels.some((level) => level.symbol === symbol && (level.price === 745 || level.price === 672.5)), false, 'never the ETF value');
+}
+
+// Through the service's parser, as the extension posts it: all four per index.
+(async () => {
+  const { normalizeCapture } = await import('../../../packages/core-parser/src/index.js');
+  const parsed = normalizeCapture(captureMessage.capture);
+  for (const [symbol, hp, mhp] of [['MES', 7492.25, 7502], ['MNQ', 27843, 27957.5]]) {
+    const rows = parsed.symbols[symbol] || [];
+    const one = (name) => rows.filter((level) => level.name === name);
+    assert.equal(one('HP').length, 1, `${symbol} HP once`);
+    assert.equal(one('HP')[0].price, hp);
+    assert.equal(one('HP')[0].kind, 'hp');
+    assert.equal(one('HP')[0].metadata.reader, 'shape-line', 'its source noted');
+    assert.equal(one('MHP').length, 1, `${symbol} MHP once`);
+    assert.equal(one('MHP')[0].price, mhp);
+    assert.equal(one('MHP')[0].kind, 'mhp');
+    assert.equal(one('Dyn HP').length, 1);
+    assert.equal(one('Dyn MHP').length, 1);
+  }
+  assert.equal((parsed.symbols.MES || []).some((level) => level.price < 1000), false, 'the SPY chart\'s HP never reaches ES');
+  console.log('browser extension page reader tests passed');
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

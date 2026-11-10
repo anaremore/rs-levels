@@ -465,10 +465,13 @@ function mapCodeFromNode(node) {
 }
 
 function candidateFromObject(node, options) {
-  const name = firstDisplayLevelName(node);
+  // A chart's own HP or MHP line (the page reader read it off the futures chart, at the
+  // chart's price) is a level; a bare `hp`/`MHP` anywhere else is a quote field.
+  const chartLevel = isPageReaderChartLevel(node);
+  const name = firstDisplayLevelName(node, chartLevel);
   const price = firstNumber(node, PRICE_KEYS);
   if (!name || price == null) return null;
-  if (isBareQuoteFieldName(name)) return null;
+  if (isBareQuoteFieldName(name) && !(chartLevel && isHpName(name))) return null;
   if (!looksLikeDisplayLevelName(name)) return null;
   const symbol = candidateSymbolFromNode(node, options);
   if (!symbol) return null;
@@ -481,8 +484,46 @@ function candidateFromObject(node, options) {
     color: inputColor(node),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
-    metadata: withEndpointMetadata(displayMetadata(node), options.endpointKey)
+    metadata: withEndpointMetadata({ ...displayMetadata(node), ...readerMetadata(node) }, options.endpointKey)
   });
+}
+
+/**
+ * A level the page reader read off a futures chart: `source: 'rocketscooter-page'`, found on a
+ * chart line or a study plot (`metadata.reader`), on a chart whose own symbol
+ * (`metadata.rawSymbol`) is an ES or NQ family futures contract. Its price is that chart's
+ * plotted value, never a conversion. Scanner rows and index or ETF charts (`SP500`, `NQ100`,
+ * `SPY`) never qualify: their HP is the ETF's.
+ */
+function isPageReaderChartLevel(node) {
+  if (stringValue(node && node.source) !== 'rocketscooter-page') return false;
+  const meta = node.metadata && typeof node.metadata === 'object' ? node.metadata : null;
+  if (!meta || !CHART_READERS.has(stringValue(meta.reader))) return false;
+  return isFuturesChartSymbol(meta.rawSymbol);
+}
+
+const CHART_READERS = new Set(['shape-line', 'study-plot']);
+
+/**
+ * An ES or NQ family futures chart's symbol: CQG's `F.US.EPZ26`, `F.US.ENQZ26`, `F.US.MESZ26`,
+ * `F.US.MNQZ26`; `ESZ26`, `MNQZ6`; a continuous `ES1!`; each with an optional
+ * `EXCHANGE:` prefix. Never an index or ETF name, nor a bare root (a stock can be named `ES`).
+ */
+function isFuturesChartSymbol(value) {
+  const text = stringValue(value).toUpperCase().replace(/^[A-Z_]+:/, '');
+  return /^F\.US\.(EP|ENQ|MES|MNQ)[FGHJKMNQUVXZ]\d{1,2}$/.test(text) ||
+    /^M?(ES|NQ)([FGHJKMNQUVXZ]\d{1,2}|1!)$/.test(text);
+}
+
+/** Where the page reader found a level (kept on the level's metadata). */
+function readerMetadata(node) {
+  if (!isPageReaderChartLevel(node)) return {};
+  const out = {};
+  ['reader', 'rawSymbol', 'study'].forEach((key) => {
+    const value = node.metadata[key];
+    if (value != null && typeof value !== 'object') out[key] = value;
+  });
+  return out;
 }
 
 function candidateFromArray(row, options) {
@@ -657,10 +698,10 @@ function valuesForKeys(node, keys) {
   return values;
 }
 
-function firstDisplayLevelName(node) {
+function firstDisplayLevelName(node, chartLevel = false) {
   for (const key of NAME_KEYS) {
     const value = stringValue(node[key]);
-    if (!value || isBareQuoteFieldName(value)) continue;
+    if (!value || (isBareQuoteFieldName(value) && !(chartLevel && isHpName(value)))) continue;
     if (looksLikeDisplayLevelName(value)) return value;
   }
   return manualLevelNameFromColor(inputColor(node));
@@ -934,6 +975,11 @@ function isUnsupportedSymbolContext(value) {
 }
 
 const NON_SYMBOL_CONTEXT_PARTS = new Set(['API', 'CME', 'CQG', 'F', 'ID', 'RS', 'TV', 'URL', 'US', 'USD']);
+
+/** The static HP and MHP names (bare: `Dyn HP` and the rest already pass). */
+function isHpName(name) {
+  return /^m?hp$/i.test(stringValue(name));
+}
 
 function isBareQuoteFieldName(name) {
   return /^(hp|mhp|open|close|high|low|last)$/i.test(stringValue(name));
