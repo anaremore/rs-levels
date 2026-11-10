@@ -489,13 +489,30 @@ function candidateFromObject(node, options) {
 }
 
 /**
- * A level the page reader read off a chart: `source: 'rocketscooter-page'` with the reader that
- * found it (`metadata.reader`: a chart line, a study plot, a scanner row). Its price is the
- * chart's own (the futures chart's plotted value), never a conversion.
+ * A level the page reader read off a futures chart: `source: 'rocketscooter-page'`, found on a
+ * chart line or a study plot (`metadata.reader`), on a chart whose own symbol
+ * (`metadata.rawSymbol`) is an ES or NQ family futures contract. Its price is that chart's
+ * plotted value, never a conversion. Scanner rows and index or ETF charts (`SP500`, `NQ100`,
+ * `SPY`) never qualify: their HP is the ETF's.
  */
 function isPageReaderChartLevel(node) {
-  return stringValue(node && node.source) === 'rocketscooter-page' &&
-    Boolean(node.metadata && typeof node.metadata === 'object' && stringValue(node.metadata.reader));
+  if (stringValue(node && node.source) !== 'rocketscooter-page') return false;
+  const meta = node.metadata && typeof node.metadata === 'object' ? node.metadata : null;
+  if (!meta || !CHART_READERS.has(stringValue(meta.reader))) return false;
+  return isFuturesChartSymbol(meta.rawSymbol);
+}
+
+const CHART_READERS = new Set(['shape-line', 'study-plot']);
+
+/**
+ * An ES or NQ family futures chart's symbol: CQG's `F.US.EPZ26`, `F.US.ENQZ26`, `F.US.MESZ26`,
+ * `F.US.MNQZ26`; `ESZ26`, `MNQZ6`; a continuous `ES1!`; the bare root; each with an optional
+ * `EXCHANGE:` prefix. Never an index or ETF name.
+ */
+function isFuturesChartSymbol(value) {
+  const text = stringValue(value).toUpperCase().replace(/^[A-Z_]+:/, '');
+  return /^F\.US\.(EP|ENQ|MES|MNQ)[FGHJKMNQUVXZ]\d{1,2}$/.test(text) ||
+    /^M?(ES|NQ)([FGHJKMNQUVXZ]\d{1,2}|1!)?$/.test(text);
 }
 
 /** Where the page reader found a level (kept on the level's metadata). */

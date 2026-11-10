@@ -224,7 +224,13 @@ const staticHp = normalizeCapture({
       { symbol: 'MES', name: 'Dyn MHP', kind: 'mhp', price: 7580, source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'study-plot', study: 'Dynamic HP' } },
       // Not from a chart reader: a bare HP stays a quote field.
       { symbol: 'MES', name: 'HP', price: 745, source: 'somewhere-else' },
-      { symbol: 'MES', name: 'MHP', price: 746, source: 'rocketscooter-page' }
+      { symbol: 'MES', name: 'MHP', price: 746, source: 'rocketscooter-page' },
+      // A scanner row whose symbol the service reads as ES (SP500): the ETF's HP, never a level.
+      { symbol: 'SP500', name: 'HP', price: 745.5, source: 'rocketscooter-page', metadata: { rawSymbol: 'SP500', reader: 'scanner-table' } },
+      // Lines on index or ETF charts: their HP is the ETF's, never a futures level.
+      { symbol: 'MNQ', name: 'HP', price: 672.75, source: 'rocketscooter-page', metadata: { rawSymbol: 'NQ100', reader: 'shape-line' } },
+      { symbol: 'MES', name: 'MHP', price: 746.25, source: 'rocketscooter-page', metadata: { rawSymbol: 'SPY', reader: 'shape-line' } },
+      { symbol: 'MES', name: 'HP', price: 745.75, source: 'rocketscooter-page', metadata: { rawSymbol: 'AMEX:SPY', reader: 'study-plot' } }
     ],
     // The reader's raw chart lines repeat the same lines: never a second HP.
     chartLines: [
@@ -245,7 +251,9 @@ assert.equal(named('MHP')[0].kind, 'mhp');
 assert.equal(named('Dyn HP').length, 1);
 assert.equal(named('Dyn HP')[0].metadata.study, 'Dynamic HP');
 assert.equal(named('Dyn MHP').length, 1);
-assert.equal(esStatic.some((level) => level.price === 745 || level.price === 746), false, 'no ETF value, no unsourced HP');
+assert.equal(esStatic.some((level) => level.price < 1000), false, 'no ETF value, no unsourced HP');
+assert.equal((staticHp.symbols.MNQ || []).some((level) => level.price < 1000), false, 'no index-chart HP on NQ');
+assert.equal(staticHp.symbols.SP500, undefined);
 
 const mixedWatchlistAndFutures = normalizeCapture({
   endpoint: '/platform/api/v1/chart/display',
