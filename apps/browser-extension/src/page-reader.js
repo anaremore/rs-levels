@@ -172,7 +172,9 @@
     if (seriesBusy) return;
     seriesBusy = true;
     // One export at a time per chart: a fast-path read in flight finishes first.
-    for (let waited = 0; liveBusy && waited < SERIES_EXPORT_TIMEOUT_MS + 1000; waited += 50) {
+    // At most every chart's export timeout (the fast path reads each chart in turn).
+    const waitMs = (chartCountFromWidget(globalThis.tvWidget) + 1) * SERIES_EXPORT_TIMEOUT_MS;
+    for (let waited = 0; liveBusy && waited < waitMs; waited += 50) {
       await new Promise((resolve) => window.setTimeout(resolve, 50));
     }
     try {

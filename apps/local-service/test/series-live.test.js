@@ -149,7 +149,15 @@ const iso = (ms) => new Date(ms).toISOString();
     });
     assert.equal(minute.status, 200);
     assert.deepEqual((await stored()).map((point) => [point.t, point.values['res.hg']]), [[iso(T0 - MIN), 21], [iso(T0), 22.9]], 'the forming 14:01 bar not stored');
-    assert.deepEqual(await nextEvent(), { event: 'bar', data: { symbol: 'NQ', t: iso(T0 + MIN), values: { 'res.hg': 23.5 }, forming: true } }, 'it moves live');
+    assert.equal(service.live.current('NQ').at(-1).values['res.hg'], 23, 'a held forming bar is the fast path\'s: a minute read never takes it back');
+    // One the fast path doesn't hold (an older extension): the minute read moves it live.
+    const esMinute = await fetch(`${base}/capture/api`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: '/page-reader/series', method: 'PAGE_READER', status: 200, capturedAt: iso(now.ms), body: JSON.stringify({ type: 'rs_series', series: { MES: { fields: ['res.hg'], rows: [[(T0 + MIN) / 1000, 9.5]] } } }) })
+    });
+    assert.equal(esMinute.status, 200);
+    assert.deepEqual(service.live.current('ES').map((bar) => [bar.t, bar.values['res.hg'], bar.forming]), [[iso(T0 + MIN), 9.5, true]]);
   } finally {
     controller.abort();
     service.server.closeAllConnections?.();

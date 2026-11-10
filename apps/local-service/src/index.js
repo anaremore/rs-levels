@@ -22,7 +22,10 @@ export function createService(options = {}) {
     const forming = (point) => Date.parse(point?.t) + SERIES_BAR_MS > nowMs;
     const closed = points.filter((point) => !forming(point));
     const open = points.filter(forming);
-    if (open.length) live.accept(symbol, open);
+    // The fast path keeps a held forming bar current: a minute read's (older) value for it
+    // would only take that back.
+    const fresh = open.filter((point) => !live.holds(symbol, point.t));
+    if (fresh.length) live.accept(symbol, fresh);
     return closed.length ? history.recordSeries(symbol, closed) : 0;
   };
   const store = options.store || createLevelStore({
@@ -33,6 +36,10 @@ export function createService(options = {}) {
     onLiveSeries: live.accept
   });
   const app = createHttpApp({ store, config, history, live, onCapture: options.onCapture });
+  // A bar whose minute ended reaches history even with no post after it (a closed tab).
+  const settleTimer = setInterval(live.settleAll, 5000);
+  settleTimer.unref?.();
+  app.server.on('close', () => clearInterval(settleTimer));
   return {
     config,
     store,

@@ -26,7 +26,18 @@ export function createSeriesLive(options = {}) {
   // Canonical symbol -> Set(listener)
   const listeners = new Map();
 
-  return { accept, current, subscribe, listenerCount };
+  return { accept, current, subscribe, listenerCount, settleAll, holds };
+
+  /** Every symbol's ended bars to history now (a timer, a history read, shutdown). */
+  function settleAll() {
+    const now = nowMs();
+    for (const [symbol, byBar] of bars) settle(symbol, byBar, now);
+  }
+
+  /** Whether the live view holds this bar (ISO time) for the symbol. */
+  function holds(symbolInput, t) {
+    return Boolean(bars.get(normalizeSymbol(symbolInput))?.has(Date.parse(t)));
+  }
 
   function nowMs() {
     const value = clock();

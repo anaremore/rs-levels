@@ -128,6 +128,8 @@ export function createHttpApp({ store, config, history, live, onCapture }) {
       if (req.method === 'GET' && historyMatch) {
         const range = historyRange(url.searchParams);
         if (range.error) return sendJson(res, 400, { ok: false, error: range.error });
+        // Ended bars the live view still holds are history's first.
+        live?.settleAll();
         const body = history ? await history.query(historyMatch[1], range) : { ok: true, enabled: false };
         return sendJson(res, body.ok === false ? 503 : 200, body);
       }
