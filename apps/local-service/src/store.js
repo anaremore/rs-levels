@@ -17,6 +17,7 @@ export function createLevelStore(options = {}) {
   const clock = typeof options.clock === 'function' ? options.clock : () => new Date();
   const onStats = typeof options.onStats === 'function' ? options.onStats : null;
   const onSeries = typeof options.onSeries === 'function' ? options.onSeries : null;
+  const onLiveSeries = typeof options.onLiveSeries === 'function' ? options.onLiveSeries : null;
   let snapshot = createEmptySnapshot({
     generatedAt: options.now || isoNow(clock()),
     source: {
@@ -47,6 +48,12 @@ export function createLevelStore(options = {}) {
     const series = seriesFromCapture(capture);
     if (series) {
       notifySeries(series);
+      return getSnapshot();
+    }
+    // The fast path's changed values: live only (history takes each bar once its minute ends).
+    const live = seriesFromCapture(capture, 'rs_series_live');
+    if (live) {
+      notifyLiveSeries(live);
       return getSnapshot();
     }
     const parsed = normalizeCapture(capture);
@@ -138,6 +145,18 @@ export function createLevelStore(options = {}) {
     });
   }
 
+  function notifyLiveSeries(series) {
+    if (!onLiveSeries) return;
+    Object.entries(series).forEach(([symbol, columns]) => {
+      try {
+        const points = seriesPoints(columns);
+        if (points.length) onLiveSeries(symbol, points);
+      } catch (_error) {
+        // A live post never fails either.
+      }
+    });
+  }
+
   function flatLevels(symbol) {
     if (symbol) {
       const row = snapshot.symbols[normalizeSymbol(symbol)];
@@ -211,18 +230,18 @@ function seriesPoints(columns) {
   return points;
 }
 
-/** `{ SYMBOL: { fields, rows } }` from an `rs_series` capture body, else null. */
-function seriesFromCapture(capture = {}) {
+/** `{ SYMBOL: { fields, rows } }` from an `rs_series` (or `type`) capture body, else null. */
+function seriesFromCapture(capture = {}, type = 'rs_series') {
   let body = capture && capture.body;
   if (typeof body === 'string') {
-    if (!body.includes('"rs_series"')) return null;
+    if (!body.includes(`"${type}"`)) return null;
     try {
       body = JSON.parse(body);
     } catch (_error) {
       return null;
     }
   }
-  if (!body || typeof body !== 'object' || body.type !== 'rs_series') return null;
+  if (!body || typeof body !== 'object' || body.type !== type) return null;
   const series = body.series;
   return series && typeof series === 'object' && !Array.isArray(series) ? series : null;
 }

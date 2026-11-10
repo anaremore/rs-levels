@@ -2,6 +2,7 @@ const els = {
   serviceUrl: document.getElementById('service-url'),
   endpointPatterns: document.getElementById('endpoint-patterns'),
   maxCaptureBytes: document.getElementById('max-capture-bytes'),
+  seriesLiveMs: document.getElementById('series-live-ms'),
   testService: document.getElementById('test-service'),
   permissionStatus: document.getElementById('permission-status'),
   save: document.getElementById('save'),
@@ -24,7 +25,7 @@ async function init() {
 }
 
 async function load() {
-  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes']);
+  const stored = await webext.storage.local.get(['settingsVersion', 'serviceUrl', 'endpointPatterns', 'maxCaptureBytes', 'seriesLiveMs']);
   const settings = globalThis.RS_LEVELS.migrateSettings(stored);
   if (settings.settingsVersion !== stored.settingsVersion) {
     await webext.storage.local.set(settings);
@@ -32,6 +33,7 @@ async function load() {
   els.serviceUrl.value = settings.serviceUrl;
   els.endpointPatterns.value = settings.endpointPatterns.join('\n');
   els.maxCaptureBytes.value = String(settings.maxCaptureBytes);
+  els.seriesLiveMs.value = String(settings.seriesLiveMs);
 }
 
 async function save() {
@@ -39,7 +41,8 @@ async function save() {
     const settings = globalThis.RS_LEVELS.cleanSettings({
       serviceUrl: els.serviceUrl.value,
       endpointPatterns: els.endpointPatterns.value,
-      maxCaptureBytes: Number(els.maxCaptureBytes.value)
+      maxCaptureBytes: Number(els.maxCaptureBytes.value),
+      seriesLiveMs: els.seriesLiveMs.value
     });
     await ensureServiceAccess(settings.serviceUrl);
     await webext.storage.local.set(settings);

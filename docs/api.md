@@ -35,6 +35,7 @@ GET  /stats/:symbol
 GET  /stats/:symbol?format=rows
 GET  /stats/:symbol/rows
 GET  /history/:symbol
+GET  /series/:symbol/stream
 GET  /sierra/:symbol
 GET  /ddbands
 GET  /zones
@@ -46,7 +47,7 @@ GET  /stream
 POST /capture/api
 ```
 
-WebSockets are not implemented yet. `GET /stream` is the first streaming transport because Server-Sent Events are easy for browsers, dashboards, and local tools.
+WebSockets are not implemented. Both streams (`GET /stream`, `GET /series/:symbol/stream`) are Server-Sent Events: easy for browsers, dashboards, and local tools, and plain HTTP under the same CORS and host rules as every other endpoint.
 
 ## GET /
 
@@ -415,6 +416,25 @@ data: {"schemaVersion":"0.1.0"}
 
 Each accepted capture broadcasts another `snapshot` event.
 
+## GET /series/:symbol/stream
+
+Server-Sent Events: a symbol's study series as they change, about a second behind the chart. Live only: nothing here is read from or written to disk by the stream itself.
+
+- On connect, one `bar` event per bar the service holds for the symbol: the forming minute and up to the last two closed minutes, with every value it has for each.
+- Then one `bar` event each time a value changes, carrying only the changed values:
+
+```text
+event: bar
+data: {"symbol":"NQ","t":"2026-06-20T14:00:00.000Z","values":{"res.hg":22.9},"forming":true}
+```
+
+- `t` is the bar's start (one bar a minute). `forming` is true while that minute hasn't ended: its values still move and the bar isn't stored yet. A value for a closed bar (`forming: false`) is a late correction.
+- `fields`: comma-separated field names to receive (`?fields=res.hg,arb.speed`). Default: every field. An event whose values are all filtered out isn't sent.
+- With nothing to send, a comment line (`: keepalive`) every 15 seconds, so a client can tell a dead connection from a quiet one.
+- `symbol` takes the same names as the other endpoints (`NQ` and `MNQ` are one symbol).
+
+History keeps one value per minute: when a bar's minute ends, its last value is stored (as with `rs_series` posts, idempotent), and a later correction is stored again (the latest wins). A forming value is never stored. A service without this endpoint answers `404`: clients fall back to `GET /history/:symbol` once a minute.
+
 ## POST /capture/api
 
 Browser-extension ingest endpoint. Public display clients should not post here.
@@ -439,7 +459,9 @@ Accepted payload shape:
 
 The page-reader fallback may also post a display snapshot with top-level `chartLines`, `referenceLines`, `zoneRectangles`, and `stats` data. These are normalized by futures chart family (`index: "ES"` becomes `MES`, `index: "NQ"` becomes `MNQ`) so one live RocketScooter page can populate both ES/MES and NQ/MNQ exports. User-added yellow, red, and purple CAT chart lines are captured from visible futures chart objects when they expose a finite price, and repeated same-kind manual lines stay separate by price. Zone rectangles are captured as geometry even when the rectangle itself is unlabeled; if a matching generic bull or bear zone label is visible inside the rectangle, the parser emits exact top/bottom zone boundaries from the rectangle. Header/study/scanner context such as DD, RI, Res, MRes, WRes, and liquidity-map `Map` codes is stored as stats, not price levels. Non-futures panels such as SPY, QQQ, or watchlist quotes are ignored unless they are merely text labels on a recognized futures chart line or the source of display-only map context.
 
-The page reader also posts study series as `endpoint: "/page-reader/series"` with a body of `{ "type": "rs_series", "series": { "MNQ": { "fields": ["arb.speed", "res.hg"], "rows": [[1782136800, 0.75, 1.5]] } } }`: each row is unix seconds, then one value or `null` per field. The columns are deliberate: a service older than series support finds no named prices in them, so it can never turn them into levels. These go to the stats history only (see `GET /history/:symbol`) and never change the snapshot or its levels. Field names are the study's source and plot title, lower-cased: `res.hg`, `res.mhp`, `res.hp`, and `arb.speed` today. Only names of that shape with a finite number are stored. Writes are idempotent by symbol, field, and time, so a batch may be sent again; points in the future or past retention are dropped. With history off, series captures are accepted and dropped.
+The page reader also posts study series as `endpoint: "/page-reader/series"` with a body of `{ "type": "rs_series", "series": { "MNQ": { "fields": ["arb.speed", "res.hg"], "rows": [[1782136800, 0.75, 1.5]] } } }`: each row is unix seconds, then one value or `null` per field. The columns are deliberate: a service older than series support finds no named prices in them, so it can never turn them into levels. These go to the stats history only (see `GET /history/:symbol`) and never change the snapshot or its levels. Field names are the study's source and plot title, lower-cased: `res.hg`, `res.mhp`, `res.hp`, and `arb.speed` today. Only names of that shape with a finite number are stored. Writes are idempotent by symbol, field, and time, so a batch may be sent again; points in the future or past retention are dropped. A bar whose minute hasn't ended (the forming bar a minute read carries) is never stored: it feeds `GET /series/:symbol/stream`, and its minute is stored within a few seconds of its end (with the last value the service saw; a later read's value replaces it). A minute read's forming value never replaces a newer one the fast path sent. Series captures change no levels: the answer is a short `{ "ok": true }`, and `GET /stream` gets no snapshot for them. With history off, series captures are accepted and dropped.
+
+The page reader's fast path posts `endpoint: "/page-reader/series-live"` with the same columns under `"type": "rs_series_live"`: the last two bars of each study, about once a second, only when a value changed. These feed `GET /series/:symbol/stream` at once; each bar reaches history only when its minute has ended, with its last value. A service older than this ignores them the same way (no named prices, so no levels).
 
 ## CORS
 

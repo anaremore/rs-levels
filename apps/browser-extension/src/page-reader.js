@@ -13,6 +13,17 @@
   // A chart whose newest bar is further ahead of now than this has a broken clock (the page logs
   // `putToCacheNewBar: time violation`): its studies' past rows are placeholders, not data.
   const SERIES_CLOCK_SKEW_S = 120;
+  // The fast path: the last two bars of each study, about every second (a setting), posted only
+  // when a value changed, so the panes follow the chart within a second or two.
+  const SERIES_LIVE_DEFAULT_MS = 1000;
+  const SERIES_LIVE_MIN_MS = 500;
+  const SERIES_LIVE_MAX_MS = 60000;
+  const SERIES_LIVE_BARS_S = 2 * 60;
+  // What the fast path last posted per bar is kept this long (a few bars).
+  const SERIES_LIVE_KEEP_S = 5 * 60;
+  // Every so often the fast path sends its bars whole, not just the changes: a post lost on its
+  // way (a service restart) is made good within this.
+  const SERIES_LIVE_FULL_MS = 10 * 1000;
   // Each index's studies, on that index's own minute chart only.
   const SERIES_STUDIES = {
     MNQ: [
@@ -31,7 +42,8 @@
   }
 
   let settings = {
-    maxCaptureBytes: 1024 * 1024
+    maxCaptureBytes: 1024 * 1024,
+    seriesLiveMs: SERIES_LIVE_DEFAULT_MS
   };
   let timer = 0;
   let lastHash = '';
@@ -55,6 +67,11 @@
     seriesClockSkewS: 0,
     seriesLastReason: '',
     seriesLastPublishedAt: '',
+    seriesLiveReadCount: 0,
+    seriesLivePublishedCount: 0,
+    seriesLiveErrorCount: 0,
+    seriesLiveLastReason: '',
+    seriesLiveLastPublishedAt: '',
     lastReason: '',
     lastDiagnosticAt: ''
   };
@@ -64,16 +81,25 @@
   // Each chart's last clock verdict (symbol -> skew seconds): a read that fails before it can
   // judge keeps it, so a broken chart's timeouts never hide its warning.
   const seriesSkew = new Map();
+  // Charts whose last minute read judged their clock right: the only ones the fast path reads.
+  const seriesClockOk = new Set();
+  let liveBusy = false;
+  let liveTimer = 0;
+  let liveFullAt = 0;
+  // `${symbol}|${seconds}` -> { field: value } as last posted by the fast path.
+  const livePosted = new Map();
 
-  globalThis[READER_KEY] = { publishDiagnostic, pollSeries };
+  globalThis[READER_KEY] = { publishDiagnostic, pollSeries, pollSeriesLive };
 
   window.addEventListener('message', (event) => {
     if (event.source !== window || event.origin !== TARGET_ORIGIN) return;
     const data = event.data || {};
     if (data.source !== CONTROL_SOURCE || data.type !== 'settings') return;
     settings = {
-      maxCaptureBytes: Number.isFinite(Number(data.maxCaptureBytes)) ? Number(data.maxCaptureBytes) : 1024 * 1024
+      maxCaptureBytes: Number.isFinite(Number(data.maxCaptureBytes)) ? Number(data.maxCaptureBytes) : 1024 * 1024,
+      seriesLiveMs: liveIntervalMs(data.seriesLiveMs)
     };
+    scheduleLive();
     publishDiagnostic('reader-settings-synced');
     poll();
   });
@@ -145,6 +171,12 @@
   async function pollSeries() {
     if (seriesBusy) return;
     seriesBusy = true;
+    // One export at a time per chart: a fast-path read in flight finishes first.
+    // At most every chart's export timeout (the fast path reads each chart in turn).
+    const waitMs = (chartCountFromWidget(globalThis.tvWidget) + 1) * SERIES_EXPORT_TIMEOUT_MS;
+    for (let waited = 0; liveBusy && waited < waitMs; waited += 50) {
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
     try {
       stats.seriesLastReason = await readAndPublishSeries();
     } catch (_err) {
@@ -218,6 +250,7 @@
         seriesSkew.delete(symbol);
       }
       if (seriesSkew.has(symbol)) {
+        seriesClockOk.delete(symbol);
         // Nothing from this chart is stored, and its full reads stay due for when it's right.
         skewed.push(displayIndex(symbol));
         skewS = Math.max(skewS, seriesSkew.get(symbol));
@@ -226,6 +259,7 @@
       // A study that failed may have been the one showing the fault: nothing from this chart
       // this read; it is tried again next minute.
       if (failed) continue;
+      seriesClockOk.add(symbol);
       fullDone.forEach((key) => seriesFullAt.set(key, nowMs));
       const points = bySymbol.get(symbol) || new Map();
       chartRows.forEach((rows) => rows.forEach((values, seconds) => {
@@ -252,6 +286,105 @@
     if (tooLarge) return 'series-too-large';
     if (!posted) return missing ? 'series-missing-study' : 'series-empty';
     return missing ? 'series-partial' : 'series-published';
+  }
+
+  function liveIntervalMs(value) {
+    const ms = Number(value);
+    if (!Number.isFinite(ms)) return SERIES_LIVE_DEFAULT_MS;
+    return Math.min(SERIES_LIVE_MAX_MS, Math.max(SERIES_LIVE_MIN_MS, Math.trunc(ms)));
+  }
+
+  function scheduleLive() {
+    if (liveTimer) window.clearInterval(liveTimer);
+    liveTimer = window.setInterval(pollSeriesLive, settings.seriesLiveMs);
+  }
+
+  /**
+   * The fast path, about every second: the last two bars of each study on the minute charts whose
+   * clock the minute read has judged right, posted only when a value changed. The minute and
+   * half-hour reads still backfill and fill gaps; this one only keeps the newest bars moving.
+   */
+  async function pollSeriesLive() {
+    // Never alongside the minute read (one export at a time per chart).
+    if (liveBusy || seriesBusy) return;
+    liveBusy = true;
+    try {
+      stats.seriesLiveLastReason = await readAndPublishLive();
+    } catch (_err) {
+      stats.seriesLiveErrorCount += 1;
+      stats.seriesLiveLastReason = 'series-live-error';
+    } finally {
+      liveBusy = false;
+    }
+  }
+
+  async function readAndPublishLive() {
+    stats.seriesLiveReadCount += 1;
+    const widget = globalThis.tvWidget;
+    if (!widget) return 'series-waiting';
+    const nowMs = Date.now();
+    const nowS = Math.floor(nowMs / 1000);
+    // Now and then everything, not just the changes.
+    const whole = nowMs - liveFullAt >= SERIES_LIVE_FULL_MS;
+    let posted = 0;
+    const chartCount = chartCountFromWidget(widget);
+    for (let index = 0; index < chartCount; index += 1) {
+      const chart = safeChart(widget, index);
+      if (!chart) continue;
+      const symbol = futuresSymbol(call(chart, 'symbol'));
+      if (!SERIES_STUDIES[symbol] || safeString(call(chart, 'resolution')).trim() !== '1') continue;
+      // A chart whose clock is off, or not yet judged, posts nothing.
+      if (!seriesClockOk.has(symbol) || seriesSkew.has(symbol)) continue;
+      if (typeof chart.exportData !== 'function') continue;
+      const studies = safeArray(call(chart, 'getAllStudies'));
+      const chartRows = new Map();
+      let newestS = 0;
+      let failed = false;
+      for (const kind of SERIES_STUDIES[symbol]) {
+        const study = studies.find((row) => row && kind.name.test(safeString(row.name).trim()));
+        if (!study) continue;
+        try {
+          const options = { includeTime: true, includeSeries: false, includedStudies: [study.id], from: nowS - SERIES_LIVE_BARS_S };
+          const read = addSeriesRows(chartRows, symbol, kind.prefix, await withTimeout(chart.exportData(options)), nowS);
+          newestS = Math.max(newestS, read.newest);
+        } catch (_err) {
+          stats.seriesLiveErrorCount += 1;
+          failed = true;
+        }
+      }
+      // Its own clock check too: a chart that went wrong since the minute read posts nothing,
+      // and stays out until a minute read judges it right again.
+      if (newestS - nowS > SERIES_CLOCK_SKEW_S) {
+        seriesSkew.set(symbol, newestS - nowS);
+        seriesClockOk.delete(symbol);
+        // Said at once, not a minute later.
+        setSeriesClock(true, [displayIndex(symbol)], newestS - nowS);
+        postToContent({ type: 'diagnostic', stats: { ...stats } });
+        continue;
+      }
+      if (failed) continue;
+      const changed = [];
+      (chartRows.get(symbol) || new Map()).forEach((values, seconds) => {
+        const key = `${symbol}|${seconds}`;
+        const last = whole ? {} : livePosted.get(key) || {};
+        const fresh = {};
+        for (const [field, value] of Object.entries(values)) {
+          if (last[field] !== value) fresh[field] = value;
+        }
+        if (Object.keys(fresh).length) changed.push({ seconds, values: fresh, key, all: { ...last, ...fresh } });
+      });
+      if (!changed.length) continue;
+      changed.sort((a, b) => a.seconds - b.seconds);
+      if (publishSeries(symbol, changed, 'rs_series_live')) {
+        changed.forEach((row) => livePosted.set(row.key, row.all));
+        posted += 1;
+      }
+    }
+    if (whole) liveFullAt = nowMs;
+    for (const key of livePosted.keys()) {
+      if (Number(key.split('|')[1]) < nowS - SERIES_LIVE_KEEP_S) livePosted.delete(key);
+    }
+    return posted ? 'series-live-published' : 'series-live-unchanged';
   }
 
   /** `widget`: this frame read the charts, so its series fields are the ones the popup shows. */
@@ -318,22 +451,28 @@
    * Columns, not named values: `{ fields, rows: [[unixSeconds, value|null, ...]] }`. A service older
    * than series support parses this as a capture with no levels, so it can never become one.
    */
-  function publishSeries(symbol, points) {
+  function publishSeries(symbol, points, type = 'rs_series') {
     const capturedAt = new Date().toISOString();
     const fields = Array.from(new Set(points.flatMap((point) => Object.keys(point.values)))).sort();
     const rows = points.map((point) => [point.seconds, ...fields.map((field) => point.values[field] ?? null)]);
-    const body = JSON.stringify({ type: 'rs_series', source: 'page-reader', capturedAt, series: { [symbol]: { fields, rows } } });
+    const body = JSON.stringify({ type, source: 'page-reader', capturedAt, series: { [symbol]: { fields, rows } } });
     if (body.length > settings.maxCaptureBytes) {
       stats.seriesTooLargeCount += 1;
       return false;
     }
-    stats.seriesPublishedCount += 1;
-    stats.seriesPointCount += points.length;
-    stats.seriesLastPublishedAt = capturedAt;
+    const live = type === 'rs_series_live';
+    if (live) {
+      stats.seriesLivePublishedCount += 1;
+      stats.seriesLiveLastPublishedAt = capturedAt;
+    } else {
+      stats.seriesPublishedCount += 1;
+      stats.seriesPointCount += points.length;
+      stats.seriesLastPublishedAt = capturedAt;
+    }
     postToContent({
       type: 'capture',
       capture: {
-        endpoint: '/page-reader/series',
+        endpoint: live ? '/page-reader/series-live' : '/page-reader/series',
         method: 'PAGE_READER',
         status: 200,
         capturedAt,
@@ -1169,8 +1308,10 @@
   timer = window.setInterval(poll, POLL_MS);
   pollSeries();
   const seriesTimer = window.setInterval(pollSeries, SERIES_MS);
+  scheduleLive();
   window.addEventListener('beforeunload', () => {
     if (timer) window.clearInterval(timer);
     if (seriesTimer) window.clearInterval(seriesTimer);
+    if (liveTimer) window.clearInterval(liveTimer);
   });
 })();

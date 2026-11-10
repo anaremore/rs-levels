@@ -354,6 +354,74 @@ function settle() {
     assert.equal(page.series().length, 0);
     assert.ok(page.posts.some((post) => post.type === 'diagnostic'));
   })
+  // The fast path: the last two bars, only what changed, only from a chart the minute read judged
+  // right, as `rs_series_live` to its own endpoint.
+  .then(async () => {
+    const rows = [
+      [NOW_S - 3 * MIN_S, 1, 2, 3, 0],
+      [NOW_S - MIN_S, 1.25, 2.5, 3.75, 0],
+      // The forming bar.
+      [NOW_S, 1.5, 2.5, 3.75, 0]
+    ];
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], rows),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S, 0.5, 0]])
+    ]);
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    const live = () => page.posts.filter((post) => post.type === 'capture' && post.capture.endpoint === '/page-reader/series-live');
+    const before = nq.calls.length;
+    await page.reader.pollSeriesLive();
+    const recent = nq.calls.slice(before);
+    assert.equal(recent.length, 2);
+    for (const options of recent) assert.ok(options.from >= NOW_S - 2 * MIN_S - 5 && options.from <= NOW_S - 2 * MIN_S + 5, 'the last two bars');
+    assert.equal(live().length, 1);
+    const body = JSON.parse(live()[0].capture.body);
+    assert.equal(body.type, 'rs_series_live');
+    assert.deepEqual(points(body.series.MNQ).map((point) => point.values), [
+      { 'res.hg': 1.25, 'res.mhp': 2.5, 'res.hp': 3.75 },
+      { 'arb.speed': 0.5, 'res.hg': 1.5, 'res.mhp': 2.5, 'res.hp': 3.75 }
+    ]);
+    // Nothing changed: nothing posted.
+    await page.reader.pollSeriesLive();
+    assert.equal(live().length, 1);
+    // One value moves on the forming bar: only it is posted.
+    rows[2][1] = 1.75;
+    await page.reader.pollSeriesLive();
+    assert.equal(live().length, 2);
+    assert.deepEqual(points(JSON.parse(live()[1].capture.body).series.MNQ), [
+      { t: new Date(NOW_S * 1000).toISOString(), values: { 'res.hg': 1.75 } }
+    ]);
+    assert.equal(page.series().length, 1, 'the minute read posted once, on load; the fast path never as rs_series');
+    // The chart's clock goes wrong: the fast path posts nothing, and stays out.
+    rows.push([NOW_S + 10 * MIN_S, 9, 9, 9, 0]);
+    rows[2][1] = 2;
+    await page.reader.pollSeriesLive();
+    assert.equal(live().length, 2, 'a chart whose clock is off never posts');
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, 'NQ', 'said at once');
+    rows.pop();
+    await page.reader.pollSeriesLive();
+    assert.equal(live().length, 2, 'until a minute read judges it right again');
+    await page.reader.pollSeries();
+    await page.reader.pollSeriesLive();
+    assert.equal(live().length, 3);
+  })
+  // A chart the minute read never judged (its export failed) is never read by the fast path.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG'], [[NOW_S, 1]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed'], [[NOW_S, 1]])
+    ]);
+    const exportData = nq.exportData;
+    nq.exportData = async () => {
+      throw new Error('not ready');
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    nq.exportData = exportData;
+    await page.reader.pollSeriesLive();
+    assert.equal(page.posts.filter((post) => post.type === 'capture' && post.capture.endpoint === '/page-reader/series-live').length, 0);
+  })
   .then(() => console.log('browser extension page reader series tests passed'))
   .catch((error) => {
     console.error(error);

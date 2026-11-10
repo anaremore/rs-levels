@@ -36,7 +36,7 @@
 
   webext.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
-    if (changes.serviceUrl || changes.endpointPatterns || changes.maxCaptureBytes) {
+    if (changes.serviceUrl || changes.endpointPatterns || changes.maxCaptureBytes || changes.seriesLiveMs) {
       syncSettings();
     }
   });
@@ -46,7 +46,7 @@
 
   async function syncSettings() {
     try {
-      const stored = await webext.storage.local.get(['settingsVersion', 'endpointPatterns', 'maxCaptureBytes']);
+      const stored = await webext.storage.local.get(['settingsVersion', 'endpointPatterns', 'maxCaptureBytes', 'seriesLiveMs']);
       const settings = globalThis.RS_LEVELS.migrateSettings(stored);
       if (settings.settingsVersion !== stored.settingsVersion) {
         await webext.storage.local.set(settings);
@@ -55,7 +55,8 @@
         source: CONTROL_SOURCE,
         type: 'settings',
         endpointPatterns: settings.endpointPatterns,
-        maxCaptureBytes: settings.maxCaptureBytes
+        maxCaptureBytes: settings.maxCaptureBytes,
+        seriesLiveMs: settings.seriesLiveMs
       }, window.location.origin);
       reportContentDiagnostic('settings-sent');
     } catch (err) {

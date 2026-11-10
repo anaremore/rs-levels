@@ -32,7 +32,9 @@
       'db/nq'
     ],
     symbols: ['ES', 'NQ'],
-    maxCaptureBytes: 1024 * 1024
+    maxCaptureBytes: 1024 * 1024,
+    // The study series' fast path (Resilience, Arb): how often the newest bars are read.
+    seriesLiveMs: 1000
   };
 
   function cleanServiceUrl(value) {
@@ -63,6 +65,15 @@
     const number = Number(value);
     if (!Number.isFinite(number)) return defaults.maxCaptureBytes;
     return Math.min(5 * 1024 * 1024, Math.max(1024, Math.trunc(number)));
+  }
+
+  /** At least half a second (the page's cost), at most a minute (the slow read's own pace). */
+  function cleanSeriesLiveMs(value) {
+    // An emptied field is the default, not the minimum.
+    if (value == null || String(value).trim() === '') return defaults.seriesLiveMs;
+    const number = Number(value);
+    if (!Number.isFinite(number)) return defaults.seriesLiveMs;
+    return Math.min(60000, Math.max(500, Math.trunc(number)));
   }
 
   function nonNegativeInteger(value) {
@@ -104,7 +115,8 @@
       settingsVersion: defaults.settingsVersion,
       serviceUrl: cleanServiceUrl(input.serviceUrl),
       endpointPatterns: cleanPatterns(input.endpointPatterns),
-      maxCaptureBytes: cleanMaxBytes(input.maxCaptureBytes)
+      maxCaptureBytes: cleanMaxBytes(input.maxCaptureBytes),
+      seriesLiveMs: cleanSeriesLiveMs(input.seriesLiveMs)
     };
   }
 

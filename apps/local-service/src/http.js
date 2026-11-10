@@ -10,6 +10,7 @@ import { displaySymbolFor, normalizeSymbol } from '../../../packages/schemas/src
 import { SERVICE_BUILD } from './build-info.js';
 import { networkStatus } from './config.js';
 import { levelsToDisplayRowsText } from './display-rows.js';
+import { SERIES_KEEPALIVE_MS } from './series-live.js';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const OPENAPI_YAML = readFileSync(new URL('../../../docs/openapi.yaml', import.meta.url), 'utf8');
@@ -17,7 +18,7 @@ const PLUGIN_MANIFEST = JSON.parse(readFileSync(new URL('../../../plugins/manife
 const PACKAGE_JSON = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const SERVICE_VERSION = String(PACKAGE_JSON.version || '0.0.0');
 
-export function createHttpApp({ store, config, history, onCapture }) {
+export function createHttpApp({ store, config, history, live, onCapture }) {
   const clients = new Set();
 
   const server = http.createServer(async (req, res) => {
@@ -117,16 +118,30 @@ export function createHttpApp({ store, config, history, onCapture }) {
         return sendJson(res, row ? 200 : 404, row ? publicStatsRow(row) : { ok: false, error: 'symbol not found' });
       }
 
+      const liveMatch = pathname.match(/^\/series\/([^/]+)\/stream$/);
+      if (req.method === 'GET' && liveMatch) {
+        if (!live) return sendJson(res, 404, { ok: false, error: 'not found' });
+        return streamSeries(req, res, live, liveMatch[1], url.searchParams);
+      }
+
       const historyMatch = pathname.match(/^\/history\/([^/]+)$/);
       if (req.method === 'GET' && historyMatch) {
         const range = historyRange(url.searchParams);
         if (range.error) return sendJson(res, 400, { ok: false, error: range.error });
+        // Ended bars the live view still holds are history's first.
+        live?.settleAll();
         const body = history ? await history.query(historyMatch[1], range) : { ok: true, enabled: false };
         return sendJson(res, body.ok === false ? 503 : 200, body);
       }
 
       if (req.method === 'POST' && pathname === '/capture/api') {
         const payload = await readJson(req);
+        // Study series (a minute read, or the fast path up to twice a second) change no levels:
+        // no snapshot broadcast, no capture report, a short answer.
+        if (isSeriesCapture(payload)) {
+          store.applyCapture(payload);
+          return sendJson(res, 200, { ok: true });
+        }
         const snapshot = store.applyCapture(payload);
         broadcast(clients, 'snapshot', snapshot);
         notifyCapture(onCapture, snapshot);
@@ -181,7 +196,7 @@ export function rootInfo(config) {
     name: 'RS Levels local service',
     version: SERVICE_VERSION,
     build: serviceBuildInfo(),
-    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/history/:symbol', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/thinkorswim/:symbol', '/stream'],
+    endpoints: ['/docs', '/openapi.yaml', '/diagnostics', '/health', '/status', '/plugins', '/snapshot', '/levels', '/levels/:symbol/rows', '/stats', '/stats/:symbol', '/stats/:symbol/rows', '/history/:symbol', '/series/:symbol/stream', '/sierra/:symbol', '/zones', '/tradingview', '/tradingview/:symbol', '/thinkorswim/:symbol', '/stream'],
     network: networkStatus(config)
   };
 }
@@ -472,6 +487,55 @@ function streamSnapshots(req, res, clients, store) {
   req.on('close', () => clients.delete(client));
 }
 
+/**
+ * A symbol's study series as they change (Server-Sent Events): first a `bar` event per bar the
+ * service holds (the forming minute and the last closed ones), then one per bar as values change,
+ * carrying only those values; a comment every 15 s when quiet. `fields` narrows the fields.
+ */
+function streamSeries(req, res, live, symbol, params) {
+  const fields = new Set(String(params.get('fields') || '').split(',').map((field) => field.trim()).filter(Boolean));
+  const pick = (event) => {
+    if (!fields.size) return event;
+    const values = Object.fromEntries(Object.entries(event.values).filter(([field]) => fields.has(field)));
+    return Object.keys(values).length ? { ...event, values } : null;
+  };
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive'
+  });
+  // Headers and a first line at once, so a client sees the stream open before any bar.
+  res.write(': connected\n\n');
+  for (const bar of live.current(symbol)) {
+    const event = pick(bar);
+    if (event) sendSse(res, 'bar', event);
+  }
+  const unsubscribe = live.subscribe(symbol, (bar) => {
+    const event = pick(bar);
+    if (event) sendSse(res, 'bar', event);
+  });
+  const keepalive = setInterval(() => res.write(': keepalive\n\n'), SERIES_KEEPALIVE_MS);
+  keepalive.unref?.();
+  res.on('close', () => {
+    clearInterval(keepalive);
+    unsubscribe();
+  });
+}
+
+/** An `rs_series` or `rs_series_live` capture (the page reader's study series). */
+function isSeriesCapture(payload = {}) {
+  let body = payload && payload.body;
+  if (typeof body === 'string') {
+    if (!body.includes('"rs_series')) return false;
+    try {
+      body = JSON.parse(body);
+    } catch (_error) {
+      return false;
+    }
+  }
+  return Boolean(body) && (body.type === 'rs_series' || body.type === 'rs_series_live');
+}
+
 function broadcast(clients, event, data) {
   clients.forEach((client) => sendSse(client.res, event, data));
 }
@@ -569,6 +633,7 @@ GET /stats
 GET /stats/:symbol
 GET /stats/:symbol/rows
 GET /history/:symbol
+GET /series/:symbol/stream
 GET /sierra/:symbol
 GET /zones
 GET /tradingview
