@@ -465,10 +465,13 @@ function mapCodeFromNode(node) {
 }
 
 function candidateFromObject(node, options) {
-  const name = firstDisplayLevelName(node);
+  // A chart's own HP or MHP line (the page reader read it off the futures chart, at the
+  // chart's price) is a level; a bare `hp`/`MHP` anywhere else is a quote field.
+  const chartLevel = isPageReaderChartLevel(node);
+  const name = firstDisplayLevelName(node, chartLevel);
   const price = firstNumber(node, PRICE_KEYS);
   if (!name || price == null) return null;
-  if (isBareQuoteFieldName(name)) return null;
+  if (isBareQuoteFieldName(name) && !(chartLevel && isHpName(name))) return null;
   if (!looksLikeDisplayLevelName(name)) return null;
   const symbol = candidateSymbolFromNode(node, options);
   if (!symbol) return null;
@@ -481,8 +484,29 @@ function candidateFromObject(node, options) {
     color: inputColor(node),
     source: options.source || 'rocketscooter',
     capturedAt: options.capturedAt || '',
-    metadata: withEndpointMetadata(displayMetadata(node), options.endpointKey)
+    metadata: withEndpointMetadata({ ...displayMetadata(node), ...readerMetadata(node) }, options.endpointKey)
   });
+}
+
+/**
+ * A level the page reader read off a chart: `source: 'rocketscooter-page'` with the reader that
+ * found it (`metadata.reader`: a chart line, a study plot, a scanner row). Its price is the
+ * chart's own (the futures chart's plotted value), never a conversion.
+ */
+function isPageReaderChartLevel(node) {
+  return stringValue(node && node.source) === 'rocketscooter-page' &&
+    Boolean(node.metadata && typeof node.metadata === 'object' && stringValue(node.metadata.reader));
+}
+
+/** Where the page reader found a level (kept on the level's metadata). */
+function readerMetadata(node) {
+  if (!isPageReaderChartLevel(node)) return {};
+  const out = {};
+  ['reader', 'rawSymbol', 'study'].forEach((key) => {
+    const value = node.metadata[key];
+    if (value != null && typeof value !== 'object') out[key] = value;
+  });
+  return out;
 }
 
 function candidateFromArray(row, options) {
@@ -657,10 +681,10 @@ function valuesForKeys(node, keys) {
   return values;
 }
 
-function firstDisplayLevelName(node) {
+function firstDisplayLevelName(node, chartLevel = false) {
   for (const key of NAME_KEYS) {
     const value = stringValue(node[key]);
-    if (!value || isBareQuoteFieldName(value)) continue;
+    if (!value || (isBareQuoteFieldName(value) && !(chartLevel && isHpName(value)))) continue;
     if (looksLikeDisplayLevelName(value)) return value;
   }
   return manualLevelNameFromColor(inputColor(node));
@@ -934,6 +958,11 @@ function isUnsupportedSymbolContext(value) {
 }
 
 const NON_SYMBOL_CONTEXT_PARTS = new Set(['API', 'CME', 'CQG', 'F', 'ID', 'RS', 'TV', 'URL', 'US', 'USD']);
+
+/** The static HP and MHP names (bare: `Dyn HP` and the rest already pass). */
+function isHpName(name) {
+  return /^m?hp$/i.test(stringValue(name));
+}
 
 function isBareQuoteFieldName(name) {
   return /^(hp|mhp|open|close|high|low|last)$/i.test(stringValue(name));

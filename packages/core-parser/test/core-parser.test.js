@@ -207,6 +207,46 @@ const quoteLikeRows = normalizeCapture({
 assert.equal(quoteLikeRows.endpoint.ok, false);
 assert.equal(quoteLikeRows.symbols.MES, undefined);
 
+// The page reader's static HP and MHP (read off the futures chart, at its price): levels next
+// to Dyn HP and Dyn MHP, their source noted. A bare HP anywhere else is still a quote field, and
+// a page-reader Open or Close keeps its old handling.
+const staticHp = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-11-10T15:00:00.000Z',
+  body: {
+    type: 'rs_snapshot',
+    source: 'page-reader',
+    levels: [
+      { symbol: 'MES', name: 'HP', kind: 'hp', price: 7492.25, color: '#00ffff', source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'shape-line' } },
+      { symbol: 'MES', name: 'MHP', kind: 'mhp', price: 7502, color: '#ff9800', source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'shape-line' } },
+      { symbol: 'MES', name: 'Dyn HP', kind: 'hp', price: 7575.5, source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'study-plot', study: 'Dynamic HP' } },
+      { symbol: 'MES', name: 'Dyn MHP', kind: 'mhp', price: 7580, source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'study-plot', study: 'Dynamic HP' } },
+      // Not from a chart reader: a bare HP stays a quote field.
+      { symbol: 'MES', name: 'HP', price: 745, source: 'somewhere-else' },
+      { symbol: 'MES', name: 'MHP', price: 746, source: 'rocketscooter-page' }
+    ],
+    // The reader's raw chart lines repeat the same lines: never a second HP.
+    chartLines: [
+      { index: 'ES', chart: 'F.US.EPZ26', price: 7492.25, text: 'HP', color: '#00ffff', source: 'chart_shape', label: 'SPY HP : 745 Liquidity Map' }
+    ]
+  }
+});
+const esStatic = staticHp.symbols.MES || [];
+const named = (name) => esStatic.filter((level) => level.name === name);
+assert.equal(named('HP').length, 1);
+assert.equal(named('HP')[0].price, 7492.25);
+assert.equal(named('HP')[0].kind, 'hp');
+assert.equal(named('HP')[0].metadata.reader, 'shape-line');
+assert.equal(named('HP')[0].metadata.rawSymbol, 'F.US.EPZ26');
+assert.equal(named('MHP').length, 1);
+assert.equal(named('MHP')[0].price, 7502);
+assert.equal(named('MHP')[0].kind, 'mhp');
+assert.equal(named('Dyn HP').length, 1);
+assert.equal(named('Dyn HP')[0].metadata.study, 'Dynamic HP');
+assert.equal(named('Dyn MHP').length, 1);
+assert.equal(esStatic.some((level) => level.price === 745 || level.price === 746), false, 'no ETF value, no unsourced HP');
+
 const mixedWatchlistAndFutures = normalizeCapture({
   endpoint: '/platform/api/v1/chart/display',
   status: 200,
