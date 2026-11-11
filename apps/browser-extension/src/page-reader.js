@@ -264,8 +264,9 @@
       const fallbackS = !clock.known && !clock.failed ? studyNewestS : 0;
       if (fallbackS - nowS > SERIES_CLOCK_SKEW_S) {
         seriesSkew.set(symbol, fallbackS - nowS);
-      } else if (!failed) {
-        // Every read answered and nothing is ahead: the clock is right.
+      } else if (clock.known || !failed) {
+        // The candles say the clock is right (a study that failed never holds an old warning they
+        // have ruled out), or every read answered and nothing is ahead.
         seriesSkew.delete(symbol);
       }
       if (seriesSkew.has(symbol)) {
@@ -436,6 +437,8 @@
    * is ahead, so `newest` 0 is right). `failed`: the read threw or timed out; nothing is judged.
    */
   async function candleClock(chart, nowS) {
+    // No export at all: nothing to judge (the studies are then counted as missing, as before).
+    if (typeof chart.exportData !== 'function') return { known: false, failed: false, newest: 0 };
     let exported;
     try {
       exported = await withTimeout(chart.exportData({

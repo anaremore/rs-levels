@@ -537,6 +537,36 @@ function settle() {
     assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
     assert.equal(page.series().length, 1);
   })
+  // Once the candles say the clock is right, a study that fails never keeps the old warning:
+  // the fault clears at once (nothing stored that read), and the next full answer stores.
+  .then(async () => {
+    let ahead = true;
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 1, 2, 3, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ], { times: [NOW_S - MIN_S] });
+    const exportData = nq.exportData;
+    let arbFails = false;
+    nq.exportData = async (options) => {
+      if (options.includeSeries && ahead) {
+        const out = await exportData(options);
+        return { schema: out.schema, data: [Float64Array.from([NOW_S + 600, 1, 1, 1, 1])] };
+      }
+      if (arbFails && (options.includedStudies || []).includes('arb-nq')) throw new Error('timed out');
+      return exportData(options);
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-chart-clock', 'candles ahead: fault');
+    ahead = false;
+    arbFails = true;
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '', 'candles right: the warning clears though a study failed');
+    assert.equal(page.series().length, 0, 'nothing stored the read a study failed');
+    arbFails = false;
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
+  })
   .then(() => console.log('browser extension page reader series tests passed'))
   .catch((error) => {
     console.error(error);
