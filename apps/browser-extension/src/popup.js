@@ -29,6 +29,8 @@ const els = {
   hookReason: document.getElementById('hook-reason'),
   seriesClockRow: document.getElementById('series-clock-row'),
   seriesClock: document.getElementById('series-clock'),
+  seriesClockChartsRow: document.getElementById('series-clock-charts-row'),
+  seriesClockCharts: document.getElementById('series-clock-charts'),
   refresh: document.getElementById('refresh'),
   options: document.getElementById('options')
 };
@@ -448,7 +450,13 @@ async function responseErrorDetail(response) {
 
 async function copyDiagnostics() {
   try {
-    const diagnostics = await getJson('/diagnostics');
+    // The extension's own diagnostics are copied even when the local service is down.
+    let diagnostics;
+    try {
+      diagnostics = await getJson('/diagnostics');
+    } catch (err) {
+      diagnostics = { error: String((err && err.message) || 'Local service unavailable').slice(0, 200) };
+    }
     const extensionState = await webext.runtime.sendMessage({ type: 'rs-levels.state' });
     const payload = {
       generatedAt: new Date().toISOString(),
@@ -574,6 +582,10 @@ function cleanCaptureStats(stats = {}) {
     publishedCount: nonNegativeInteger(stats.publishedCount),
     seriesClockSymbol: String(stats.seriesClockSymbol || '').slice(0, 20),
     seriesClockSkewS: nonNegativeInteger(stats.seriesClockSkewS),
+    seriesLastReason: String(stats.seriesLastReason || '').slice(0, 40),
+    seriesClockNowS: nonNegativeInteger(stats.seriesClockNowS),
+    seriesClockAt: nonNegativeInteger(stats.seriesClockNowS) ? new Date(nonNegativeInteger(stats.seriesClockNowS) * 1000).toISOString() : '',
+    seriesClockCharts: globalThis.RS_LEVELS.cleanSeriesClockCharts(stats.seriesClockCharts),
     lastReason: String(stats.lastReason || ''),
     lastDiagnosticAt: String(stats.lastDiagnosticAt || '')
   };
@@ -591,6 +603,11 @@ function renderCaptureStats(stats = {}) {
   els.seriesClock.title = clean.seriesClockSymbol
     ? `Its newest bar is ${clean.seriesClockSkewS} s ahead of this computer's clock`
     : '';
+  // Each minute futures chart's clock read: which chart, where its time came from, how far ahead.
+  const charts = globalThis.RS_LEVELS.seriesClockChartsText(clean.seriesClockCharts);
+  els.seriesClockChartsRow.hidden = !charts;
+  els.seriesClockCharts.textContent = charts;
+  els.seriesClockCharts.title = clean.seriesClockAt ? `Read at ${clean.seriesClockAt}` : '';
 }
 
 function seriesClockText(clean) {

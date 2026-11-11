@@ -16,8 +16,13 @@
   // time column past the last candle on a chart whose clock is right.
   const SERIES_CLOCK_SKEW_S = 120;
   // The candle read for the clock asks for this recent past only (`from` is a lower bound, so a
-  // candle ahead of now is always in it).
-  const SERIES_CLOCK_WINDOW_S = 5 * 60;
+  // candle ahead of now is always in it). An hour, so the last real candle is in it ahead of any
+  // rows that only carry its close forward.
+  const SERIES_CLOCK_WINDOW_S = 60 * 60;
+  // The clock diagnostics (popup only): the export's columns and last rows, kept small.
+  const CLOCK_DIAG_COLUMNS = 8;
+  const CLOCK_DIAG_ROWS = 5;
+  const CLOCK_DIAG_CHARTS = 4;
   // The fast path: the last two bars of each study, about every second (a setting), posted only
   // when a value changed, so the panes follow the chart within a second or two.
   const SERIES_LIVE_DEFAULT_MS = 1000;
@@ -70,6 +75,9 @@
     // The charts whose clock is off (`NQ`, `NQ, ES`) and the largest skew seen, in seconds.
     seriesClockSymbol: '',
     seriesClockSkewS: 0,
+    // Each minute futures chart's clock read (popup diagnostics only; set once a read is done).
+    seriesClockNowS: 0,
+    seriesClockCharts: [],
     seriesLastReason: '',
     seriesLastPublishedAt: '',
     seriesLiveReadCount: 0,
@@ -201,6 +209,7 @@
     if (!widget) {
       // A widget that went away leaves no old warning behind.
       setSeriesClock(false, [], 0);
+      stats.seriesClockCharts = [];
       return 'series-waiting';
     }
     const nowMs = Date.now();
@@ -211,14 +220,23 @@
     let tooLarge = false;
     const skewed = [];
     let skewS = 0;
+    const clockCharts = [];
+    const seen = [];
+    const activeIndex = activeChartIndex(widget);
     const chartCount = chartCountFromWidget(widget);
     for (let index = 0; index < chartCount; index += 1) {
       const chart = safeChart(widget, index);
       if (!chart) continue;
-      const symbol = futuresSymbol(call(chart, 'symbol'));
+      // The same chart object at two indexes (a widget that maps every index to one chart) is
+      // read once.
+      const dup = seen.includes(chart);
+      seen.push(chart);
+      const rawSymbol = safeString(call(chart, 'symbol'));
+      const resolution = safeString(call(chart, 'resolution')).trim();
+      const symbol = futuresSymbol(rawSymbol);
       // The one-minute chart only: daily charts carry an all-zero Resilience study, and a second
       // NQ chart at 5 minutes must not overwrite the minute values.
-      if (!SERIES_STUDIES[symbol] || safeString(call(chart, 'resolution')).trim() !== '1') continue;
+      if (!SERIES_STUDIES[symbol] || resolution !== '1' || dup) continue;
       charts += 1;
       const studies = safeArray(call(chart, 'getAllStudies'));
       // This chart's rows wait here until its clock is known to be right.
@@ -226,7 +244,19 @@
       let studyNewestS = 0;
       const fullDone = [];
       // The clock from the candles first: a chart they show ahead is read no further.
-      const clock = await candleClock(chart, nowS);
+      const clock = await candleClock(chart, nowS, studies);
+      // What the popup shows of this chart's clock (local only): which chart, and what it read.
+      const entry = {
+        index,
+        chart: rawSymbol.slice(0, 32),
+        resolution,
+        active: activeIndex === null ? chart === call(widget, 'activeChart') : activeIndex === index,
+        ...clock.diag,
+        candleS: clock.known ? clock.newest : 0,
+        studyS: 0,
+        skewS: clock.known ? clock.newest - nowS : 0
+      };
+      if (clockCharts.length < CLOCK_DIAG_CHARTS) clockCharts.push(entry);
       if (clock.failed) stats.seriesErrorCount += 1;
       let failed = clock.failed;
       if (clock.known && clock.newest - nowS > SERIES_CLOCK_SKEW_S) {
@@ -260,8 +290,10 @@
       }
       // The candles said the clock is not ahead, or (a candle read that failed) nothing: a failed
       // read keeps the last judgment and stores nothing. Only an export with no candle columns at
-      // all falls back to the studies' newest row.
+      // all falls back to the studies' newest row with a value.
       const fallbackS = !clock.known && !clock.failed ? studyNewestS : 0;
+      entry.studyS = studyNewestS;
+      if (!clock.known && !clock.failed) entry.skewS = studyNewestS ? studyNewestS - nowS : 0;
       if (fallbackS - nowS > SERIES_CLOCK_SKEW_S) {
         seriesSkew.set(symbol, fallbackS - nowS);
       } else if (clock.known || !failed) {
@@ -290,6 +322,8 @@
     // Set together once the read is done: diagnostics posted while exports are pending keep the
     // last read's warning.
     setSeriesClock(charts > 0, skewed, skewS);
+    stats.seriesClockNowS = nowS;
+    stats.seriesClockCharts = clockCharts;
     if (missing || !charts) stats.seriesMissingCount += 1;
     if (!charts) return 'series-no-chart';
     let posted = 0;
@@ -359,7 +393,7 @@
       const studies = safeArray(call(chart, 'getAllStudies'));
       const chartRows = new Map();
       let studyNewestS = 0;
-      const clock = await candleClock(chart, nowS);
+      const clock = await candleClock(chart, nowS, studies);
       if (clock.failed) stats.seriesLiveErrorCount += 1;
       let failed = clock.failed;
       const candlesAhead = clock.known && clock.newest - nowS > SERIES_CLOCK_SKEW_S;
@@ -431,14 +465,19 @@
   }
 
   /**
-   * The chart's clock: the time (seconds) of its newest candle, a row whose main-series columns
-   * hold a number. Rows past the last candle (a study or shape drawn ahead) carry none, so they
-   * never count. `known`: the export had main-series columns (no candle in the window means none
-   * is ahead, so `newest` 0 is right). `failed`: the read threw or timed out; nothing is judged.
+   * The chart's clock: the time (seconds) of its newest candle. A candle is a row of the main
+   * series (the export's first series source; never a column a study on this chart owns) that
+   * carries a real trade: volume above zero when the export has volume, or else prices that are
+   * not merely the last candle's close carried forward. Rows past the last candle (whitespace a
+   * study or shape drawn ahead adds, with NaN or carried-forward prices) never count, so only real
+   * candles ahead judge the clock wrong. `known`: the export had main-series columns (no candle in
+   * the window means none is ahead, so `newest` 0 is right). `failed`: the read threw or timed out;
+   * nothing is judged. `diag`: what the popup's diagnostics show of this read (local only).
    */
-  async function candleClock(chart, nowS) {
+  async function candleClock(chart, nowS, studies = []) {
+    const diag = { source: 'no-export', columns: [], tail: [], rows: 0, ahead: 0, skipped: 0 };
     // No export at all: nothing to judge (the studies are then counted as missing, as before).
-    if (typeof chart.exportData !== 'function') return { known: false, failed: false, newest: 0 };
+    if (typeof chart.exportData !== 'function') return { known: false, failed: false, newest: 0, diag };
     let exported;
     try {
       exported = await withTimeout(chart.exportData({
@@ -448,33 +487,84 @@
         from: nowS - SERIES_CLOCK_WINDOW_S
       }));
     } catch (_err) {
-      return { known: false, failed: true, newest: 0 };
+      diag.source = 'failed';
+      return { known: false, failed: true, newest: 0, diag };
     }
+    const studyIds = new Set(studies.map((row) => safeString(row && row.id)).filter(Boolean));
     const schema = safeArray(exported && exported.schema);
-    const columns = [];
+    const prices = [];
+    let close = -1;
+    let volume = -1;
+    let mainKey = null;
     for (let column = 1; column < schema.length; column += 1) {
       const field = schema[column] || {};
       const title = safeString(field.plotTitle).trim().toLowerCase();
-      // `sourceType: 'series'` is the main series; an export without it names OHLC by title.
-      if (field.sourceType === 'series' || (field.sourceType === undefined && /^(open|high|low|close)$/.test(title))) {
-        columns.push(column);
+      const type = safeString(field.sourceType).trim().toLowerCase();
+      const id = safeString(field.sourceId);
+      if (diag.columns.length < CLOCK_DIAG_COLUMNS) {
+        diag.columns.push({ type: type.slice(0, 12), id: id.slice(0, 24), title: title.slice(0, 24) });
       }
+      // A study's column is never a candle, whatever it is tagged.
+      if (id && studyIds.has(id)) continue;
+      // `sourceType: 'series'` is a series; an export without it names OHLC by title.
+      const series = type === 'series' || (!type && /^(open|high|low|close|volume)$/.test(title));
+      if (!series) continue;
+      // The main series comes first: a second series source (an overlay) is not this chart's clock.
+      const key = id || safeString(field.sourceTitle);
+      if (mainKey === null) mainKey = key;
+      if (key !== mainKey) continue;
+      if (title === 'volume') {
+        if (volume < 0) volume = column;
+        continue;
+      }
+      if (title === 'close') close = column;
+      prices.push(column);
     }
-    if (!columns.length) return { known: false, failed: false, newest: 0 };
+    if (!prices.length) {
+      diag.source = 'studies';
+      return { known: false, failed: false, newest: 0, diag };
+    }
+    diag.source = 'candles';
+    const rows = safeArray(exported && exported.data)
+      .filter((row) => row && typeof row.length === 'number' && Number.isFinite(Number(row[0])))
+      .sort((a, b) => Number(a[0]) - Number(b[0]));
+    const finite = (value) => typeof value === 'number' && Number.isFinite(value);
+    // Volume judges only when the feed gives it: a feed whose volume is always empty is judged by
+    // its prices instead (never by nothing, which would call every chart right).
+    const byVolume = volume > 0 && rows.some((row) => finite(row[volume]) && row[volume] > 0);
+    const closeColumn = close > 0 ? close : prices[prices.length - 1];
     let newest = 0;
-    for (const row of safeArray(exported && exported.data)) {
-      if (!row || typeof row.length !== 'number') continue;
+    let last = null;
+    for (const row of rows) {
       const seconds = Number(row[0]);
-      if (!Number.isFinite(seconds) || seconds <= newest) continue;
-      if (columns.some((column) => typeof row[column] === 'number' && Number.isFinite(row[column]))) newest = seconds;
+      diag.rows += 1;
+      if (seconds > nowS) diag.ahead += 1;
+      let real = prices.some((column) => finite(row[column]));
+      if (real && byVolume) {
+        real = finite(row[volume]) && row[volume] > 0;
+      } else if (real && last) {
+        // No volume: prices that are all the last candle's close, carried forward, are no trade.
+        // (The first row in the window has nothing to compare with: it counts, so a lone candle
+        // ahead is still a fault; the window is long enough that the last real candle comes first.)
+        real = !prices.every((column) => row[column] === last[closeColumn]);
+      }
+      if (!real) {
+        diag.skipped += 1;
+        continue;
+      }
+      last = row;
+      if (seconds > newest) newest = seconds;
     }
-    return { known: true, failed: false, newest };
+    const tailColumns = [0, ...prices, ...(volume > 0 ? [volume] : [])].slice(0, CLOCK_DIAG_COLUMNS);
+    diag.tail = rows.slice(-CLOCK_DIAG_ROWS).map((row) => tailColumns.map((column) => (finite(row[column]) ? row[column] : null)));
+    return { known: true, failed: false, newest, diag };
   }
 
   /**
    * Plot columns by title; plot `0` is the zero line. Rows after now are never data. Returns how
-   * many rows had a value, and the newest row's time (seconds; also a row after now): the clock's
-   * fallback only, when the candle read had no main-series columns.
+   * many rows had a value, and the newest time (seconds; also a row after now) of a row with a
+   * value: the clock's fallback only, when the candle read had no main-series columns. A row that
+   * is only a time (whitespace a study drawn ahead adds) is not a bar the chart has computed.
    */
   function addSeriesRows(bySymbol, symbol, prefix, exported, nowS) {
     const schema = safeArray(exported && exported.schema);
@@ -485,10 +575,11 @@
     }
     let found = 0;
     let newest = 0;
-    // The newest row's time from every row, whatever its columns (the clock's fallback only).
+    // The newest valued row's time, after now too (the clock's fallback only).
     for (const row of safeArray(exported && exported.data)) {
       const seconds = row && typeof row.length === 'number' ? Number(row[0]) : NaN;
-      if (Number.isFinite(seconds) && seconds > newest) newest = seconds;
+      if (!Number.isFinite(seconds) || seconds <= newest) continue;
+      if (columns.some(([column]) => typeof row[column] === 'number' && Number.isFinite(row[column]))) newest = seconds;
     }
     if (!columns.length) return { found, newest };
     const points = bySymbol.get(symbol) || new Map();
@@ -899,7 +990,7 @@
           const bottom = Math.min(...prices);
           addZoneRectangle(state, seen, {
             index,
-            chart: rawSymbol,
+            chart: rawSymbol.slice(0, 32),
             top,
             bottom,
             name: shapeName,
@@ -940,7 +1031,7 @@
         if (shapeName === 'horizontal_line' || shapeName === 'horizontal_ray') {
           addChartLine(state, seen, {
             index,
-            chart: rawSymbol,
+            chart: rawSymbol.slice(0, 32),
             price,
             text: levelName || label,
             title: safeString(props && props.title),
@@ -1282,6 +1373,12 @@
     } catch (_err) {
       return 1;
     }
+  }
+
+  /** The layout's active chart index, or null when the widget can't say. */
+  function activeChartIndex(widget) {
+    const index = Number(call(widget, 'activeChartIndex'));
+    return Number.isInteger(index) && index >= 0 ? index : null;
   }
 
   function safeChart(widget, index) {

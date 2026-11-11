@@ -563,6 +563,8 @@ function cleanCaptureStats(input = {}) {
     seriesLastReason: String(input.seriesLastReason || '').slice(0, 40),
     seriesClockSymbol: String(input.seriesClockSymbol || '').slice(0, 20),
     seriesClockSkewS: nonNegativeInteger(input.seriesClockSkewS),
+    seriesClockNowS: nonNegativeInteger(input.seriesClockNowS),
+    seriesClockCharts: globalThis.RS_LEVELS.cleanSeriesClockCharts(input.seriesClockCharts),
     seriesLastPublishedAt: String(input.seriesLastPublishedAt || '').slice(0, 40),
     lastReason: String(input.lastReason || ''),
     lastDiagnosticAt: String(input.lastDiagnosticAt || '')

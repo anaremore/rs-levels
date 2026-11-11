@@ -156,6 +156,31 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   diag = merge(diag, { seriesWidget: true, seriesLastReason: 'series-published', seriesClockSymbol: '' }, t0 + 6000);
   assert.equal(diag.seriesClockSymbol, '', 'cleared by the chart frame once its clock is right');
 
+  // Each chart's clock read: kept like the other series fields, bounded and plain.
+  const tail = Array.from({ length: 9 }, (_, row) => Array.from({ length: 12 }, (_v, column) => (column ? row + column / 3 : 1_800_000_000 + row * 60)));
+  tail[8][1] = NaN;
+  const read = {
+    index: 2, chart: 'F.US.ENQZ26<script>', resolution: '1', active: true, source: 'candles',
+    candleS: 1_800_000_060, studyS: 0, skewS: -12.7, rows: 61, ahead: 25, skipped: 25,
+    columns: Array.from({ length: 12 }, () => ({ type: 'series', id: 'x'.repeat(40), title: 'close' })),
+    tail
+  };
+  diag = merge(diag, { seriesWidget: true, seriesClockNowS: 1_800_000_072, seriesClockCharts: [read, read, read, read, read, 'junk'] }, t0 + 7000);
+  diag = merge(diag, { lastReason: 'published' }, t0 + 8000);
+  assert.equal(diag.seriesClockNowS, 1_800_000_072, 'kept through another frame diagnostic');
+  assert.equal(diag.seriesClockCharts.length, 4, 'at most four charts');
+  const [kept] = diag.seriesClockCharts;
+  assert.equal(kept.chart, 'F.US.ENQZ26script');
+  assert.equal(kept.candleAt, new Date(1_800_000_060_000).toISOString());
+  assert.equal(kept.skewS, -12);
+  assert.equal(kept.columns.length, 8);
+  assert.equal(kept.columns[0].id.length, 24);
+  assert.equal(kept.tail.length, 5, 'the last five rows');
+  assert.equal(kept.tail[0].length, 8);
+  assert.equal(kept.tail[0][0], 1_800_000_000 + 4 * 60);
+  assert.equal(kept.tail[4][1], null, 'a value that is no number is null');
+  assert.equal(merge({}, { seriesWidget: true, seriesClockCharts: 'no' }, t0).seriesClockCharts.length, 0);
+
   console.log('TradingView background handoff tests passed');
 })().catch((error) => {
   console.error(error);
