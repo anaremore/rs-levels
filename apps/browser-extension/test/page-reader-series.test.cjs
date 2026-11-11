@@ -13,21 +13,42 @@ function study(id, name, plotTitles, rows) {
   return { info: { id, name }, schema: [{ plotTitle: 'time' }, ...plotTitles.map((plotTitle) => ({ plotTitle }))], rows };
 }
 
-function chart(symbol, resolution, studies) {
+// The main series (candles) export: `type: 'time'` then OHLC with `sourceType: 'series'`, as
+// Float64Array rows. `candles.times`: the candles' times; without it, every study row's time is a
+// candle (the chart's clock is what its studies show). `candles.through`: the export's time column
+// runs on to here with NaN candles (a study or shape drawn ahead does that).
+const CANDLE_SCHEMA = [{ type: 'time' }, ...['open', 'high', 'low', 'close'].map((plotTitle) => ({ type: 'value', sourceType: 'series', plotTitle, sourceTitle: 'Main' }))];
+
+function chart(symbol, resolution, studies, candles = {}) {
   const calls = [];
+  const candleCalls = [];
   const mutations = [];
   const byId = new Map(studies.map((row) => [row.info.id, row]));
+  const candleRows = () => {
+    const times = candles.times || Array.from(new Set(studies.flatMap((row) => row.rows.map((data) => data[0]))));
+    const rows = times.map((t) => Float64Array.from([t, 100, 101, 99, 100.5]));
+    const last = Math.max(0, ...times);
+    for (let t = last + 60; Number.isFinite(candles.through) && t <= candles.through; t += 60) {
+      rows.push(Float64Array.from([t, NaN, NaN, NaN, NaN]));
+    }
+    return rows;
+  };
   return {
     calls,
+    candleCalls,
     mutations,
     symbol: () => symbol,
     resolution: () => resolution,
     getAllStudies: () => studies.map((row) => row.info),
     getAllShapes: () => [],
     exportData: async (options) => {
+      const from = Number.isFinite(options.from) ? options.from : -Infinity;
+      if (options.includeSeries && options.includedStudies.length === 0) {
+        candleCalls.push(options);
+        return { schema: candles.schema || CANDLE_SCHEMA, data: candleRows().filter((data) => data[0] >= from) };
+      }
       calls.push(options);
       const row = byId.get(options.includedStudies[0]);
-      const from = Number.isFinite(options.from) ? options.from : -Infinity;
       return { schema: row.schema, data: row.rows.filter((data) => data[0] >= from) };
     },
     // Read-only: any of these being called is a failure.
@@ -118,6 +139,11 @@ function settle() {
     assert.equal(options.includeSeries, false);
     assert.equal(options.from, undefined, 'the first read sends everything loaded');
   }
+  // The clock: one candle read per chart, the main series only, the recent past only.
+  assert.equal(nq.candleCalls.length, 1);
+  assert.equal(nq.candleCalls[0].includeSeries, true);
+  assert.deepEqual(Array.from(nq.candleCalls[0].includedStudies), []);
+  assert.ok(nq.candleCalls[0].from >= NOW_S - 10 * MIN_S && nq.candleCalls[0].from <= NOW_S);
 
   const posts = page.series();
   assert.equal(posts.length, 2, 'one post per symbol');
@@ -202,9 +228,11 @@ function settle() {
     const bodies = page.series().map((post) => JSON.parse(post.capture.body));
     assert.ok(bodies.every((body) => !body.series.MNQ), 'nothing stored from the NQ chart');
     assert.ok(bodies.some((body) => body.series.MES), 'the ES chart is still read');
-    // Still off a minute later: the full read is tried again, still nothing stored.
+    // The candles are ahead: its studies are not read at all.
+    assert.equal(nq.calls.length, 0, 'no study read from a chart whose candles are ahead');
+    // Still off a minute later: still nothing stored.
     await page.reader.pollSeries();
-    assert.ok(nq.calls.slice(2).every((options) => options.from === undefined), 'its full read stays due');
+    assert.equal(nq.calls.length, 0);
     assert.ok(page.series().every((post) => !JSON.parse(post.capture.body).series.MNQ));
     assert.equal(page.lastDiagnostic().seriesWidget, true, 'from the frame with the charts');
     // The widget goes away in this frame: it no longer reports the old skew.
@@ -223,6 +251,7 @@ function settle() {
     assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
     const recovered = page.series().map((post) => JSON.parse(post.capture.body)).find((body) => body.series.MNQ);
     assert.ok(recovered, 'NQ is stored again');
+    assert.ok(nq.calls.length === 2 && nq.calls.every((options) => options.from === undefined), 'its full read stayed due');
     // Both charts off: both named.
     const both = [nq, chart('F.US.EPZ26', '1', [
       study('res-es', 'SP500 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S + skewS, 0, 0, 0, 0]]),
@@ -350,7 +379,7 @@ function settle() {
     const page = load({ chartsCount: () => 1, chart: () => broken });
     await settle();
     const stats = page.lastDiagnostic();
-    assert.equal(stats.seriesErrorCount, 2);
+    assert.equal(stats.seriesErrorCount, 3, 'its candles and both studies');
     assert.equal(page.series().length, 0);
     assert.ok(page.posts.some((post) => post.type === 'diagnostic'));
   })
@@ -421,6 +450,122 @@ function settle() {
     nq.exportData = exportData;
     await page.reader.pollSeriesLive();
     assert.equal(page.posts.filter((post) => post.type === 'capture' && post.capture.endpoint === '/page-reader/series-live').length, 0);
+  })
+  // The NQ minute chart with a study drawn 26 bars ahead (its export's time column runs past the
+  // last candle) while its candles end now: the clock is right, rows up to now are stored, the
+  // rows ahead are dropped, and the fast path publishes too.
+  .then(async () => {
+    const ahead = 26 * MIN_S;
+    const resRows = [];
+    for (let t = NOW_S - 3 * MIN_S; t <= NOW_S + ahead; t += MIN_S) resRows.push([t, 1, 2, 3, 0]);
+    resRows[1][1] = 1.25;
+    const candleTimes = [];
+    for (let t = NOW_S - 30 * MIN_S; t <= NOW_S; t += MIN_S) candleTimes.push(t);
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], resRows),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0], [NOW_S, 0.75, 0]])
+    ], { times: candleTimes, through: NOW_S + ahead });
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    const stats = page.lastDiagnostic();
+    assert.equal(stats.seriesLastReason, 'series-published', 'no series-chart-clock');
+    assert.equal(stats.seriesClockSymbol, '');
+    assert.equal(stats.seriesClockSkewS, 0);
+    const stored = points(JSON.parse(page.series()[0].capture.body).series.MNQ);
+    assert.deepEqual(stored.map((point) => point.t), [-3, -2, -1, 0].map((m) => new Date((NOW_S + m * MIN_S) * 1000).toISOString()), 'rows up to now, none ahead');
+    assert.equal(stored[1].values['res.hg'], 1.25);
+    // The fast path: the same candles, the same study ahead, still publishes.
+    await page.reader.pollSeriesLive();
+    const live = page.posts.filter((post) => post.type === 'capture' && post.capture.endpoint === '/page-reader/series-live');
+    assert.equal(live.length, 1, 'the fast path publishes');
+    const livePoints = points(JSON.parse(live[0].capture.body).series.MNQ);
+    assert.ok(livePoints.every((point) => Date.parse(point.t) <= NOW_S * 1000 + 5000), 'none ahead');
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '');
+    assert.equal(nq.candleCalls.length, 2, 'one candle read per read');
+    assert.deepEqual(nq.mutations, []);
+  })
+  // Candles that really are 5 minutes ahead while the studies end now: still the clock fault,
+  // the skew in the diagnostics, nothing stored, no study read; the fast path stays out.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 1, 2, 3, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ], { times: [NOW_S - MIN_S, NOW_S, NOW_S + 5 * MIN_S] });
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    const stats = page.lastDiagnostic();
+    assert.equal(stats.seriesLastReason, 'series-chart-clock');
+    assert.equal(stats.seriesClockSymbol, 'NQ');
+    assert.ok(Math.abs(stats.seriesClockSkewS - 5 * MIN_S) <= 2, `skew ${stats.seriesClockSkewS}`);
+    assert.equal(page.series().length, 0);
+    assert.equal(nq.calls.length, 0);
+    await page.reader.pollSeriesLive();
+    assert.equal(page.posts.filter((post) => post.type === 'capture' && /series/.test(post.capture.endpoint)).length, 0, 'the fast path posts nothing');
+  })
+  // An export with no main-series columns (an older chart API): the studies' newest row judges
+  // the clock as before.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 1, 2, 3, 0], [NOW_S + 3600, 0, 0, 0, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ], { schema: [{ type: 'time' }] });
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-chart-clock');
+    assert.equal(page.series().length, 0);
+  })
+  // The candle read fails: no clock fault is claimed, nothing is stored this read, and the next
+  // read that answers stores the chart.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 1, 2, 3, 0], [NOW_S + 3600, 0, 0, 0, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ], { times: [NOW_S - MIN_S] });
+    const exportData = nq.exportData;
+    let candlesFail = true;
+    nq.exportData = async (options) => {
+      if (candlesFail && options.includeSeries) throw new Error('timed out');
+      return exportData(options);
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '', 'a failed candle read is no clock fault');
+    assert.equal(page.lastDiagnostic().seriesErrorCount, 1);
+    assert.equal(page.series().length, 0, 'nothing stored without a judged clock');
+    candlesFail = false;
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
+    assert.equal(page.series().length, 1);
+  })
+  // Once the candles say the clock is right, a study that fails never keeps the old warning:
+  // the fault clears at once (nothing stored that read), and the next full answer stores.
+  .then(async () => {
+    let ahead = true;
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - MIN_S, 1, 2, 3, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ], { times: [NOW_S - MIN_S] });
+    const exportData = nq.exportData;
+    let arbFails = false;
+    nq.exportData = async (options) => {
+      if (options.includeSeries && ahead) {
+        const out = await exportData(options);
+        return { schema: out.schema, data: [Float64Array.from([NOW_S + 600, 1, 1, 1, 1])] };
+      }
+      if (arbFails && (options.includedStudies || []).includes('arb-nq')) throw new Error('timed out');
+      return exportData(options);
+    };
+    const page = load({ chartsCount: () => 1, chart: () => nq });
+    await settle();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-chart-clock', 'candles ahead: fault');
+    ahead = false;
+    arbFails = true;
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesClockSymbol, '', 'candles right: the warning clears though a study failed');
+    assert.equal(page.series().length, 0, 'nothing stored the read a study failed');
+    arbFails = false;
+    await page.reader.pollSeries();
+    assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
   })
   .then(() => console.log('browser extension page reader series tests passed'))
   .catch((error) => {
