@@ -19,6 +19,9 @@
   // candle ahead of now is always in it). An hour, so the last real candle is in it ahead of any
   // rows that only carry its close forward.
   const SERIES_CLOCK_WINDOW_S = 60 * 60;
+  // The fast path's candle read (about once a second): a short window, since it only runs on a
+  // chart whose minute read already found its last real candle.
+  const SERIES_LIVE_CLOCK_WINDOW_S = 10 * 60;
   // The clock diagnostics (popup only): the export's columns and last rows, kept small.
   const CLOCK_DIAG_COLUMNS = 8;
   const CLOCK_DIAG_ROWS = 5;
@@ -254,7 +257,7 @@
         ...clock.diag,
         candleS: clock.known ? clock.newest : 0,
         studyS: 0,
-        skewS: clock.known ? clock.newest - nowS : 0
+        skewS: clock.known && clock.newest ? clock.newest - nowS : 0
       };
       if (clockCharts.length < CLOCK_DIAG_CHARTS) clockCharts.push(entry);
       if (clock.failed) stats.seriesErrorCount += 1;
@@ -393,7 +396,7 @@
       const studies = safeArray(call(chart, 'getAllStudies'));
       const chartRows = new Map();
       let studyNewestS = 0;
-      const clock = await candleClock(chart, nowS, studies);
+      const clock = await candleClock(chart, nowS, studies, SERIES_LIVE_CLOCK_WINDOW_S);
       if (clock.failed) stats.seriesLiveErrorCount += 1;
       let failed = clock.failed;
       const candlesAhead = clock.known && clock.newest - nowS > SERIES_CLOCK_SKEW_S;
@@ -474,7 +477,7 @@
    * the window means none is ahead, so `newest` 0 is right). `failed`: the read threw or timed out;
    * nothing is judged. `diag`: what the popup's diagnostics show of this read (local only).
    */
-  async function candleClock(chart, nowS, studies = []) {
+  async function candleClock(chart, nowS, studies = [], windowS = SERIES_CLOCK_WINDOW_S) {
     const diag = { source: 'no-export', columns: [], tail: [], rows: 0, ahead: 0, skipped: 0 };
     // No export at all: nothing to judge (the studies are then counted as missing, as before).
     if (typeof chart.exportData !== 'function') return { known: false, failed: false, newest: 0, diag };
@@ -484,7 +487,7 @@
         includeTime: true,
         includeSeries: true,
         includedStudies: [],
-        from: nowS - SERIES_CLOCK_WINDOW_S
+        from: nowS - windowS
       }));
     } catch (_err) {
       diag.source = 'failed';
@@ -540,13 +543,19 @@
       diag.rows += 1;
       if (seconds > nowS) diag.ahead += 1;
       let real = prices.some((column) => finite(row[column]));
-      if (real && byVolume) {
-        real = finite(row[volume]) && row[volume] > 0;
-      } else if (real && last) {
-        // No volume: prices that are all the last candle's close, carried forward, are no trade.
-        // (The first row in the window has nothing to compare with: it counts, so a lone candle
-        // ahead is still a fault; the window is long enough that the last real candle comes first.)
-        real = !prices.every((column) => row[column] === last[closeColumn]);
+      if (real && byVolume) real = finite(row[volume]) && row[volume] > 0;
+      if (real && last) {
+        // Padding past the last bar is no trade, whatever its volume: prices that are all the
+        // last candle's close carried forward, or a repeat of the last candle (every price, and
+        // volume when given, the same; columns without a number are ignored). A real minute
+        // that matches the one before in every column is vanishingly rare. (The first row in the
+        // window has nothing to compare with: it counts, so a lone candle ahead is still a fault;
+        // the window is long enough that the last real candle comes first.)
+        const given = prices.filter((column) => finite(row[column]));
+        const carried = given.every((column) => row[column] === last[closeColumn]);
+        const repeated = given.every((column) => row[column] === last[column])
+          && (volume < 0 || !finite(row[volume]) || row[volume] === last[volume]);
+        real = !(carried || repeated);
       }
       if (!real) {
         diag.skipped += 1;

@@ -26,7 +26,8 @@ function chart(symbol, resolution, studies, candles = {}) {
   const byId = new Map(studies.map((row) => [row.info.id, row]));
   const candleRows = () => {
     const times = candles.times || Array.from(new Set(studies.flatMap((row) => row.rows.map((data) => data[0]))));
-    const rows = times.map((t) => Float64Array.from([t, 100, 101, 99, 100.5]));
+    // Each minute a different bar, as real candles are (a bar repeated exactly reads as padding).
+    const rows = times.map((t, i) => Float64Array.from([t, 100 + i * 0.25, 101 + i * 0.25, 99 + i * 0.25, 100.5 + i * 0.25]));
     const last = Math.max(0, ...times);
     for (let t = last + 60; Number.isFinite(candles.through) && t <= candles.through; t += 60) {
       rows.push(Float64Array.from([t, NaN, NaN, NaN, NaN]));
@@ -605,7 +606,11 @@ function settle() {
       // Whitespace with the last close carried forward (O=H=L=C), no volume column.
       ['carried close', CANDLE_SCHEMA, [...real, ...ahead((t) => [t, lastClose, lastClose, lastClose, lastClose])]],
       // Whitespace with prices but no trade: volume 0 or NaN where the feed gives volume.
-      ['no volume', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, 100, 101, 99, 100.5, t % 120 ? 0 : NaN])]]
+      ['no volume', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, 100, 101, 99, 100.5, t % 120 ? 0 : NaN])]],
+      // Whitespace that repeats the last whole bar, volume included.
+      ['repeated bar', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, ...real[real.length - 1].slice(1), 12])]],
+      // Whitespace with only the close carried, the other prices empty.
+      ['close only', CANDLE_SCHEMA, [...real, ...ahead((t) => [t, NaN, NaN, NaN, lastClose])]]
     ];
     for (const [name, schema, rows] of cases) {
       const nq = withCandles(schema, rows);
@@ -626,7 +631,7 @@ function settle() {
     }
     // Real trades ahead are still the fault: volume above zero, or prices that move.
     const realAhead = [
-      ['volume', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, 100, 101, 99, 100.5, 3])]],
+      ['volume', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, 100, 101, 99, 100.5, 3 + ((t / MIN_S) % 4)])]],
       ['moving prices', CANDLE_SCHEMA, [...real, ...ahead((t) => [t, 100, 101 + (t % 7), 99, 100.5])]]
     ];
     for (const [name, schema, rows] of realAhead) {
