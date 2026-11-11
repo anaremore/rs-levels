@@ -990,7 +990,7 @@
           const bottom = Math.min(...prices);
           addZoneRectangle(state, seen, {
             index,
-            chart: rawSymbol.slice(0, 32),
+            chart: rawSymbol,
             top,
             bottom,
             name: shapeName,
@@ -1031,7 +1031,7 @@
         if (shapeName === 'horizontal_line' || shapeName === 'horizontal_ray') {
           addChartLine(state, seen, {
             index,
-            chart: rawSymbol.slice(0, 32),
+            chart: rawSymbol,
             price,
             text: levelName || label,
             title: safeString(props && props.title),
