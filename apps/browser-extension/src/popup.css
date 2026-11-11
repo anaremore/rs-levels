@@ -391,3 +391,8 @@ dd {
     transition: none !important;
   }
 }
+
+/* One line per minute futures chart: span the whole diagnostics grid. */
+#series-clock-charts-row {
+  grid-column: 1 / -1;
+}

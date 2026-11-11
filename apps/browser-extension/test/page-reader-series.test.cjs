@@ -26,7 +26,8 @@ function chart(symbol, resolution, studies, candles = {}) {
   const byId = new Map(studies.map((row) => [row.info.id, row]));
   const candleRows = () => {
     const times = candles.times || Array.from(new Set(studies.flatMap((row) => row.rows.map((data) => data[0]))));
-    const rows = times.map((t) => Float64Array.from([t, 100, 101, 99, 100.5]));
+    // Each minute a different bar, as real candles are (a bar repeated exactly reads as padding).
+    const rows = times.map((t, i) => Float64Array.from([t, 100 + i * 0.25, 101 + i * 0.25, 99 + i * 0.25, 100.5 + i * 0.25]));
     const last = Math.max(0, ...times);
     for (let t = last + 60; Number.isFinite(candles.through) && t <= candles.through; t += 60) {
       rows.push(Float64Array.from([t, NaN, NaN, NaN, NaN]));
@@ -90,6 +91,11 @@ function load(widget) {
   return { posts, reader, series, lastDiagnostic, context };
 }
 
+// Values from the reader's context, as plain data (its arrays are another realm's).
+function plain(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 // The reader starts its first read on load; let it finish.
 function settle() {
   return new Promise((resolve) => setImmediate(resolve));
@@ -143,7 +149,7 @@ function settle() {
   assert.equal(nq.candleCalls.length, 1);
   assert.equal(nq.candleCalls[0].includeSeries, true);
   assert.deepEqual(Array.from(nq.candleCalls[0].includedStudies), []);
-  assert.ok(nq.candleCalls[0].from >= NOW_S - 10 * MIN_S && nq.candleCalls[0].from <= NOW_S);
+  assert.ok(nq.candleCalls[0].from >= NOW_S - 65 * MIN_S && nq.candleCalls[0].from <= NOW_S - 55 * MIN_S, 'the last hour');
 
   const posts = page.series();
   assert.equal(posts.length, 2, 'one post per symbol');
@@ -566,6 +572,160 @@ function settle() {
     arbFails = false;
     await page.reader.pollSeries();
     assert.equal(page.lastDiagnostic().seriesLastReason, 'series-published');
+  })
+  // 0.4.9: the owner's NQ chart was judged ~25 minutes ahead every read, the offset moving with
+  // the clock. Each export shape that can give that is reproduced here.
+  .then(async () => {
+    const studies = () => [
+      study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], [[NOW_S - 2 * MIN_S, 1, 2, 3, 0], [NOW_S - MIN_S, 1.5, 2.5, 3.5, 0]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+    ];
+    // The candle export answered by `rows` (plain rows, sent as Float64Array) under `schema`.
+    const withCandles = (schema, rows) => {
+      const nq = chart('F.US.ENQZ26', '1', studies());
+      const exportData = nq.exportData;
+      nq.exportData = async (options) => {
+        if (options.includeSeries) {
+          nq.candleCalls.push(options);
+          return { schema, data: rows.filter((row) => row[0] >= options.from).map((row) => Float64Array.from(row)) };
+        }
+        return exportData(options);
+      };
+      return nq;
+    };
+    const real = [];
+    for (let m = -10; m <= 0; m += 1) real.push([NOW_S + m * MIN_S, 100 + m, 101 + m, 99 + m, 100.5 + m]);
+    const lastClose = real[real.length - 1][4];
+    const ahead = (row) => {
+      const out = [];
+      for (let m = 1; m <= 25; m += 1) out.push(row(NOW_S + m * MIN_S));
+      return out;
+    };
+    const volumeSchema = [...CANDLE_SCHEMA, { type: 'value', sourceType: 'series', plotTitle: 'volume', sourceTitle: 'Main' }];
+    const cases = [
+      // Whitespace with the last close carried forward (O=H=L=C), no volume column.
+      ['carried close', CANDLE_SCHEMA, [...real, ...ahead((t) => [t, lastClose, lastClose, lastClose, lastClose])]],
+      // Whitespace with prices but no trade: volume 0 or NaN where the feed gives volume.
+      ['no volume', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, 100, 101, 99, 100.5, t % 120 ? 0 : NaN])]],
+      // Whitespace that repeats the last whole bar, volume included.
+      ['repeated bar', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, ...real[real.length - 1].slice(1), 12])]],
+      // Whitespace with only the close carried, the other prices empty.
+      ['close only', CANDLE_SCHEMA, [...real, ...ahead((t) => [t, NaN, NaN, NaN, lastClose])]]
+    ];
+    for (const [name, schema, rows] of cases) {
+      const nq = withCandles(schema, rows);
+      const page = load({ chartsCount: () => 1, chart: () => nq, activeChartIndex: () => 0 });
+      await settle();
+      const stats = page.lastDiagnostic();
+      assert.equal(stats.seriesLastReason, 'series-published', `${name}: recorded`);
+      assert.equal(stats.seriesClockSymbol, '', `${name}: no clock fault`);
+      const [entry] = stats.seriesClockCharts;
+      assert.equal(entry.source, 'candles');
+      assert.equal(entry.active, true);
+      assert.equal(entry.candleS, NOW_S, `${name}: the clock is the last real candle`);
+      assert.equal(entry.skewS, 0);
+      assert.equal(entry.ahead, 25);
+      assert.equal(entry.skipped, 25);
+      assert.equal(entry.tail.length, 5, 'the last five rows');
+      assert.equal(entry.tail[4][0], NOW_S + 25 * MIN_S, 'the tail shows the rows ahead');
+    }
+    // Real trades ahead are still the fault: volume above zero, or prices that move.
+    const realAhead = [
+      ['volume', volumeSchema, [...real.map((row) => [...row, 12]), ...ahead((t) => [t, 100, 101, 99, 100.5, 3 + ((t / MIN_S) % 4)])]],
+      ['moving prices', CANDLE_SCHEMA, [...real, ...ahead((t) => [t, 100, 101 + (t % 7), 99, 100.5])]]
+    ];
+    for (const [name, schema, rows] of realAhead) {
+      const nq = withCandles(schema, rows);
+      const page = load({ chartsCount: () => 1, chart: () => nq });
+      await settle();
+      const stats = page.lastDiagnostic();
+      assert.equal(stats.seriesLastReason, 'series-chart-clock', `${name}: real candles ahead are a fault`);
+      assert.ok(Math.abs(stats.seriesClockSkewS - 25 * MIN_S) <= 2, `${name}: skew ${stats.seriesClockSkewS}`);
+      assert.equal(stats.seriesClockCharts[0].candleS, NOW_S + 25 * MIN_S);
+      assert.equal(page.series().length, 0);
+    }
+    // A feed whose volume column is always empty is judged by its prices (never by nothing).
+    {
+      const rows = [...real.map((row) => [...row, NaN]), ...ahead((t) => [t, 100, 101 + (t % 7), 99, 100.5, NaN])];
+      const nq = withCandles(volumeSchema, rows);
+      const page = load({ chartsCount: () => 1, chart: () => nq });
+      await settle();
+      assert.equal(page.lastDiagnostic().seriesLastReason, 'series-chart-clock', 'empty volume: prices judge');
+    }
+    // A column tagged `series` that a study on the chart owns, or a second series source (an
+    // overlay), runs 25 minutes ahead: never the chart's clock.
+    {
+      const schema = [
+        ...CANDLE_SCHEMA,
+        { type: 'value', sourceType: 'series', sourceId: 'res-nq', plotTitle: 'close', sourceTitle: 'Liquidity' },
+        { type: 'value', sourceType: 'series', sourceId: 'overlay-1', plotTitle: 'close', sourceTitle: 'Overlay' }
+      ];
+      const rows = [
+        ...real.map((row) => [...row, 1, 2]),
+        ...ahead((t) => [t, NaN, NaN, NaN, NaN, 5 + (t % 3), 7 + (t % 5)])
+      ];
+      const nq = withCandles(schema, rows);
+      const page = load({ chartsCount: () => 1, chart: () => nq });
+      await settle();
+      const stats = page.lastDiagnostic();
+      assert.equal(stats.seriesLastReason, 'series-published', 'other sources ahead: recorded');
+      assert.equal(stats.seriesClockCharts[0].candleS, NOW_S);
+      assert.deepEqual(plain(stats.seriesClockCharts[0].columns).map((column) => [column.type, column.id, column.title]), [
+        ['series', '', 'open'], ['series', '', 'high'], ['series', '', 'low'], ['series', '', 'close'],
+        ['series', 'res-nq', 'close'], ['series', 'overlay-1', 'close']
+      ]);
+    }
+    // No candle columns (0.4.8's fallback, the same check as before it): study rows ahead that
+    // are only a time (whitespace) are no bar; study rows ahead with values still are (tested above).
+    {
+      const resRows = [[NOW_S - MIN_S, 1, 2, 3, 0]];
+      for (let m = 1; m <= 26; m += 1) resRows.push([NOW_S + m * MIN_S, null, null, null, null]);
+      const nq = chart('F.US.ENQZ26', '1', [
+        study('res-nq', 'NQ100 Resilience', ['HG', 'MHP', 'HP', '0'], resRows),
+        study('arb-nq', 'NQ100 Arb', ['Speed', '0'], [[NOW_S - MIN_S, 0.5, 0]])
+      ], { schema: [{ type: 'time' }] });
+      const page = load({ chartsCount: () => 1, chart: () => nq });
+      await settle();
+      const stats = page.lastDiagnostic();
+      assert.equal(stats.seriesLastReason, 'series-published', 'time-only study rows ahead: recorded');
+      assert.equal(stats.seriesClockCharts[0].source, 'studies');
+      assert.equal(stats.seriesClockCharts[0].studyS, NOW_S - MIN_S);
+      assert.equal(stats.seriesClockCharts[0].skewS, -MIN_S);
+    }
+  })
+  // Diagnostics: each minute futures chart's index, symbol, resolution and whether it's active;
+  // a widget that hands the same chart object for every index reads it once.
+  .then(async () => {
+    const nq = chart('F.US.ENQZ26', '1', [
+      study('res-nq', 'NQ100 Resilience', ['HG'], [[NOW_S - MIN_S, 1]]),
+      study('arb-nq', 'NQ100 Arb', ['Speed'], [[NOW_S - MIN_S, 1]])
+    ]);
+    const es = chart('F.US.EPZ26', '1', [
+      study('res-es', 'SP500 Resilience', ['HG'], [[NOW_S - MIN_S, 1]]),
+      study('arb-es', 'SP500 Arb', ['Speed'], [[NOW_S - MIN_S, 1]])
+    ]);
+    const qqq = chart('QQQ', '1D', []);
+    const charts = [qqq, es, nq];
+    const page = load({ chartsCount: () => charts.length, chart: (index) => charts[index], activeChartIndex: () => 2 });
+    await settle();
+    const stats = page.lastDiagnostic();
+    assert.equal(stats.seriesClockNowS, NOW_S);
+    assert.deepEqual(plain(stats.seriesClockCharts).map((row) => [row.index, row.chart, row.resolution, row.active, row.source]), [
+      [1, 'F.US.EPZ26', '1', false, 'candles'],
+      [2, 'F.US.ENQZ26', '1', true, 'candles']
+    ]);
+    assert.equal(stats.seriesClockCharts[1].candleS, NOW_S - MIN_S);
+    assert.deepEqual(Array.from(stats.seriesClockCharts[1].tail[0]), [NOW_S - MIN_S, 100, 101, 99, 100.5]);
+    // Without `activeChartIndex`, the active chart is the one `activeChart()` returns.
+    const byObject = load({ chartsCount: () => 2, chart: (index) => [es, nq][index], activeChart: () => es });
+    await settle();
+    assert.deepEqual(plain(byObject.lastDiagnostic().seriesClockCharts).map((row) => row.active), [true, false]);
+    // Every index the same chart: read once.
+    const before = nq.candleCalls.length;
+    const same = load({ chartsCount: () => 4, chart: () => nq });
+    await settle();
+    assert.equal(nq.candleCalls.length - before, 1, 'one chart object, one read');
+    assert.equal(same.lastDiagnostic().seriesClockCharts.length, 1);
   })
   .then(() => console.log('browser extension page reader series tests passed'))
   .catch((error) => {

@@ -1151,8 +1151,63 @@
     return Number.isFinite(number) ? String(number) : '';
   }
 
+  /**
+   * The page reader's per-chart clock diagnostics, bounded and plain: at most 4 charts, 8 columns
+   * and 5 rows of numbers each. Local only (popup and copied diagnostics); never posted anywhere.
+   */
+  function cleanSeriesClockCharts(input) {
+    if (!Array.isArray(input)) return [];
+    const text = (value, max) => String(value ?? '').replace(/[^A-Za-z0-9 .:_\-!/^=]/g, '').slice(0, max);
+    const int = (value) => {
+      const number = Number(value);
+      return Number.isFinite(number) ? Math.max(-1e10, Math.min(1e10, Math.trunc(number))) : 0;
+    };
+    const count = (value) => Math.max(0, int(value));
+    const num = (value) => (typeof value === 'number' && Number.isFinite(value) ? Math.round(value * 1e6) / 1e6 : null);
+    const iso = (seconds) => (seconds > 0 ? new Date(seconds * 1000).toISOString() : '');
+    return input.slice(0, 4).filter((row) => row && typeof row === 'object').map((row) => {
+      const candleS = count(row.candleS);
+      const studyS = count(row.studyS);
+      return {
+        index: count(row.index),
+        chart: text(row.chart, 32),
+        resolution: text(row.resolution, 8),
+        active: row.active === true,
+        source: text(row.source, 12),
+        candleS,
+        candleAt: iso(candleS),
+        studyS,
+        studyAt: iso(studyS),
+        skewS: int(row.skewS),
+        rows: count(row.rows),
+        ahead: count(row.ahead),
+        skipped: count(row.skipped),
+        columns: (Array.isArray(row.columns) ? row.columns : []).slice(0, 8).map((column) => ({
+          type: text(column && column.type, 12),
+          id: text(column && column.id, 24),
+          title: text(column && column.title, 24)
+        })),
+        tail: (Array.isArray(row.tail) ? row.tail : []).slice(-5).map((values) => (
+          Array.isArray(values) ? values.slice(0, 8).map(num) : []
+        ))
+      };
+    });
+  }
+
+  /** One line per chart for the popup: `NQ #0 active 1m: candles 17:24:00Z (+1503 s)`. */
+  function seriesClockChartsText(charts) {
+    return cleanSeriesClockCharts(charts).map((row) => {
+      const at = row.source === 'candles' ? row.candleAt : row.studyAt;
+      const time = at ? `${at.slice(11, 19)}Z` : 'none';
+      const skew = at ? ` (${row.skewS >= 0 ? '+' : ''}${row.skewS} s)` : '';
+      return `${row.chart || '?'} #${row.index}${row.active ? ' active' : ''} ${row.resolution}m: ${row.source} ${time}${skew}`;
+    }).join('; ');
+  }
+
   globalThis.RS_LEVELS = {
     defaults,
+    cleanSeriesClockCharts,
+    seriesClockChartsText,
     cleanServiceUrl,
     cleanPatterns,
     mergeEndpointPatterns,

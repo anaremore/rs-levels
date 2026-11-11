@@ -20,6 +20,15 @@ assert.equal(Object.hasOwn(settings, 'captureEnabled'), false);
 assert.equal(JSON.stringify(settings.endpointPatterns), JSON.stringify(['level', 'zone', 'ddband']));
 assert.equal(settings.maxCaptureBytes, 1024);
 assert.equal(sharedContext.RS_LEVELS.defaults.settingsVersion, 6);
+// The popup's line per chart clock read.
+assert.equal(
+  sharedContext.RS_LEVELS.seriesClockChartsText([
+    { index: 0, chart: 'F.US.ENQZ26', resolution: '1', active: true, source: 'candles', candleS: 1_800_000_060, skewS: 1503 },
+    { index: 1, chart: 'F.US.EPZ26', resolution: '1', source: 'studies', studyS: 1_800_000_000, skewS: -12 },
+    { index: 2, chart: 'F.US.EPZ26', resolution: '1', source: 'failed' }
+  ]),
+  'F.US.ENQZ26 #0 active 1m: candles 08:01:00Z (+1503 s); F.US.EPZ26 #1 1m: studies 08:00:00Z (-12 s); F.US.EPZ26 #2 1m: failed none'
+);
 assert.equal(Object.hasOwn(sharedContext.RS_LEVELS.defaults, 'captureEnabled'), false);
 assert.equal(Object.hasOwn(sharedContext.RS_LEVELS.cleanSettings({ captureEnabled: false }), 'captureEnabled'), false);
 assert.ok(sharedContext.RS_LEVELS.defaults.endpointPatterns.includes('chart'));
