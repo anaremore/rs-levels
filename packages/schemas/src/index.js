@@ -65,7 +65,9 @@ export function normalizeSymbolSnapshot(symbol, input = {}) {
     displaySymbol: stringValue(input.displaySymbol || cleanSymbol),
     price: finiteNumberOrNull(input.price),
     capturedAt: stringValue(input.capturedAt),
-    levels: Array.isArray(input.levels) ? input.levels.map((level) => normalizeLevel(cleanSymbol, level)) : [],
+    levels: Array.isArray(input.levels)
+      ? dropShapeDuplicates(input.levels.map((level) => normalizeLevel(cleanSymbol, level)))
+      : [],
     stats: normalizeStats(input.stats || {}),
     warnings: normalizeWarnings(input.warnings || [])
   };
@@ -264,6 +266,42 @@ function shouldUseInferredKind(explicitKind, inferredKind) {
 
 function isZoneSideKind(kind) {
   return kind === 'zone-bull' || kind === 'zone-bear';
+}
+
+/** The chart-shape names the page reader prefixes to a manual line's label. */
+const SHAPE_PREFIXES = ['horizontal_line ', 'horizontal_ray '];
+
+/**
+ * A manual line drawn on a RocketScooter chart reaches the service twice: as the level the page
+ * reader named from it (`metadata.reader: 'shape-line'`, e.g. `OVNHP`) and as the chart shape
+ * itself (`metadata.source: 'chart_shape'`, named `horizontal_line OVNHP`). Keep the named one:
+ * drop a chart-shape level when a shape-line level on the same symbol, kind and price carries
+ * its name without the shape prefix. Nothing else is dropped: a chart shape with no named twin,
+ * or levels whose names differ, all stay. The rest keep their sequence.
+ */
+export function dropShapeDuplicates(levels) {
+  if (!Array.isArray(levels) || levels.length < 2) return Array.isArray(levels) ? levels : [];
+  const key = (symbol, kind, price, name) =>
+    [normalizeSymbol(symbol), stringValue(kind), priceKey(price), stringValue(name).trim().toUpperCase()].join('|');
+  const named = new Set();
+  levels.forEach((level) => {
+    if (level && level.metadata && level.metadata.reader === 'shape-line') {
+      named.add(key(level.symbol, level.kind, level.price, level.name));
+    }
+  });
+  if (!named.size) return levels;
+  return levels.filter((level) => {
+    if (!level || !level.metadata || level.metadata.source !== 'chart_shape') return true;
+    const name = stringValue(level.name);
+    const prefix = SHAPE_PREFIXES.find((p) => name.toLowerCase().startsWith(p));
+    if (!prefix) return true;
+    return !named.has(key(level.symbol, level.kind, level.price, name.slice(prefix.length)));
+  });
+}
+
+function priceKey(value) {
+  const price = finiteNumberOrNull(value);
+  return price == null ? 'NA' : price.toFixed(6);
 }
 
 export function stableLevelId(symbol, level = {}) {

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  dropShapeDuplicates,
   inferLevelKind,
   normalizeEndpointSummary,
   normalizeLevel,
@@ -101,5 +102,34 @@ assert.equal(displaySymbolFor('MNQ'), 'NQ');
 assert.equal(displaySymbolFor('NQ'), 'NQ');
 assert.equal(displaySymbolFor('F.US.ENQU26'), 'NQ');
 assert.equal(displaySymbolFor('SPY'), 'SPY');
+
+// One manual line, two readings: the shape-line level stays, its `horizontal_line` chart shape goes.
+{
+  const line = (name, price, kind, metadata) => ({ symbol: 'MES', name, price, kind, metadata });
+  const kept = line('OVNHP', 7632, 'hp', { reader: 'shape-line' });
+  const twin = line('horizontal_line OVNHP', 7632, 'hp', { source: 'chart_shape', label: 'horizontal_line OVNHP' });
+  assert.deepEqual(dropShapeDuplicates([twin, kept]), [kept], 'the named one stays, in sequence');
+  const ray = line('horizontal_ray OVNHP', 7632, 'hp', { source: 'chart_shape' });
+  assert.deepEqual(dropShapeDuplicates([kept, ray]), [kept]);
+  // Never more than the double: another price, another kind, another name or symbol, or a shape
+  // that isn't a chart shape all stay.
+  for (const other of [
+    line('horizontal_line OVNHP', 7632.25, 'hp', { source: 'chart_shape' }),
+    line('horizontal_line OVNHP', 7632, 'mhp', { source: 'chart_shape' }),
+    line('horizontal_line OVNMHP', 7632, 'hp', { source: 'chart_shape' }),
+    { ...twin, symbol: 'MNQ' },
+    line('horizontal_line OVNHP', 7632, 'hp', { source: 'rocketscooter-page' }),
+    line('OVNHP copy', 7632, 'hp', { source: 'chart_shape' })
+  ]) {
+    assert.equal(dropShapeDuplicates([kept, other]).length, 2, JSON.stringify(other));
+  }
+  // A chart shape with no named twin stays; an empty or missing list is fine.
+  assert.deepEqual(dropShapeDuplicates([twin]), [twin]);
+  assert.deepEqual(dropShapeDuplicates([]), []);
+  assert.deepEqual(dropShapeDuplicates(undefined), []);
+  // Through the symbol snapshot every reader of the service builds on.
+  const row = normalizeSymbolSnapshot('MES', { levels: [kept, twin] });
+  assert.deepEqual(row.levels.map((level) => level.name), ['OVNHP']);
+}
 
 console.log('schema sample validation passed');
