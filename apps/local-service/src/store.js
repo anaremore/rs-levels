@@ -2,6 +2,7 @@ import {
   SCHEMA_VERSION,
   STATS_FIELDS,
   createEmptySnapshot,
+  dropShapeDuplicates,
   normalizeSymbol,
   normalizeSourceState,
   normalizeStats,
@@ -38,7 +39,12 @@ export function createLevelStore(options = {}) {
     if (!result.ok) {
       throw new Error(result.errors.join('; '));
     }
-    snapshot = nextSnapshot;
+    // A snapshot kept from before manual lines were served once: each line once here too.
+    const symbols = {};
+    Object.entries(nextSnapshot.symbols || {}).forEach(([symbol, row]) => {
+      symbols[symbol] = { ...row, levels: dropShapeDuplicates(row.levels) };
+    });
+    snapshot = { ...nextSnapshot, symbols };
     lastAcceptedAtMs = 0;
     return getSnapshot();
   }

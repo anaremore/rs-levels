@@ -3,6 +3,7 @@ import './config.test.js';
 import './stats-history.test.js';
 import './series-live.test.js';
 import './static-hp.test.js';
+import './manual-line-dedup.test.js';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createService, listen } from '../src/index.js';

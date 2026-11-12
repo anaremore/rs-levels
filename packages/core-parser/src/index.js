@@ -4,6 +4,7 @@ import {
   normalizeLevel,
   normalizeStats,
   normalizeSymbol,
+  dropShapeDuplicates,
   stableLevelId
 } from '../../schemas/src/index.js';
 
@@ -105,7 +106,8 @@ export function collectLevels(root, options = {}) {
     });
   });
   addMatchedZoneRectangles(root, levels, seen, options);
-  return levels;
+  // A manual chart line read both as a named level and as its chart shape: one level.
+  return dropShapeDuplicates(levels);
 }
 
 function addMatchedZoneRectangles(root, levels, seen, options = {}) {

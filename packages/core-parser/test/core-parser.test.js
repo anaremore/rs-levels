@@ -522,4 +522,32 @@ assert.equal(
   '/platform/api/users/:id/feeds/:id/ddbands/MES'
 );
 
+// A manual line drawn on the chart (OVNHP, OVNMHP): the page reader's named level and its chart
+// shape (`horizontal_line OVNHP`) are one level, the named one.
+const manual = normalizeCapture({
+  endpoint: '/page-reader/display',
+  status: 200,
+  capturedAt: '2026-11-12T14:00:00.000Z',
+  body: {
+    type: 'rs_snapshot',
+    source: 'page-reader',
+    levels: [
+      { symbol: 'ES', name: 'OVNHP', kind: 'hp', price: 7632, color: '#00ffff', source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'shape-line' } },
+      { symbol: 'ES', name: 'OVNMHP', kind: 'mhp', price: 7597, color: '#ff9800', source: 'rocketscooter-page', metadata: { rawSymbol: 'F.US.EPZ26', reader: 'shape-line' } }
+    ],
+    chartLines: [
+      { index: 'ES', chart: 'F.US.EPZ26', price: 7632, text: 'OVNHP', color: '#00ffff', source: 'chart_shape', label: 'horizontal_line OVNHP' },
+      { index: 'ES', chart: 'F.US.EPZ26', price: 7597, text: 'OVNMHP', color: '#ff9800', source: 'chart_shape', label: 'horizontal_line OVNMHP' },
+      // No named twin: stays.
+      { index: 'ES', chart: 'F.US.EPZ26', price: 7610, text: 'YHP', color: '#00ffff', source: 'chart_shape', label: 'horizontal_line YHP' }
+    ]
+  }
+});
+const manualLevels = Object.values(manual.symbols).flat();
+assert.deepEqual(
+  manualLevels.map((level) => level.id),
+  ['MES:OVNHP:7632.00', 'MES:OVNMHP:7597.00', 'MES:HORIZONTAL-LINE-YHP:7610.00']
+);
+assert.equal(manualLevels[0].metadata.reader, 'shape-line');
+
 console.log('core parser tests passed');
