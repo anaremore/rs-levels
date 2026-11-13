@@ -95,6 +95,12 @@ export function normalizeLevel(symbol, level = {}) {
 export const STATS_FIELDS = Object.freeze([
   Object.freeze({ key: 'dd', label: 'DD', kind: 'number' }),
   Object.freeze({ key: 'riskInterval', label: 'RI', kind: 'number' }),
+  // The RI/DD table's other columns, per futures family (MES and ES, MNQ and NQ share them).
+  Object.freeze({ key: 'yellowLineDistance', label: 'YL', kind: 'number' }),
+  Object.freeze({ key: 'ddBandUpper', label: 'DD-Band-U', kind: 'number' }),
+  Object.freeze({ key: 'ddBandLower', label: 'DD-Band-L', kind: 'number' }),
+  Object.freeze({ key: 'prevSessionClose', label: 'Prev Close', kind: 'number' }),
+  Object.freeze({ key: 'dynHp', label: 'Dyn-HP', kind: 'number' }),
   Object.freeze({ key: 'resilience', label: 'Res', kind: 'number' }),
   Object.freeze({ key: 'weeklyResilience', label: 'WRes', kind: 'number' }),
   Object.freeze({ key: 'monthlyResilience', label: 'MRes', kind: 'number' }),
@@ -105,6 +111,11 @@ export function normalizeStats(stats = {}) {
   return {
     dd: firstFiniteNumber(stats.dd, stats.ddRatio),
     riskInterval: firstFiniteNumber(stats.riskInterval, stats.ri, stats.RI, stats.risk, stats.riskInt, stats['Risk Interval']),
+    yellowLineDistance: firstFiniteNumber(stats.yellowLineDistance),
+    ddBandUpper: firstFiniteNumber(stats.ddBandUpper),
+    ddBandLower: firstFiniteNumber(stats.ddBandLower),
+    prevSessionClose: firstFiniteNumber(stats.prevSessionClose),
+    dynHp: firstFiniteNumber(stats.dynHp),
     resilience: firstFiniteNumber(stats.resilience, stats.res, stats.dailyResilience),
     weeklyResilience: firstFiniteNumber(stats.weeklyResilience, stats.wres, stats.resilience3),
     monthlyResilience: firstFiniteNumber(stats.monthlyResilience, stats.mres, stats.resilience2),

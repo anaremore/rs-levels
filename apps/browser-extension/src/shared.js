@@ -153,7 +153,7 @@
   function summaryHasStats(summary = {}) {
     const stats = summary.stats || {};
     return Boolean(stats.mapCode) ||
-      [stats.dd, stats.riskInterval, stats.resilience, stats.monthlyResilience, stats.weeklyResilience]
+      [stats.dd, stats.riskInterval, stats.yellowLineDistance, stats.ddBandUpper, stats.ddBandLower, stats.prevSessionClose, stats.dynHp, stats.resilience, stats.monthlyResilience, stats.weeklyResilience]
         .some((value) => value != null && value !== '' && Number.isFinite(Number(value)));
   }
 
@@ -734,6 +734,11 @@
     return {
       dd: firstFinite(stats.dd, stats.ddRatio),
       riskInterval: firstFinite(stats.riskInterval, stats.ri, stats.RI, stats.risk, stats.riskInt, stats['Risk Interval']),
+      yellowLineDistance: firstFinite(stats.yellowLineDistance),
+      ddBandUpper: firstFinite(stats.ddBandUpper),
+      ddBandLower: firstFinite(stats.ddBandLower),
+      prevSessionClose: firstFinite(stats.prevSessionClose),
+      dynHp: firstFinite(stats.dynHp),
       resilience: firstFinite(stats.resilience, stats.res, stats.dailyResilience),
       monthlyResilience: firstFinite(stats.monthlyResilience, stats.mres, stats.resilience2),
       weeklyResilience: firstFinite(stats.weeklyResilience, stats.wres, stats.resilience3),
@@ -745,6 +750,11 @@
     return {
       dd: next.dd == null ? existing.dd : next.dd,
       riskInterval: next.riskInterval == null ? existing.riskInterval : next.riskInterval,
+      yellowLineDistance: next.yellowLineDistance == null ? existing.yellowLineDistance : next.yellowLineDistance,
+      ddBandUpper: next.ddBandUpper == null ? existing.ddBandUpper : next.ddBandUpper,
+      ddBandLower: next.ddBandLower == null ? existing.ddBandLower : next.ddBandLower,
+      prevSessionClose: next.prevSessionClose == null ? existing.prevSessionClose : next.prevSessionClose,
+      dynHp: next.dynHp == null ? existing.dynHp : next.dynHp,
       resilience: next.resilience == null ? existing.resilience : next.resilience,
       monthlyResilience: next.monthlyResilience == null ? existing.monthlyResilience : next.monthlyResilience,
       weeklyResilience: next.weeklyResilience == null ? existing.weeklyResilience : next.weeklyResilience,
@@ -783,7 +793,7 @@
 
   function hasStats(stats = {}) {
     return Boolean(stats.mapCode) ||
-      [stats.dd, stats.riskInterval, stats.resilience, stats.monthlyResilience, stats.weeklyResilience].some((value) => value != null);
+      [stats.dd, stats.riskInterval, stats.yellowLineDistance, stats.ddBandUpper, stats.ddBandLower, stats.prevSessionClose, stats.dynHp, stats.resilience, stats.monthlyResilience, stats.weeklyResilience].some((value) => value != null);
   }
 
   function firstFinite(...values) {

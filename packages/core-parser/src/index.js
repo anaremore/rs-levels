@@ -3,6 +3,7 @@ import {
   normalizeEndpointSummary,
   normalizeLevel,
   normalizeStats,
+  STATS_FIELDS,
   normalizeSymbol,
   dropShapeDuplicates,
   stableLevelId
@@ -429,6 +430,11 @@ function looksLikeStatsNode(node) {
     node.risk,
     node.riskInt,
     node['Risk Interval'],
+    node.yellowLineDistance,
+    node.ddBandUpper,
+    node.ddBandLower,
+    node.prevSessionClose,
+    node.dynHp,
     node.resilience,
     node.res,
     node.dailyResilience,
@@ -443,13 +449,13 @@ function looksLikeStatsNode(node) {
 
 function hasMeaningfulStats(stats = {}) {
   return Boolean(stats.mapCode) ||
-    [stats.dd, stats.riskInterval, stats.resilience, stats.weeklyResilience, stats.monthlyResilience]
-      .some((value) => value != null && Number.isFinite(Number(value)));
+    STATS_FIELDS.filter((field) => field.kind === 'number')
+      .some(({ key }) => stats[key] != null && Number.isFinite(Number(stats[key])));
 }
 
 function mergeStatsValues(existing = {}, next = {}) {
   const merged = normalizeStats(existing);
-  ['dd', 'riskInterval', 'resilience', 'weeklyResilience', 'monthlyResilience'].forEach((key) => {
+  STATS_FIELDS.filter((field) => field.kind === 'number').forEach(({ key }) => {
     if (next[key] != null && Number.isFinite(Number(next[key]))) merged[key] = Number(next[key]);
   });
   if (next.mapCode) merged.mapCode = next.mapCode;

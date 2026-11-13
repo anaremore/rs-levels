@@ -639,5 +639,68 @@ const range = (fromMs, toMs, fields) => ({ fromMs, toMs, fields });
   assert.deepEqual(body.segments.dd, [{ from: iso(T0 + 7000), to: iso(last) }], 'one span, no false gaps');
 }
 
+// The RI/DD table's columns, as the page reader sends them for MES and MNQ: on /stats/ES and
+// /stats/NQ (the families, as RI), and in the stats history as RI is.
+{
+  const dataDir = tempDir();
+  const now = { ms: T0 };
+  const service = createService({
+    env: {},
+    config: { host: '127.0.0.1', port: 0, dataDir },
+    clock: () => new Date(now.ms)
+  });
+  const address = await listen(service);
+  const base = `http://127.0.0.1:${address.port}`;
+  const posted = await fetch(`${base}/capture/api`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      endpoint: '/page-reader/display',
+      method: 'PAGE_READER',
+      status: 200,
+      capturedAt: iso(now.ms),
+      body: {
+        levels: [],
+        stats: {
+          MES: {
+            riskInterval: 68.75,
+            prevSessionClose: 7574.75,
+            yellowLineDistance: 545,
+            ddBandUpper: 7643.5,
+            ddBandLower: 7506,
+            dynHp: 7707.5
+          },
+          // A "-" cell never reaches the body: the field is simply missing.
+          MNQ: { riskInterval: 266.25, yellowLineDistance: 2109, ddBandLower: 30460.25 }
+        }
+      }
+    })
+  });
+  assert.equal(posted.status, 200);
+  const es = await (await fetch(`${base}/stats/ES`)).json();
+  assert.equal(es.stats.riskInterval, 68.75);
+  assert.equal(es.stats.yellowLineDistance, 545);
+  assert.equal(es.stats.prevSessionClose, 7574.75);
+  assert.equal(es.stats.ddBandUpper, 7643.5);
+  assert.equal(es.stats.ddBandLower, 7506);
+  assert.equal(es.stats.dynHp, 7707.5);
+  const nq = await (await fetch(`${base}/stats/NQ`)).json();
+  assert.equal(nq.stats.yellowLineDistance, 2109);
+  assert.equal(nq.stats.ddBandUpper, null, 'not captured: null, never a guess');
+  assert.equal(nq.stats.dynHp, null);
+  const lines = fileLines(dataDir);
+  // Stored under the captured contract, as RI is; /history/ES reads MES's.
+  const esLine = lines.find((line) => line.s === 'MES');
+  assert.equal(esLine.v.yellowLineDistance, 545, 'written to the history as RI is');
+  assert.equal(esLine.v.riskInterval, 68.75);
+  assert.equal(esLine.v.dynHp, 7707.5);
+  const nqLine = lines.find((line) => line.s === 'MNQ');
+  assert.equal(nqLine.v.yellowLineDistance, 2109);
+  assert.equal('dynHp' in nqLine.v, false, 'a field not captured is never written');
+  const history = await (await fetch(`${base}/history/ES?from=${iso(T0)}&to=${iso(now.ms + 1000)}&fields=yellowLineDistance`)).json();
+  assert.deepEqual(history.points.map((point) => point.values.yellowLineDistance), [545]);
+  await new Promise((resolve) => service.server.close(resolve));
+}
+
 for (const dir of dirs) rmSync(dir, { recursive: true, force: true });
 console.log('Stats history tests passed');

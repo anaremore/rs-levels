@@ -48,6 +48,13 @@ export interface Level {
 
 export interface SymbolStats {
   dd: number | null;
+  riskInterval: number | null;
+  /** The RI/DD table's YL column: the yellow line's distance, in points. */
+  yellowLineDistance: number | null;
+  ddBandUpper: number | null;
+  ddBandLower: number | null;
+  prevSessionClose: number | null;
+  dynHp: number | null;
   resilience: number | null;
   weeklyResilience: number | null;
   monthlyResilience: number | null;

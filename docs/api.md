@@ -272,6 +272,12 @@ Returns display context stats for every symbol with captured stats:
       "capturedAt": "2026-06-19T14:29:59.500Z",
       "stats": {
         "dd": 0.66,
+        "riskInterval": 68.75,
+        "yellowLineDistance": 545,
+        "ddBandUpper": 7643.5,
+        "ddBandLower": 7506,
+        "prevSessionClose": 7574.75,
+        "dynHp": null,
         "resilience": 73.82,
         "weeklyResilience": -29.29,
         "monthlyResilience": 49.87,
@@ -284,6 +290,18 @@ Returns display context stats for every symbol with captured stats:
 
 Stats are display-only RocketScooter context. `mapCode` is the liquidity-map code as exposed by RocketScooter, for example `BLD`.
 `riskInterval` is the RocketScooter RI value for the ES/NQ futures family and is used by VARIS-style display indicators. When explicit `RI` has not been captured yet but the API has both DD band prices for a symbol, display stats may include a derived RI equal to half the outer DD-band distance.
+
+The page's RI/DD table (columns Contract, Month, Ticker, Product Name, Prev Session Close, RI, YL, DD-Band-U, DD-Band-L, Dyn-HP) gives the rest of each family's row, read under the table's header row only (a cell showing "-" is absent, `null` here). They are stats like RI, on `/stats` and `/stats/:symbol` and in the stats history, keyed by the same family (`MES` and `ES` share them, `MNQ` and `NQ`):
+
+| Field | Column | Meaning |
+|---|---|---|
+| `yellowLineDistance` | YL | The yellow line's distance, in points. |
+| `ddBandUpper` | DD-Band-U | The upper DD band's price. |
+| `ddBandLower` | DD-Band-L | The lower DD band's price. |
+| `prevSessionClose` | Prev Session Close | The previous session's close. |
+| `dynHp` | Dyn-HP | The table's dynamic HP, when it shows one. |
+
+They are display context only and aren't in `?format=rows`, `/sierra/:symbol` or the TradingView payload (those keep their rows). As with RI, a value stays until a capture brings a new one: a cell that later shows "-" leaves the last value in place, and the history's freshness (`/status`) says how old it is.
 
 ## GET /stats/:symbol?format=rows
 

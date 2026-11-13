@@ -57,6 +57,11 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 {
   "dd": 0.66,
   "riskInterval": 68.75,
+  "yellowLineDistance": 545,
+  "ddBandUpper": 7643.5,
+  "ddBandLower": 7506,
+  "prevSessionClose": 7574.75,
+  "dynHp": null,
   "resilience": 73.82,
   "weeklyResilience": -29.29,
   "monthlyResilience": 49.87,
@@ -64,7 +69,7 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 }
 ```
 
-`riskInterval` is RocketScooter's RI value for the futures family. `mapCode` is the RocketScooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows` or, for Sierra Chart studies, from `/sierra/:symbol`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload and displays them in the stats panel instead of drawing price lines. VARIS-style indicators can use `riskInterval`/`RI` to size VWAP bands without treating it as a price level.
+`riskInterval` is RocketScooter's RI value for the futures family; `yellowLineDistance`, `ddBandUpper`, `ddBandLower`, `prevSessionClose` and `dynHp` are the same table's YL, DD-Band-U, DD-Band-L, Prev Session Close and Dyn-HP columns (`null` when not captured; see docs/api.md). `mapCode` is the RocketScooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows` or, for Sierra Chart studies, from `/sierra/:symbol`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload and displays them in the stats panel instead of drawing price lines. VARIS-style indicators can use `riskInterval`/`RI` to size VWAP bands without treating it as a price level.
 
 ## Level
 

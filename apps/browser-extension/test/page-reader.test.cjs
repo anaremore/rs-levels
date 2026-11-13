@@ -124,10 +124,14 @@ const charts = [
   ])
 ];
 
+// The RI/DD table as the page draws it (synthetic values). Before its header row, none of the
+// columns below RI are known, so a row there gives no YL or bands (RI keeps its older
+// positional fallback); a "-" cell reads as absent.
 const riskIntervalTable = makeTable([
-  makeRow(['Contract', 'Month', 'Ticker', 'Product Name', 'Prev Session Close', 'RI', 'YL', 'DD-Band-U', 'DD-Band-L', 'Action']),
-  makeRow(['MES', 'U26', 'F.US.MESU26', 'MICRO E-MINI S&P500 FUTURES', '7574.75', '68.75', '545.00', '7643.50', '7506.00', '']),
-  makeRow(['MNQ', 'U26', 'F.US.MNQU26', 'MICRO E-MINI NASDAQ 100 FUTURE', '30726.5', '266.25', '2109.00', '30992.75', '30460.25', ''])
+  makeRow(['MNQ', 'U26', 'F.US.MNQU26', 'MICRO E-MINI NASDAQ 100 FUTURE', '1', '2', '3', '4', '5', '6']),
+  makeRow(['Contract', 'Month', 'Ticker', 'Product Name', 'Prev Session Close', 'RI', 'YL', 'DD-Band-U', 'DD-Band-L', 'Dyn-HP']),
+  makeRow(['MES', 'U26', 'F.US.MESU26', 'MICRO E-MINI S&P500 FUTURES', '7,574.75', '68.75', '545.00', '7643.50', '7506.00', '7707.50']),
+  makeRow(['MNQ', 'U26', 'F.US.MNQU26', 'MICRO E-MINI NASDAQ 100 FUTURE', '30726.5', '266.25', '2,109.00', '-', '30460.25', '-'])
 ]);
 
 const context = {
@@ -245,6 +249,16 @@ assert.equal(body.stats.MNQ.resilience, 73.82);
 assert.equal(body.stats.MNQ.monthlyResilience, 49.87);
 assert.equal(body.stats.MNQ.weeklyResilience, -29.29);
 assert.equal(body.stats.MNQ.mapCode, 'BLD');
+// The RI/DD table's other columns, under their header.
+assert.equal(body.stats.MES.prevSessionClose, 7574.75);
+assert.equal(body.stats.MES.yellowLineDistance, 545);
+assert.equal(body.stats.MES.ddBandUpper, 7643.5);
+assert.equal(body.stats.MES.ddBandLower, 7506);
+assert.equal(body.stats.MES.dynHp, 7707.5);
+assert.equal(body.stats.MNQ.yellowLineDistance, 2109);
+assert.equal(body.stats.MNQ.ddBandLower, 30460.25);
+assert.equal(body.stats.MNQ.ddBandUpper ?? null, null, '"-" reads as absent, and the row above the header gave nothing');
+assert.equal(body.stats.MNQ.dynHp ?? null, null, '"-" reads as absent');
 
 // The static HP and MHP: read off the futures chart at its own price (never the ETF's value),
 // next to Dyn HP and Dyn MHP.
