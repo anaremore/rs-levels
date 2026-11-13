@@ -16,7 +16,9 @@ export const HISTORY_HEARTBEAT_MS = 60 * 1000;
 export const HISTORY_GAP_MS = 5 * 60 * 1000;
 export const HISTORY_DEFAULT_RANGE_MS = DAY_MS;
 export const HISTORY_MAX_POINTS = 20000;
-export const HISTORY_MAX_FIELDS = 32;
+/** Series fields a symbol keeps beside its stats fields; the cap on fields follows the stats list. */
+export const HISTORY_MAX_SERIES_FIELDS = 26;
+export const HISTORY_MAX_FIELDS = HISTORY_MAX_SERIES_FIELDS + STATS_FIELDS.length;
 
 /**
  * Display stats over time, local and append-only: one JSON line per symbol when a value changes,

@@ -805,24 +805,44 @@
   }
 
   function readRiskIntervalRoleRows(state, doc, detectedSymbols) {
-    let headers = [];
+    // Each grid's header row names its own columns: a later grid without one is never read
+    // with another grid's columns.
+    const headersByGrid = new Map();
     domArray(doc.querySelectorAll('[role="row"]')).forEach((row) => {
       const cells = cellTexts(row, '[role="columnheader"],[role="cell"],[role="gridcell"]');
       if (!cells.length) return;
+      const grid = typeof row.closest === 'function'
+        ? row.closest('[role="grid"],[role="table"],[role="treegrid"]') || doc
+        : doc;
       if (riskIntervalHeaderRow(cells)) {
-        headers = cells;
+        headersByGrid.set(grid, cells);
         return;
       }
-      addRiskIntervalFromCells(state, cells, headers, detectedSymbols);
+      addRiskIntervalFromCells(state, cells, headersByGrid.get(grid) || [], detectedSymbols);
     });
   }
+
+  // The RI/DD table's other columns (Contract, Month, Ticker, Product Name, Prev Session Close,
+  // RI, YL, DD-Band-U, DD-Band-L, Dyn-HP): read only under a header row naming them (RI keeps
+  // its older fallbacks). A "-" cell reads as absent.
+  const RISK_TABLE_COLUMNS = [
+    { key: 'prevSessionClose', headers: ['PREVSESSIONCLOSE', 'PREVCLOSE'] },
+    { key: 'yellowLineDistance', headers: ['YL'] },
+    { key: 'ddBandUpper', headers: ['DDBANDU'] },
+    { key: 'ddBandLower', headers: ['DDBANDL'] },
+    { key: 'dynHp', headers: ['DYNHP'] }
+  ];
 
   function addRiskIntervalFromCells(state, cells, headers, detectedSymbols) {
     const symbol = symbolFromRiskIntervalCells(cells, headers);
     if (!symbol || !detectedSymbols.has(symbol)) return;
-    const riskInterval = riskIntervalFromCells(cells, headers);
-    if (riskInterval == null) return;
-    addStats(state, symbol, { riskInterval });
+    const values = { riskInterval: riskIntervalFromCells(cells, headers) };
+    RISK_TABLE_COLUMNS.forEach(({ key, headers: keys }) => {
+      const index = headerIndex(headers, ...keys);
+      values[key] = index >= 0 ? numberValue(cells[index]) : null;
+    });
+    if (Object.values(values).every((value) => value == null)) return;
+    addStats(state, symbol, values);
   }
 
   function symbolFromRiskIntervalCells(cells, headers) {
@@ -942,6 +962,11 @@
     const clean = {
       dd: firstFinite(statsInput.dd, statsInput.ddRatio),
       riskInterval: firstFinite(statsInput.riskInterval, statsInput.ri, statsInput.RI, statsInput.risk, statsInput.riskInt, statsInput['Risk Interval']),
+      yellowLineDistance: firstFinite(statsInput.yellowLineDistance),
+      ddBandUpper: firstFinite(statsInput.ddBandUpper),
+      ddBandLower: firstFinite(statsInput.ddBandLower),
+      prevSessionClose: firstFinite(statsInput.prevSessionClose),
+      dynHp: firstFinite(statsInput.dynHp),
       resilience: firstFinite(statsInput.resilience, statsInput.res, statsInput.dailyResilience),
       monthlyResilience: firstFinite(statsInput.monthlyResilience, statsInput.mres, statsInput.resilience2),
       weeklyResilience: firstFinite(statsInput.weeklyResilience, statsInput.wres, statsInput.resilience3),
@@ -952,6 +977,11 @@
     state.stats[symbol] = {
       dd: clean.dd == null ? existing.dd : clean.dd,
       riskInterval: clean.riskInterval == null ? existing.riskInterval : clean.riskInterval,
+      yellowLineDistance: clean.yellowLineDistance == null ? existing.yellowLineDistance : clean.yellowLineDistance,
+      ddBandUpper: clean.ddBandUpper == null ? existing.ddBandUpper : clean.ddBandUpper,
+      ddBandLower: clean.ddBandLower == null ? existing.ddBandLower : clean.ddBandLower,
+      prevSessionClose: clean.prevSessionClose == null ? existing.prevSessionClose : clean.prevSessionClose,
+      dynHp: clean.dynHp == null ? existing.dynHp : clean.dynHp,
       resilience: clean.resilience == null ? existing.resilience : clean.resilience,
       monthlyResilience: clean.monthlyResilience == null ? existing.monthlyResilience : clean.monthlyResilience,
       weeklyResilience: clean.weeklyResilience == null ? existing.weeklyResilience : clean.weeklyResilience,
@@ -1416,6 +1446,11 @@
         symbol,
         values.dd,
         values.riskInterval,
+        values.yellowLineDistance,
+        values.ddBandUpper,
+        values.ddBandLower,
+        values.prevSessionClose,
+        values.dynHp,
         values.resilience,
         values.monthlyResilience,
         values.weeklyResilience,
@@ -1432,7 +1467,7 @@
 
   function hasStats(values = {}) {
     return Boolean(values.mapCode) ||
-      [values.dd, values.riskInterval, values.resilience, values.monthlyResilience, values.weeklyResilience].some((value) => value != null);
+      [values.dd, values.riskInterval, values.yellowLineDistance, values.ddBandUpper, values.ddBandLower, values.prevSessionClose, values.dynHp, values.resilience, values.monthlyResilience, values.weeklyResilience].some((value) => value != null);
   }
 
   function firstFinite(...values) {

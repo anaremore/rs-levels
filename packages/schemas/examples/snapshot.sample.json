@@ -64,6 +64,11 @@
       "stats": {
         "dd": 0.59,
         "riskInterval": 68.75,
+        "yellowLineDistance": 545,
+        "ddBandUpper": 7643.5,
+        "ddBandLower": 7506,
+        "prevSessionClose": 7574.75,
+        "dynHp": null,
         "resilience": -30.42,
         "weeklyResilience": -51.48,
         "monthlyResilience": -34.89,

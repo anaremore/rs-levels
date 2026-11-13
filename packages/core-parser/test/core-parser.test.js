@@ -550,4 +550,15 @@ assert.deepEqual(
 );
 assert.equal(manualLevels[0].metadata.reader, 'shape-line');
 
+// A level map's YL is the yellow line's price: a level, never the RI/DD table's distance.
+{
+  const parsed = normalizeCapture({
+    endpoint: '/levels',
+    status: 200,
+    body: JSON.stringify({ symbol: 'MES', HP: 7600, YL: 7632 })
+  });
+  assert.ok(parsed.symbols.MES.some((level) => level.kind === 'yellow-line' && level.price === 7632));
+  assert.deepEqual(parsed.stats, {}, 'no stats: YL there is a price');
+}
+
 console.log('core parser tests passed');

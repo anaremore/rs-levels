@@ -343,6 +343,11 @@ function publicStats(stats = {}, levels = []) {
   return {
     dd: finiteNumberOrNull(stats.dd),
     riskInterval: explicitRiskInterval == null ? riskIntervalFromDdBands(levels) : explicitRiskInterval,
+    yellowLineDistance: finiteNumberOrNull(stats.yellowLineDistance),
+    ddBandUpper: finiteNumberOrNull(stats.ddBandUpper),
+    ddBandLower: finiteNumberOrNull(stats.ddBandLower),
+    prevSessionClose: finiteNumberOrNull(stats.prevSessionClose),
+    dynHp: finiteNumberOrNull(stats.dynHp),
     resilience: finiteNumberOrNull(stats.resilience),
     weeklyResilience: finiteNumberOrNull(stats.weeklyResilience),
     monthlyResilience: finiteNumberOrNull(stats.monthlyResilience),
@@ -377,7 +382,7 @@ function rowCell(value) {
 
 function hasPublicStats(stats = {}) {
   return Boolean(stats.mapCode) ||
-    [stats.dd, stats.riskInterval, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
+    [stats.dd, stats.riskInterval, stats.yellowLineDistance, stats.ddBandUpper, stats.ddBandLower, stats.prevSessionClose, stats.dynHp, stats.resilience, stats.weeklyResilience, stats.monthlyResilience].some((value) => value != null);
 }
 
 function riskIntervalFromDdBands(levels = []) {

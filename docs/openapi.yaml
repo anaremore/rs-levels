@@ -783,7 +783,7 @@ components:
     Stats:
       type: object
       description: Display-only context such as DD ratio, risk interval, resilience, and RocketScooter liquidity-map code.
-      required: [dd, riskInterval, resilience, weeklyResilience, monthlyResilience, mapCode]
+      required: [dd, riskInterval, yellowLineDistance, ddBandUpper, ddBandLower, prevSessionClose, dynHp, resilience, weeklyResilience, monthlyResilience, mapCode]
       properties:
         dd:
           type: number
@@ -791,6 +791,26 @@ components:
         riskInterval:
           type: number
           nullable: true
+        yellowLineDistance:
+          type: number
+          nullable: true
+          description: The RI/DD table's YL column, the yellow line's distance in points.
+        ddBandUpper:
+          type: number
+          nullable: true
+          description: The RI/DD table's DD-Band-U column.
+        ddBandLower:
+          type: number
+          nullable: true
+          description: The RI/DD table's DD-Band-L column.
+        prevSessionClose:
+          type: number
+          nullable: true
+          description: The RI/DD table's Prev Session Close column.
+        dynHp:
+          type: number
+          nullable: true
+          description: The RI/DD table's Dyn-HP column, when it shows one.
         resilience:
           type: number
           nullable: true
