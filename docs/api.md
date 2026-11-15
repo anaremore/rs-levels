@@ -301,7 +301,7 @@ The page's RI/DD table (columns Contract, Month, Ticker, Product Name, Prev Sess
 | `prevSessionClose` | Prev Session Close | The previous session's close. |
 | `dynHp` | Dyn-HP | The table's dynamic HP, when it shows one. |
 
-They are display context only and aren't in `?format=rows`, `/sierra/:symbol` or the TradingView payload (those keep their rows). As with RI, a value stays until a capture brings a new one: a cell that later shows "-" leaves the last value in place, and the history's freshness (`/status`) says how old it is.
+They are display context only. Of them, only `yellowLineDistance` is in `/stats/:symbol?format=rows`, `/sierra/:symbol` and the TradingView payload, as a `D_YL` row (a `D_YL,568.5,stat` row in the payload): never a bare `YL`, which in a level row is the yellow line's price. The others stay out of those feeds. As with RI, a value stays until a capture brings a new one: a cell that later shows "-" leaves the last value in place, and the history's freshness (`/status`) says how old it is.
 
 ## GET /stats/:symbol?format=rows
 
@@ -310,6 +310,7 @@ Returns simple display-context rows for direct plugins:
 ```text
 DD,0.66
 RI,68.75
+D_YL,568.5
 Res,73.82
 MRes,49.87
 WRes,-29.29
@@ -375,6 +376,7 @@ STATE,capturing
 OVNHP,7537.00,41,98,255,hp
 DD,0.66
 RI,68.75
+D_YL,568.5
 Res,73.82
 MRes,49.87
 WRes,-29.29
@@ -388,7 +390,7 @@ The first row is always `STATE,<state>` so ACSIL studies can observe a completed
 Returns the all-symbol futures `RSLEVELS|2` paste payload for the included TradingView Pine indicator. These local endpoints remain ES/NQ-only fallbacks for the extension. The popup's primary page-reader path can additionally build stock sections directly from supported RocketScooter charts that are open in the browser; those stock sections are not exposed by this local API. CQG current-contract symbols are normalized by root and contract suffix pattern, so rollover from `F.US.EPU26` to later `F.US.EP...` contracts and from `F.US.ENQU26` to later `F.US.ENQ...` contracts keeps exporting the same ES/NQ families.
 
 ```text
-RSLEVELS|2|2026-08-19T23:00:00.000Z|ES|2026-08-19T22:59:59.500Z|Dyn MHP,7715.75,mhp;Dyn HP,7707.5,hp;Bull Zone Top 1,7782.07,zone-bull;RI,68.75,stat|NQ|2026-08-19T22:59:59.500Z|Dyn MHP,29588.25,mhp;Dyn HP,29547,hp;RI,266.25,stat
+RSLEVELS|2|2026-08-19T23:00:00.000Z|ES|2026-08-19T22:59:59.500Z|Dyn MHP,7715.75,mhp;Dyn HP,7707.5,hp;Bull Zone Top 1,7782.07,zone-bull;RI,68.75,stat;D_YL,568.5,stat|NQ|2026-08-19T22:59:59.500Z|Dyn MHP,29588.25,mhp;Dyn HP,29547,hp;RI,266.25,stat;D_YL,2109,stat
 ```
 
 The local API includes every finite-price level in each section unless a caller explicitly requests a smaller set. Automatic RocketScooter overnight levels retain the names `Dyn MHP` and `Dyn HP`; legacy `OVNMHP` and `OVNHP` rows remain accepted. The static `HP` and `MHP` (RocketScooter computes them from the index ETFs, as the page header shows, and draws them on the futures charts) come from the page reader's reading of the futures chart, at the price the chart plots them: rows named `HP` and `MHP`, kinds `hp` and `mhp`, next to `Dyn HP` and `Dyn MHP`. Only a chart line or study plot on an ES or NQ family futures chart counts (its `metadata` says which: `reader`, `shape-line` or `study-plot`, and `rawSymbol`, such as `F.US.EPZ26`); scanner rows and index or ETF charts (`SP500`, `NQ100`, `SPY`) never do, since their HP is the ETF's. The service never converts an ETF value. A bare `HP` or `MHP` from anything else (a quote's field) is never a level. If the chart draws more than one line named HP (another session's map, a hand-drawn line), each distinct price is its own `HP` row. TradingView zone boundaries are exported with friendly `Bull Zone Top`, `Bull Zone Bottom`, `Bear Zone Top`, and `Bear Zone Bottom` names plus optional occurrence numbers so repeated zone pairs do not collapse before Pine fills them. Pine labels only the bottom bull boundary as `Bull Zone` and the top bear boundary as `Bear Zone`; the opposite boundaries remain unlabeled. Compact `BZT`/`BZB` and `BrZT`/`BrZB` names remain accepted for older pasted payloads and platform adapter feeds. When the browser extension captures RocketScooter zone rectangle geometry, exact rectangle top/bottom prices are preferred over DD-bounded reconstruction; generic `Bull Zone` or `Bear Zone` label rows are consumed once matched to a rectangle. DD-bounded reconstruction remains a compatibility fallback for older captures that expose a generic zone label but no rectangle geometry. User-added RocketScooter yellow, red, and purple CAT chart lines are exported as `yellow-line`, `red-line`, and `cat` kinds when they are captured. Multiple legacy `OVNHP`, `OVNMHP`, yellow, or red lines are preserved as separate rows when they have distinct prices; exact duplicate name-kind-price rows are emitted once. A hand-drawn line the page reader names (`OVNHP`, `metadata.reader: shape-line`) is also seen as its chart shape (`horizontal_line OVNHP`, `metadata.source: chart_shape`); the service serves it once, as the named row, everywhere (levels, rows, snapshot, stream and every export). A chart shape with no named twin, or a different name at the same price, stays its own row. Display context travels as `stat` rows; the included Pine indicator uses those rows for its stats panel and does not draw them as price levels. VARIS-style indicators can read the `RI` stat row from the same payload. If explicit `RI` is missing but both DD bands are present, the exported display payload can include derived RI from the outer DD-band pair.

@@ -209,7 +209,7 @@ const localSnapshot = sharedContext.RS_LEVELS.captureToTradingViewSnapshot({
       { symbol: 'SPY', name: 'Open', price: 740, kind: 'open-close' }
     ],
     stats: {
-      ES: { dd: 0.66, riskInterval: 68.75, resilience: 14.47, monthlyResilience: 19.87, mapCode: 'BLD' },
+      ES: { dd: 0.66, riskInterval: 68.75, yellowLineDistance: 568.5, resilience: 14.47, monthlyResilience: 19.87, mapCode: 'BLD' },
       NQ: { dd: 0.66, riskInterval: 266.25, resilience: 73.82, monthlyResilience: 49.87, weeklyResilience: -29.29, mapCode: 'BLD' }
     },
     zoneRectangles: [
@@ -235,6 +235,8 @@ assert.match(localPayload, /Yellow Line,7598,yellow-line/);
 assert.match(localPayload, /Red Line,7520,red-line/);
 assert.match(localPayload, /DD,0\.66,stat/);
 assert.match(localPayload, /RI,68\.75,stat/);
+assert.match(localPayload, /;D_YL,568\.5,stat/);
+assert.doesNotMatch(localPayload, /[;|]YL,/);
 assert.match(localPayload, /Res,14\.47,stat/);
 assert.match(localPayload, /MRes,19\.87,stat/);
 assert.match(localPayload, /Map BLD,0,stat/);
@@ -245,6 +247,7 @@ assert.match(localPayload, /Red Line,30182,red-line/);
 assert.match(localPayload, /Red Line,30090,red-line/);
 assert.match(localPayload, /Yellow Line,30979,yellow-line/);
 assert.match(localPayload, /RI,266\.25,stat/);
+assert.equal((localPayload.match(/D_YL,/g) || []).length, 1, 'NQ has no captured YL distance: no D_YL row');
 assert.match(localPayload, /WRes,-29\.29,stat/);
 assert.doesNotMatch(localPayload, /MidGap|Mid Gap/);
 assert.match(localPayload, /\|SPY\|[^|]+\|Open,740,open-close/);

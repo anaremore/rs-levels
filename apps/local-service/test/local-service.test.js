@@ -435,7 +435,7 @@ try {
         QQQ: { mapCode: 'BLD' }
       },
       stats: {
-        NQ: { RI: 266.25, resilience3: -29.29 }
+        NQ: { RI: 266.25, yellowLineDistance: 2109, resilience3: -29.29 }
       }
     }
   });
@@ -465,6 +465,7 @@ try {
   assert.equal(mnqStatsPathRows, nqStatsRows);
   assert.match(nqStatsRows, /DD,0\.66/);
   assert.match(nqStatsRows, /RI,266\.25/);
+  assert.match(nqStatsRows, /^D_YL,2109$/m);
   assert.match(nqStatsRows, /Res,73\.82/);
   assert.match(nqStatsRows, /MRes,49\.87/);
   assert.match(nqStatsRows, /WRes,-29\.29/);
@@ -474,6 +475,7 @@ try {
   assert.match(sierraStatsFeed, /BrZT1,30450\.00,240,98,146,zone-bear/);
   assert.match(sierraStatsFeed, /DD,0\.66/);
   assert.match(sierraStatsFeed, /RI,266\.25/);
+  assert.match(sierraStatsFeed, /^D_YL,2109$/m);
   assert.match(sierraStatsFeed, /Res,73\.82/);
   assert.match(sierraStatsFeed, /MRes,49\.87/);
   assert.match(sierraStatsFeed, /WRes,-29\.29/);
@@ -516,6 +518,7 @@ try {
   assert.match(bundledTradingViewPayload, /CAT,31232\.74,cat/);
   assert.match(bundledTradingViewPayload, /DD,0\.66,stat/);
   assert.match(bundledTradingViewPayload, /RI,266\.25,stat/);
+  assert.match(bundledTradingViewPayload, /;D_YL,2109,stat/);
   assert.match(bundledTradingViewPayload, /Res,73\.82,stat/);
   assert.match(bundledTradingViewPayload, /MRes,49\.87,stat/);
   assert.match(bundledTradingViewPayload, /WRes,-29\.29,stat/);

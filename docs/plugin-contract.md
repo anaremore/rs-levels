@@ -121,13 +121,14 @@ Display-context stats are separate from price levels:
 ```text
 DD,0.66
 RI,68.75
+D_YL,568.5
 Res,73.82
 MRes,49.87
 WRes,-29.29
 Map,BLD
 ```
 
-Direct plugins should render these rows as chart-corner context when the platform supports text overlays. Bookmap may surface them in the indicator full name because its public value-line API is focused on horizontal price markers. TradingView carries these values as `stat` rows inside the `RSLEVELS|2` payload and must not draw them as price lines. VARIS-style indicators should use `RI` as band distance input while keeping it out of the horizontal level overlay. VARIS exposes three positive configurable multipliers, default `0.5`, `1`, and `2`, and draws symmetric upper/lower pairs at `VWAP +/- RI * multiplier`. If explicit `RI` is not captured yet but both DD bands are present, feed generators may expose a display-derived `RI` equal to half the outer DD-band distance.
+Direct plugins should render these rows as chart-corner context when the platform supports text overlays. Bookmap may surface them in the indicator full name because its public value-line API is focused on horizontal price markers. TradingView carries these values as `stat` rows inside the `RSLEVELS|2` payload and must not draw them as price lines. VARIS-style indicators should use `RI` as band distance input while keeping it out of the horizontal level overlay. `D_YL` is the yellow line's distance in points (RocketScooter's RI/DD table YL column), never a price; plugins that don't use it ignore it. VARIS exposes three positive configurable multipliers, default `0.5`, `1`, and `2`, and draws symmetric upper/lower pairs at `VWAP +/- RI * multiplier`. If explicit `RI` is not captured yet but both DD bands are present, feed generators may expose a display-derived `RI` equal to half the outer DD-band distance.
 
 ## Safety Tests
 

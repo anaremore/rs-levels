@@ -299,4 +299,26 @@ assert.match(pine, /varisCumTpv/);
 assert.match(pine, /varisVwap = varisCumVolume != 0 \? varisCumTpv \/ varisCumVolume : na/);
 assert.match(pine, /vwapPlot = plot\(varisVisible and showVwap \? varisVwap : na/);
 
+// D_YL (the yellow line's distance, points) is a stat row: none of the name rules that run before
+// the kind (CAT, yellow/red line, zone names) may claim it as a price line, and the stats panel
+// stays Map + RI only. A bare `YL` name would be drawn as a yellow line, hence D_YL.
+{
+  const fnBody = (name) => {
+    const text = pine.split(String.fromCharCode(13)).join('');
+    const start = text.indexOf('\n' + name + '(');
+    assert.ok(start >= 0, name + ' exists');
+    return text.slice(start, text.indexOf('\n\n', start + 1));
+  };
+  const nameRules = fnBody('levelKind') + fnBody('zoneKindFromName');
+  const rules = [...nameRules.matchAll(/str\.(startswith|contains)\((upperName|compactName), "([^"]+)"\)/g)];
+  assert.ok(rules.length >= 10, 'levelKind name rules found');
+  const forms = { upperName: 'D_YL', compactName: 'DYL' };
+  for (const [, fn, form, needle] of rules) {
+    const text = forms[form];
+    const hit = fn === 'startswith' ? text.startsWith(needle) : text.includes(needle);
+    assert.equal(hit, false, `D_YL must not match ${fn}(${form}, "${needle}")`);
+  }
+  assert.doesNotMatch(fnBody('statsPanelBody'), /YL/);
+}
+
 console.log('TradingView plugin tests passed');

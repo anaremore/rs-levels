@@ -285,12 +285,15 @@ function tradingViewStatsRows(stats = {}) {
   const rows = [];
   const dd = finiteNumber(stats.dd);
   const riskInterval = finiteNumber(stats.riskInterval);
+  const yellowLineDistance = finiteNumber(stats.yellowLineDistance);
   const resilience = finiteNumber(stats.resilience);
   const monthlyResilience = finiteNumber(stats.monthlyResilience);
   const weeklyResilience = finiteNumber(stats.weeklyResilience);
   const mapCode = field(stats.mapCode);
   if (dd != null) rows.push({ name: 'DD', price: dd, kind: 'stat' });
   if (riskInterval != null) rows.push({ name: 'RI', price: riskInterval, kind: 'stat' });
+  // The yellow line's distance in points; never a bare `YL` (a level row's YL is a price).
+  if (yellowLineDistance != null) rows.push({ name: 'D_YL', price: yellowLineDistance, kind: 'stat' });
   if (resilience != null) rows.push({ name: 'Res', price: resilience, kind: 'stat' });
   if (monthlyResilience != null) rows.push({ name: 'MRes', price: monthlyResilience, kind: 'stat' });
   if (weeklyResilience != null) rows.push({ name: 'WRes', price: weeklyResilience, kind: 'stat' });
