@@ -1,6 +1,6 @@
 //@version=6
 // VARIS Zones concept credited to RocketScooter community member IAmTheLiquidity2.
-indicator("RS Levels v2026.10.22.1", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
+indicator("RS Levels v2026.11.15.1", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)
 chartFamilyInput = input.string("Auto", "Chart family", options = ["Auto", "ES", "NQ"], display = display.none)
@@ -149,7 +149,9 @@ levelKind(name, kind) =>
     compactName = compactText(name)
     normalizedKind = cleanKind(kind)
     sideKind = zoneSideKind(name, kind)
-    if str.contains(upperName, "CAT") or str.contains(compactName, "CAT")
+    if normalizedKind == "stat"
+        "stat"
+    else if str.contains(upperName, "CAT") or str.contains(compactName, "CAT")
         "cat"
     else if str.contains(upperName, "YELLOW LINE") or str.contains(compactName, "YELLOWLINE") or str.startswith(upperName, "YL")
         "yellow-line"

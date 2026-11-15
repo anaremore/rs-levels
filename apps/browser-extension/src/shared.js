@@ -784,9 +784,8 @@
     const rows = [];
     if (stats.dd != null) rows.push(`DD,${tradingViewPrice(stats.dd)},stat`);
     if (stats.riskInterval != null) rows.push(`RI,${tradingViewPrice(stats.riskInterval)},stat`);
-    // The yellow line's distance in points. Never a bare `YL`: in a level row YL is the yellow
-    // line's price, and older RS Levels indicators would draw it as one.
-    if (stats.yellowLineDistance != null) rows.push(`D_YL,${tradingViewPrice(stats.yellowLineDistance)},stat`);
+    // The yellow line's distance in points (a stat: the indicators never draw it as a price).
+    if (stats.yellowLineDistance != null) rows.push(`YL,${tradingViewPrice(stats.yellowLineDistance)},stat`);
     if (stats.resilience != null) rows.push(`Res,${tradingViewPrice(stats.resilience)},stat`);
     if (stats.monthlyResilience != null) rows.push(`MRes,${tradingViewPrice(stats.monthlyResilience)},stat`);
     if (stats.weeklyResilience != null) rows.push(`WRes,${tradingViewPrice(stats.weeklyResilience)},stat`);

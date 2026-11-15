@@ -4,7 +4,7 @@ const { join } = require('node:path');
 
 const pine = readFileSync(join(__dirname, '..', 'rs-levels.pine'), 'utf8');
 
-assert.match(pine, /indicator\("RS Levels v2026\.10\.22\.1"/);
+assert.match(pine, /indicator\("RS Levels v2026\.11\.15\.1"/);
 assert.equal(existsSync(join(__dirname, '..', 'varis-zones.pine')), false, 'VARIS lives inside rs-levels.pine');
 assert.doesNotMatch(pine, /\bstrategy\s*\(/i);
 assert.doesNotMatch(pine, /\bstrategy\./i);
@@ -299,25 +299,21 @@ assert.match(pine, /varisCumTpv/);
 assert.match(pine, /varisVwap = varisCumVolume != 0 \? varisCumTpv \/ varisCumVolume : na/);
 assert.match(pine, /vwapPlot = plot\(varisVisible and showVwap \? varisVwap : na/);
 
-// D_YL (the yellow line's distance, points) is a stat row: none of the name rules that run before
-// the kind (CAT, yellow/red line, zone names) may claim it as a price line, and the stats panel
-// stays Map + RI only. A bare `YL` name would be drawn as a yellow line, hence D_YL.
+// A `stat` row is display context whatever its name: `YL` (the yellow line's distance, points),
+// `RI` and the rest are never drawn, though `YL`/`RL`/`CAT` names would otherwise make lines.
+// levelKind checks the kind before any name rule, and the stats panel stays Map + RI.
 {
+  const text = pine.split(String.fromCharCode(13)).join('');
   const fnBody = (name) => {
-    const text = pine.split(String.fromCharCode(13)).join('');
     const start = text.indexOf('\n' + name + '(');
     assert.ok(start >= 0, name + ' exists');
     return text.slice(start, text.indexOf('\n\n', start + 1));
   };
-  const nameRules = fnBody('levelKind') + fnBody('zoneKindFromName');
-  const rules = [...nameRules.matchAll(/str\.(startswith|contains)\((upperName|compactName), "([^"]+)"\)/g)];
-  assert.ok(rules.length >= 10, 'levelKind name rules found');
-  const forms = { upperName: 'D_YL', compactName: 'DYL' };
-  for (const [, fn, form, needle] of rules) {
-    const text = forms[form];
-    const hit = fn === 'startswith' ? text.startsWith(needle) : text.includes(needle);
-    assert.equal(hit, false, `D_YL must not match ${fn}(${form}, "${needle}")`);
-  }
+  const levelKindBody = fnBody('levelKind');
+  const statRule = levelKindBody.indexOf('if normalizedKind == "stat"\n        "stat"');
+  assert.ok(statRule > 0, 'levelKind keeps stat rows as stat');
+  assert.ok(statRule < levelKindBody.indexOf('str.contains(upperName, "CAT")'), 'before the name rules');
+  assert.match(pine, /"stat" => false/);
   assert.doesNotMatch(fnBody('statsPanelBody'), /YL/);
 }
 

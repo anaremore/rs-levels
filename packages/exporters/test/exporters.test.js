@@ -69,9 +69,8 @@ assert.doesNotMatch(payload, /\bBZT\d*,|\bBZB\d*,|\bBrZT\d*,|\bBrZB\d*,/);
 assert.doesNotMatch(payload, /MidGap|Mid Gap/);
 assert.match(payload, /DD,0\.66,stat/);
 assert.match(payload, /RI,68\.75,stat/);
-// The yellow line's distance rides as D_YL, never a bare YL (a level row's YL is a price).
-assert.match(payload, /;D_YL,568\.5,stat/);
-assert.doesNotMatch(payload, /[;|]YL,/);
+// The yellow line's distance rides as a stat row next to RI.
+assert.match(payload, /;RI,68\.75,stat;YL,568\.5,stat;/);
 assert.match(payload, /Res,73\.82,stat/);
 assert.match(payload, /MRes,49\.87,stat/);
 assert.match(payload, /WRes,-29\.29,stat/);
