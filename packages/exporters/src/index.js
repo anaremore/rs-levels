@@ -285,12 +285,15 @@ function tradingViewStatsRows(stats = {}) {
   const rows = [];
   const dd = finiteNumber(stats.dd);
   const riskInterval = finiteNumber(stats.riskInterval);
+  const yellowLineDistance = finiteNumber(stats.yellowLineDistance);
   const resilience = finiteNumber(stats.resilience);
   const monthlyResilience = finiteNumber(stats.monthlyResilience);
   const weeklyResilience = finiteNumber(stats.weeklyResilience);
   const mapCode = field(stats.mapCode);
   if (dd != null) rows.push({ name: 'DD', price: dd, kind: 'stat' });
   if (riskInterval != null) rows.push({ name: 'RI', price: riskInterval, kind: 'stat' });
+  // The yellow line's distance in points (a stat, never drawn as a price).
+  if (yellowLineDistance != null) rows.push({ name: 'YL', price: yellowLineDistance, kind: 'stat' });
   if (resilience != null) rows.push({ name: 'Res', price: resilience, kind: 'stat' });
   if (monthlyResilience != null) rows.push({ name: 'MRes', price: monthlyResilience, kind: 'stat' });
   if (weeklyResilience != null) rows.push({ name: 'WRes', price: weeklyResilience, kind: 'stat' });
@@ -302,6 +305,8 @@ function tradingViewLevelName(level) {
   const raw = field(level?.name);
   if (!raw) return 'Level';
   const kind = canonicalTradingViewKind(level?.kind);
+  // A stat row keeps its name: `YL` is the yellow line's distance, not a Yellow Line level.
+  if (kind === 'stat') return raw;
   const zoneName = zoneBoundaryDisplayName(raw, kind);
   if (zoneName) return zoneName;
   if (kind === 'red-line') return 'Red Line';

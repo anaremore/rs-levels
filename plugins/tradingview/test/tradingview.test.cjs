@@ -4,7 +4,7 @@ const { join } = require('node:path');
 
 const pine = readFileSync(join(__dirname, '..', 'rs-levels.pine'), 'utf8');
 
-assert.match(pine, /indicator\("RS Levels v2026\.10\.22\.1"/);
+assert.match(pine, /indicator\("RS Levels v2026\.11\.15\.1"/);
 assert.equal(existsSync(join(__dirname, '..', 'varis-zones.pine')), false, 'VARIS lives inside rs-levels.pine');
 assert.doesNotMatch(pine, /\bstrategy\s*\(/i);
 assert.doesNotMatch(pine, /\bstrategy\./i);
@@ -298,5 +298,23 @@ assert.match(pine, /varisNewSession = hour\(time, "America\/New_York"\) == 18 an
 assert.match(pine, /varisCumTpv/);
 assert.match(pine, /varisVwap = varisCumVolume != 0 \? varisCumTpv \/ varisCumVolume : na/);
 assert.match(pine, /vwapPlot = plot\(varisVisible and showVwap \? varisVwap : na/);
+
+// A `stat` row is display context whatever its name: `YL` (the yellow line's distance, points),
+// `RI` and the rest are never drawn, though `YL`/`RL`/`CAT` names would otherwise make lines.
+// levelKind checks the kind before any name rule, and the stats panel stays Map + RI.
+{
+  const text = pine.split(String.fromCharCode(13)).join('');
+  const fnBody = (name) => {
+    const start = text.indexOf('\n' + name + '(');
+    assert.ok(start >= 0, name + ' exists');
+    return text.slice(start, text.indexOf('\n\n', start + 1));
+  };
+  const levelKindBody = fnBody('levelKind');
+  const statRule = levelKindBody.indexOf('if normalizedKind == "stat"\n        "stat"');
+  assert.ok(statRule > 0, 'levelKind keeps stat rows as stat');
+  assert.ok(statRule < levelKindBody.indexOf('str.contains(upperName, "CAT")'), 'before the name rules');
+  assert.match(pine, /"stat" => false/);
+  assert.doesNotMatch(fnBody('statsPanelBody'), /YL/);
+}
 
 console.log('TradingView plugin tests passed');

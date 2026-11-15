@@ -360,6 +360,7 @@ function statsToRowsText(stats = {}, levels = []) {
   const rows = [];
   if (clean.dd != null) rows.push(`DD,${formatMetric(clean.dd)}`);
   if (clean.riskInterval != null) rows.push(`RI,${formatMetric(clean.riskInterval)}`);
+  if (clean.yellowLineDistance != null) rows.push(`YL,${formatMetric(clean.yellowLineDistance)}`);
   if (clean.resilience != null) rows.push(`Res,${formatMetric(clean.resilience)}`);
   if (clean.monthlyResilience != null) rows.push(`MRes,${formatMetric(clean.monthlyResilience)}`);
   if (clean.weeklyResilience != null) rows.push(`WRes,${formatMetric(clean.weeklyResilience)}`);
