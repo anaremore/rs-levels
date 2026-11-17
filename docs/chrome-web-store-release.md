@@ -90,7 +90,8 @@ Capture runs automatically on the Rocket Scooter hosts declared during installat
 
 Requirements:
 • Your own Rocket Scooter access
-• The RS Levels TradingView indicator (v2026.11.15.1 or later) or another RS Levels platform integration
+• For TradingView, the RS Levels indicator (v2026.11.15.1 or later): https://www.tradingview.com/script/leyC2uqL-RS-Levels-v2026-11-15-1/
+• For other platforms, an RS Levels platform integration
 
 RS Levels Capture provides display-data transport only. It does not provide trading advice, recommendations, order entry, or broker automation.
 
