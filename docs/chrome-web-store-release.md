@@ -69,27 +69,28 @@ English
 **Detailed description**
 
 ```text
-RS Levels Capture brings your Rocket Scooter levels into TradingView and other supported charting platforms.
+RS Levels Capture brings your Rocket Scooter levels into TradingView, Thinkorswim, and other supported charting platforms.
 
-Use the same levels you already follow in Rocket Scooter without manually recreating them on every chart. The extension detects supported Rocket Scooter charts and prepares the level data for your preferred RS Levels display.
+Use the same levels you already follow in Rocket Scooter without recreating them by hand on every chart. The extension detects supported Rocket Scooter charts and prepares the level data for your preferred RS Levels display.
 
 Key features:
 • Display Rocket Scooter levels directly on TradingView charts
 • Send levels to TradingView in a few clicks—no manual data entry
-• Copy a generated Thinkorswim study for one selected chart
+• Copy a ready-to-paste Thinkorswim study for one selected chart, generated inside the extension with no extra software
 • Automatically detect supported Rocket Scooter charts
 • Choose a specific chart or send all detected charts
 • Use the same captured levels with Sierra Chart, NinjaTrader, Quantower, Bookmap, and other RS Levels integrations
 • Copy a validated payload whenever you prefer a manual workflow
 • Keep data local by default with the optional RS Levels service
+• With the optional RS Levels service, keep a local history of the Resilience and Arb studies from 1-minute ES and NQ charts
 
-TradingView integration is simple: open the RS Levels indicator settings, click “Send to TradingView” in the extension, and review the populated payload before applying it. For Thinkorswim, select one chart, click “Copy Thinkorswim study,” and replace the source of a custom study.
+TradingView integration is simple: add the RS Levels indicator (v2026.11.15.1 or later) to your chart, open its settings, click “Send to TradingView” in the extension, and review the populated payload before applying it. For Thinkorswim, select one chart, click “Copy Thinkorswim study,” and replace the source of a custom study.
 
 Capture runs automatically on the Rocket Scooter hosts declared during installation. The extension does not read cookies, passwords, authorization headers, or unrelated form inputs, and captured data is not sent to the extension developer.
 
 Requirements:
 • Your own Rocket Scooter access
-• A compatible RS Levels indicator or platform integration
+• The RS Levels TradingView indicator (v2026.11.15.1 or later) or another RS Levels platform integration
 
 RS Levels Capture provides display-data transport only. It does not provide trading advice, recommendations, order entry, or broker automation.
 
@@ -117,7 +118,7 @@ Capture display-level data from the user's Rocket Scooter browser session and ma
 `storage`
 
 ```text
-Stores the user's local service URL, endpoint allowlist, and maximum capture size in extension-local storage. A sanitized latest chart snapshot is kept only in session storage so explicit copy and TradingView handoff actions can use current display data.
+Stores the user's local service URL, endpoint allowlist, maximum capture size, and Resilience and Arb update interval in extension-local storage. A sanitized latest chart snapshot is kept only in session storage so explicit copy and TradingView handoff actions can use current display data.
 ```
 
 `clipboardWrite`
@@ -164,7 +165,7 @@ All executable JavaScript is included in the uploaded ZIP. Response bodies and c
 
 Select:
 
-- **Website content** — allowlisted Rocket Scooter response bodies and visible chart-level metadata are processed on the declared Rocket Scooter hosts.
+- **Website content** — allowlisted Rocket Scooter response bodies, visible chart-level metadata, and Resilience and Arb study values from 1-minute ES and NQ charts are processed on the declared Rocket Scooter hosts.
 - **Web history** — the extension handles supported Rocket Scooter response URLs and, for an explicit handoff, matching currently open TradingView chart URLs. It does not read or retain the user's general browser history.
 
 Do not select financial/payment information merely because the payload contains market display levels; the extension does not handle a user's payment details, balances, positions, or transactions. If production testing proves otherwise, stop and update the code, disclosure, and privacy policy before submission.
