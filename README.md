@@ -1,15 +1,15 @@
 # RS Levels
 
 <p align="center">
-  <img src="store-assets/readme-marquee-0.4.4.png" alt="RS Levels Capture — RocketScooter levels on the platform you trade" width="100%">
+  <img src="store-assets/readme-marquee-0.4.11.png" alt="RS Levels Capture — Rocket Scooter levels on the platform you trade" width="100%">
 </p>
 
-<p align="center"><strong>Local-first RocketScooter level and display-context capture feeds.</strong></p>
+<p align="center"><strong>Local-first Rocket Scooter level and display-context capture feeds.</strong></p>
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko">Chrome extension</a>
   &nbsp;&bull;&nbsp;
-  <a href="https://www.tradingview.com/script/u0U3v5FX-RS-Levels/">TradingView indicator</a>
+  <a href="https://www.tradingview.com/script/leyC2uqL-RS-Levels-v2026-11-15-1/">TradingView indicator</a>
   &nbsp;&bull;&nbsp;
   <a href="docs/tradingview-quickstart.md">TradingView quickstart</a>
   &nbsp;&bull;&nbsp;
@@ -19,17 +19,17 @@
 </p>
 
 > [!IMPORTANT]
-> **Community project:** RS Levels is independently created and maintained. It is not affiliated with, endorsed by, sponsored by, or officially supported by RocketScooter.
+> **Community project:** RS Levels is independently created and maintained. It is not affiliated with, endorsed by, sponsored by, or officially supported by Rocket Scooter.
 
-RS Levels lets a user capture level and display-context data from their own RocketScooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
+RS Levels lets a user capture level and display-context data from their own Rocket Scooter browser session, normalize it locally, and expose it through localhost APIs for display tools and charting-platform plugins.
 
 ## Included Feature Areas
 
 RS Levels is organized around three display-only pieces:
 
-- **[Browser extension](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko)**: published for Chrome and compatible Chromium browsers, with Firefox Desktop 140+ supported from the shared runtime. It captures allowlisted RocketScooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff, TradingView payload and generated Thinkorswim study copy actions, scrubbed diagnostics, API docs links, and extension status/debug tools.
+- **[Browser extension](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko)**: published for Chrome and compatible Chromium browsers, with Firefox Desktop 140+ supported from the shared runtime. It captures allowlisted Rocket Scooter display data from the user's own browser session, detects supported futures and stock charts currently open on the platform, provides an opt-in `Send to TradingView` settings-field handoff, TradingView payload and generated Thinkorswim study copy actions, scrubbed diagnostics, API docs links, and extension status/debug tools.
 - **Local levels server**: runs on `http://127.0.0.1:8765` by default, normalizes the latest captured ES/MES and NQ/MNQ levels, exposes read-only JSON/text/SSE/OpenAPI endpoints, and can be explicitly configured for trusted private networks such as Tailscale.
-- **Platform plugins, indicators, and studies**: includes the published [RS Levels TradingView indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), TradingView Pine sources, generated Thinkorswim studies, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
+- **Platform plugins, indicators, and studies**: includes the published [RS Levels TradingView indicator](https://www.tradingview.com/script/leyC2uqL-RS-Levels-v2026-11-15-1/), TradingView Pine sources, generated Thinkorswim studies, Sierra Chart ACSIL studies, NinjaTrader indicators, Quantower indicators, Bookmap add-on sources, and VARIS Zones support using captured risk interval (`RI`) where the platform can use it.
 
 ## See It in Action
 
@@ -60,9 +60,9 @@ Prefer the unframed extension view? Open the [browser extension popup screenshot
 - No trade recommendations.
 - No order entry, cancel, flatten, or broker execution.
 - No account, PnL, batch, or trade-journal features.
-- No redistribution of RocketScooter data.
+- No redistribution of Rocket Scooter data.
 
-Users must have their own RocketScooter access. This project only processes data already loaded in the user's browser and keeps it local by default.
+Users must have their own Rocket Scooter access. This project only processes data already loaded in the user's browser and keeps it local by default.
 
 ## Choose Your Path
 
@@ -70,7 +70,7 @@ Use this table as the repo map. TradingView users can start with the extension a
 
 | Use case | Start here | Then use |
 | --- | --- | --- |
-| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [Published indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/), [TradingView reference](docs/tradingview.md) |
+| TradingView levels only | [TradingView quickstart](docs/tradingview-quickstart.md) | [Published indicator](https://www.tradingview.com/script/leyC2uqL-RS-Levels-v2026-11-15-1/), [TradingView reference](docs/tradingview.md) |
 | TradingView VARIS Zones | [TradingView quickstart](docs/tradingview-quickstart.md) | [VARIS Zones](docs/varis-zones.md) |
 | Thinkorswim levels | [Browser extension setup](docs/user-setup.md) | [Thinkorswim study](plugins/thinkorswim/README.md) |
 | Local API, diagnostics, examples, or private-network setup | [Local API and extension setup](docs/user-setup.md) | [API](docs/api.md), [Networking](docs/networking.md) |
@@ -140,4 +140,4 @@ scripts/
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service with saved settings, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live RocketScooter/platform runtimes and native app packaging.
+Public-safe foundation in progress. The schema package, parser, exporter package, local service with saved settings, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live Rocket Scooter/platform runtimes and native app packaging.

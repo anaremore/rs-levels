@@ -66,7 +66,7 @@ Each multiplier must be finite and greater than zero; invalid values use that le
 - Clears displayed lines after stale/offline data exceeds the configured threshold.
 - Logs feed availability warnings through Bookmap's logging API.
 
-`VARISZonesBookmap.java` uses Bookmap's simplified `BarDataListener` at `Intervals.INTERVAL_1_MINUTE` to compute VWAP from bar VWAP/volume, then draws VWAP, three configurable upper/lower RI band pairs as primary-chart indicators. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+`VARISZonesBookmap.java` uses Bookmap's simplified `BarDataListener` at `Intervals.INTERVAL_1_MINUTE` to compute VWAP from bar VWAP/volume, then draws VWAP, three configurable upper/lower RI band pairs as primary-chart indicators. The VARIS Zones concept is credited to Rocket Scooter community member `IAmTheLiquidity2`.
 
 ## Safety Boundary
 

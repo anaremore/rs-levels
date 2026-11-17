@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: RS Levels Local API
   version: 0.1.0
-  description: Local-first RocketScooter display-level capture and read-only feed API.
+  description: Local-first Rocket Scooter display-level capture and read-only feed API.
 servers:
   - url: http://127.0.0.1:8765
     description: Default loopback service
@@ -574,7 +574,7 @@ components:
       properties:
         state:
           type: string
-          description: Current capture freshness state. The service reports stale when lastCaptureAt is older than the configured stale threshold. The default stale threshold is 23 hours for daily RocketScooter levels.
+          description: Current capture freshness state. The service reports stale when lastCaptureAt is older than the configured stale threshold. The default stale threshold is 23 hours for daily Rocket Scooter levels.
           enum: [offline, waiting, capturing, stale, error]
         connected:
           type: boolean
@@ -782,7 +782,7 @@ components:
           $ref: '#/components/schemas/Stats'
     Stats:
       type: object
-      description: Display-only context such as DD ratio, risk interval, resilience, and RocketScooter liquidity-map code.
+      description: Display-only context such as DD ratio, risk interval, resilience, and Rocket Scooter liquidity-map code.
       required: [dd, riskInterval, yellowLineDistance, ddBandUpper, ddBandLower, prevSessionClose, dynHp, resilience, weeklyResilience, monthlyResilience, mapCode]
       properties:
         dd:

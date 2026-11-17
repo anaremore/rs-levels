@@ -6,7 +6,7 @@ RS Levels is local-first. The default service must bind to loopback only and avo
 
 The browser extension may forward:
 
-- allowlisted RocketScooter response body text
+- allowlisted Rocket Scooter response body text
 - endpoint path
 - HTTP status
 - capture timestamp

@@ -230,21 +230,21 @@ async function detectedTradingViewIssue() {
   const receivedAt = new Date(state.tradingViewReceivedAt).getTime();
   const ageMs = Date.now() - receivedAt;
   if (!Number.isFinite(receivedAt) || ageMs < -30000 || ageMs > TRADINGVIEW_DETECTED_FRESH_MS) {
-    return 'Detected chart data is stale. Refresh RocketScooter before sending to TradingView.';
+    return 'Detected chart data is stale. Refresh Rocket Scooter before sending to TradingView.';
   }
 
   const sourceTabId = nonNegativeInteger(state.tradingViewSourceTabId);
   if (!sourceTabId) {
-    return 'The RocketScooter source chart is no longer open. Refresh RocketScooter before sending to TradingView.';
+    return 'The Rocket Scooter source chart is no longer open. Refresh Rocket Scooter before sending to TradingView.';
   }
 
   try {
     const tab = await webext.tabs.get(sourceTabId);
     if (!tab || !isRocketScooterUrl(tab.url || '')) {
-      return 'The RocketScooter source chart is no longer open. Refresh RocketScooter before sending to TradingView.';
+      return 'The Rocket Scooter source chart is no longer open. Refresh Rocket Scooter before sending to TradingView.';
     }
   } catch (_error) {
-    return 'The RocketScooter source chart is no longer open. Refresh RocketScooter before sending to TradingView.';
+    return 'The Rocket Scooter source chart is no longer open. Refresh Rocket Scooter before sending to TradingView.';
   }
 
   return '';
@@ -490,7 +490,7 @@ async function injectActiveTab() {
     const tab = tabs && tabs[0];
     if (!tab || !tab.id) throw new Error('No active tab found');
     if (!isRocketScooterUrl(tab.url || '')) {
-      throw new Error('Open a RocketScooter tab before reconnecting capture');
+      throw new Error('Open a Rocket Scooter tab before reconnecting capture');
     }
     await webext.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },

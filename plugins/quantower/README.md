@@ -90,14 +90,14 @@ The project targets the .NET runtime used by current Quantower builds and refere
 
 The screenshot shows the intended Quantower layout with RS Levels Display and VARIS Zones on the same chart. RS Levels draws captured display levels and stats, while VARIS Zones uses the captured `RI` when available.
 
-If the settings panel only shows generic **VIEW**, **LINE1 DATA SERIES**, or **TIMEFRAME VISIBILITY** sections, Quantower loaded a generated template indicator rather than the repo's `RSLevelsDisplayQuantower` or `VARISZonesQuantower` class. Rebuild from `RSLevels.csproj` and add the named indicator class again. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+If the settings panel only shows generic **VIEW**, **LINE1 DATA SERIES**, or **TIMEFRAME VISIBILITY** sections, Quantower loaded a generated template indicator rather than the repo's `RSLevelsDisplayQuantower` or `VARISZonesQuantower` class. Rebuild from `RSLevels.csproj` and add the named indicator class again. The VARIS Zones concept is credited to Rocket Scooter community member `IAmTheLiquidity2`.
 
 ## Rendering Plan
 
 - Poll the local API from a timer that does not block chart rendering.
 - Cache the latest symbol snapshot in memory.
 - Draw horizontal overlays in the chart paint routine, including yellow-line, red-line, and CAT manual-line kinds from the row feed.
-- Preserve multiple yellow-line and red-line rows when RocketScooter exposes several manual lines at different prices.
+- Preserve multiple yellow-line and red-line rows when Rocket Scooter exposes several manual lines at different prices.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the line to avoid struck-through text.
 - Render DD/Res/MRes/WRes/Map context in the chart corner when available.

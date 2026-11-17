@@ -36,7 +36,7 @@ import velox.api.layer1.simplified.LineStyle;
 @Layer1SimpleAttachable
 @Layer1StrategyName("VARIS Zones")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
-// VARIS Zones concept credited to RocketScooter community member IAmTheLiquidity2.
+// VARIS Zones concept credited to Rocket Scooter community member IAmTheLiquidity2.
 public class VARISZonesBookmap implements CustomModule, BarDataListener {
     private static final String BUILD = "VARIS Bookmap v2026.06.21.1";
     private static final String DEFAULT_SERVICE_URL = "http://127.0.0.1:8765";

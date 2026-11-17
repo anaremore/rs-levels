@@ -73,7 +73,7 @@ Sierra Chart studies use the single Sierra compatibility feed for reliability. T
 4. Add **RS Levels Display** to a chart.
 5. Set the service URL and symbol if different from the defaults.
 
-For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add **VARIS Zones** to the chart. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+For VARIS Zones, copy `varis-zones-sierra.cpp`, build it the same way, and add **VARIS Zones** to the chart. The VARIS Zones concept is credited to Rocket Scooter community member `IAmTheLiquidity2`.
 
 Existing Sierra studies preserve input values across rebuilds. After updating VARIS Zones, confirm the on-chart status marker shows the current `varis-sierra-...` build tag and the settings include `Follow chart symbol`. If the marker still shows an older build tag, copy the current `varis-zones-sierra.cpp` into `ACS_Source`, rebuild that file, and re-add or reset the study. `Follow chart symbol` defaults on and is auto-enabled once for upgraded study instances. During that migration, old `ES`, `MES`, `NQ`, or `MNQ` symbol overrides are reset to `Auto` so an old `MES` input cannot keep an NQ/MNQ chart on the ES family.
 
@@ -81,12 +81,12 @@ Existing Sierra studies preserve input values across rebuilds. After updating VA
 
 - Poll `/sierra/:symbol` for RS Levels source state, display levels, and DD/Res/MRes/WRes/Map context in one response.
 - Poll `/sierra/:symbol` for VARIS Zones `RI`, with `Auto` symbol detection from the Sierra chart symbol.
-- Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently, including numbered RocketScooter aliases such as `YL2` and `RL3`.
+- Draw level lines in the chart region at each price, up to 500 rows, using the same reliable two-point ACSIL line pattern as the proven internal display study. Multiple yellow-line and red-line rows are drawn independently, including numbered Rocket Scooter aliases such as `YL2` and `RL3`.
 - Draw cleaned labels near the right edge of the chart, offset above or below the line. Labels can be hidden from the study inputs.
 - Suppress duplicate same-name open/close rows from noisy feeds, so only one `Close` label is drawn while independent manual lines still remain separate by price.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Show waiting, offline, stale, timeout, and parsed row-count state as a small chart text marker, plus a bottom-left stats marker when context is available.
-- When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured RocketScooter URLs, response bodies, account data, or credentials.
+- When debug status is enabled, show the latest request path, response length, response shape, raw row count, parsed row count, and Sierra source build tag. This is intentionally scrubbed and hidden by default: it does not include captured Rocket Scooter URLs, response bodies, account data, or credentials.
 - The VARIS Zones status marker says `API RI` when the study is using captured or derived API RI, and `manual RI` while it is falling back to the manual input. The marker includes the source build tag so stale compiled studies are easy to spot. Its optional debug marker is hidden by default and shows only scrubbed transport details such as `/sierra/:symbol`, response length, response shape, row count, detected stat keys, parsed RI, and build tag.
 
 ## Safety Boundary

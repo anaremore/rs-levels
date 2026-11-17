@@ -13,7 +13,7 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   const freshAt = new Date(Date.now() - 1000).toISOString();
   const olderAt = new Date(Date.now() - 60000).toISOString();
   first.setTabs([
-    { id: 12, windowId: 1, title: 'RocketScooter ES', url: 'https://rocket.place/chart' }
+    { id: 12, windowId: 1, title: 'Rocket Scooter ES', url: 'https://rocket.place/chart' }
   ]);
 
   await first.api.rememberTradingViewSnapshot(captureAt(
@@ -49,7 +49,7 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
 
   const restarted = createHarness(sessionStore);
   restarted.setTabs([
-    { id: 12, windowId: 1, title: 'RocketScooter ES', url: 'https://rocket.place/chart' }
+    { id: 12, windowId: 1, title: 'Rocket Scooter ES', url: 'https://rocket.place/chart' }
   ]);
   const recovered = await restarted.api.tradingViewPayloadResponse('ES', { detectedOnly: true });
   assert.equal(recovered.ok, true);
@@ -59,7 +59,7 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   staleSessionStore.rsLevelsTradingViewSession.receivedAt = new Date(Date.now() - 180000).toISOString();
   const stale = createHarness(staleSessionStore);
   stale.setTabs([
-    { id: 12, windowId: 1, title: 'RocketScooter ES', url: 'https://rocket.place/chart' }
+    { id: 12, windowId: 1, title: 'Rocket Scooter ES', url: 'https://rocket.place/chart' }
   ]);
   const staleResult = await stale.api.tradingViewPayloadResponse('ES', { detectedOnly: true });
   assert.equal(staleResult.ok, false);
@@ -68,7 +68,7 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   const removedSessionStore = JSON.parse(JSON.stringify(sessionStore));
   const removed = createHarness(removedSessionStore);
   removed.setTabs([
-    { id: 12, windowId: 1, title: 'RocketScooter ES', url: 'https://rocket.place/chart' }
+    { id: 12, windowId: 1, title: 'Rocket Scooter ES', url: 'https://rocket.place/chart' }
   ]);
   assert.equal(removed.tabRemovedListeners.length, 1);
   await removed.tabRemovedListeners[0](12);
@@ -79,7 +79,7 @@ const sharedSource = readFileSync(join(root, 'src', 'shared.js'), 'utf8');
   const navigatedSessionStore = JSON.parse(JSON.stringify(sessionStore));
   const navigated = createHarness(navigatedSessionStore);
   navigated.setTabs([
-    { id: 12, windowId: 1, title: 'RocketScooter ES', url: 'https://rocket.place/chart' }
+    { id: 12, windowId: 1, title: 'Rocket Scooter ES', url: 'https://rocket.place/chart' }
   ]);
   assert.equal(navigated.tabUpdatedListeners.length, 1);
   await navigated.tabUpdatedListeners[0](12, { url: 'https://example.test/' });

@@ -78,7 +78,7 @@ function bindEvents() {
 }
 
 async function refresh() {
-  setMessage('Checking open RocketScooter charts');
+  setMessage('Checking open Rocket Scooter charts');
   let extState = {};
   try {
     const extensionState = await webext.runtime.sendMessage({ type: 'rs-levels.state' });
@@ -111,7 +111,7 @@ async function refresh() {
     } else if (sourceState === 'stale') {
       setMessage('No supported data detected in the open charts. Captured service data is stale.', 'warning');
     } else {
-      setMessage('No supported data detected in the open RocketScooter charts.');
+      setMessage('No supported data detected in the open Rocket Scooter charts.');
     }
   } catch (err) {
     latestServiceStatus = null;
@@ -164,7 +164,7 @@ async function sendTradingViewPayload() {
 
   const scope = selectedSymbol();
   if (!scope) {
-    setMessage('Open a RocketScooter chart with HP, MHP, or liquidity-map data first.', 'warning');
+    setMessage('Open a Rocket Scooter chart with HP, MHP, or liquidity-map data first.', 'warning');
     return;
   }
 
@@ -301,7 +301,7 @@ function setCopyingThinkorswim(value) {
 async function copyTradingViewPayload() {
   const scope = selectedSymbol();
   if (!scope) {
-    setMessage('Open a RocketScooter chart with HP, MHP, or liquidity-map data first.', 'warning');
+    setMessage('Open a Rocket Scooter chart with HP, MHP, or liquidity-map data first.', 'warning');
     return;
   }
 
@@ -322,7 +322,7 @@ async function copyTradingViewPayload() {
 async function copyThinkorswimStudy() {
   const scope = selectedSymbol();
   if (!scope) {
-    setMessage('Open a RocketScooter chart with captured levels first.', 'warning');
+    setMessage('Open a Rocket Scooter chart with captured levels first.', 'warning');
     return;
   }
   if (scope === ALL_SCOPE) {
@@ -408,7 +408,7 @@ async function reconnectActiveTab() {
     const result = await webext.runtime.sendMessage({ type: 'rs-levels.inject-active-tab' });
     if (!result || result.ok !== true) throw new Error(result && result.error || 'Capture reconnect failed');
     await refresh();
-    setMessage('Capture hook reconnected. Refresh RocketScooter data if levels are still waiting.', 'ok');
+    setMessage('Capture hook reconnected. Refresh Rocket Scooter data if levels are still waiting.', 'ok');
   } catch (err) {
     setMessage(err && err.message ? err.message : 'Capture reconnect failed', 'error');
   }
@@ -536,7 +536,7 @@ function renderOverview() {
     : 'Checking open charts…';
   els.chartHint.textContent = count
     ? detectedMessage()
-    : 'Open a supported RocketScooter chart to begin.';
+    : 'Open a supported Rocket Scooter chart to begin.';
 }
 
 function combineServiceStatus(health = {}, status = {}) {
@@ -630,18 +630,18 @@ function renderTransferState() {
     ? 'Open a new TradingView chart'
     : selected
       ? `Fill ${scopeLabel(selected)} in an open RS Levels settings dialog`
-      : 'Open a RocketScooter chart with supported data first';
+      : 'Open a Rocket Scooter chart with supported data first';
 
   els.copyPayload.disabled = transferBusy || !selected;
   els.copyPayload.title = selected
     ? `Copy ${scopeLabel(selected)} TradingView payload`
-    : 'Open a RocketScooter chart with supported data first';
+    : 'Open a Rocket Scooter chart with supported data first';
   els.copyThinkorswim.disabled = transferBusy || !selected;
   els.copyThinkorswim.title = selected === ALL_SCOPE
     ? 'Choose one chart before copying a Thinkorswim study'
     : selected
       ? `Copy a generated ${scopeLabel(selected)} Thinkorswim study`
-      : 'Open a RocketScooter chart with captured levels first';
+      : 'Open a Rocket Scooter chart with captured levels first';
   els.tradingViewTab.disabled = transferBusy || tradingViewTabs.length <= 1;
 }
 

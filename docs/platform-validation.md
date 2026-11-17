@@ -10,7 +10,7 @@ Validation notes must stay public-safe:
 
 - Record platform name, platform version, operating system, RS Levels commit, local service URL, and pass/fail result.
 - Use screenshots only when they show display overlays and scrubbed status. Do not include account, broker, position, PnL, order, or credential information.
-- Do not include raw RocketScooter response URLs, cookies, headers, tokens, or private payload bodies.
+- Do not include raw Rocket Scooter response URLs, cookies, headers, tokens, or private payload bodies.
 - Record failures as reproducible setup steps plus scrubbed error text.
 
 ## Service Preflight
@@ -53,7 +53,7 @@ Every VARIS Zones adapter must verify:
 - VWAP resets on the configured 18:00 ET futures session boundary.
 - Three upper/lower band pairs are drawn around VWAP, with default RI multipliers `0.5`, `1`, and `2`.
 - Changing each level multiplier moves only that pair by `RI * multiplier`; band visibility and manual RI fallback still work.
-- The VARIS Zones concept credit for RocketScooter community member `IAmTheLiquidity2` remains visible in docs or source comments.
+- The VARIS Zones concept credit for Rocket Scooter community member `IAmTheLiquidity2` remains visible in docs or source comments.
 
 ## Platform Matrix
 
@@ -80,7 +80,7 @@ Run this manual smoke test in both a fresh Chrome/Chromium profile and a Firefox
 4. With settings already open, send to `rs-levels.pine`; confirm only the exact `RS Levels Payload` field changes.
 5. With settings closed, send, open settings within 45 seconds, and confirm the field fills. Repeat after 45 seconds and confirm it does not fill.
 6. Confirm the helper never clicks `OK`, presses Enter, changes another setting, or hides a TradingView error.
-7. Reload the extension or restart the browser and confirm no earlier session payload is sent until RocketScooter produces a fresh detected-chart capture.
+7. Reload the extension or restart the browser and confirm no earlier session payload is sent until Rocket Scooter produces a fresh detected-chart capture.
 8. Exercise the copy fallback after a missing-field failure so a TradingView markup change does not block the release workflow.
 
 ## Thinkorswim Copy Check
@@ -92,16 +92,16 @@ Run this manual smoke test in both a fresh Chrome/Chromium profile and a Firefox
 5. Disable each category input and confirm only that category hides. Disable labels, status, and stats independently.
 6. Repeat for NQ/MNQ and confirm ES levels do not appear.
 7. Capture changed levels, copy again, replace the study source, and confirm the timestamp and plots update only after the manual replacement.
-8. Stop the local service, refresh RocketScooter, and confirm **Copy Thinkorswim study** still produces a valid current study from the extension session.
+8. Stop the local service, refresh Rocket Scooter, and confirm **Copy Thinkorswim study** still produces a valid current study from the extension session.
 
-## Live RocketScooter Field Check
+## Live Rocket Scooter Field Check
 
-When the market is open and RocketScooter exposes live display context:
+When the market is open and Rocket Scooter exposes live display context:
 
-1. Load current ES/MES and NQ/MNQ futures charts in RocketScooter.
+1. Load current ES/MES and NQ/MNQ futures charts in Rocket Scooter.
 2. Keep SPY/QQQ or other non-futures panels open if that is part of the user's normal layout.
-3. Reload the extension, reconnect the tab, and refresh RocketScooter.
-4. Confirm the popup lists only supported symbols from charts currently open in RocketScooter and adds `All charts (N)` when several are available; watchlist-only rows must not appear.
+3. Reload the extension, reconnect the tab, and refresh Rocket Scooter.
+4. Confirm the popup lists only supported symbols from charts currently open in Rocket Scooter and adds `All charts (N)` when several are available; watchlist-only rows must not appear.
 5. Open a stock such as NVDA and confirm both `Send to TradingView` and `Copy payload instead` include detected HP, MHP, and `Map` data under the stock ticker. Also confirm existing futures levels, manual yellow/red/CAT lines, zones, and stats remain intact.
 6. Confirm direct plugin feeds show the same display rows through `/sierra/:symbol`, `/levels/:symbol?format=rows`, and `/stats/:symbol?format=rows`.
 

@@ -21,7 +21,7 @@ Deliverables:
 - JSON examples for `/snapshot` and `/levels/:symbol`
 - lightweight validation tests
 
-No RocketScooter parser code yet.
+No Rocket Scooter parser code yet.
 
 ## Slice 3: Local Service Shell
 

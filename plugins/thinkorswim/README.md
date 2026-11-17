@@ -4,7 +4,7 @@ This adapter is a display-only generated ThinkScript study. ThinkScript cannot m
 
 ## Install or refresh the study
 
-1. Open RocketScooter with the desired chart visible and let the RS Levels extension capture fresh levels.
+1. Open Rocket Scooter with the desired chart visible and let the RS Levels extension capture fresh levels.
 2. Open the RS Levels Capture extension popup.
 3. Select one chart. The all-charts selection is not supported because each generated study belongs to one chart family or stock symbol.
 4. Click **Copy Thinkorswim study**.
@@ -38,7 +38,7 @@ For example, `http://127.0.0.1:8765/thinkorswim/ES` returns a paste-ready ES-fam
 
 ## Freshness
 
-Thinkorswim receives a frozen source snapshot. It does not poll the API, auto-refresh, or automatically clear stale levels. Check the capture timestamp shown by the study and copy a new study after refreshing RocketScooter levels.
+Thinkorswim receives a frozen source snapshot. It does not poll the API, auto-refresh, or automatically clear stale levels. Check the capture timestamp shown by the study and copy a new study after refreshing Rocket Scooter levels.
 
 ## Safety Boundary
 

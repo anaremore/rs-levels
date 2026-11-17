@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createService, listen } from '../src/index.js';
 
-// A manual line drawn on a RocketScooter chart reaches the service twice: as the level the page
+// A manual line drawn on a Rocket Scooter chart reaches the service twice: as the level the page
 // reader names from it (`reader: 'shape-line'`, `OVNHP`) and as its chart shape
 // (`source: 'chart_shape'`, `horizontal_line OVNHP`). Every reader of the service gets it once.
 // Synthetic captures shaped as the extension posts them.

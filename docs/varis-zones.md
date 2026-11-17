@@ -1,14 +1,14 @@
 # VARIS Zones
 
-VARIS Zones is a VWAP-centered band overlay that uses RocketScooter risk interval (`RI`) as its distance input.
+VARIS Zones is a VWAP-centered band overlay that uses Rocket Scooter risk interval (`RI`) as its distance input.
 
-The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`. This repository provides display-only, local-first implementations that can read the captured `RI` value from RS Levels. It does not include trading strategy, alerts, broker connectivity, order entry, account reads, PnL reads, or automation.
+The VARIS Zones concept is credited to Rocket Scooter community member `IAmTheLiquidity2`. This repository provides display-only, local-first implementations that can read the captured `RI` value from RS Levels. It does not include trading strategy, alerts, broker connectivity, order entry, account reads, PnL reads, or automation.
 
 ## TradingView
 
 On TradingView, VARIS Zones are built into the RS Levels indicator (`plugins/tradingview/rs-levels.pine`) and use the same `RSLEVELS|2` payload as the level overlay, because Pine cannot poll localhost directly:
 
-1. Capture RocketScooter display data with the browser extension.
+1. Capture Rocket Scooter display data with the browser extension.
 2. Add the RS Levels indicator to an ES/MES or NQ/MNQ TradingView chart.
 3. Click `Send to TradingView`; approve the exact site permission on first use and choose a target if several chart tabs are open.
 4. Open the indicator settings within 45 seconds if needed, review the filled `RS Levels Payload`, and click `OK` yourself.
@@ -16,7 +16,7 @@ On TradingView, VARIS Zones are built into the RS Levels indicator (`plugins/tra
 
 `Copy payload instead` retains the manual copy/paste route. All VARIS settings live in the indicator's `VARIS Zones` group; turn off `Show VARIS zones` to hide them.
 
-The indicator reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. RS Levels prefers explicit `RI` captured from RocketScooter display data. If explicit `RI` is missing but DD bands are available, the TradingView exporter can include a derived display fallback from the outer DD-band pair. If no pasted `RI` is available on a futures chart, the indicator uses `Manual RI (points)`. Stock charts without `RI` skip VARIS Zones. VARIS input and plot values are kept out of TradingView's chart status line; plot values remain in the Data Window.
+The indicator reads the `RI` stat row for the matching ES/MES or NQ/MNQ section. RS Levels prefers explicit `RI` captured from Rocket Scooter display data. If explicit `RI` is missing but DD bands are available, the TradingView exporter can include a derived display fallback from the outer DD-band pair. If no pasted `RI` is available on a futures chart, the indicator uses `Manual RI (points)`. Stock charts without `RI` skip VARIS Zones. VARIS input and plot values are kept out of TradingView's chart status line; plot values remain in the Data Window.
 
 ## Bands
 

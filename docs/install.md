@@ -75,7 +75,7 @@ Only use remote binding on networks you trust. The browser extension should cont
 
 ## Browser Extension
 
-The extension supports Chrome/Chromium and Firefox Desktop 140+. Firefox for Android is not currently supported. The extension posts allowlisted RocketScooter responses to `/capture/api`, shows local service status, and provides opt-in `Send to TradingView` plus an explicit payload-copy fallback.
+The extension supports Chrome/Chromium and Firefox Desktop 140+. Firefox for Android is not currently supported. The extension posts allowlisted Rocket Scooter responses to `/capture/api`, shows local service status, and provides opt-in `Send to TradingView` plus an explicit payload-copy fallback.
 
 Chrome users can [install RS Levels Capture from the Chrome Web Store](https://chromewebstore.google.com/detail/rs-levels-capture/jgfonimhhihgemjnejboonidkgplkiko).
 
@@ -90,4 +90,4 @@ For Chrome/Chromium development or manual installation, unzip the first artifact
 
 ## Platform Plugins
 
-Plugins are display-only and will consume the read-only API. TradingView is handled differently because Pine scripts cannot call arbitrary localhost HTTP; use the [published RS Levels indicator](https://www.tradingview.com/script/u0U3v5FX-RS-Levels/) and see [TradingView](tradingview.md).
+Plugins are display-only and will consume the read-only API. TradingView is handled differently because Pine scripts cannot call arbitrary localhost HTTP; use the [published RS Levels indicator](https://www.tradingview.com/script/leyC2uqL-RS-Levels-v2026-11-15-1/) and see [TradingView](tradingview.md).

@@ -27,9 +27,9 @@ Current schema version: `0.1.0`.
 - `stale`
 - `error`
 
-`source.lastCaptureAt` preserves the capture timestamp. `source.ageMs` is calculated by the local service when a snapshot, health payload, status payload, or diagnostics bundle is read and measures how long it has been since the service accepted the latest capture. After the configured stale threshold is exceeded, the local service reports `source.state: "stale"` and `source.connected: false`. The default stale threshold is 23 hours because captured RocketScooter levels are expected to remain useful after the daily post-open update window.
+`source.lastCaptureAt` preserves the capture timestamp. `source.ageMs` is calculated by the local service when a snapshot, health payload, status payload, or diagnostics bundle is read and measures how long it has been since the service accepted the latest capture. After the configured stale threshold is exceeded, the local service reports `source.state: "stale"` and `source.connected: false`. The default stale threshold is 23 hours because captured Rocket Scooter levels are expected to remain useful after the daily post-open update window.
 
-Use `source.endpoints` to show which RocketScooter captures were seen recently and whether parsing succeeded. Endpoint summaries intentionally omit raw captured URLs and include only normalized endpoint keys, status codes, parser names, timestamps, and parse status. Long numeric or identifier-like path segments in endpoint keys are scrubbed as `:id`.
+Use `source.endpoints` to show which Rocket Scooter captures were seen recently and whether parsing succeeded. Endpoint summaries intentionally omit raw captured URLs and include only normalized endpoint keys, status codes, parser names, timestamps, and parse status. Long numeric or identifier-like path segments in endpoint keys are scrubbed as `:id`.
 
 ## Symbol Snapshot
 
@@ -47,7 +47,7 @@ Each symbol key maps to a display snapshot:
 }
 ```
 
-Symbols are normalized to display families for cross-platform chart use. `ES`, `MES`, CQG `EP` contracts such as `F.US.EPU26`, and S&P 500 chart titles map to `MES`; `NQ`, `MNQ`, CQG `ENQ` contracts such as `F.US.ENQU26`, and NASDAQ-100 chart titles map to `MNQ`. ETF/watchlist chart prices such as `SPY` and `QQQ` are not drawn on futures charts. When RocketScooter exposes display context through those panels, for example liquidity-map codes, extractors may store that context on the matching futures family as stats.
+Symbols are normalized to display families for cross-platform chart use. `ES`, `MES`, CQG `EP` contracts such as `F.US.EPU26`, and S&P 500 chart titles map to `MES`; `NQ`, `MNQ`, CQG `ENQ` contracts such as `F.US.ENQU26`, and NASDAQ-100 chart titles map to `MNQ`. ETF/watchlist chart prices such as `SPY` and `QQQ` are not drawn on futures charts. When Rocket Scooter exposes display context through those panels, for example liquidity-map codes, extractors may store that context on the matching futures family as stats.
 
 ## Stats
 
@@ -69,7 +69,7 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 }
 ```
 
-`riskInterval` is RocketScooter's RI value for the futures family; `yellowLineDistance`, `ddBandUpper`, `ddBandLower`, `prevSessionClose` and `dynHp` are the same table's YL, DD-Band-U, DD-Band-L, Prev Session Close and Dyn-HP columns (`null` when not captured; see docs/api.md). `mapCode` is the RocketScooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows` or, for Sierra Chart studies, from `/sierra/:symbol`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload (`yellowLineDistance` as `YL`) and displays them in the stats panel instead of drawing price lines. VARIS-style indicators can use `riskInterval`/`RI` to size VWAP bands without treating it as a price level.
+`riskInterval` is Rocket Scooter's RI value for the futures family; `yellowLineDistance`, `ddBandUpper`, `ddBandLower`, `prevSessionClose` and `dynHp` are the same table's YL, DD-Band-U, DD-Band-L, Prev Session Close and Dyn-HP columns (`null` when not captured; see docs/api.md). `mapCode` is the Rocket Scooter liquidity-map code, such as `BLD`. Direct plugins read these values from `/stats/:symbol?format=rows` or, for Sierra Chart studies, from `/sierra/:symbol`; TradingView receives them as `stat` rows in the short `RSLEVELS|2` payload (`yellowLineDistance` as `YL`) and displays them in the stats panel instead of drawing price lines. VARIS-style indicators can use `riskInterval`/`RI` to size VWAP bands without treating it as a price level.
 
 ## Level
 
@@ -105,7 +105,7 @@ Symbols are normalized to display families for cross-platform chart use. `ES`, `
 
 `zone-bull` and `zone-bear` identify bullish/demand/support zones and bearish/supply/resistance zones. New extractors should classify zones into one of those two kinds. `zone` remains schema-compatible for older or ambiguous captures, but display plugins should avoid a separate generic Zones setting and label fallback/ambiguous kinds as `Other levels` in user-facing settings.
 
-`yellow-line`, `red-line`, and `cat` identify user-added RocketScooter chart lines when those visible manual lines are present. Extractors may classify them by explicit labels such as `Yellow Line`, `Red Line`, `YL`, `RL`, or `CAT`, or by the visible line color when a chart object has symbol context and a finite price.
+`yellow-line`, `red-line`, and `cat` identify user-added Rocket Scooter chart lines when those visible manual lines are present. Extractors may classify them by explicit labels such as `Yellow Line`, `Red Line`, `YL`, `RL`, or `CAT`, or by the visible line color when a chart object has symbol context and a finite price.
 
 ## Diagnostics
 

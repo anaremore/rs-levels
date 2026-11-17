@@ -53,7 +53,7 @@ Documents\NinjaTrader 8\bin\Custom\Indicators\RSLevelsDisplay.cs
 4. Add **RS Levels Display** to a chart.
 5. Set the service URL and symbol override if needed.
 
-For VARIS Zones, copy `VARISZones.cs` to the same folder, compile it, and add **VARIS Zones** to the chart. The VARIS Zones concept is credited to RocketScooter community member `IAmTheLiquidity2`.
+For VARIS Zones, copy `VARISZones.cs` to the same folder, compile it, and add **VARIS Zones** to the chart. The VARIS Zones concept is credited to Rocket Scooter community member `IAmTheLiquidity2`.
 
 ## Rendering Plan
 
@@ -61,7 +61,7 @@ For VARIS Zones, copy `VARISZones.cs` to the same folder, compile it, and add **
 - Marshal results back to the chart thread before drawing.
 - Draw horizontal lines by `level.price` and text by `level.name`.
 - Use the display row feed color columns and optional sixth `kind` column for display styling, including yellow-line, red-line, and CAT manual-line kinds.
-- Preserve multiple yellow-line and red-line rows when RocketScooter exposes several manual lines at different prices.
+- Preserve multiple yellow-line and red-line rows when Rocket Scooter exposes several manual lines at different prices.
 - Fill matched bull and bear zone top/bottom pairs with low-opacity zone color.
 - Offset labels above or below the level line to avoid struck-through text.
 - Render DD/Res/MRes/WRes/Map context in the chart corner when the local API has it.
