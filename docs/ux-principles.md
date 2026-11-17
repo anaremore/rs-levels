@@ -4,7 +4,7 @@ RS Levels should feel like a quiet local utility: obvious status, stable feeds, 
 
 ## Product Promises
 
-- The user remains in control of their own RocketScooter session.
+- The user remains in control of their own Rocket Scooter session.
 - Data stays on the local machine by default.
 - The service explains what it knows, what is stale, and what is missing.
 - Chart plugins display levels; they never trade.
@@ -14,7 +14,7 @@ RS Levels should feel like a quiet local utility: obvious status, stable feeds, 
 The popup should answer five questions:
 
 1. Is the local service reachable?
-2. Which supported RocketScooter charts are detected?
+2. Which supported Rocket Scooter charts are detected?
 3. Which chart or chart set will be sent?
 4. Is TradingView ready to receive the payload?
 5. Where can reconnect and diagnostic tools be found?
@@ -24,7 +24,7 @@ Recommended states:
 | State | Meaning |
 | --- | --- |
 | Service Offline | Local service is not reachable. |
-| Waiting For RocketScooter | Service is online, but no active tab/capture yet. |
+| Waiting For Rocket Scooter | Service is online, but no active tab/capture yet. |
 | Capturing | Recent recognized captures are flowing. |
 | Stale | Last recognized capture is older than the freshness window. |
 | Error | Extension cannot send captures or service rejected a payload. |
@@ -74,7 +74,7 @@ Ideal first-run flow:
 
 1. Start the local service.
 2. Load the extension.
-3. Open RocketScooter.
+3. Open Rocket Scooter.
 4. Open `http://127.0.0.1:8765/health`.
 5. Add a display plugin or run an example client.
 

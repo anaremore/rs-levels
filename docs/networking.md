@@ -11,7 +11,7 @@ This lets the browser extension, examples, and chart plugins on the same machine
 
 ## Tailscale And Private Networks
 
-Some users may want to run RocketScooter capture on one machine and display levels on another machine over Tailscale or a trusted LAN.
+Some users may want to run Rocket Scooter capture on one machine and display levels on another machine over Tailscale or a trusted LAN.
 
 That should be supported deliberately, not accidentally.
 

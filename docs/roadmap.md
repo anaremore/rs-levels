@@ -24,7 +24,7 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 - Safe loopback default with explicit Tailscale/private-network opt-in.
 - Generic display parser normalizes object, compact row, and keyed map level shapes.
 - Recaptures replace previous levels from the same scrubbed endpoint key while preserving other display endpoints.
-- Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state with a 23-hour default stale window for daily RocketScooter levels.
+- Source freshness is reported through dynamic `ageMs`, `connected`, and `stale` state with a 23-hour default stale window for daily Rocket Scooter levels.
 - Public source endpoint summaries omit raw URLs and scrub identifier-like path segments.
 - API responses report the local service version and use `Cache-Control: no-store`.
 - `/status` and diagnostics expose scrubbed per-symbol summaries for plugin and extension readiness checks.
@@ -38,16 +38,16 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 Status: public setup foundation complete; field validation planned.
 
 - Manifest V3 extension shell.
-- Capture only allowlisted RocketScooter responses.
+- Capture only allowlisted Rocket Scooter responses.
 - Skip clearly non-text response content types before body reads.
 - Show connection status, service version, post timing, capture counters, and last issue in a popup.
-- Keep capture automatic on the extension's declared RocketScooter hosts without a redundant pause/resume control.
+- Keep capture automatic on the extension's declared Rocket Scooter hosts without a redundant pause/resume control.
 - Add popup `Send to TradingView` for all-symbol and selected-scope exports, plus `Copy payload instead` and scrubbed diagnostics.
 - Make the `RSLEVELS|2` payload fillable through an opt-in, fail-closed TradingView settings helper and directly pasteable through the manual fallback.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
-- Next: field testing against real RocketScooter endpoint shapes.
+- Next: field testing against real Rocket Scooter endpoint shapes.
 
 ## Milestone 4: Display Plugins
 
@@ -61,7 +61,7 @@ Status: public source artifacts complete; platform compile/install validation pl
 - Direct platform adapters display DD/RI/Res/MRes/WRes/liquidity-map context from the platform's display feed: `/sierra/:symbol` for Sierra Chart and `/stats/:symbol?format=rows` for NinjaTrader, Quantower, and Bookmap.
 - VARIS Zones consume the same RI context for VWAP band spacing: built into the TradingView indicator, and as separate indicators for Sierra Chart, NinjaTrader, Quantower, and Bookmap.
 - Public `plugins/manifest.json` inventory with static display-only validation.
-- Public platform validation checklist for compile/install and live RocketScooter field checks.
+- Public platform validation checklist for compile/install and live Rocket Scooter field checks.
 
 ## Milestone 5: Packaging
 

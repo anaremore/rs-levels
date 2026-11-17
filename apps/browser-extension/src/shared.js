@@ -184,8 +184,8 @@
     const source = status.source || {};
     const symbolIssue = selectedSymbolIssue(status, symbol);
     if (symbolIssue) return symbolIssue;
-    if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before sending or copying TradingView data.';
-    if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before sending or copying TradingView data.';
+    if (source.state === 'stale') return 'Captured levels are stale. Refresh Rocket Scooter before sending or copying TradingView data.';
+    if (source.connected === false) return 'Captured levels are not live. Refresh Rocket Scooter before sending or copying TradingView data.';
     return '';
   }
 
@@ -205,8 +205,8 @@
   function tradingViewBundleCopyIssue(status = {}) {
     const source = status.source || {};
     if (!hasAnyDisplayData(status)) return 'No captured display data is available yet.';
-    if (source.state === 'stale') return 'Captured levels are stale. Refresh RocketScooter before copying TradingView.';
-    if (source.connected === false) return 'Captured levels are not live. Refresh RocketScooter before copying TradingView.';
+    if (source.state === 'stale') return 'Captured levels are stale. Refresh Rocket Scooter before copying TradingView.';
+    if (source.connected === false) return 'Captured levels are not live. Refresh Rocket Scooter before copying TradingView.';
     return '';
   }
 
@@ -214,7 +214,7 @@
     const payload = String(text || '').trim();
     const parts = payload.split('|');
     if (parts.length < 6 || parts[0] !== 'RSLEVELS' || parts[1] !== '2' || (parts.length - 3) % 3 !== 0) {
-      throw new Error('The captured chart data uses an unsupported export format. Reload the extension and refresh RocketScooter.');
+      throw new Error('The captured chart data uses an unsupported export format. Reload the extension and refresh Rocket Scooter.');
     }
     for (let index = 3; index < parts.length; index += 3) {
       if (!validPayloadSymbol(parts[index])) {

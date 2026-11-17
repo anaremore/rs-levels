@@ -1,5 +1,5 @@
 //@version=6
-// VARIS Zones concept credited to RocketScooter community member IAmTheLiquidity2.
+// VARIS Zones concept credited to Rocket Scooter community member IAmTheLiquidity2.
 indicator("RS Levels v2026.11.15.1", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)
 
 payload = input.string("", "RS Levels Payload", display = display.none)

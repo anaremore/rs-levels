@@ -459,8 +459,8 @@ function diagnosticChecks({ source, levels, symbols, network }) {
 
 function diagnosticHints({ source, levels, network }) {
   const hints = [];
-  if (source.state === 'stale') hints.push('The last capture is stale. Refresh RocketScooter or copy a fresh TradingView payload after a new capture.');
-  if (!source.connected) hints.push('Open RocketScooter with the browser extension enabled, then refresh this status.');
+  if (source.state === 'stale') hints.push('The last capture is stale. Refresh Rocket Scooter or copy a fresh TradingView payload after a new capture.');
+  if (!source.connected) hints.push('Open Rocket Scooter with the browser extension enabled, then refresh this status.');
   if (!levels.length) hints.push('Use the demo capture command to verify the API before connecting a browser session.');
   if (network.warnings.length) hints.push(...network.warnings);
   if (network.remoteAccess) hints.push('Remote binding is enabled; use it only on a trusted private network.');
@@ -623,7 +623,7 @@ function docsHtml() {
 <body>
   <main>
     <h1>RS Levels API Docs</h1>
-    <p>Local-first RocketScooter display-level capture API. This service is display-only.</p>
+    <p>Local-first Rocket Scooter display-level capture API. This service is display-only.</p>
     <p><a href="/openapi.yaml">Open the OpenAPI YAML spec</a>, or point Swagger UI, Redoc, Postman, Insomnia, or another OpenAPI-compatible tool at this URL:</p>
     <pre id="spec-url">/openapi.yaml</pre>
     <p>Common read endpoints:</p>

@@ -1,7 +1,7 @@
 {
   "name": "rs-levels",
   "version": "0.0.0",
-  "description": "Local-first RocketScooter level capture and display feeds.",
+  "description": "Local-first Rocket Scooter level capture and display feeds.",
   "scripts": {
     "start": "node apps/local-service/src/cli.js",
     "demo:capture": "node tools/post-sample-capture.mjs",

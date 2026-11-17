@@ -3,7 +3,7 @@
 RS Levels is a local-first data bridge with three layers:
 
 ```text
-RocketScooter browser session
+Rocket Scooter browser session
   -> browser extension capture
   -> local service normalization/cache
   -> read-only local APIs and display plugins
@@ -15,7 +15,7 @@ The system must stay display-data only. There is no broker connection, account s
 
 ### Browser Extension
 
-The extension runs in the user's browser and captures allowlisted RocketScooter responses from pages the user is already allowed to view.
+The extension runs in the user's browser and captures allowlisted Rocket Scooter responses from pages the user is already allowed to view.
 
 Responsibilities:
 
@@ -79,7 +79,7 @@ The initial service should keep HTTP and WebSocket on one port if practical.
 ## Data Flow
 
 ```text
-1. User opens RocketScooter.
+1. User opens Rocket Scooter.
 2. Extension observes allowlisted response.
 3. Extension posts capture to local service.
 4. Local service stores raw source metadata in memory for diagnostics.
@@ -96,7 +96,7 @@ The UX should make the failure easy to understand:
 | --- | --- |
 | Local service not running | Extension popup says service unreachable. |
 | Browser tab not open | API says capture disconnected or stale. |
-| RocketScooter loaded but no recognized endpoints | API says waiting for recognized captures. |
+| Rocket Scooter loaded but no recognized endpoints | API says waiting for recognized captures. |
 | Parser cannot understand a response | API keeps last good snapshot and reports parser warning. |
 | Plugin cannot reach service | Plugin clears or marks levels stale, depending on platform capability. |
 

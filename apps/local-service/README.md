@@ -137,7 +137,7 @@ POST /capture/api
 
 /thinkorswim/:symbol returns a paste-ready, display-only ThinkScript study containing one frozen stored symbol snapshot. It remains available for direct tooling; the extension's normal `Copy Thinkorswim study` action generates locally from its current selected-chart capture.
 
-Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/levels/:symbol/rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
+Captured user-added Rocket Scooter yellow lines, red lines, and purple CAT lines flow through `/levels`, `/levels/:symbol?format=rows`, `/levels/:symbol/rows`, `/references`, and `/tradingview` as `yellow-line`, `red-line`, and `cat` kinds.
 
 /stats returns display-only context such as DD ratio, RI, Res, MRes, WRes, and liquidity-map codes like `Map BLD`. /stats/:symbol?format=rows and /stats/:symbol/rows provide simple row feeds for direct platform plugins and VARIS-style band indicators.
 
@@ -149,7 +149,7 @@ Captured user-added RocketScooter yellow lines, red lines, and purple CAT lines 
 
 /diagnostics returns scrubbed setup checks and hints for local API, capture, and private-network troubleshooting. It does not include raw captured URLs.
 
-/health, /status, /snapshot, and /diagnostics compute service-side source freshness on each read. After the configured `staleMs` threshold (also settable through `RS_LEVELS_STALE_MS`), the source state becomes `stale` and `connected` becomes `false`. The default is 23 hours because RocketScooter levels are expected to remain stable after the daily post-open update window.
+/health, /status, /snapshot, and /diagnostics compute service-side source freshness on each read. After the configured `staleMs` threshold (also settable through `RS_LEVELS_STALE_MS`), the source state becomes `stale` and `connected` becomes `false`. The default is 23 hours because Rocket Scooter levels are expected to remain stable after the daily post-open update window.
 
 /stream is an SSE stream that emits the current snapshot immediately and emits a new snapshot after each accepted capture.
 

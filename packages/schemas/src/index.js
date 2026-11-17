@@ -283,7 +283,7 @@ function isZoneSideKind(kind) {
 const SHAPE_PREFIXES = ['horizontal_line ', 'horizontal_ray '];
 
 /**
- * A manual line drawn on a RocketScooter chart reaches the service twice: as the level the page
+ * A manual line drawn on a Rocket Scooter chart reaches the service twice: as the level the page
  * reader named from it (`metadata.reader: 'shape-line'`, e.g. `OVNHP`) and as the chart shape
  * itself (`metadata.source: 'chart_shape'`, named `horizontal_line OVNHP`). Keep the named one:
  * drop a chart-shape level when a shape-line level on the same symbol, kind and price carries

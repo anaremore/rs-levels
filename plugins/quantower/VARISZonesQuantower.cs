@@ -9,7 +9,7 @@ using TradingPlatform.BusinessLayer.Chart;
 
 namespace RSLevelsQuantower
 {
-    // VARIS Zones concept credited to RocketScooter community member IAmTheLiquidity2.
+    // VARIS Zones concept credited to Rocket Scooter community member IAmTheLiquidity2.
     public class VARISZonesQuantower : Indicator
     {
         private const string Build = "VARIS Quantower v2026.06.21.1";

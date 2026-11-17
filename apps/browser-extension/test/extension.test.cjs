@@ -8,7 +8,7 @@ const firefoxManifest = JSON.parse(readFileSync(join(root, 'manifest.firefox.jso
 
 assert.equal(manifest.manifest_version, 3);
 assert.equal(manifest.version, '0.4.11');
-assert.equal(manifest.description, 'Capture RocketScooter chart levels for TradingView, Thinkorswim, and local RS Levels tools.');
+assert.equal(manifest.description, 'Capture Rocket Scooter chart levels for TradingView, Thinkorswim, and local RS Levels tools.');
 assert.deepEqual(manifest.icons, {
   16: 'assets/icon-16.png',
   32: 'assets/icon-32.png',
@@ -248,7 +248,7 @@ assert.match(popupHtml, /id="tradingview-tab"/);
 assert.match(popupHtml, /role="status"/);
 assert.match(popupHtml, /aria-live="polite"/);
 assert.match(popupHtml, /for="symbol">Chart/);
-assert.match(popupHtml, /Checking supported RocketScooter charts/);
+assert.match(popupHtml, /Checking supported Rocket Scooter charts/);
 assert.match(popupHtml, /build-info\.js/);
 assert.match(popupHtml, /build-id/);
 assert.match(popupHtml, /header-summary/);
@@ -259,7 +259,7 @@ assert.match(popupHtml, /Refresh status/);
 assert.match(popupHtml, /reconnect/);
 assert.match(popupHtml, /open-docs/);
 assert.match(popupHtml, /open-plugins/);
-assert.doesNotMatch(popupHtml, /capture-enabled|capture-disclosure|RocketScooter capture/);
+assert.doesNotMatch(popupHtml, /capture-enabled|capture-disclosure|Rocket Scooter capture/);
 assert.match(popupHtml, /observed-count/);
 assert.match(popupHtml, /ignored-count/);
 assert.match(popupHtml, /skipped-count/);
@@ -304,7 +304,7 @@ assert.match(options, /AbortController/);
 assert.match(options, /permissionStatus/);
 assert.match(options, /migrateSettings/);
 assert.match(optionsHtml, /test-service/);
-assert.doesNotMatch(optionsHtml, /capture-enabled|capture-disclosure|RocketScooter capture/);
+assert.doesNotMatch(optionsHtml, /capture-enabled|capture-disclosure|Rocket Scooter capture/);
 assert.match(optionsHtml, /permission-status/);
 assert.match(optionsCss, /\.status\.warning/);
 assert.match(optionsCss, /box-sizing: border-box/);
