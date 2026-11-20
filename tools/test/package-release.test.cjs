@@ -60,7 +60,7 @@ try {
 }
 
 assert.match(checkOutput, /release package check passed/);
-assert.match(checkOutput, /36 critical entries/);
+assert.match(checkOutput, /37 critical entries/);
 assert.match(checkOutput, /zip enabled/);
 assert.match(checkOutput, /Chrome and Firefox extension zips enabled/);
 
@@ -100,6 +100,7 @@ const zip = readFileSync(zipPath);
 const zipText = zip.toString('utf8');
 assert.equal(zip.readUInt32LE(0), 0x04034b50);
 assert.match(zipText, /rs-levels-0\.0\.0\/README\.md/);
+assert.match(zipText, /rs-levels-0\.0\.0\/LICENSE/);
 assert.match(zipText, /rs-levels-0\.0\.0\/docs\/platform-validation\.md/);
 assert.match(zipText, /rs-levels-0\.0\.0\/apps\/local-service\/src\/build-info\.js/);
 assert.match(zipText, /rs-levels-0\.0\.0\/docs\/privacy-policy\.md/);

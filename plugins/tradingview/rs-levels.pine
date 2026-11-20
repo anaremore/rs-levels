@@ -1,3 +1,6 @@
+// RS Levels. Copyright (c) 2026 Austin Naremore.
+// MIT License with the Commons Clause: free to use, modify, and share with this notice; not for sale.
+// https://github.com/anaremore/rs-levels/blob/main/LICENSE
 //@version=6
 // VARIS Zones concept credited to Rocket Scooter community member IAmTheLiquidity2.
 indicator("RS Levels v2026.11.15.1", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500)

@@ -16,3 +16,5 @@ npm run scan:secrets
 
 Every scan hit must be reviewed. Some terms are allowed in safety documentation; implementation code should remain display-only.
 
+By contributing, you agree that your contributions are licensed under this repository's [LICENSE](LICENSE): the MIT License with the Commons Clause.
+

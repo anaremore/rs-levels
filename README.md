@@ -146,3 +146,7 @@ tools/
 ## Status
 
 Released and in use. The browser extension is published on the Chrome Web Store, the RS Levels indicator is published on TradingView, and each GitHub release carries the source package, the Chrome/Chromium and Firefox extension ZIPs, and checksums. The schema package, parser, exporter package, local service with saved settings, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation of the display plugins on live platform runtimes and native app packaging.
+
+## License
+
+RS Levels is released under the [MIT License with the Commons Clause](LICENSE). You may use, copy, modify, and share it for free, including for your own trading, as long as the copyright and license notice stay with every copy. You may not sell it: the Commons Clause forbids charging others for a product or service whose value comes entirely or substantially from this software, including paid hosting or support.

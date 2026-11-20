@@ -46,6 +46,7 @@ const serviceBuildInfo = serviceBuildInfoSource({
 
 const includeEntries = [
   'README.md',
+  'LICENSE',
   'CONTRIBUTING.md',
   'SECURITY.md',
   'package.json',
@@ -63,6 +64,7 @@ const extensionIncludeEntries = ['manifest.json', 'README.md', 'assets', 'src'];
 
 const requiredReleaseEntries = [
   'README.md',
+  'LICENSE',
   'docs/openapi.yaml',
   'docs/user-setup.md',
   'docs/platform-validation.md',
