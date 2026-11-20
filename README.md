@@ -1,7 +1,7 @@
 # RS Levels
 
 <p align="center">
-  <img src="store-assets/readme-marquee-0.4.11.png" alt="RS Levels Capture — Rocket Scooter levels on the platform you trade" width="100%">
+  <img src="store-assets/marquee-promo-1400x560.png" alt="RS Levels Capture — Rocket Scooter levels on the platform you trade" width="100%">
 </p>
 
 <p align="center"><strong>Local-first Rocket Scooter level and display-context capture feeds.</strong></p>
@@ -36,13 +36,13 @@ RS Levels is organized around three display-only pieces:
 <table>
   <tr>
     <td width="50%">
-      <a href="screenshots/tradingview-levels.png">
-        <img src="screenshots/tradingview-levels.png" alt="RS Levels displayed in TradingView">
+      <a href="docs/images/tradingview-levels.png">
+        <img src="docs/images/tradingview-levels.png" alt="RS Levels displayed in TradingView">
       </a>
     </td>
     <td width="50%">
-      <a href="screenshots/quantower-levels.png">
-        <img src="screenshots/quantower-levels.png" alt="RS Levels displayed in Quantower">
+      <a href="docs/images/quantower-levels.png">
+        <img src="docs/images/quantower-levels.png" alt="RS Levels displayed in Quantower">
       </a>
     </td>
   </tr>
@@ -52,7 +52,7 @@ RS Levels is organized around three display-only pieces:
   </tr>
 </table>
 
-Prefer the unframed extension view? Open the [browser extension popup screenshot](screenshots/rslevels-extension.png).
+Prefer the unframed extension view? Open the [browser extension popup screenshot](docs/images/rslevels-extension.png).
 
 ## What This Is Not
 
@@ -119,9 +119,11 @@ http://127.0.0.1:8765
 apps/
   browser-extension/
   local-service/
+  userscripts/
 packages/
   schemas/
   core-parser/
+  exporters/
 plugins/
   manifest.json
   sierra-chart/
@@ -135,9 +137,12 @@ examples/
   node-client/
   python-client/
 docs/
+  images/
 scripts/
+store-assets/
+tools/
 ```
 
 ## Status
 
-Public-safe foundation in progress. The schema package, parser, exporter package, local service with saved settings, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation against live Rocket Scooter/platform runtimes and native app packaging.
+Released and in use. The browser extension is published on the Chrome Web Store, the RS Levels indicator is published on TradingView, and each GitHub release carries the source package, the Chrome/Chromium and Firefox extension ZIPs, and checksums. The schema package, parser, exporter package, local service with saved settings, browser extension, TradingView assisted handoff and paste-fallback workflow, generated Thinkorswim handoff, display plugin sources, VARIS Zones source artifacts, release packaging, and public validation checklist are implemented with tests. Remaining work is primarily field validation of the display plugins on live platform runtimes and native app packaging.

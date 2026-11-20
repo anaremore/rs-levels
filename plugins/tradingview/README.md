@@ -33,7 +33,7 @@ The `VARIS Zones` settings group reads RI from the same payload and draws three 
 
 ## Safety Boundary
 
-These indicators only draw overlays. They do not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or trading automation. The optional extension helper only fills the exact payload setting and never confirms the dialog. Confirm that extension-assisted input is permitted by the TradingView terms that apply to your use before enabling access.
+This indicator only draws overlays. They do not contain strategy logic, alerts, order placement, broker connectivity, account reads, PnL reads, or trading automation. The optional extension helper only fills the exact payload setting and never confirms the dialog. Confirm that extension-assisted input is permitted by the TradingView terms that apply to your use before enabling access.
 
 ## Indicator Controls
 

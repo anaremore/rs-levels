@@ -4,13 +4,12 @@ RS Levels is local-first. The default service must bind to loopback only and avo
 
 ## Extension Capture Rules
 
-The browser extension may forward:
+The browser extension may forward, only to the RS Levels service URL the user configured:
 
-- allowlisted Rocket Scooter response body text
-- endpoint path
-- HTTP status
+- allowlisted Rocket Scooter response body text, with its response URL, endpoint path, HTTP method, and status
 - capture timestamp
-- a small safe request summary when needed to disambiguate display data
+- sanitized chart-level metadata from supported Rocket Scooter charts already open: chart symbols, level labels and prices, display colors, zones, and limited display statistics
+- timestamped Resilience and Arb study values from open 1-minute ES and NQ charts, with the time of each chart's newest candle
 
 The browser extension must not forward:
 
@@ -21,7 +20,7 @@ The browser extension must not forward:
 - arbitrary request bodies
 - arbitrary page content
 - screenshots
-- browser history
+- general browser history (only the URLs of supported Rocket Scooter responses are forwarded)
 
 ## Optional TradingView Handoff
 

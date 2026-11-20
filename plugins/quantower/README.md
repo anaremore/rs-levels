@@ -86,7 +86,7 @@ The project targets the .NET runtime used by current Quantower builds and refere
 6. Set the service URL only when you intentionally use a trusted private-network/Tailscale URL instead of `http://127.0.0.1:8765`.
 7. Leave symbol override on Auto unless the chart symbol cannot be detected.
 
-![RS Levels Quantower indicators](../../screenshots/quantower-levels.png)
+![RS Levels Quantower indicators](../../docs/images/quantower-levels.png)
 
 The screenshot shows the intended Quantower layout with RS Levels Display and VARIS Zones on the same chart. RS Levels draws captured display levels and stats, while VARIS Zones uses the captured `RI` when available.
 

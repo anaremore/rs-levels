@@ -30,12 +30,12 @@ Status: public API foundation complete; launch scripts included; app wrapper pla
 - `/status` and diagnostics expose scrubbed per-symbol summaries for plugin and extension readiness checks.
 - Service CLI includes non-binding `--help` and `--version` smoke paths.
 - Explicit `--config` JSON settings persist across restarts, with environment/programmatic overrides and loopback safeguards.
-- Optional local stats history: changed values per symbol, per-field coverage so gaps stay gaps, and age and size limits, served at `/history/:symbol`.
+- Optional local stats history: changed values per symbol, per-field coverage so gaps stay gaps, and age and size limits, served at `/history/:symbol`, including the Resilience and Arb study series, which also stream live at `/series/:symbol/stream`.
 - Next: native packaged app wrapper.
 
 ## Milestone 3: Browser Extension
 
-Status: public setup foundation complete; field validation planned.
+Status: published on the Chrome Web Store (0.4.11); Firefox Desktop 140+ package built from the same source.
 
 - Manifest V3 extension shell.
 - Capture only allowlisted Rocket Scooter responses.
@@ -47,7 +47,10 @@ Status: public setup foundation complete; field validation planned.
 - Add quick links to local API docs and the display-plugin manifest.
 - Add options-page service reachability check for localhost and trusted private-network URLs.
 - Guard TradingView copy while source data is waiting or stale.
-- Next: field testing against real Rocket Scooter endpoint shapes.
+- Generate the Thinkorswim study inside the extension from one selected chart, with no local service needed.
+- Capture the RI/DD table's YL, DD bands, previous close, and Dyn-HP.
+- Read the Resilience and Arb studies on open 1-minute ES and NQ charts for the local service's history and live stream, skipping and flagging any chart whose clock runs ahead.
+- Package Firefox Desktop 140+ from the shared runtime.
 
 ## Milestone 4: Display Plugins
 

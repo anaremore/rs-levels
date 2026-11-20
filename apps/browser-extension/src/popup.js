@@ -415,22 +415,16 @@ async function reconnectActiveTab() {
 }
 
 
-async function fetchTradingViewText(path, options = {}) {
+async function fetchTradingViewText(path) {
   const url = `${settings.serviceUrl}${path}`;
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(copyFailureMessage(response.status, await responseErrorDetail(response), options));
+    throw new Error(copyFailureMessage(response.status, await responseErrorDetail(response)));
   }
   return globalThis.RS_LEVELS.cleanTradingViewPayload(await response.text());
 }
 
-function copyFailureMessage(status, detail = '', options = {}) {
-  if (options.allSymbols) {
-    if (/no symbols|no futures|symbol not found|no captured/i.test(detail)) {
-      return 'No captured ES or NQ levels are available yet.';
-    }
-    return `All-symbol TradingView payload unavailable (${status})${detail ? `: ${detail}` : ''}`;
-  }
+function copyFailureMessage(status, detail = '') {
   if (status === 404) return `No data for ${scopeLabel(selectedSymbol())}`;
   return `TradingView payload unavailable (${status})${detail ? `: ${detail}` : ''}`;
 }
