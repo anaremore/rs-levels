@@ -2,7 +2,6 @@
 
 Before any public release:
 
-- Choose and add an explicit license.
 - Confirm all code is display-data only.
 - Run private-term and secret scans.
 - Build from a clean clone.
