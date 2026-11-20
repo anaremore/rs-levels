@@ -74,7 +74,7 @@ One payload can carry multiple detected tickers and futures families. Send it to
 
 TradingView Pine cannot poll Rocket Scooter or localhost directly. When Rocket Scooter levels change, send a fresh payload from the extension.
 
-![RS Levels TradingView indicator overlay](../screenshots/tradingview-levels.png)
+![RS Levels TradingView indicator overlay](images/tradingview-levels.png)
 
 When the paste is working, the chart should show the display-only RS Levels overlay: DD bands, HP/MHP, user-added yellow/red/CAT lines, open/close references, bull and bear zones, and the small map/RI panel.
 

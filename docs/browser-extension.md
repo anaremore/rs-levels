@@ -33,7 +33,7 @@ Rocket Scooter's automatic futures overnight levels pass through as `Dyn MHP` an
 3. Open Rocket Scooter.
 4. Check the popup status.
 5. Choose a symbol from `Chart`. Only open charts with supported data appear; use `All charts (N)` when more than one is available.
-6. Open a TradingView chart with either Pine indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
+6. Open a TradingView chart with the RS Levels indicator added, click `Send to TradingView`, and grant the exact TradingView site permission on first use. Choose a target if several chart tabs are open. The selected tab is focused and the helper fills only the visible `RS Levels Payload` field; if settings are not open, open them within 45 seconds. Review the value and click `OK` yourself. Use `Copy payload instead` for the original paste workflow.
 7. For Thinkorswim, select one chart, click `Copy Thinkorswim study`, then replace the source of a custom study and save it. The extension generates this source locally and does not require the local API.
 8. Expand `Tools & diagnostics` to inspect plugins, open options or API docs, reconnect capture, or copy support diagnostics.
 9. Use `Reconnect Tab` if the popup is waiting and the Rocket Scooter page was already open when the extension was loaded or reloaded.
@@ -44,7 +44,7 @@ The popup distinguishes ready, waiting, offline, and stale states so an old capt
 
 Packaged releases include `dist/rs-levels-browser-extension-<extension-version>.zip` for Chrome/Chromium and `dist/rs-levels-browser-extension-firefox-<extension-version>.zip` for Firefox. Normal Chrome installs should use the published Chrome Web Store listing; unzip the Chrome artifact and use `Load unpacked` for development or manual Chromium installation. For a temporary Firefox install, select the Firefox ZIP from `about:debugging` or select its extracted `manifest.json`. The Firefox manifest declares `browsingActivity` and `websiteContent` so Firefox can show its built-in data consent prompt. Firefox removes temporary add-ons on restart, and permanent distribution requires Mozilla signing.
 
-The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.4+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
+The `Tools & diagnostics` metadata shows the extension version. Packaged releases add the short git revision, for example `ext 0.4.11+abc1234`. Nested `Technical details` show the local service version and packaged service revision when the running service exposes one. `Copy Diagnostics` includes both build identities.
 
 Nested `Technical details` include aggregate capture-hook counters and `Refresh status`, which manually re-reads the local API and extension state. Capture does not depend on this button.
 
@@ -57,7 +57,7 @@ Capture-hook counters are aggregate only:
 
 These counters do not include ignored URLs, response bodies, request headers, cookies, or page text.
 
-![RS Levels browser extension popup](../screenshots/rslevels-extension.png)
+![RS Levels browser extension popup](images/rslevels-extension.png)
 
 The popup screenshot shows the normal capture controls. Current builds label the selector `Chart`, summarize the supported open-chart count, and keep troubleshooting utilities collapsed by default.
 

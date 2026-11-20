@@ -30,13 +30,20 @@ Dashboard artwork:
 - Small promo tile: `store-assets/small-promo-440x280.png`
 - Marquee promo tile: `store-assets/marquee-promo-1400x560.png` (optional)
 
+To regenerate the screenshot and marquee, start from the sources in `store-assets/source/` and the popup capture `docs/images/rslevels-extension.png`:
+
+- Render `screenshot-backdrop.svg` at 1280x800 and `marquee-promo.svg` at 1400x560 in headless Chrome, for example `chrome --headless=new --screenshot=backdrop.png --window-size=1280,800 backdrop.html`, where the HTML page shows the SVG at full size with no margins.
+- Capture the popup 360 px wide in its ready state with charts detected, trim the empty background below it, and save it as `docs/images/rslevels-extension.png`.
+- Screenshot: scale the popup to 94% and center it in the 390x524 box at x=850, y=138 of the backdrop.
+- Marquee: scale the popup to 80% and center it in the 352x480 box at x=1000, y=40.
+- `small-promo.svg` and `extension-icon.svg` are the sources for the small promo tile and the icons.
+- The README shows `store-assets/marquee-promo-1400x560.png` directly, so there is no second copy to update.
+
 Before submission, install the ZIP in a fresh Chrome profile, confirm supported Rocket Scooter charts are captured automatically, and exercise every advertised flow.
 
 ## Item choice
 
-Use **New item** for RS Levels Capture if no existing RS Levels Capture item exists. The rejected **Eat My Shorts!** entry shown in the dashboard is a different product and should not be reused.
-
-If an existing rejected or draft item is actually an earlier RS Levels Capture submission, open that item and upload the corrected package there so its item ID and history are preserved.
+RS Levels Capture is published as item `jgfonimhhihgemjnejboonidkgplkiko`. Upload each new version to that item so its users, ratings, and history carry over. Never create a **New item** for an update; that starts a separate listing.
 
 ## Store listing
 
@@ -143,7 +150,7 @@ Runs the capture hook and display-only chart reader only on rocket.place and roc
 Required localhost host access
 
 ```text
-Connects to the optional RS Levels service on 127.0.0.1 or localhost to post captured display data, read health and status, and open local API documentation. Thinkorswim source is generated inside the extension from the selected captured chart.
+Connects to the optional RS Levels service on 127.0.0.1 or localhost to post captured display data, read health, status, and diagnostics, fetch a fallback TradingView payload, and open the local API documentation and plugin list. Thinkorswim source is generated inside the extension from the selected captured chart.
 ```
 
 Optional `http://*/*` and `https://*/*` host access
@@ -175,7 +182,7 @@ Certify all Limited Use statements only after confirming the uploaded build matc
 
 ## Distribution
 
-Choose visibility and regions deliberately. For the first review, deferred publishing is recommended so approval does not immediately make the item public. After approval, Chrome allows a limited staging window before the draft must be reviewed again.
+Keep the existing visibility and regions unless you mean to change them. Deferred publishing is optional for an update: approval then stages the new version instead of replacing the live one, and Chrome allows a limited staging window before the draft must be reviewed again.
 
 The extension is free and requires separately obtained Rocket Scooter access. Do not imply that Rocket Scooter or TradingView is included.
 
@@ -208,11 +215,11 @@ If a compliant reviewer account cannot be provided, do not submit yet; an inacce
 1. Push the final privacy policy and verify its public URL while signed out.
 2. Run the complete verification and package commands.
 3. Install the exact ZIP in a fresh Chrome profile and perform the manual test matrix.
-4. Open the RS Levels Capture item, or choose **New item** if none exists.
+4. Open the existing RS Levels Capture item.
 5. Upload `dist/rs-levels-browser-extension-0.4.11.zip`.
 6. Complete Store listing, Privacy practices, Distribution, and Test instructions using this guide.
 7. Upload the icon, screenshot, small promo tile, and optional marquee promo tile from `store-assets`.
-8. Choose deferred publishing, submit for review, and monitor the account email for reviewer questions.
-9. After approval, perform one final staged-package smoke test before publishing.
+8. Choose deferred publishing if you want to stage the update, submit for review, and monitor the account email for reviewer questions.
+9. If the update is staged, perform one final smoke test of the approved package before publishing.
 
 Do not submit the package until the dedicated reviewer account and the live manual test are complete.
